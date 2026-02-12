@@ -32,7 +32,7 @@ export interface HyperCardShellProps {
   stack: Stack;
   domainActionHandler?: DomainActionHandler;
   customRenderers?: Record<string, CardTypeRenderer>;
-  /** Additional data from domain slices (e.g. inventory items) */
+  /** Additional data from domain slices (merged with stack.data) */
   domainData?: Record<string, unknown[]>;
   navShortcuts?: Array<{ card: string; icon: string }>;
   /** Render function for AI panel (chat) — only used in split/drawer layouts */

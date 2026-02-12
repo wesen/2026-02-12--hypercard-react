@@ -21,7 +21,7 @@ function ChatDemo() {
           ]);
         }}
         onAction={(a) => alert(`Action: ${JSON.stringify(a)}`)}
-        placeholder="Ask about inventory…"
+        placeholder="Ask me anything…"
       />
     </div>
   );

@@ -27,7 +27,7 @@ export function LayoutDrawer({ main, drawer }: LayoutDrawerProps) {
           onClick={() => setOpen(!open)}
         >
           <span>🤖 AI {open ? '▾' : '▸'}</span>
-          <span data-part="ai-model-label" style={{ fontStyle: 'italic' }}>Ask about inventory…</span>
+          <span data-part="ai-model-label" style={{ fontStyle: 'italic' }}>Ask a question…</span>
         </div>
         {open && <div style={{ flex: 1, overflow: 'hidden' }}>{drawer}</div>}
       </div>
