@@ -1,0 +1,15 @@
+{
+  "name": "hypercard-react",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w apps/inventory",
+    "build": "npm run build -w packages/engine && npm run build -w apps/inventory",
+    "storybook": "npm run storybook -w apps/inventory",
+    "lint": "eslint . --ext .ts,.tsx",
+    "typecheck": "tsc --build"
+  }
+}
