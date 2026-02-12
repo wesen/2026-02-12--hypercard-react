@@ -43,3 +43,6 @@ export {
   dispatchDSLAction,
   type DomainActionHandler,
 } from './app/dispatchDSLAction';
+
+// ── Registry APIs ──
+export * from './api';

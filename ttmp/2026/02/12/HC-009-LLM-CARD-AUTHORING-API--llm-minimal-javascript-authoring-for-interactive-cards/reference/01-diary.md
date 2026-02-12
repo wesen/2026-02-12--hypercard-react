@@ -77,3 +77,56 @@ Create tasks in the ticket, the nwork them off one by one, comitting and checkin
 
 ### Technical details
 - Initial execution tasks are now declared in `tasks.md` and will be checked off as each task commit lands.
+
+## Step 2: Implement Engine Action Registry API
+
+Implemented an engine-level action registry abstraction and exported it via the engine barrel so domain apps can replace handwritten switch handlers with registry declarations.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 1)
+
+**Assistant interpretation:** Execute Task 2 by building reusable action registry primitives in the engine package.
+
+**Inferred user intent:** Reduce repetitive domain action glue and make app action wiring more declarative.
+
+**Commit (code):** pending
+
+### What I did
+- Added `packages/engine/src/api/actionRegistry.ts` with:
+  - `defineActionRegistry`
+  - `createDomainActionHandler`
+  - `ActionRegistryEntry` and context types
+- Added `packages/engine/src/api/index.ts`.
+- Exported new API from `packages/engine/src/index.ts`.
+- Ran `npm run typecheck` successfully.
+
+### Why
+- Current apps duplicate switch-based handlers with near-identical structural logic.
+- Registry abstraction centralizes the pattern and prepares app migrations.
+
+### What worked
+- New API compiles cleanly.
+- Engine exports now expose registry helpers for app usage.
+
+### What didn't work
+- N/A
+
+### What I learned
+- Existing `DomainActionHandler` signature is sufficient for first registry pass; no interface change required.
+
+### What was tricky to build
+- Needed to preserve flexibility for payload mapping and side effects while staying thin enough for immediate adoption.
+
+### What warrants a second pair of eyes
+- Confirm whether future evolution should include async action support in registry entries.
+
+### What should be done in the future
+- Add tests for registry behavior once integrations are complete.
+
+### Code review instructions
+- Start at `packages/engine/src/api/actionRegistry.ts` and verify `mapPayload`, `toast`, and `effect` behavior.
+- Verify export surface at `packages/engine/src/index.ts`.
+
+### Technical details
+- Validation command: `npm run typecheck`
