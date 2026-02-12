@@ -1,20 +1,26 @@
 // @hypercard/engine — barrel exports
+//
+// USAGE:
+//   import { HyperCardShell, DataTable, navigationReducer, ... } from '@hypercard/engine';
+//   import '@hypercard/engine/src/theme/base.css';      // load base tokens
+//   import '@hypercard/engine/src/theme/modern.css';     // optional theme
+//
 
-// Types
+// ── Types ──
 export * from './types';
 export * from './parts';
 
-// DSL
+// ── DSL ──
 export * from './dsl/types';
 export { resolveValue, matchFilter, interpolateTemplate, type ResolveContext } from './dsl/resolver';
 
-// Widgets
+// ── Widgets ──
 export * from './components/widgets';
 
-// Shell
+// ── Shell ──
 export * from './components/shell';
 
-// State
+// ── State ──
 export {
   navigationReducer,
   navigate,
@@ -32,7 +38,7 @@ export {
 } from './features/notifications/notificationsSlice';
 export * from './features/notifications/selectors';
 
-// App
+// ── App ──
 export {
   dispatchDSLAction,
   type DomainActionHandler,

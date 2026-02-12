@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "npm run dev -w apps/inventory",
     "build": "npm run build -w packages/engine && npm run build -w apps/inventory",
-    "storybook": "npm run storybook -w apps/inventory",
+    "storybook": "npx storybook dev -p 6006 --config-dir apps/inventory/.storybook",
     "lint": "eslint . --ext .ts,.tsx",
     "typecheck": "tsc --build"
   }

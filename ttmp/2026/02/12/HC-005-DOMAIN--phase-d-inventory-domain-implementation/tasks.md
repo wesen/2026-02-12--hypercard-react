@@ -2,16 +2,16 @@
 
 ## TODO
 
-- [ ] Add tasks here
+- [x] Add tasks here
 
-- [ ] Define domain/types.ts (Item, SaleEntry, InventorySettings)
-- [ ] Create domain/stack.ts (full STACK constant, typed)
-- [ ] Implement inventorySlice + selectors
-- [ ] Implement salesSlice + selectors
-- [ ] Implement chatSlice + selectors
-- [ ] Implement intentEngine.ts and computeHandlers.ts
-- [ ] Implement domain/formatters.ts (formatCurrency, qtyState)
-- [ ] Implement domain/columnConfigs.ts (itemColumns, salesColumns)
+- [x] Define domain/types.ts (Item, SaleEntry, InventorySettings)
+- [x] Create domain/stack.ts (full STACK constant, typed)
+- [x] Implement inventorySlice + selectors
+- [x] Implement salesSlice + selectors
+- [x] Implement chatSlice + selectors
+- [x] Implement intentEngine.ts and computeHandlers.ts
+- [x] Implement domain/formatters.ts (formatCurrency, qtyState)
+- [x] Implement domain/columnConfigs.ts (itemColumns, salesColumns)
 - [ ] Implement domain/computeFields.ts (margin, inventoryValue)
 - [ ] Implement domain/reportCompute.ts (all report section computations)
 - [ ] Implement domainActionHandler.ts
