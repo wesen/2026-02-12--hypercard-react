@@ -7,9 +7,7 @@ export type DomainDataFromRegistry<TRegistry extends SelectorRegistry<any>> = {
   [K in keyof TRegistry]: ReturnType<TRegistry[K]>;
 };
 
-export function defineSelectorRegistry<TState, TRegistry extends SelectorRegistry<TState>>(
-  registry: TRegistry,
-): TRegistry {
+export function defineSelectorRegistry<TRegistry extends SelectorRegistry<any>>(registry: TRegistry): TRegistry {
   return registry;
 }
 

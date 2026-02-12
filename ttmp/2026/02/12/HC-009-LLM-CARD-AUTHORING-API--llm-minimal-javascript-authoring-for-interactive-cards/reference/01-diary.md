@@ -16,7 +16,7 @@ RelatedFiles:
       Note: Task checklist that is executed and checked off step-by-step
 ExternalSources: []
 Summary: "Implementation diary for HC-009 DSL/JS API execution sequence."
-LastUpdated: 2026-02-12T14:46:14-05:00
+LastUpdated: 2026-02-12T14:48:57-05:00
 WhatFor: "Track implementation steps, decisions, failures, and validation evidence for HC-009."
 WhenToUse: "Use during execution and review of HC-009 implementation tasks."
 ---
@@ -43,7 +43,7 @@ Create tasks in the ticket, the nwork them off one by one, comitting and checkin
 
 **Inferred user intent:** Move from analysis to incremental implementation with visible operational discipline.
 
-**Commit (code):** pending
+**Commit (code):** `ce23232`
 
 ### What I did
 - Wrote `design/02-implementation-plan-dsl-and-js-api-no-llm-scope.md` as the canonical execution plan.
@@ -90,7 +90,7 @@ Implemented an engine-level action registry abstraction and exported it via the 
 
 **Inferred user intent:** Reduce repetitive domain action glue and make app action wiring more declarative.
 
-**Commit (code):** pending
+**Commit (code):** `830c9ad`
 
 ### What I did
 - Added `packages/engine/src/api/actionRegistry.ts` with:
@@ -143,7 +143,7 @@ Migrated the Todo application to consume the new engine registries instead of ha
 
 **Inferred user intent:** Prove the new engine APIs are practical in a real app and reduce local boilerplate.
 
-**Commit (code):** pending
+**Commit (code):** `6ee7523`
 
 ### What I did
 - Added `apps/todo/src/app/domainDataRegistry.ts` with a selector registry and `selectTodoDomainData`.
@@ -193,7 +193,7 @@ Implemented the selector registry helper layer so domain apps can centralize dom
 
 **Inferred user intent:** Reduce App-level selector boilerplate and make data binding declarative.
 
-**Commit (code):** pending
+**Commit (code):** `775257f`
 
 ### What I did
 - Added `packages/engine/src/api/selectorRegistry.ts` with:
@@ -232,3 +232,63 @@ Implemented the selector registry helper layer so domain apps can centralize dom
 
 ### Technical details
 - Validation command: `npm run typecheck`
+
+## Step 5: Migrate Inventory App to Registry APIs
+
+Migrated the Inventory app to registry-based action and selector wiring. During this step, typecheck revealed that the initial registry type definitions were too narrow (`unknown` payload), so I tightened engine API typing to support practical per-entry inference.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 1)
+
+**Assistant interpretation:** Execute Task 5 by migrating Inventory and ensuring the registry APIs are robust enough for real payload types.
+
+**Inferred user intent:** Complete second-app proof that the DSL/JS API is viable and consistent across apps.
+
+**Commit (code):** pending
+
+### What I did
+- Replaced switch-based Inventory handler with registry wiring in `apps/inventory/src/app/domainActionHandler.ts`.
+- Added `apps/inventory/src/app/domainDataRegistry.ts`.
+- Updated `apps/inventory/src/App.tsx` to feed `domainData` from registry selectors.
+- Fixed engine typing in:
+  - `packages/engine/src/api/actionRegistry.ts` (`ActionRegistryEntry<any>` for practical payload inference)
+  - `packages/engine/src/api/selectorRegistry.ts` (simplified `defineSelectorRegistry` inference)
+- Updated Todo selector registry callsite to match improved selector API.
+- Ran `npm run typecheck` successfully after fixes.
+
+### Why
+- Inventory is the second high-coverage app integration and surfaced realistic typing pressure.
+- Engine API type tightening prevents app authors from needing noisy casts around payload and toast handlers.
+
+### What worked
+- Final migration compiles cleanly.
+- Existing domain behavior is preserved, including delete navigation side effect and conditional receive-stock toast.
+
+### What didn't work
+- First compile attempt failed due `unknown` payload registry typing and selector registry generic ergonomics.
+
+### What I learned
+- Registry helpers must prioritize local inference quality to be usable in app code without type ceremony.
+
+### What was tricky to build
+- Preserving behavior parity while converting five action cases, including `receiveStock`’s conditional user feedback.
+
+### What warrants a second pair of eyes
+- Confirm whether `receiveStock` should reject/ignore invalid payloads earlier in the pipeline instead of no-op reducing.
+
+### What should be done in the future
+- Add focused unit tests for `createDomainActionHandler` typing and runtime behavior with mixed registry entries.
+
+### Code review instructions
+- Review Inventory migration files:
+  - `apps/inventory/src/app/domainActionHandler.ts`
+  - `apps/inventory/src/app/domainDataRegistry.ts`
+  - `apps/inventory/src/App.tsx`
+- Review engine typing adjustments:
+  - `packages/engine/src/api/actionRegistry.ts`
+  - `packages/engine/src/api/selectorRegistry.ts`
+
+### Technical details
+- Initial error command: `npm run typecheck`
+- Final validation command: `npm run typecheck`

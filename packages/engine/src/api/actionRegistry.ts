@@ -18,7 +18,7 @@ export interface ActionRegistryEntry<TPayload> {
   effect?: (ctx: ActionRegistryContext<TPayload>) => void;
 }
 
-export type ActionRegistry = Record<string, ActionRegistryEntry<unknown>>;
+export type ActionRegistry = Record<string, ActionRegistryEntry<any>>;
 
 export function defineActionRegistry<T extends ActionRegistry>(registry: T): T {
   return registry;

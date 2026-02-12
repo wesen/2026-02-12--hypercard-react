@@ -6,7 +6,7 @@ import { selectTasks, type TasksStateSlice } from '../features/tasks/selectors';
 
 export type TodoDomainDataState = TasksStateSlice;
 
-export const todoDomainDataRegistry = defineSelectorRegistry<TodoDomainDataState>({
+export const todoDomainDataRegistry = defineSelectorRegistry({
   tasks: selectTasks,
 });
 

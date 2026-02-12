@@ -1,36 +1,59 @@
-import type { DomainActionHandler } from '@hypercard/engine';
-import { goBack, showToast } from '@hypercard/engine';
+import {
+  createDomainActionHandler,
+  defineActionRegistry,
+  goBack,
+} from '@hypercard/engine';
 import { updateQty, saveItem, deleteItem, createItem, receiveStock } from '../features/inventory/inventorySlice';
+import type { Item } from '../domain/types';
 
-export const inventoryActionHandler: DomainActionHandler = (action, dispatch) => {
-  const a = action as Record<string, unknown>;
-  switch (action.type) {
-    case 'updateQty':
-      dispatch(updateQty({ sku: a.sku as string, delta: a.delta as number }));
-      dispatch(showToast(`${(a.delta as number) > 0 ? '+' : ''}${a.delta} qty for ${a.sku}`));
-      return true;
-    case 'saveItem':
-      dispatch(saveItem({ sku: a.sku as string, edits: (a.edits ?? {}) as Record<string, unknown> }));
-      dispatch(showToast(`Saved ${a.sku}`));
-      return true;
-    case 'deleteItem':
-      dispatch(deleteItem({ sku: a.sku as string }));
+const inventoryActionRegistry = defineActionRegistry({
+  updateQty: {
+    actionCreator: updateQty,
+    mapPayload: (action) => {
+      const a = action as Record<string, unknown>;
+      return { sku: String(a.sku ?? ''), delta: Number(a.delta ?? 0) };
+    },
+    toast: (payload) => `${payload.delta > 0 ? '+' : ''}${payload.delta} qty for ${payload.sku}`,
+  },
+  saveItem: {
+    actionCreator: saveItem,
+    mapPayload: (action) => {
+      const a = action as Record<string, unknown>;
+      return { sku: String(a.sku ?? ''), edits: (a.edits ?? {}) as Partial<Item> };
+    },
+    toast: (payload) => `Saved ${payload.sku}`,
+  },
+  deleteItem: {
+    actionCreator: deleteItem,
+    mapPayload: (action) => {
+      const a = action as Record<string, unknown>;
+      return { sku: String(a.sku ?? '') };
+    },
+    effect: ({ dispatch }) => {
       dispatch(goBack());
-      dispatch(showToast(`Deleted ${a.sku}`));
-      return true;
-    case 'createItem':
-      dispatch(createItem(a.values as any));
-      dispatch(showToast(`Created ${(a.values as any)?.sku}`));
-      return true;
-    case 'receiveStock': {
-      const vals = a.values as { sku?: string; qty?: number } | undefined;
-      if (vals?.sku && vals?.qty) {
-        dispatch(receiveStock({ sku: vals.sku, qty: Number(vals.qty) }));
-        dispatch(showToast(`Received +${vals.qty} for ${vals.sku}`));
-      }
-      return true;
-    }
-    default:
-      return false;
-  }
-};
+    },
+    toast: (payload) => `Deleted ${payload.sku}`,
+  },
+  createItem: {
+    actionCreator: createItem,
+    mapPayload: (action) => {
+      const a = action as Record<string, unknown>;
+      return (a.values ?? {}) as Item;
+    },
+    toast: (payload) => `Created ${payload.sku}`,
+  },
+  receiveStock: {
+    actionCreator: receiveStock,
+    mapPayload: (action) => {
+      const a = action as Record<string, unknown>;
+      const values = (a.values ?? {}) as { sku?: unknown; qty?: unknown };
+      return { sku: String(values.sku ?? ''), qty: Number(values.qty ?? 0) };
+    },
+    toast: (payload) =>
+      payload.sku && payload.qty
+        ? `Received +${payload.qty} for ${payload.sku}`
+        : undefined,
+  },
+});
+
+export const inventoryActionHandler = createDomainActionHandler(inventoryActionRegistry);
