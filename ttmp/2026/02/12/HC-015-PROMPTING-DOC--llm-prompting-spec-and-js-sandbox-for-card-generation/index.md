@@ -10,20 +10,25 @@ DocType: index
 Intent: long-term
 Owners: []
 RelatedFiles:
-    - Path: /home/manuel/code/wesen/2026-02-12--hypercard-react/ttmp/2026/02/12/HC-015-PROMPTING-DOC--llm-prompting-spec-and-js-sandbox-for-card-generation/design/02-foolproof-llm-prompting-specification-for-hypercard-dsl-js.md
-      Note: Primary prompting specification for foolproof LLM DSL/JS generation
-    - Path: /home/manuel/code/wesen/2026-02-12--hypercard-react/ttmp/2026/02/12/HC-015-PROMPTING-DOC--llm-prompting-spec-and-js-sandbox-for-card-generation/design/01-analysis-and-implementation-plan-js-card-sandbox-app-for-manual-llm-validation.md
-      Note: Detailed architecture and execution plan for manual code validation sandbox
-    - Path: /home/manuel/code/wesen/2026-02-12--hypercard-react/packages/engine/src/dsl/types.ts
-      Note: Source of truth for current DSL model and constraints
-    - Path: /home/manuel/code/wesen/2026-02-12--hypercard-react/packages/engine/src/app/dispatchDSLAction.ts
+    - Path: docs/js-api-user-guide-reference.md
+      Note: Document under analysis
+    - Path: packages/engine/src/app/dispatchDSLAction.ts
       Note: Runtime action dispatch behavior referenced by both analyses
+    - Path: packages/engine/src/dsl/types.ts
+      Note: Source of truth for current DSL model and constraints
+    - Path: ttmp/2026/02/12/HC-015-PROMPTING-DOC--llm-prompting-spec-and-js-sandbox-for-card-generation/analysis/01-analysis-js-api-user-guide-reference-as-self-contained-document.md
+      Note: Analysis of JS API user guide reference completeness and accuracy
+    - Path: ttmp/2026/02/12/HC-015-PROMPTING-DOC--llm-prompting-spec-and-js-sandbox-for-card-generation/design/01-analysis-and-implementation-plan-js-card-sandbox-app-for-manual-llm-validation.md
+      Note: Detailed architecture and execution plan for manual code validation sandbox
+    - Path: ttmp/2026/02/12/HC-015-PROMPTING-DOC--llm-prompting-spec-and-js-sandbox-for-card-generation/design/02-foolproof-llm-prompting-specification-for-hypercard-dsl-js.md
+      Note: Primary prompting specification for foolproof LLM DSL/JS generation
 ExternalSources: []
-Summary: "Ticket index for HC-015 covering a foolproof LLM prompting protocol and a practical JS card sandbox plan for manual generated-code validation."
+Summary: Ticket index for HC-015 covering a foolproof LLM prompting protocol and a practical JS card sandbox plan for manual generated-code validation.
 LastUpdated: 2026-02-12T17:19:51-05:00
-WhatFor: "Capture and operationalize robust LLM generation prompts plus sandbox-driven validation workflow for HyperCard DSL/JS."
-WhenToUse: "Use as the entry point when preparing prompt templates, reviewing generation safety constraints, or planning sandbox implementation."
+WhatFor: Capture and operationalize robust LLM generation prompts plus sandbox-driven validation workflow for HyperCard DSL/JS.
+WhenToUse: Use as the entry point when preparing prompt templates, reviewing generation safety constraints, or planning sandbox implementation.
 ---
+
 
 # LLM Prompting Spec and JS Sandbox for Card Generation
 

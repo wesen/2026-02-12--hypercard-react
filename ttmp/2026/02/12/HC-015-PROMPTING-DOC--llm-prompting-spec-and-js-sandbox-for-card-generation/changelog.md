@@ -15,3 +15,12 @@ Added two primary design artifacts:
 
 - /home/manuel/code/wesen/2026-02-12--hypercard-react/ttmp/2026/02/12/HC-015-PROMPTING-DOC--llm-prompting-spec-and-js-sandbox-for-card-generation/design/02-foolproof-llm-prompting-specification-for-hypercard-dsl-js.md - Prompting system specification and reusable prompt pack
 - /home/manuel/code/wesen/2026-02-12--hypercard-react/ttmp/2026/02/12/HC-015-PROMPTING-DOC--llm-prompting-spec-and-js-sandbox-for-card-generation/design/01-analysis-and-implementation-plan-js-card-sandbox-app-for-manual-llm-validation.md - Sandbox app architecture, scope tiers, risks, and phased implementation plan
+
+## 2026-02-12
+
+Added analysis of docs/js-api-user-guide-reference.md as self-contained reference. Verified all claims against source code, identified 3 inaccuracies, 7 critical gaps, 8 quality gaps, and 5 nice-to-haves. Produced test Book Tracker stack from doc alone to validate completeness.
+
+### Related Files
+
+- /home/manuel/code/wesen/2026-02-12--hypercard-react/ttmp/2026/02/12/HC-015-PROMPTING-DOC--llm-prompting-spec-and-js-sandbox-for-card-generation/analysis/01-analysis-js-api-user-guide-reference-as-self-contained-document.md — New analysis document
+
