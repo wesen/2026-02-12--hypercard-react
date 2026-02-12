@@ -16,7 +16,7 @@ RelatedFiles:
       Note: Task checklist that is executed and checked off step-by-step
 ExternalSources: []
 Summary: "Implementation diary for HC-009 DSL/JS API execution sequence."
-LastUpdated: 2026-02-12T14:48:57-05:00
+LastUpdated: 2026-02-12T14:50:49-05:00
 WhatFor: "Track implementation steps, decisions, failures, and validation evidence for HC-009."
 WhenToUse: "Use during execution and review of HC-009 implementation tasks."
 ---
@@ -245,7 +245,7 @@ Migrated the Inventory app to registry-based action and selector wiring. During 
 
 **Inferred user intent:** Complete second-app proof that the DSL/JS API is viable and consistent across apps.
 
-**Commit (code):** pending
+**Commit (code):** `3ac552d`
 
 ### What I did
 - Replaced switch-based Inventory handler with registry wiring in `apps/inventory/src/app/domainActionHandler.ts`.
@@ -292,3 +292,61 @@ Migrated the Inventory app to registry-based action and selector wiring. During 
 ### Technical details
 - Initial error command: `npm run typecheck`
 - Final validation command: `npm run typecheck`
+
+## Step 6: Validate, Finalize Docs, and Close Task Checklist
+
+Finalized ticket documentation after code migration completion. This included validation runs, changelog updates, index metadata/content refresh, and final checklist completion.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 1)
+
+**Assistant interpretation:** Execute final validation and documentation hygiene so HC-009 is operationally complete.
+
+**Inferred user intent:** Ensure traceable, review-ready delivery with clear artifacts and completion status.
+
+**Commit (code):** pending
+
+### What I did
+- Ran validation commands:
+  - `npm run typecheck`
+  - `docmgr doctor --ticket HC-009-LLM-CARD-AUTHORING-API --stale-after 30`
+  - `docmgr validate frontmatter --doc 2026/02/12/HC-009-LLM-CARD-AUTHORING-API--llm-minimal-javascript-authoring-for-interactive-cards/index.md --suggest-fixes`
+  - `docmgr validate frontmatter --doc 2026/02/12/HC-009-LLM-CARD-AUTHORING-API--llm-minimal-javascript-authoring-for-interactive-cards/design/02-implementation-plan-dsl-and-js-api-no-llm-scope.md --suggest-fixes`
+  - `docmgr validate frontmatter --doc 2026/02/12/HC-009-LLM-CARD-AUTHORING-API--llm-minimal-javascript-authoring-for-interactive-cards/reference/01-diary.md --suggest-fixes`
+- Updated changelog via:
+  - `docmgr changelog update --ticket HC-009-LLM-CARD-AUTHORING-API ...`
+- Updated `index.md` summary/overview/related files for the scope pivot and delivered work.
+- Checked off Task 6 in `tasks.md`.
+
+### Why
+- Close the loop with clear evidence of completion and a maintainable ticket state.
+
+### What worked
+- Typecheck passed.
+- Frontmatter validation passed for core docs.
+- Changelog successfully captured implementation commit set.
+
+### What didn't work
+- First frontmatter validation attempt used workspace-relative `ttmp/...` paths and failed because `docmgr` expects paths relative to the ttmp root.
+
+### What I learned
+- For `docmgr validate frontmatter --doc`, paths should be like `YYYY/MM/DD/...` not `ttmp/YYYY/MM/DD/...`.
+
+### What was tricky to build
+- Avoiding drift between code completion status and ticket artifact status required explicit final validation pass and checklist synchronization.
+
+### What warrants a second pair of eyes
+- Whether topic vocabulary should be expanded beyond current default (`chat`, `backend`, `websocket`) to avoid recurring warnings for frontend tickets.
+
+### What should be done in the future
+- Add test coverage for registry helpers (`actionRegistry`, `selectorRegistry`) as a follow-up ticket.
+
+### Code review instructions
+- Review ticket-level finalization files:
+  - `ttmp/2026/02/12/HC-009-LLM-CARD-AUTHORING-API--llm-minimal-javascript-authoring-for-interactive-cards/index.md`
+  - `ttmp/2026/02/12/HC-009-LLM-CARD-AUTHORING-API--llm-minimal-javascript-authoring-for-interactive-cards/changelog.md`
+  - `ttmp/2026/02/12/HC-009-LLM-CARD-AUTHORING-API--llm-minimal-javascript-authoring-for-interactive-cards/tasks.md`
+
+### Technical details
+- Validation note: `docmgr doctor` still reports unknown topic vocabulary values (`react`, `rtk-toolkit`, `vite`), but this is pre-existing ticket taxonomy and not a frontmatter schema failure.
