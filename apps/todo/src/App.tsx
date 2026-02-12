@@ -3,17 +3,20 @@ import { HyperCardShell } from '@hypercard/engine';
 import { STACK } from './domain/stack';
 import { todoActionHandler } from './app/domainActionHandler';
 import { todoRenderers } from './overrides/cardRenderers';
-import { selectTasks, type TasksStateSlice } from './features/tasks/selectors';
+import {
+  selectTodoDomainData,
+  type TodoDomainDataState,
+} from './app/domainDataRegistry';
 
 export function App() {
-  const tasks = useSelector((s: TasksStateSlice) => selectTasks(s));
+  const domainData = useSelector((s: TodoDomainDataState) => selectTodoDomainData(s));
 
   return (
     <HyperCardShell
       stack={STACK as any}
       domainActionHandler={todoActionHandler}
       customRenderers={todoRenderers}
-      domainData={{ tasks }}
+      domainData={domainData}
       navShortcuts={[
         { card: 'home', icon: '🏠' },
         { card: 'browse', icon: '📋' },

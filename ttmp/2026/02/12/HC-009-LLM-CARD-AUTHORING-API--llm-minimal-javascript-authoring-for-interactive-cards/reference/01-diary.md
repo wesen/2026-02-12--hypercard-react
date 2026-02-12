@@ -16,7 +16,7 @@ RelatedFiles:
       Note: Task checklist that is executed and checked off step-by-step
 ExternalSources: []
 Summary: "Implementation diary for HC-009 DSL/JS API execution sequence."
-LastUpdated: 2026-02-12T16:08:00-05:00
+LastUpdated: 2026-02-12T14:46:14-05:00
 WhatFor: "Track implementation steps, decisions, failures, and validation evidence for HC-009."
 WhenToUse: "Use during execution and review of HC-009 implementation tasks."
 ---
@@ -127,6 +127,56 @@ Implemented an engine-level action registry abstraction and exported it via the 
 ### Code review instructions
 - Start at `packages/engine/src/api/actionRegistry.ts` and verify `mapPayload`, `toast`, and `effect` behavior.
 - Verify export surface at `packages/engine/src/index.ts`.
+
+### Technical details
+- Validation command: `npm run typecheck`
+
+## Step 4: Migrate Todo App to Registry APIs
+
+Migrated the Todo application to consume the new engine registries instead of handwritten action/selector glue. The app root now derives `domainData` through a selector registry function, and the domain action handler is now registry-driven.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 1)
+
+**Assistant interpretation:** Execute Task 4 by converting Todo app wiring to `defineActionRegistry`/`createDomainActionHandler` and `defineSelectorRegistry`/`selectDomainData`.
+
+**Inferred user intent:** Prove the new engine APIs are practical in a real app and reduce local boilerplate.
+
+**Commit (code):** pending
+
+### What I did
+- Added `apps/todo/src/app/domainDataRegistry.ts` with a selector registry and `selectTodoDomainData`.
+- Replaced switch-based handler in `apps/todo/src/app/domainActionHandler.ts` with `todoActionRegistry`.
+- Updated `apps/todo/src/App.tsx` to consume registry-derived `domainData`.
+- Ran `npm run typecheck` successfully.
+
+### Why
+- This is the first real-app validation of the DSL/JS API abstractions.
+- It removes duplicated imperative wiring and aligns Todo with the new canonical pattern.
+
+### What worked
+- Typecheck remained green after migration.
+- Action and selector registries covered current Todo flows without extra engine changes.
+
+### What didn't work
+- N/A
+
+### What I learned
+- Payload normalization through `mapPayload` keeps the action registry resilient to loose card-action payloads.
+
+### What was tricky to build
+- Preserving existing behavior (including navigation effect on delete) while changing handler architecture.
+
+### What warrants a second pair of eyes
+- Validate whether `createTask` payload typing should be shared with slice action payload types to avoid drift.
+
+### What should be done in the future
+- Apply the same migration pattern to Inventory to ensure cross-app consistency.
+
+### Code review instructions
+- Review `apps/todo/src/app/domainActionHandler.ts` for parity with prior switch behavior.
+- Review `apps/todo/src/app/domainDataRegistry.ts` and `apps/todo/src/App.tsx` for selector registry usage.
 
 ### Technical details
 - Validation command: `npm run typecheck`
