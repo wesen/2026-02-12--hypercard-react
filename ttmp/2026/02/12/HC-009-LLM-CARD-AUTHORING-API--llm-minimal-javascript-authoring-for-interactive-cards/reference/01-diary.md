@@ -130,3 +130,55 @@ Implemented an engine-level action registry abstraction and exported it via the 
 
 ### Technical details
 - Validation command: `npm run typecheck`
+
+## Step 3: Implement Engine Selector Registry API
+
+Implemented the selector registry helper layer so domain apps can centralize domain-data selector wiring and derive `domainData` via one selector call.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 1)
+
+**Assistant interpretation:** Execute Task 3 by adding selector registry APIs in engine.
+
+**Inferred user intent:** Reduce App-level selector boilerplate and make data binding declarative.
+
+**Commit (code):** pending
+
+### What I did
+- Added `packages/engine/src/api/selectorRegistry.ts` with:
+  - `defineSelectorRegistry`
+  - `selectDomainData`
+  - helper types (`SelectorRegistry`, `DomainDataFromRegistry`)
+- Exported selector registry from `packages/engine/src/api/index.ts`.
+- Ran `npm run typecheck` successfully.
+
+### Why
+- Current app roots manually call multiple selectors and build `domainData` objects by hand.
+- Registry helper enables one stable pattern for both apps.
+
+### What worked
+- API compiles and exports correctly.
+- Type inference preserves per-key return arrays in derived `domainData` object.
+
+### What didn't work
+- N/A
+
+### What I learned
+- A pure `selectDomainData` helper is sufficient for current architecture; no hook wrapper is necessary.
+
+### What was tricky to build
+- Needed to retain precise mapped return types while iterating keys dynamically.
+
+### What warrants a second pair of eyes
+- Confirm whether future versions should permit non-array selector returns in this registry.
+
+### What should be done in the future
+- Add unit tests covering key iteration and type-level expectations.
+
+### Code review instructions
+- Review `packages/engine/src/api/selectorRegistry.ts` for type shape and iteration logic.
+- Verify public export via `packages/engine/src/api/index.ts`.
+
+### Technical details
+- Validation command: `npm run typecheck`
