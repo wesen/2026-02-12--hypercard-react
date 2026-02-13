@@ -21,6 +21,32 @@ function toArray(value: unknown): unknown[] {
   return [value];
 }
 
+interface ComputedFieldLike {
+  id: string;
+  label: string;
+  compute: (record: Record<string, unknown>) => string;
+}
+
+function normalizeComputedFields(value: unknown): ComputedFieldLike[] {
+  return toArray(value).flatMap((entry, index) => {
+    if (!entry || typeof entry !== 'object') return [];
+    const candidate = entry as Record<string, unknown>;
+    const id = String(candidate.id ?? `computed:${index}`);
+    const label = String(candidate.label ?? candidate.id ?? `Computed ${index + 1}`);
+
+    if (typeof candidate.compute === 'function') {
+      return [{ id, label, compute: candidate.compute as ComputedFieldLike['compute'] }];
+    }
+
+    if ('value' in candidate) {
+      const constantValue = candidate.value;
+      return [{ id, label, compute: () => String(constantValue ?? '') }];
+    }
+
+    return [];
+  });
+}
+
 export interface CardRendererRuntime {
   mode: 'interactive' | 'preview';
   resolve: (expr: unknown, event?: { name: string; payload: unknown }) => unknown;
@@ -218,7 +244,7 @@ export function CardRenderer({ cardId, cardDef, runtime }: CardRendererProps) {
       case 'detail': {
         const record = (runtime.resolve(node.record) ?? {}) as Record<string, unknown>;
         const fields = (runtime.resolve(node.fields) ?? []) as unknown[];
-        const computed = (runtime.resolve(node.computed) ?? undefined) as unknown;
+        const computed = normalizeComputedFields(runtime.resolve(node.computed));
         const edits = (runtime.resolve(node.edits) ?? {}) as Record<string, unknown>;
         const actions = (runtime.resolve(node.actions) ?? undefined) as unknown;
 
@@ -227,7 +253,7 @@ export function CardRenderer({ cardId, cardDef, runtime }: CardRendererProps) {
             key={keyHint}
             record={record}
             fields={fields as any}
-            computed={computed as any}
+            computed={computed.length ? (computed as any) : undefined}
             edits={edits}
             onEdit={(id, value) => emit(node, 'change', { field: id, value })}
             actions={actions as any}
