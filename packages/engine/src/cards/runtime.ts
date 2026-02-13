@@ -33,6 +33,74 @@ interface RuntimeLookup {
     : never;
 }
 
+export interface RuntimeDebugEvent {
+  id: number;
+  ts: string;
+  kind: string;
+  stackId: string;
+  cardId: string;
+  cardType: string;
+  nodeKey?: string;
+  eventName?: string;
+  actionType?: string;
+  selectorName?: string;
+  scope?: LocalScope | 'shared';
+  durationMs?: number;
+  payload?: unknown;
+  meta?: Record<string, unknown>;
+}
+
+export interface RuntimeDebugHooks {
+  onEvent?: (event: RuntimeDebugEvent) => void;
+  shouldCapture?: (event: Omit<RuntimeDebugEvent, 'id' | 'ts'>) => boolean;
+  sanitize?: (payload: unknown, context: { kind: string }) => unknown;
+}
+
+export interface RuntimeDebugContext {
+  stackId: string;
+  cardId: string;
+  cardType: string;
+}
+
+export type RuntimeDebugEventInput = Omit<RuntimeDebugEvent, 'id' | 'ts' | 'stackId' | 'cardId' | 'cardType'> & Partial<Pick<RuntimeDebugEvent, 'stackId' | 'cardId' | 'cardType'>>;
+
+let runtimeDebugEventId = 0;
+
+function nextRuntimeDebugEventId(): number {
+  runtimeDebugEventId += 1;
+  return runtimeDebugEventId;
+}
+
+function isPromiseLike(value: unknown): value is Promise<unknown> {
+  return !!value && typeof value === 'object' && typeof (value as { then?: unknown }).then === 'function';
+}
+
+export function emitRuntimeDebugEvent(
+  hooks: RuntimeDebugHooks | undefined,
+  context: RuntimeDebugContext,
+  event: RuntimeDebugEventInput,
+) {
+  if (!hooks?.onEvent) return;
+  const eventWithoutStamp: Omit<RuntimeDebugEvent, 'id' | 'ts'> = {
+    ...event,
+    stackId: event.stackId ?? context.stackId,
+    cardId: event.cardId ?? context.cardId,
+    cardType: event.cardType ?? context.cardType,
+  };
+  if (hooks.shouldCapture && !hooks.shouldCapture(eventWithoutStamp)) return;
+
+  const payload = hooks.sanitize
+    ? hooks.sanitize(eventWithoutStamp.payload, { kind: eventWithoutStamp.kind })
+    : eventWithoutStamp.payload;
+
+  hooks.onEvent({
+    ...eventWithoutStamp,
+    payload,
+    id: nextRuntimeDebugEventId(),
+    ts: new Date().toISOString(),
+  });
+}
+
 function deepGet(obj: unknown, path: string): unknown {
   const parts = String(path).split('.').filter(Boolean);
   let cur: unknown = obj;
@@ -85,23 +153,78 @@ export function createSelectorResolver(
   ctx: CardContext,
   lookup: RuntimeLookup,
   sharedSelectors: SharedSelectorRegistry,
+  debugHooks?: RuntimeDebugHooks,
 ) {
   return (name: string, from: SelectorScope | undefined, args: unknown): unknown => {
+    const startedAt = Date.now();
+
     if (from === 'shared') {
-      return sharedSelectors[name]?.(rootState, args, ctx);
+      const hasSharedSelector = Object.prototype.hasOwnProperty.call(sharedSelectors, name);
+      const selector = hasSharedSelector ? sharedSelectors[name] : undefined;
+      const value = selector?.(rootState, args, ctx);
+      emitRuntimeDebugEvent(debugHooks, ctx, {
+        kind: 'selector.resolve',
+        selectorName: name,
+        scope: 'shared',
+        durationMs: Date.now() - startedAt,
+        payload: { from, args, found: hasSharedSelector, value },
+      });
+      return value;
     }
 
     if (from && from !== 'auto') {
       const result = selectorFromScope(from, name, rootState, args, ctx, lookup);
+      emitRuntimeDebugEvent(debugHooks, ctx, {
+        kind: 'selector.resolve',
+        selectorName: name,
+        scope: from,
+        durationMs: Date.now() - startedAt,
+        payload: { from, args, found: result.found, value: result.value },
+      });
       return result.value;
     }
 
+    let resolvedScope: LocalScope | 'shared' | undefined;
+    let resolvedFound = false;
+
     for (const scope of ['card', 'cardType', 'background', 'stack', 'global'] as const) {
       const result = selectorFromScope(scope, name, rootState, args, ctx, lookup);
-      if (result.found) return result.value;
+      if (result.found) {
+        resolvedScope = scope;
+        resolvedFound = true;
+        emitRuntimeDebugEvent(debugHooks, ctx, {
+          kind: 'selector.resolve',
+          selectorName: name,
+          scope,
+          durationMs: Date.now() - startedAt,
+          payload: { from: 'auto', args, found: result.found, value: result.value },
+        });
+        return result.value;
+      }
     }
 
-    return sharedSelectors[name]?.(rootState, args, ctx);
+    const hasSharedSelector = Object.prototype.hasOwnProperty.call(sharedSelectors, name);
+    const sharedSelector = hasSharedSelector ? sharedSelectors[name] : undefined;
+    const sharedValue = sharedSelector?.(rootState, args, ctx);
+    if (hasSharedSelector) {
+      resolvedScope = 'shared';
+      resolvedFound = true;
+    }
+
+    emitRuntimeDebugEvent(debugHooks, ctx, {
+      kind: 'selector.resolve',
+      selectorName: name,
+      scope: resolvedScope,
+      durationMs: Date.now() - startedAt,
+      payload: {
+        from: from ?? 'auto',
+        args,
+        found: resolvedFound,
+        value: sharedValue,
+      },
+    });
+
+    return sharedValue;
   };
 }
 
@@ -232,8 +355,25 @@ export function executeActionDescriptor(
   deps: {
     showToast: (message: string) => void;
   },
+  debugHooks?: RuntimeDebugHooks,
 ) {
   const actionType = descriptor.type;
+  const startedAt = Date.now();
+  const finalize = (target: string, meta?: Record<string, unknown>) => {
+    emitRuntimeDebugEvent(debugHooks, ctx, {
+      kind: 'action.execute',
+      actionType,
+      durationMs: Date.now() - startedAt,
+      payload: { args },
+      meta: { target, ...(meta ?? {}) },
+    });
+  };
+
+  emitRuntimeDebugEvent(debugHooks, ctx, {
+    kind: 'action.execute.start',
+    actionType,
+    payload: { args },
+  });
 
   // Built-in navigation compatibility.
   if (actionType === 'nav.go' || actionType === 'navigate') {
@@ -241,11 +381,13 @@ export function executeActionDescriptor(
     const card = String(data.card ?? '');
     const param = data.param ? String(data.param) : data.paramValue ? String(data.paramValue) : undefined;
     if (card) ctx.nav.go(card, param);
+    finalize('builtin');
     return;
   }
 
   if (actionType === 'nav.back' || actionType === 'back') {
     ctx.nav.back();
+    finalize('builtin');
     return;
   }
 
@@ -253,6 +395,7 @@ export function executeActionDescriptor(
     const data = args as Record<string, unknown>;
     const msg = String(data.message ?? '');
     if (msg) deps.showToast(msg);
+    finalize('builtin');
     return;
   }
 
@@ -262,7 +405,14 @@ export function executeActionDescriptor(
     const scope = (data.scope as LocalScope | undefined) ?? 'card';
     const path = String(data.path ?? '');
     if (!path) return;
+    emitRuntimeDebugEvent(debugHooks, ctx, {
+      kind: 'state.mutation',
+      actionType,
+      scope,
+      payload: { path, value: data.value },
+    });
     ctx.setScopedState(scope, path, data.value);
+    finalize('builtin');
     return;
   }
 
@@ -273,7 +423,14 @@ export function executeActionDescriptor(
     const path = String(data.path ?? '');
     if (!key) return;
     const fullPath = path ? `${path}.${key}` : key;
+    emitRuntimeDebugEvent(debugHooks, ctx, {
+      kind: 'state.mutation',
+      actionType,
+      scope,
+      payload: { path: fullPath, value: data.value },
+    });
     ctx.setScopedState(scope, fullPath, data.value);
+    finalize('builtin');
     return;
   }
 
@@ -281,27 +438,72 @@ export function executeActionDescriptor(
     const data = args as Record<string, unknown>;
     const scope = (data.scope as LocalScope | undefined) ?? 'card';
     const patch = (data.patch ?? {}) as Record<string, unknown>;
+    emitRuntimeDebugEvent(debugHooks, ctx, {
+      kind: 'state.mutation',
+      actionType,
+      scope,
+      payload: { patch },
+    });
     ctx.patchScopedState(scope, patch);
+    finalize('builtin');
     return;
   }
 
   if (actionType === 'state.reset') {
     const data = args as Record<string, unknown>;
     const scope = (data.scope as LocalScope | undefined) ?? 'card';
+    emitRuntimeDebugEvent(debugHooks, ctx, {
+      kind: 'state.mutation',
+      actionType,
+      scope,
+    });
     ctx.resetScopedState(scope);
+    finalize('builtin');
     return;
   }
 
   const localHandler = resolveActionHandler(actionType, lookup);
   if (localHandler) {
-    void localHandler(ctx, args);
+    const result = localHandler(ctx, args);
+    if (isPromiseLike(result)) {
+      void result
+        .then(() => finalize('local'))
+        .catch((error) => {
+          emitRuntimeDebugEvent(debugHooks, ctx, {
+            kind: 'action.execute.error',
+            actionType,
+            payload: { args, error: String(error) },
+          });
+          finalize('local', { status: 'error' });
+        });
+      return;
+    }
+    finalize('local');
     return;
   }
 
-  const shared = sharedActions[actionType];
+  const hasSharedAction = Object.prototype.hasOwnProperty.call(sharedActions, actionType);
+  const shared = hasSharedAction ? sharedActions[actionType] : undefined;
   if (shared) {
-    void shared(ctx, args);
+    const result = shared(ctx, args);
+    if (isPromiseLike(result)) {
+      void result
+        .then(() => finalize('shared'))
+        .catch((error) => {
+          emitRuntimeDebugEvent(debugHooks, ctx, {
+            kind: 'action.execute.error',
+            actionType,
+            payload: { args, error: String(error) },
+          });
+          finalize('shared', { status: 'error' });
+        });
+      return;
+    }
+    finalize('shared');
+    return;
   }
+
+  finalize('unhandled');
 }
 
 export interface ExecuteCommandInput {
@@ -319,16 +521,29 @@ export function executeCommand(
   deps: {
     showToast: (message: string) => void;
   },
+  debugHooks?: RuntimeDebugHooks,
 ) {
-  const selectors = createSelectorResolver(rootState, ctx, lookup, sharedSelectors);
+  const selectors = createSelectorResolver(rootState, ctx, lookup, sharedSelectors, debugHooks);
+  emitRuntimeDebugEvent(debugHooks, ctx, {
+    kind: 'command.resolveArgs.start',
+    actionType: input.command.type,
+    payload: { event: input.event },
+  });
+  const startedAt = Date.now();
   const resolvedArgs = resolveValueExpr(input.command.args, {
     state: rootState,
     params: ctx.params,
     event: input.event,
     selectors,
   });
+  emitRuntimeDebugEvent(debugHooks, ctx, {
+    kind: 'command.resolveArgs',
+    actionType: input.command.type,
+    durationMs: Date.now() - startedAt,
+    payload: { resolvedArgs, event: input.event },
+  });
 
-  executeActionDescriptor(input.command, resolvedArgs, ctx, lookup, sharedActions, deps);
+  executeActionDescriptor(input.command, resolvedArgs, ctx, lookup, sharedActions, deps, debugHooks);
 }
 
 export type { RuntimeLookup };

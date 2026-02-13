@@ -35,8 +35,10 @@ import {
 import {
   createCardContext,
   createSelectorResolver,
+  emitRuntimeDebugEvent,
   executeCommand,
   resolveValueExpr,
+  type RuntimeDebugHooks,
   type RuntimeLookup,
 } from '../../cards/runtime';
 
@@ -52,6 +54,7 @@ export interface HyperCardShellProps<TRootState = unknown> {
   stack: CardStackDefinition<any>;
   sharedSelectors?: SharedSelectorRegistry<any>;
   sharedActions?: SharedActionRegistry<any>;
+  debugHooks?: RuntimeDebugHooks;
   navShortcuts?: Array<{ card: string; icon: string }>;
   renderAIPanel?: (dispatch: (action: ActionDescriptor) => void) => ReactNode;
   themeClass?: string;
@@ -62,6 +65,7 @@ export function HyperCardShell({
   stack,
   sharedSelectors,
   sharedActions,
+  debugHooks,
   navShortcuts,
   renderAIPanel,
   themeClass,
@@ -131,6 +135,30 @@ export function HyperCardShell({
     backgroundDef,
   }), [cardDef, stack, cardTypeDef, backgroundDef]);
 
+  const debugContext = useMemo(
+    () => ({
+      stackId: stack.id,
+      cardId: currentCardId,
+      cardType: cardDef.type,
+    }),
+    [stack.id, currentCardId, cardDef.type],
+  );
+
+  const dispatchWithDebug = useCallback((action: unknown) => {
+    emitRuntimeDebugEvent(debugHooks, debugContext, {
+      kind: 'redux.dispatch.start',
+      payload: { action },
+    });
+    const startedAt = Date.now();
+    const result = dispatch(action as any);
+    emitRuntimeDebugEvent(debugHooks, debugContext, {
+      kind: 'redux.dispatch',
+      durationMs: Date.now() - startedAt,
+      payload: { action },
+    });
+    return result;
+  }, [dispatch, debugHooks, debugContext]);
+
   const runAction = useCallback((action: ActionDescriptor, event?: { name: string; payload: unknown }) => {
     const context = createCardContext(runtimeRoot, {
       stackId: stack.id,
@@ -140,10 +168,10 @@ export function HyperCardShell({
       mode,
       params,
       getState: () => store.getState(),
-      dispatch: (a) => dispatch(a as any),
+      dispatch: dispatchWithDebug,
       nav: {
-        go: (card, param) => dispatch(navigate({ card, paramValue: param })),
-        back: () => dispatch(goBack()),
+        go: (card, param) => dispatchWithDebug(navigate({ card, paramValue: param })),
+        back: () => dispatchWithDebug(goBack()),
       },
     });
 
@@ -155,8 +183,9 @@ export function HyperCardShell({
       (sharedSelectors ?? {}) as SharedSelectorRegistry,
       (sharedActions ?? {}) as SharedActionRegistry,
       {
-        showToast: (message) => dispatch(showToast(message)),
+        showToast: (message) => dispatchWithDebug(showToast(message)),
       },
+      debugHooks,
     );
   }, [
     runtimeRoot,
@@ -167,10 +196,11 @@ export function HyperCardShell({
     mode,
     params,
     store,
-    dispatch,
+    dispatchWithDebug,
     lookup,
     sharedSelectors,
     sharedActions,
+    debugHooks,
   ]);
 
   const resolve = useCallback((expr: unknown, event?: { name: string; payload: unknown }) => {
@@ -182,10 +212,10 @@ export function HyperCardShell({
       mode,
       params,
       getState: () => store.getState(),
-      dispatch: (a) => dispatch(a as any),
+      dispatch: dispatchWithDebug,
       nav: {
-        go: (card, param) => dispatch(navigate({ card, paramValue: param })),
-        back: () => dispatch(goBack()),
+        go: (card, param) => dispatchWithDebug(navigate({ card, paramValue: param })),
+        back: () => dispatchWithDebug(goBack()),
       },
     });
 
@@ -194,6 +224,7 @@ export function HyperCardShell({
       context,
       lookup,
       (sharedSelectors ?? {}) as SharedSelectorRegistry,
+      debugHooks,
     );
 
     return resolveValueExpr(expr, {
@@ -211,9 +242,10 @@ export function HyperCardShell({
     mode,
     params,
     store,
-    dispatch,
+    dispatchWithDebug,
     lookup,
     sharedSelectors,
+    debugHooks,
   ]);
 
   const emit = useCallback((nodeKey: string, eventName: string, payload: unknown) => {
@@ -228,8 +260,10 @@ export function HyperCardShell({
       resolve,
       emit,
       execute: runAction,
+      debugEvent: (event: Parameters<typeof emitRuntimeDebugEvent>[2]) =>
+        emitRuntimeDebugEvent(debugHooks, debugContext, event),
     }),
-    [mode, resolve, emit, runAction],
+    [mode, resolve, emit, runAction, debugHooks, debugContext],
   );
 
   const mainContent = (

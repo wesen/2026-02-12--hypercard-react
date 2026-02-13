@@ -12,3 +12,10 @@ export {
   type HypercardRuntimeStateSlice,
   type ScopedLookup,
 } from './runtimeStateSlice';
+export {
+  emitRuntimeDebugEvent,
+  type RuntimeDebugContext,
+  type RuntimeDebugEvent,
+  type RuntimeDebugEventInput,
+  type RuntimeDebugHooks,
+} from './runtime';

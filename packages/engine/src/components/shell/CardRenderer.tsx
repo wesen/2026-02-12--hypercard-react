@@ -9,6 +9,7 @@ import { ListView } from '../widgets/ListView';
 import { MenuGrid } from '../widgets/MenuGrid';
 import { ReportView } from '../widgets/ReportView';
 import type { ActionDescriptor, CardDefinition, UINode } from '../../cards/types';
+import type { RuntimeDebugEventInput } from '../../cards/runtime';
 
 function isActionDescriptor(value: unknown): value is ActionDescriptor {
   return !!value && typeof value === 'object' && (value as { $?: unknown }).$ === 'act';
@@ -25,6 +26,7 @@ export interface CardRendererRuntime {
   resolve: (expr: unknown, event?: { name: string; payload: unknown }) => unknown;
   emit: (nodeKey: string, eventName: string, payload: unknown) => void;
   execute: (action: ActionDescriptor, event?: { name: string; payload: unknown }) => void;
+  debugEvent?: (event: RuntimeDebugEventInput) => void;
 }
 
 export interface CardRendererProps {
@@ -37,6 +39,12 @@ export function CardRenderer({ cardId, cardDef, runtime }: CardRendererProps) {
   function runNodeAction(action: unknown, event?: { name: string; payload: unknown }) {
     if (runtime.mode === 'preview') return;
     if (isActionDescriptor(action)) {
+      runtime.debugEvent?.({
+        kind: 'ui.inlineAction',
+        actionType: action.type,
+        eventName: event?.name,
+        payload: event?.payload,
+      });
       runtime.execute(action, event);
     }
   }
@@ -44,6 +52,12 @@ export function CardRenderer({ cardId, cardDef, runtime }: CardRendererProps) {
   function emit(node: UINode, eventName: string, payload: unknown) {
     if (runtime.mode === 'preview') return;
     if (!node.key) return;
+    runtime.debugEvent?.({
+      kind: 'ui.emit',
+      nodeKey: node.key,
+      eventName,
+      payload,
+    });
     runtime.emit(node.key, eventName, payload);
   }
 
