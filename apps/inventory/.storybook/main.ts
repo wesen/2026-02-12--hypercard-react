@@ -9,6 +9,7 @@ const config: StorybookConfig = {
     '../src/**/*.stories.@(ts|tsx)',
     '../../todo/src/**/*.stories.@(ts|tsx)',
     '../../book-tracker-debug/src/**/*.stories.@(ts|tsx)',
+    '../../crm/src/**/*.stories.@(ts|tsx)',
     '../../../packages/engine/src/**/*.stories.@(ts|tsx)',
   ],
   addons: [
