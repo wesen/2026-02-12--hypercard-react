@@ -85,3 +85,12 @@ Fixed Storybook Detail Cards regression 'cf.compute is not a function' by preser
 - /home/manuel/code/wesen/2026-02-12--hypercard-react/ttmp/2026/02/13/HC-017-NEW-DSL--replace-current-dsl-with-js-ui-dsl-sketch/reference/01-diary.md — Step 15 diary narrative for debugging and validation details.
 - /home/manuel/code/wesen/2026-02-12--hypercard-react/ttmp/2026/02/13/HC-017-NEW-DSL--replace-current-dsl-with-js-ui-dsl-sketch/scripts/05-resolve-valueexpr-function-pass-through.mjs — Experiment that reproduces and validates the regression fix.
 
+
+## 2026-02-13
+
+Added direct Storybook smoke validation evidence for the Detail Cards row-click regression fix in diary (Browse -> Book Detail transition, 0 console errors).
+
+### Related Files
+
+- /home/manuel/code/wesen/2026-02-12--hypercard-react/ttmp/2026/02/13/HC-017-NEW-DSL--replace-current-dsl-with-js-ui-dsl-sketch/reference/01-diary.md — Documented browser-level verification for cf.compute fix.
+
