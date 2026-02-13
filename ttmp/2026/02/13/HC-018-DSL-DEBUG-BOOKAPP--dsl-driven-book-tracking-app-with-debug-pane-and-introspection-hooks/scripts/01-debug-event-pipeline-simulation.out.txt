@@ -1,0 +1,10 @@
+PASS: ring buffer keeps max 6 latest events
+PASS: oldest event was evicted
+PASS: token fields are redacted
+PASS: password fields are redacted
+PASS: long strings are truncated
+PASS: kind filter returns expected count
+PASS: actionType filter returns expected count
+
+Debug event pipeline simulation passed.
+Retained events: 6
