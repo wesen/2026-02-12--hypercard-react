@@ -13,7 +13,8 @@ export function App() {
       sharedSelectors={bookSharedSelectors}
       sharedActions={bookSharedActions}
       debugHooks={debugHooks}
-      renderAIPanel={() => <DebugPane />}
+      layoutMode="debugPane"
+      renderDebugPane={() => <DebugPane />}
       navShortcuts={[
         { card: 'home', icon: '🏠' },
         { card: 'browse', icon: '📋' },

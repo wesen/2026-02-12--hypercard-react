@@ -57,6 +57,8 @@ export interface HyperCardShellProps<TRootState = unknown> {
   debugHooks?: RuntimeDebugHooks;
   navShortcuts?: Array<{ card: string; icon: string }>;
   renderAIPanel?: (dispatch: (action: ActionDescriptor) => void) => ReactNode;
+  renderDebugPane?: (dispatch: (action: ActionDescriptor) => void) => ReactNode;
+  layoutMode?: 'legacyTabs' | 'debugPane';
   themeClass?: string;
   mode?: 'interactive' | 'preview';
 }
@@ -68,6 +70,8 @@ export function HyperCardShell({
   debugHooks,
   navShortcuts,
   renderAIPanel,
+  renderDebugPane,
+  layoutMode = 'legacyTabs',
   themeClass,
   mode = 'interactive',
 }: HyperCardShellProps) {
@@ -288,9 +292,16 @@ export function HyperCardShell({
   );
 
   const aiPanel = renderAIPanel ? renderAIPanel(runAction) : null;
+  const debugPane = renderDebugPane ? renderDebugPane(runAction) : null;
 
   let layoutContent;
-  if (layout === 'split' && aiPanel) {
+  if (layoutMode === 'debugPane') {
+    if (debugPane) {
+      layoutContent = <LayoutSplit main={mainContent} side={debugPane} />;
+    } else {
+      layoutContent = <LayoutCardChat main={mainContent} />;
+    }
+  } else if (layout === 'split' && aiPanel) {
     layoutContent = <LayoutSplit main={mainContent} side={aiPanel} />;
   } else if (layout === 'drawer' && aiPanel) {
     layoutContent = <LayoutDrawer main={mainContent} drawer={aiPanel} />;
@@ -301,19 +312,21 @@ export function HyperCardShell({
   return (
     <HyperCardTheme theme={themeClass}>
       <WindowChrome
-        title={`${stack.name} — HyperCard + AI`}
+        title={layoutMode === 'debugPane' ? `${stack.name} — HyperCard + Debug` : `${stack.name} — HyperCard + AI`}
         icon={stack.icon}
       >
-        <TabBar
-          tabs={LAYOUT_TABS}
-          active={layout}
-          onSelect={(key) => dispatch(setLayout(key as any))}
-        />
+        {layoutMode === 'legacyTabs' ? (
+          <TabBar
+            tabs={LAYOUT_TABS}
+            active={layout}
+            onSelect={(key) => dispatch(setLayout(key as any))}
+          />
+        ) : null}
         <div data-part="content-area">
           {layoutContent}
         </div>
         <div data-part="footer-line">
-          CardDefinition runtime · {Object.keys(stack.cards).length} cards
+          CardDefinition runtime · {Object.keys(stack.cards).length} cards · {layoutMode}
         </div>
         {toast && <Toast message={toast} onDone={() => dispatch(clearToast())} />}
       </WindowChrome>

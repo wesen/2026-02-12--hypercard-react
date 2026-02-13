@@ -53,7 +53,8 @@ function DebugShellAtCard({ card, param }: { card: string; param?: string }) {
       sharedSelectors={bookSharedSelectors}
       sharedActions={bookSharedActions}
       debugHooks={debugHooks}
-      renderAIPanel={() => <DebugPane />}
+      layoutMode="debugPane"
+      renderDebugPane={() => <DebugPane />}
       navShortcuts={[
         { card: 'home', icon: '🏠' },
         { card: 'browse', icon: '📋' },
