@@ -1,4 +1,4 @@
-import { Act, Sel, ui, type CardDefinition } from '@hypercard/engine';
+import { Act, type CardDefinition, Sel, ui } from '@hypercard/engine';
 import type { BooksStateSlice } from '../types';
 
 export const readingReportCard: CardDefinition<BooksStateSlice> = {

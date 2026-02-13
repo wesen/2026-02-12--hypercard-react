@@ -1,48 +1,45 @@
 export {
-  streamingChatSlice,
-  streamingChatReducer,
-  addMessage,
-  startStreaming,
-  appendStreamToken,
-  finishStreaming,
-  streamError,
-  resetConversation,
-  setActiveConversation,
-  nextMessageId,
-  selectActiveConversationId,
-  selectActiveConversation,
-  selectActiveMessages,
-  selectIsStreaming,
-  selectStreamingMessageId,
-  selectChatError,
-  type ChatState,
-  type Conversation,
-  type StreamingChatStateSlice,
-} from './chatSlice';
-
-export {
-  startCompletion,
-  connectStream,
   type ChatCompletionRequest,
   type ChatCompletionResponse,
-  type StreamToken,
+  connectStream,
   type StreamHandlers,
+  type StreamToken,
+  startCompletion,
 } from './chatApi';
-
 export {
-  useChatStream,
-  type UseChatStreamOptions,
-  type UseChatStreamReturn,
-} from './useChatStream';
-
-export {
-  fakeStream,
-  type FakeStreamConfig,
-} from './mocks/fakeStreamService';
-
+  addMessage,
+  appendStreamToken,
+  type ChatState,
+  type Conversation,
+  finishStreaming,
+  nextMessageId,
+  resetConversation,
+  type StreamingChatStateSlice,
+  selectActiveConversation,
+  selectActiveConversationId,
+  selectActiveMessages,
+  selectChatError,
+  selectIsStreaming,
+  selectStreamingMessageId,
+  setActiveConversation,
+  startStreaming,
+  streamError,
+  streamingChatReducer,
+  streamingChatSlice,
+} from './chatSlice';
 export {
   defaultResponseMatcher,
-  tokenize,
   type FakeResponse,
   type ResponseMatcher,
+  tokenize,
 } from './mocks/fakeResponses';
+
+export {
+  type FakeStreamConfig,
+  fakeStream,
+} from './mocks/fakeStreamService';
+export {
+  type UseChatStreamOptions,
+  type UseChatStreamReturn,
+  useChatStream,
+} from './useChatStream';

@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import type { ColumnConfig, FilterConfig, FooterConfig, ActionConfig, RowKeyFn } from '../../types';
+import type { ActionConfig, ColumnConfig, FilterConfig, FooterConfig, RowKeyFn } from '../../types';
+import { Btn } from './Btn';
 import { DataTable } from './DataTable';
 import { FilterBar } from './FilterBar';
-import { Btn } from './Btn';
 
 export interface ListViewProps<T = Record<string, unknown>> {
   items: T[];
@@ -43,7 +43,9 @@ export function ListView<T extends Record<string, unknown>>({
       const lower = val.toLowerCase();
       items = items.filter((i) =>
         searchFields.some((f) =>
-          String(i[f as keyof T] ?? '').toLowerCase().includes(lower),
+          String(i[f as keyof T] ?? '')
+            .toLowerCase()
+            .includes(lower),
         ),
       );
     } else {
@@ -57,11 +59,21 @@ export function ListView<T extends Record<string, unknown>>({
     const vals = items.map((i) => Number(i[footer.field as keyof T] ?? 0));
     let result = 0;
     switch (footer.type) {
-      case 'sum': result = vals.reduce((a, b) => a + b, 0); break;
-      case 'count': result = vals.length; break;
-      case 'avg': result = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0; break;
-      case 'min': result = Math.min(...vals); break;
-      case 'max': result = Math.max(...vals); break;
+      case 'sum':
+        result = vals.reduce((a, b) => a + b, 0);
+        break;
+      case 'count':
+        result = vals.length;
+        break;
+      case 'avg':
+        result = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+        break;
+      case 'min':
+        result = Math.min(...vals);
+        break;
+      case 'max':
+        result = Math.max(...vals);
+        break;
     }
     footerText = `${footer.label}: ${footer.format ? footer.format(result) : result.toFixed(2)}`;
   }

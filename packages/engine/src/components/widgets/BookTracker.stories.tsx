@@ -1,30 +1,30 @@
-import { useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { Provider } from 'react-redux';
-import { configureStore, createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import {
   Act,
-  Ev,
-  HyperCardShell,
-  Sel,
-  defineCardStack,
-  hypercardRuntimeReducer,
-  navigationReducer,
-  navigate,
-  notificationsReducer,
-  ui,
   type CardStackDefinition,
   type ColumnConfig,
   type ComputedFieldConfig,
+  defineCardStack,
+  Ev,
   type FieldConfig,
   type FilterConfig,
+  HyperCardShell,
+  hypercardRuntimeReducer,
+  navigate,
+  navigationReducer,
+  notificationsReducer,
+  Sel,
   type SharedActionRegistry,
   type SharedSelectorRegistry,
+  ui,
 } from '@hypercard/engine';
-import { MenuGrid } from './MenuGrid';
-import { ListView } from './ListView';
+import { configureStore, createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import type { Meta, StoryObj } from '@storybook/react';
+import { useState } from 'react';
+import { Provider } from 'react-redux';
 import { DetailView } from './DetailView';
 import { FormView } from './FormView';
+import { ListView } from './ListView';
+import { MenuGrid } from './MenuGrid';
 
 type Book = {
   id: string;
@@ -71,8 +71,7 @@ const DETAIL_COMPUTED: ComputedFieldConfig<Book>[] = [
   {
     id: 'readingProgress',
     label: 'Progress',
-    compute: (r) =>
-      r.status === 'read' ? '✅ Finished' : r.status === 'reading' ? '📖 In Progress' : '📋 Queued',
+    compute: (r) => (r.status === 'read' ? '✅ Finished' : r.status === 'reading' ? '📖 In Progress' : '📋 Queued'),
   },
 ];
 
@@ -88,10 +87,7 @@ const menuMeta = {
   component: MenuGrid,
   args: {
     icon: '📚',
-    labels: [
-      { value: 'Book Tracker' },
-      { value: 'Track your reading', style: 'muted' },
-    ],
+    labels: [{ value: 'Book Tracker' }, { value: 'Track your reading', style: 'muted' }],
     buttons: [
       { label: '📋 All Books', action: Act('nav.go', { card: 'browse' }), variant: 'default' as const },
       { label: '➕ Add Book', action: Act('nav.go', { card: 'addBook' }), variant: 'default' as const },
@@ -231,10 +227,7 @@ const BOOK_STACK: CardStackDefinition<BooksState> = defineCardStack({
       ui: ui.menu({
         key: 'homeMenu',
         icon: '📚',
-        labels: [
-          { value: 'Book Tracker' },
-          { value: 'Full app via CardDefinition widgets', style: 'muted' },
-        ],
+        labels: [{ value: 'Book Tracker' }, { value: 'Full app via CardDefinition widgets', style: 'muted' }],
         buttons: [
           { label: '📋 Browse Books', action: Act('nav.go', { card: 'browse' }) },
           { label: '🔥 Reading Now', action: Act('nav.go', { card: 'readingNow' }) },
@@ -306,10 +299,36 @@ const BOOK_STACK: CardStackDefinition<BooksState> = defineCardStack({
         computed: DETAIL_COMPUTED,
         edits: Sel('state.edits'),
         actions: [
-          { label: '✏️ Save', variant: 'primary', action: Act('books.save', { id: Sel('books.paramId', undefined, { from: 'shared' }), edits: Sel('state.edits') }, { to: 'shared' }) },
-          { label: '📖 Mark Reading', action: Act('books.setStatus', { id: Sel('books.paramId', undefined, { from: 'shared' }), status: 'reading' }, { to: 'shared' }) },
-          { label: '✅ Mark Read', action: Act('books.setStatus', { id: Sel('books.paramId', undefined, { from: 'shared' }), status: 'read' }, { to: 'shared' }) },
-          { label: '🗑 Delete', variant: 'danger', action: Act('books.delete', { id: Sel('books.paramId', undefined, { from: 'shared' }) }, { to: 'shared' }) },
+          {
+            label: '✏️ Save',
+            variant: 'primary',
+            action: Act(
+              'books.save',
+              { id: Sel('books.paramId', undefined, { from: 'shared' }), edits: Sel('state.edits') },
+              { to: 'shared' },
+            ),
+          },
+          {
+            label: '📖 Mark Reading',
+            action: Act(
+              'books.setStatus',
+              { id: Sel('books.paramId', undefined, { from: 'shared' }), status: 'reading' },
+              { to: 'shared' },
+            ),
+          },
+          {
+            label: '✅ Mark Read',
+            action: Act(
+              'books.setStatus',
+              { id: Sel('books.paramId', undefined, { from: 'shared' }), status: 'read' },
+              { to: 'shared' },
+            ),
+          },
+          {
+            label: '🗑 Delete',
+            variant: 'danger',
+            action: Act('books.delete', { id: Sel('books.paramId', undefined, { from: 'shared' }) }, { to: 'shared' }),
+          },
         ],
       }),
       bindings: {
@@ -365,7 +384,8 @@ const bookSharedSelectors: SharedSelectorRegistry<BooksState> = {
   'books.all': (state) => state.books.items,
   'books.reading': (state) => state.books.items.filter((b) => b.status === 'reading'),
   'books.paramId': (_state, _args, ctx) => String(ctx.params.param ?? ''),
-  'books.byParam': (state, _args, ctx) => state.books.items.find((b) => b.id === String(ctx.params.param ?? '')) ?? null,
+  'books.byParam': (state, _args, ctx) =>
+    state.books.items.find((b) => b.id === String(ctx.params.param ?? '')) ?? null,
   'books.reportSections': (state) => {
     const items = state.books.items;
     const total = items.length;
@@ -374,9 +394,7 @@ const bookSharedSelectors: SharedSelectorRegistry<BooksState> = {
       reading: items.filter((b) => b.status === 'reading').length,
       read: items.filter((b) => b.status === 'read').length,
     };
-    const avgRating = total
-      ? (items.reduce((sum, b) => sum + Number(b.rating ?? 0), 0) / total).toFixed(1)
-      : '0.0';
+    const avgRating = total ? (items.reduce((sum, b) => sum + Number(b.rating ?? 0), 0) / total).toFixed(1) : '0.0';
 
     return [
       { label: 'Total Books', value: String(total) },
@@ -391,10 +409,12 @@ const bookSharedSelectors: SharedSelectorRegistry<BooksState> = {
 const bookSharedActions: SharedActionRegistry<BooksState> = {
   'books.save': (ctx, args) => {
     const data = (args ?? {}) as Record<string, unknown>;
-    ctx.dispatch(booksSlice.actions.saveBook({
-      id: String(data.id ?? ''),
-      edits: (data.edits ?? {}) as Partial<Book>,
-    }));
+    ctx.dispatch(
+      booksSlice.actions.saveBook({
+        id: String(data.id ?? ''),
+        edits: (data.edits ?? {}) as Partial<Book>,
+      }),
+    );
     ctx.patchScopedState('card', { edits: {} });
   },
   'books.delete': (ctx, args) => {
@@ -424,12 +444,14 @@ const bookSharedActions: SharedActionRegistry<BooksState> = {
       ctx.patchScopedState('card', { submitResult: '❌ Title and Author are required' });
       return;
     }
-    ctx.dispatch(booksSlice.actions.createBook({
-      title: String(values.title),
-      author: String(values.author),
-      status: values.status ? String(values.status) : 'to-read',
-      rating: Number(values.rating ?? 0),
-    }));
+    ctx.dispatch(
+      booksSlice.actions.createBook({
+        title: String(values.title),
+        author: String(values.author),
+        status: values.status ? String(values.status) : 'to-read',
+        rating: Number(values.rating ?? 0),
+      }),
+    );
     ctx.patchScopedState('card', {
       submitResult: '✅ Book added',
       formValues: { title: '', author: '', status: 'to-read', rating: 0 },

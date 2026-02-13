@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 
 export interface LayoutDrawerProps {
   main: ReactNode;
@@ -10,9 +10,7 @@ export function LayoutDrawer({ main, drawer }: LayoutDrawerProps) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {main}
-      </div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>{main}</div>
       <div
         data-part="ai-panel"
         style={{
@@ -27,7 +25,9 @@ export function LayoutDrawer({ main, drawer }: LayoutDrawerProps) {
           onClick={() => setOpen(!open)}
         >
           <span>🤖 AI {open ? '▾' : '▸'}</span>
-          <span data-part="ai-model-label" style={{ fontStyle: 'italic' }}>Ask a question…</span>
+          <span data-part="ai-model-label" style={{ fontStyle: 'italic' }}>
+            Ask a question…
+          </span>
         </div>
         {open && <div style={{ flex: 1, overflow: 'hidden' }}>{drawer}</div>}
       </div>

@@ -1,4 +1,4 @@
-import { Act, ui, type CardDefinition } from '@hypercard/engine';
+import { Act, type CardDefinition, ui } from '@hypercard/engine';
 import type { CrmStateSlice } from '../types';
 
 export const homeCard: CardDefinition<CrmStateSlice> = {
@@ -9,10 +9,7 @@ export const homeCard: CardDefinition<CrmStateSlice> = {
   ui: ui.menu({
     key: 'homeMenu',
     icon: '💼',
-    labels: [
-      { value: 'CRM Dashboard' },
-      { value: 'Contacts · Companies · Deals · Activities', style: 'muted' },
-    ],
+    labels: [{ value: 'CRM Dashboard' }, { value: 'Contacts · Companies · Deals · Activities', style: 'muted' }],
     buttons: [
       { label: '👤 Contacts', action: Act('nav.go', { card: 'contacts' }) },
       { label: '🏢 Companies', action: Act('nav.go', { card: 'companies' }) },

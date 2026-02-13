@@ -1,12 +1,10 @@
-import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { ChatView } from './ChatView';
+import { useState } from 'react';
 import type { ChatMessage } from '../../types';
+import { ChatView } from './ChatView';
 
 function ChatDemo() {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'ai', text: 'Hello! How can I help?' },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([{ role: 'ai', text: 'Hello! How can I help?' }]);
 
   return (
     <div style={{ width: 400, height: 350 }}>

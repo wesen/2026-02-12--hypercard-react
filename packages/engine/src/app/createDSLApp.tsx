@@ -1,8 +1,8 @@
 import type { Reducer } from '@reduxjs/toolkit';
+import type { CardStackDefinition, SharedActionRegistry, SharedSelectorRegistry } from '../cards/types';
 import { HyperCardShell } from '../components/shell/HyperCardShell';
 import { StandardDebugPane } from '../debug/StandardDebugPane';
 import { useStandardDebugHooks } from '../debug/useStandardDebugHooks';
-import type { CardStackDefinition, SharedActionRegistry, SharedSelectorRegistry } from '../cards/types';
 import { createAppStore } from './createAppStore';
 
 export interface DSLAppConfig<TRootState = unknown> {
@@ -39,15 +39,7 @@ export interface DSLAppConfig<TRootState = unknown> {
  * ```
  */
 export function createDSLApp<TRootState = unknown>(config: DSLAppConfig<TRootState>) {
-  const {
-    stack,
-    sharedSelectors,
-    sharedActions,
-    domainReducers,
-    navShortcuts,
-    snapshotSelector,
-    debugTitle,
-  } = config;
+  const { stack, sharedSelectors, sharedActions, domainReducers, navShortcuts, snapshotSelector, debugTitle } = config;
 
   const { store, createStore } = createAppStore(domainReducers);
 
@@ -62,10 +54,7 @@ export function createDSLApp<TRootState = unknown>(config: DSLAppConfig<TRootSta
         debugHooks={debugHooks}
         layoutMode="debugPane"
         renderDebugPane={() => (
-          <StandardDebugPane
-            title={debugTitle ?? `${stack.name} Debug`}
-            snapshotSelector={snapshotSelector}
-          />
+          <StandardDebugPane title={debugTitle ?? `${stack.name} Debug`} snapshotSelector={snapshotSelector} />
         )}
         navShortcuts={navShortcuts}
       />

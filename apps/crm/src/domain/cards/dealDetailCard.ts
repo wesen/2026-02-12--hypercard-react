@@ -1,6 +1,6 @@
-import { Act, Ev, Sel, ui, type CardDefinition } from '@hypercard/engine';
-import { DEAL_DETAIL_FIELDS, DEAL_COMPUTED } from './common';
+import { Act, type CardDefinition, Ev, Sel, ui } from '@hypercard/engine';
 import type { CrmStateSlice } from '../types';
+import { DEAL_COMPUTED, DEAL_DETAIL_FIELDS } from './common';
 
 export const dealDetailCard: CardDefinition<CrmStateSlice> = {
   id: 'dealDetail',
@@ -18,39 +18,59 @@ export const dealDetailCard: CardDefinition<CrmStateSlice> = {
       {
         label: 'Save',
         variant: 'primary',
-        action: Act('deals.save', {
-          id: Sel('deals.paramId', undefined, { from: 'shared' }),
-          edits: Sel('state.edits'),
-        }, { to: 'shared' }),
+        action: Act(
+          'deals.save',
+          {
+            id: Sel('deals.paramId', undefined, { from: 'shared' }),
+            edits: Sel('state.edits'),
+          },
+          { to: 'shared' },
+        ),
       },
       {
         label: 'Advance Stage',
-        action: Act('deals.setStage', {
-          id: Sel('deals.paramId', undefined, { from: 'shared' }),
-          stage: 'negotiation',
-        }, { to: 'shared' }),
+        action: Act(
+          'deals.setStage',
+          {
+            id: Sel('deals.paramId', undefined, { from: 'shared' }),
+            stage: 'negotiation',
+          },
+          { to: 'shared' },
+        ),
       },
       {
         label: 'Mark Won',
-        action: Act('deals.setStage', {
-          id: Sel('deals.paramId', undefined, { from: 'shared' }),
-          stage: 'closed-won',
-        }, { to: 'shared' }),
+        action: Act(
+          'deals.setStage',
+          {
+            id: Sel('deals.paramId', undefined, { from: 'shared' }),
+            stage: 'closed-won',
+          },
+          { to: 'shared' },
+        ),
       },
       {
         label: 'Mark Lost',
         variant: 'danger',
-        action: Act('deals.setStage', {
-          id: Sel('deals.paramId', undefined, { from: 'shared' }),
-          stage: 'closed-lost',
-        }, { to: 'shared' }),
+        action: Act(
+          'deals.setStage',
+          {
+            id: Sel('deals.paramId', undefined, { from: 'shared' }),
+            stage: 'closed-lost',
+          },
+          { to: 'shared' },
+        ),
       },
       {
         label: 'Delete',
         variant: 'danger',
-        action: Act('deals.delete', {
-          id: Sel('deals.paramId', undefined, { from: 'shared' }),
-        }, { to: 'shared' }),
+        action: Act(
+          'deals.delete',
+          {
+            id: Sel('deals.paramId', undefined, { from: 'shared' }),
+          },
+          { to: 'shared' },
+        ),
       },
     ],
   }),

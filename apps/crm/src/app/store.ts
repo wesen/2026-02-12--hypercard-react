@@ -1,8 +1,8 @@
 import { createAppStore, streamingChatReducer } from '@hypercard/engine';
-import { contactsReducer } from '../features/contacts/contactsSlice';
-import { companiesReducer } from '../features/companies/companiesSlice';
-import { dealsReducer } from '../features/deals/dealsSlice';
 import { activitiesReducer } from '../features/activities/activitiesSlice';
+import { companiesReducer } from '../features/companies/companiesSlice';
+import { contactsReducer } from '../features/contacts/contactsSlice';
+import { dealsReducer } from '../features/deals/dealsSlice';
 
 export const { store, createStore: createCrmStore } = createAppStore({
   contacts: contactsReducer,

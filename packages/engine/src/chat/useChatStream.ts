@@ -6,15 +6,15 @@ import {
   finishStreaming,
   nextMessageId,
   resetConversation,
+  type StreamingChatStateSlice,
   selectActiveMessages,
   selectChatError,
   selectIsStreaming,
   startStreaming,
   streamError,
-  type StreamingChatStateSlice,
 } from './chatSlice';
-import { fakeStream, type FakeStreamConfig } from './mocks/fakeStreamService';
 import type { ResponseMatcher } from './mocks/fakeResponses';
+import { type FakeStreamConfig, fakeStream } from './mocks/fakeStreamService';
 
 export interface UseChatStreamOptions {
   /** Conversation ID (default: uses active conversation) */
@@ -51,50 +51,57 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
   const cancelRef = useRef<(() => void) | null>(null);
   const convId = options.conversationId;
 
-  const send = useCallback((text: string) => {
-    const trimmed = text.trim();
-    if (!trimmed) return;
-    if (isStreaming) return; // don't send while streaming
+  const send = useCallback(
+    (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      if (isStreaming) return; // don't send while streaming
 
-    // Add user message
-    const userMsgId = nextMessageId();
-    dispatch(addMessage({
-      conversationId: convId,
-      message: { id: userMsgId, role: 'user', text: trimmed, status: 'complete' },
-    }));
+      // Add user message
+      const userMsgId = nextMessageId();
+      dispatch(
+        addMessage({
+          conversationId: convId,
+          message: { id: userMsgId, role: 'user', text: trimmed, status: 'complete' },
+        }),
+      );
 
-    // Start streaming
-    const aiMsgId = nextMessageId();
-    dispatch(startStreaming({ conversationId: convId, messageId: aiMsgId }));
+      // Start streaming
+      const aiMsgId = nextMessageId();
+      dispatch(startStreaming({ conversationId: convId, messageId: aiMsgId }));
 
-    // Start fake stream
-    const cancel = fakeStream(
-      trimmed,
-      {
-        onToken: (token) => {
-          dispatch(appendStreamToken({ conversationId: convId, messageId: aiMsgId, token }));
+      // Start fake stream
+      const cancel = fakeStream(
+        trimmed,
+        {
+          onToken: (token) => {
+            dispatch(appendStreamToken({ conversationId: convId, messageId: aiMsgId, token }));
+          },
+          onDone: (data) => {
+            dispatch(
+              finishStreaming({
+                conversationId: convId,
+                messageId: aiMsgId,
+                actions: data.actions,
+              }),
+            );
+            cancelRef.current = null;
+          },
+          onError: (err) => {
+            dispatch(streamError({ conversationId: convId, messageId: aiMsgId, error: err }));
+            cancelRef.current = null;
+          },
         },
-        onDone: (data) => {
-          dispatch(finishStreaming({
-            conversationId: convId,
-            messageId: aiMsgId,
-            actions: data.actions,
-          }));
-          cancelRef.current = null;
+        {
+          ...options.streamConfig,
+          responseMatcher: options.responseMatcher,
         },
-        onError: (err) => {
-          dispatch(streamError({ conversationId: convId, messageId: aiMsgId, error: err }));
-          cancelRef.current = null;
-        },
-      },
-      {
-        ...options.streamConfig,
-        responseMatcher: options.responseMatcher,
-      },
-    );
+      );
 
-    cancelRef.current = cancel;
-  }, [dispatch, convId, isStreaming, options.streamConfig, options.responseMatcher]);
+      cancelRef.current = cancel;
+    },
+    [dispatch, convId, isStreaming, options.streamConfig, options.responseMatcher],
+  );
 
   const cancel = useCallback(() => {
     if (cancelRef.current) {
@@ -104,10 +111,12 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
       // Mark it as complete with whatever text we have
       const streamingMsg = messages.find((m) => m.status === 'streaming');
       if (streamingMsg?.id) {
-        dispatch(finishStreaming({
-          conversationId: convId,
-          messageId: streamingMsg.id,
-        }));
+        dispatch(
+          finishStreaming({
+            conversationId: convId,
+            messageId: streamingMsg.id,
+          }),
+        );
       }
     }
   }, [dispatch, convId, messages]);

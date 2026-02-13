@@ -1,12 +1,9 @@
-import {
-  type SharedActionRegistry,
-  type SharedSelectorRegistry,
-} from '@hypercard/engine';
-import type { CrmStateSlice, ContactStatus, DealStage } from '../domain/types';
-import { selectContacts } from '../features/contacts/selectors';
-import { selectCompanies } from '../features/companies/selectors';
-import { selectDeals } from '../features/deals/selectors';
+import type { SharedActionRegistry, SharedSelectorRegistry } from '@hypercard/engine';
+import type { ContactStatus, CrmStateSlice, DealStage } from '../domain/types';
+import { createActivity, resetActivities } from '../features/activities/activitiesSlice';
 import { selectActivities } from '../features/activities/selectors';
+import { createCompany, deleteCompany, resetCompanies, saveCompany } from '../features/companies/companiesSlice';
+import { selectCompanies } from '../features/companies/selectors';
 import {
   createContact,
   deleteContact,
@@ -14,23 +11,9 @@ import {
   saveContact,
   setContactStatus,
 } from '../features/contacts/contactsSlice';
-import {
-  createCompany,
-  deleteCompany,
-  resetCompanies,
-  saveCompany,
-} from '../features/companies/companiesSlice';
-import {
-  createDeal,
-  deleteDeal,
-  resetDeals,
-  saveDeal,
-  setDealStage,
-} from '../features/deals/dealsSlice';
-import {
-  createActivity,
-  resetActivities,
-} from '../features/activities/activitiesSlice';
+import { selectContacts } from '../features/contacts/selectors';
+import { createDeal, deleteDeal, resetDeals, saveDeal, setDealStage } from '../features/deals/dealsSlice';
+import { selectDeals } from '../features/deals/selectors';
 
 // ── Shared Selectors ──
 
@@ -66,8 +49,7 @@ export const crmSharedSelectors: SharedSelectorRegistry<CrmStateSlice> = {
 
   // Deals
   'deals.all': (state) => selectDeals(state),
-  'deals.open': (state) =>
-    selectDeals(state).filter((d) => !d.stage.startsWith('closed')),
+  'deals.open': (state) => selectDeals(state).filter((d) => !d.stage.startsWith('closed')),
   'deals.paramId': (_state, _args, ctx) => String(ctx.params.param ?? ''),
   'deals.byParam': (state, _args, ctx) => {
     const id = String(ctx.params.param ?? '');
@@ -93,9 +75,7 @@ export const crmSharedSelectors: SharedSelectorRegistry<CrmStateSlice> = {
     return selectActivities(state).filter((a) => a.dealId === dealId);
   },
   'activities.recent': (state) => {
-    return [...selectActivities(state)]
-      .sort((a, b) => b.date.localeCompare(a.date))
-      .slice(0, 20);
+    return [...selectActivities(state)].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 20);
   },
 
   // Pipeline report
@@ -130,18 +110,22 @@ export const crmSharedActions: SharedActionRegistry<CrmStateSlice> = {
   // Contact CRUD
   'contacts.save': (ctx, args) => {
     const data = (args ?? {}) as Record<string, unknown>;
-    ctx.dispatch(saveContact({
-      id: String(data.id ?? ''),
-      edits: (data.edits ?? {}) as Record<string, unknown>,
-    }));
+    ctx.dispatch(
+      saveContact({
+        id: String(data.id ?? ''),
+        edits: (data.edits ?? {}) as Record<string, unknown>,
+      }),
+    );
     ctx.patchScopedState('card', { edits: {} });
   },
   'contacts.setStatus': (ctx, args) => {
     const data = (args ?? {}) as Record<string, unknown>;
-    ctx.dispatch(setContactStatus({
-      id: String(data.id ?? ''),
-      status: String(data.status ?? '') as ContactStatus,
-    }));
+    ctx.dispatch(
+      setContactStatus({
+        id: String(data.id ?? ''),
+        status: String(data.status ?? '') as ContactStatus,
+      }),
+    );
   },
   'contacts.delete': (ctx, args) => {
     const data = (args ?? {}) as Record<string, unknown>;
@@ -157,14 +141,16 @@ export const crmSharedActions: SharedActionRegistry<CrmStateSlice> = {
       ctx.patchScopedState('card', { submitResult: 'Name and Email are required' });
       return;
     }
-    ctx.dispatch(createContact({
-      name,
-      email,
-      phone: String(values.phone ?? ''),
-      companyId: String(values.companyId ?? ''),
-      status: (values.status as ContactStatus) ?? 'lead',
-      tags: [],
-    }));
+    ctx.dispatch(
+      createContact({
+        name,
+        email,
+        phone: String(values.phone ?? ''),
+        companyId: String(values.companyId ?? ''),
+        status: (values.status as ContactStatus) ?? 'lead',
+        tags: [],
+      }),
+    );
     ctx.patchScopedState('card', {
       submitResult: 'Contact created',
       formValues: { name: '', email: '', phone: '', companyId: '', status: 'lead' },
@@ -177,10 +163,12 @@ export const crmSharedActions: SharedActionRegistry<CrmStateSlice> = {
   // Company CRUD
   'companies.save': (ctx, args) => {
     const data = (args ?? {}) as Record<string, unknown>;
-    ctx.dispatch(saveCompany({
-      id: String(data.id ?? ''),
-      edits: (data.edits ?? {}) as Record<string, unknown>,
-    }));
+    ctx.dispatch(
+      saveCompany({
+        id: String(data.id ?? ''),
+        edits: (data.edits ?? {}) as Record<string, unknown>,
+      }),
+    );
     ctx.patchScopedState('card', { edits: {} });
   },
   'companies.delete': (ctx, args) => {
@@ -196,12 +184,14 @@ export const crmSharedActions: SharedActionRegistry<CrmStateSlice> = {
       ctx.patchScopedState('card', { submitResult: 'Company name is required' });
       return;
     }
-    ctx.dispatch(createCompany({
-      name,
-      industry: String(values.industry ?? ''),
-      website: String(values.website ?? ''),
-      size: (values.size as 'startup' | 'small' | 'medium' | 'enterprise') ?? 'small',
-    }));
+    ctx.dispatch(
+      createCompany({
+        name,
+        industry: String(values.industry ?? ''),
+        website: String(values.website ?? ''),
+        size: (values.size as 'startup' | 'small' | 'medium' | 'enterprise') ?? 'small',
+      }),
+    );
     ctx.patchScopedState('card', {
       submitResult: 'Company created',
       formValues: { name: '', industry: '', website: '', size: 'small' },
@@ -214,18 +204,22 @@ export const crmSharedActions: SharedActionRegistry<CrmStateSlice> = {
   // Deal CRUD
   'deals.save': (ctx, args) => {
     const data = (args ?? {}) as Record<string, unknown>;
-    ctx.dispatch(saveDeal({
-      id: String(data.id ?? ''),
-      edits: (data.edits ?? {}) as Record<string, unknown>,
-    }));
+    ctx.dispatch(
+      saveDeal({
+        id: String(data.id ?? ''),
+        edits: (data.edits ?? {}) as Record<string, unknown>,
+      }),
+    );
     ctx.patchScopedState('card', { edits: {} });
   },
   'deals.setStage': (ctx, args) => {
     const data = (args ?? {}) as Record<string, unknown>;
-    ctx.dispatch(setDealStage({
-      id: String(data.id ?? ''),
-      stage: String(data.stage ?? '') as DealStage,
-    }));
+    ctx.dispatch(
+      setDealStage({
+        id: String(data.id ?? ''),
+        stage: String(data.stage ?? '') as DealStage,
+      }),
+    );
   },
   'deals.delete': (ctx, args) => {
     const data = (args ?? {}) as Record<string, unknown>;
@@ -240,18 +234,28 @@ export const crmSharedActions: SharedActionRegistry<CrmStateSlice> = {
       ctx.patchScopedState('card', { submitResult: 'Deal title is required' });
       return;
     }
-    ctx.dispatch(createDeal({
-      title,
-      contactId: String(values.contactId ?? ''),
-      companyId: String(values.companyId ?? ''),
-      stage: (values.stage as DealStage) ?? 'qualification',
-      value: Number(values.value ?? 0),
-      probability: Number(values.probability ?? 25),
-      closeDate: String(values.closeDate ?? ''),
-    }));
+    ctx.dispatch(
+      createDeal({
+        title,
+        contactId: String(values.contactId ?? ''),
+        companyId: String(values.companyId ?? ''),
+        stage: (values.stage as DealStage) ?? 'qualification',
+        value: Number(values.value ?? 0),
+        probability: Number(values.probability ?? 25),
+        closeDate: String(values.closeDate ?? ''),
+      }),
+    );
     ctx.patchScopedState('card', {
       submitResult: 'Deal created',
-      formValues: { title: '', contactId: '', companyId: '', stage: 'qualification', value: 0, probability: 25, closeDate: '' },
+      formValues: {
+        title: '',
+        contactId: '',
+        companyId: '',
+        stage: 'qualification',
+        value: 0,
+        probability: 25,
+        closeDate: '',
+      },
     });
   },
   'deals.reset': (ctx) => {
@@ -267,14 +271,16 @@ export const crmSharedActions: SharedActionRegistry<CrmStateSlice> = {
       ctx.patchScopedState('card', { submitResult: 'Subject is required' });
       return;
     }
-    ctx.dispatch(createActivity({
-      contactId: String(values.contactId ?? ''),
-      dealId: String(values.dealId ?? ''),
-      type: (values.type as 'call' | 'email' | 'meeting' | 'note') ?? 'note',
-      subject,
-      date: String(values.date ?? new Date().toISOString().slice(0, 10)),
-      notes: String(values.notes ?? ''),
-    }));
+    ctx.dispatch(
+      createActivity({
+        contactId: String(values.contactId ?? ''),
+        dealId: String(values.dealId ?? ''),
+        type: (values.type as 'call' | 'email' | 'meeting' | 'note') ?? 'note',
+        subject,
+        date: String(values.date ?? new Date().toISOString().slice(0, 10)),
+        notes: String(values.notes ?? ''),
+      }),
+    );
     ctx.patchScopedState('card', {
       submitResult: 'Activity logged',
       formValues: { contactId: '', dealId: '', type: 'note', subject: '', date: '', notes: '' },

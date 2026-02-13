@@ -6,45 +6,37 @@
 //   import '@hypercard/engine/src/theme/modern.css';     // optional theme
 //
 
-// ── Types ──
-export * from './types';
-export * from './parts';
-
-// ── Theme ──
-export { HyperCardTheme, type HyperCardThemeProps } from './theme/HyperCardTheme';
-
+// ── App utilities ──
+export * from './app';
 // ── Card DSL ──
 export * from './cards';
-
-// ── Widgets ──
-export * from './components/widgets';
-
+// ── Chat ──
+export * from './chat';
 // ── Shell ──
 export * from './components/shell';
 
+// ── Widgets ──
+export * from './components/widgets';
 // ── Debug utilities ──
 export * from './debug';
-
-// ── Chat ──
-export * from './chat';
-
-// ── App utilities ──
-export * from './app';
-
 // ── State ──
 export {
-  navigationReducer,
-  navigate,
   goBack,
-  setLayout,
   type LayoutMode,
   type NavEntry,
+  navigate,
+  navigationReducer,
+  setLayout,
 } from './features/navigation/navigationSlice';
 export * from './features/navigation/selectors';
-
 export {
+  clearToast,
   notificationsReducer,
   showToast,
-  clearToast,
 } from './features/notifications/notificationsSlice';
 export * from './features/notifications/selectors';
+export * from './parts';
+// ── Theme ──
+export { HyperCardTheme, type HyperCardThemeProps } from './theme/HyperCardTheme';
+// ── Types ──
+export * from './types';

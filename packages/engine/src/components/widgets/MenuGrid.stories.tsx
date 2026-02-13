@@ -6,10 +6,7 @@ const meta = {
   component: MenuGrid,
   args: {
     icon: '📇',
-    labels: [
-      { value: 'Welcome to Shop Inventory' },
-      { value: 'HyperCard + AI', style: 'muted' },
-    ],
+    labels: [{ value: 'Welcome to Shop Inventory' }, { value: 'HyperCard + AI', style: 'muted' }],
     buttons: [
       { label: '📋 Browse Items', action: 'browse', variant: 'default' },
       { label: '⚠️ Low Stock', action: 'lowStock', variant: 'default' },

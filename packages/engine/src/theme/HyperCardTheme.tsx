@@ -18,17 +18,10 @@ export interface HyperCardThemeProps {
  * HyperCardShell uses this internally — you only need it when rendering
  * widgets outside the shell (Storybook, tests, embedding).
  */
-export function HyperCardTheme({
-  children,
-  theme,
-  unstyled,
-  themeVars,
-}: HyperCardThemeProps) {
+export function HyperCardTheme({ children, theme, unstyled, themeVars }: HyperCardThemeProps) {
   if (unstyled) return <>{children}</>;
 
-  const style: CSSProperties | undefined = themeVars
-    ? (themeVars as unknown as CSSProperties)
-    : undefined;
+  const style: CSSProperties | undefined = themeVars ? (themeVars as unknown as CSSProperties) : undefined;
 
   return (
     <div data-widget="hypercard" className={theme} style={style}>

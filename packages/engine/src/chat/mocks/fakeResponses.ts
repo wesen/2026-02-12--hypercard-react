@@ -16,7 +16,7 @@ export const defaultResponseMatcher: ResponseMatcher = (input) => {
 
   if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
     return {
-      text: 'Hello! I\'m your AI assistant. I can help you navigate the app, look up information, and answer questions about your data. What would you like to know?',
+      text: "Hello! I'm your AI assistant. I can help you navigate the app, look up information, and answer questions about your data. What would you like to know?",
     };
   }
 

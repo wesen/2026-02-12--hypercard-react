@@ -1,8 +1,10 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { Item } from '../../domain/types';
 import { ITEMS } from '../../domain/seedData';
+import type { Item } from '../../domain/types';
 
-interface InventoryState { items: Item[] }
+interface InventoryState {
+  items: Item[];
+}
 
 const initialState: InventoryState = {
   items: JSON.parse(JSON.stringify(ITEMS)),

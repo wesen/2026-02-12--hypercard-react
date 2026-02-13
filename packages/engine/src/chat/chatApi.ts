@@ -48,10 +48,7 @@ export type StreamHandlers = {
  * Connect to a streaming WebSocket and dispatch tokens.
  * Returns a cleanup function to close the connection.
  */
-export function connectStream(
-  streamUrl: string,
-  handlers: StreamHandlers,
-): () => void {
+export function connectStream(streamUrl: string, handlers: StreamHandlers): () => void {
   const ws = new WebSocket(streamUrl);
 
   ws.onmessage = (event) => {

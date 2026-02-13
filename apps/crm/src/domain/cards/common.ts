@@ -1,10 +1,5 @@
-import type {
-  ColumnConfig,
-  ComputedFieldConfig,
-  FieldConfig,
-  FilterConfig,
-} from '@hypercard/engine';
-import type { Contact, Company, Deal, Activity } from '../types';
+import type { ColumnConfig, ComputedFieldConfig, FieldConfig, FilterConfig } from '@hypercard/engine';
+import type { Activity, Company, Contact, Deal } from '../types';
 
 // ── Contact columns & fields ──
 
@@ -102,7 +97,11 @@ export const DEAL_COLUMNS: ColumnConfig<Deal>[] = [
 ];
 
 export const DEAL_FILTERS: FilterConfig[] = [
-  { field: 'stage', type: 'select', options: ['All', 'qualification', 'proposal', 'negotiation', 'closed-won', 'closed-lost'] },
+  {
+    field: 'stage',
+    type: 'select',
+    options: ['All', 'qualification', 'proposal', 'negotiation', 'closed-won', 'closed-lost'],
+  },
   { field: '_search', type: 'text', placeholder: 'Search deals...' },
 ];
 
@@ -111,7 +110,12 @@ export const DEAL_DETAIL_FIELDS: FieldConfig[] = [
   { id: 'title', label: 'Title', type: 'text' },
   { id: 'contactId', label: 'Contact ID', type: 'text' },
   { id: 'companyId', label: 'Company ID', type: 'text' },
-  { id: 'stage', label: 'Stage', type: 'select', options: ['qualification', 'proposal', 'negotiation', 'closed-won', 'closed-lost'] },
+  {
+    id: 'stage',
+    label: 'Stage',
+    type: 'select',
+    options: ['qualification', 'proposal', 'negotiation', 'closed-won', 'closed-lost'],
+  },
   { id: 'value', label: 'Value ($)', type: 'number', step: 1000 },
   { id: 'probability', label: 'Probability (%)', type: 'number', step: 5 },
   { id: 'closeDate', label: 'Close Date', type: 'text' },
@@ -143,7 +147,12 @@ export const DEAL_FORM_FIELDS: FieldConfig[] = [
   { id: 'title', label: 'Title', type: 'text', placeholder: 'Deal title', required: true },
   { id: 'contactId', label: 'Contact ID', type: 'text', placeholder: 'c1' },
   { id: 'companyId', label: 'Company ID', type: 'text', placeholder: 'co1' },
-  { id: 'stage', label: 'Stage', type: 'select', options: ['qualification', 'proposal', 'negotiation', 'closed-won', 'closed-lost'] },
+  {
+    id: 'stage',
+    label: 'Stage',
+    type: 'select',
+    options: ['qualification', 'proposal', 'negotiation', 'closed-won', 'closed-lost'],
+  },
   { id: 'value', label: 'Value ($)', type: 'number', step: 1000 },
   { id: 'probability', label: 'Probability (%)', type: 'number', step: 5 },
   { id: 'closeDate', label: 'Close Date', type: 'text', placeholder: '2026-06-30' },

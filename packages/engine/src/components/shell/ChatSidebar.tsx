@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import type { ChatMessage } from '../../types';
 import { StreamingChatView } from '../widgets/StreamingChatView';
 
@@ -34,15 +34,17 @@ export function ChatSidebar({
 
   if (collapsed) {
     return (
-      <aside style={{
-        width: 44,
-        height: '100%',
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-        paddingTop: 8,
-        borderLeft: '1px solid rgba(0,0,0,0.08)',
-      }}>
+      <aside
+        style={{
+          width: 44,
+          height: '100%',
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'center',
+          paddingTop: 8,
+          borderLeft: '1px solid rgba(0,0,0,0.08)',
+        }}
+      >
         <button type="button" onClick={() => setCollapsed(false)} title="Open chat">
           💬
         </button>
@@ -51,24 +53,28 @@ export function ChatSidebar({
   }
 
   return (
-    <aside style={{
-      width: 'var(--hc-chat-sidebar-width, 340px)',
-      maxWidth: '48vw',
-      minWidth: 280,
-      height: '100%',
-      borderLeft: '1px solid rgba(0,0,0,0.08)',
-      display: 'flex',
-      flexDirection: 'column',
-      background: 'var(--hc-color-ai-bg, #fafbfc)',
-    }}>
-      <div style={{
+    <aside
+      style={{
+        width: 'var(--hc-chat-sidebar-width, 340px)',
+        maxWidth: '48vw',
+        minWidth: 280,
+        height: '100%',
+        borderLeft: '1px solid rgba(0,0,0,0.08)',
         display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        padding: '6px 10px',
-        borderBottom: '1px solid rgba(0,0,0,0.1)',
-        flexShrink: 0,
-      }}>
+        flexDirection: 'column',
+        background: 'var(--hc-color-ai-bg, #fafbfc)',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '6px 10px',
+          borderBottom: '1px solid rgba(0,0,0,0.1)',
+          flexShrink: 0,
+        }}
+      >
         <strong style={{ fontSize: 12 }}>💬 {title}</strong>
         <span style={{ fontSize: 10, opacity: 0.6 }}>
           {messages.length} message{messages.length !== 1 ? 's' : ''}
@@ -93,13 +99,15 @@ export function ChatSidebar({
       </div>
 
       {footer && (
-        <div style={{
-          borderTop: '1px solid rgba(0,0,0,0.08)',
-          padding: '4px 10px',
-          fontSize: 10,
-          opacity: 0.6,
-          flexShrink: 0,
-        }}>
+        <div
+          style={{
+            borderTop: '1px solid rgba(0,0,0,0.08)',
+            padding: '4px 10px',
+            fontSize: 10,
+            opacity: 0.6,
+            flexShrink: 0,
+          }}
+        >
           {footer}
         </div>
       )}

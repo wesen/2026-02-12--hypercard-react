@@ -1,6 +1,6 @@
-import { Act, Ev, Sel, ui, type CardDefinition } from '@hypercard/engine';
-import { DEAL_COLUMNS, DEAL_FILTERS } from './common';
+import { Act, type CardDefinition, Ev, Sel, ui } from '@hypercard/engine';
 import type { CrmStateSlice } from '../types';
+import { DEAL_COLUMNS, DEAL_FILTERS } from './common';
 
 export const dealsCard: CardDefinition<CrmStateSlice> = {
   id: 'deals',

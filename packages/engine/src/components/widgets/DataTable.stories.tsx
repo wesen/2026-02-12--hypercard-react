@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { DataTable } from './DataTable';
 import type { ColumnConfig } from '../../types';
+import { DataTable } from './DataTable';
 
-type SampleRow = { id: string; name: string; qty: number; price: number; [key: string]: unknown }
+type SampleRow = { id: string; name: string; qty: number; price: number; [key: string]: unknown };
 
 const sampleData: SampleRow[] = [
   { id: '1', name: 'Widget A', qty: 10, price: 9.99 },

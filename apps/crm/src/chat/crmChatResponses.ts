@@ -31,9 +31,7 @@ export const crmResponseMatcher: ResponseMatcher = (input): FakeResponse | null 
   if (lower.includes('alice')) {
     return {
       text: 'Alice Johnson is a **customer** at Acme Corp.\n\n• Email: alice@acme.com\n• Phone: 555-0101\n• Tags: vip, tech\n• Deals: Acme Enterprise License ($120K, negotiation) + Acme Support Renewal ($30K, won)',
-      actions: [
-        { label: '👤 View Alice', action: Act('nav.go', { card: 'contactDetail', param: 'c1' }) },
-      ],
+      actions: [{ label: '👤 View Alice', action: Act('nav.go', { card: 'contactDetail', param: 'c1' }) }],
     };
   }
 
@@ -58,7 +56,11 @@ export const crmResponseMatcher: ResponseMatcher = (input): FakeResponse | null 
     };
   }
 
-  if (lower.includes('deal') && lower.includes('biggest') || lower.includes('largest') || lower.includes('highest value')) {
+  if (
+    (lower.includes('deal') && lower.includes('biggest')) ||
+    lower.includes('largest') ||
+    lower.includes('highest value')
+  ) {
     return {
       text: 'Your largest open deal is the **Umbrella Health Platform** at **$200,000** (40% probability, proposal stage).\n\nContact: Eve Martinez at Umbrella Ltd.\n\nNext steps: Follow up on legal review (expected 2-week turnaround).',
       actions: [
@@ -72,23 +74,24 @@ export const crmResponseMatcher: ResponseMatcher = (input): FakeResponse | null 
   if (lower.includes('compan') && (lower.includes('how many') || lower.includes('list') || lower.includes('all'))) {
     return {
       text: 'You work with **5 companies**:\n\n• **Acme Corp** — Enterprise, Technology\n• **Globex Inc** — Medium, Finance\n• **Initech** — Small, Consulting\n• **Soylent Corp** — Startup, Food & Bev\n• **Umbrella Ltd** — Enterprise, Healthcare',
-      actions: [
-        { label: '🏢 Companies', action: Act('nav.go', { card: 'companies' }) },
-      ],
+      actions: [{ label: '🏢 Companies', action: Act('nav.go', { card: 'companies' }) }],
     };
   }
 
   if (lower.includes('acme')) {
     return {
       text: 'Acme Corp is an **enterprise technology** company (acme.com).\n\nContacts: Alice Johnson (customer, VIP), Frank Brown (churned)\nDeals: Enterprise License ($120K, negotiation) + Support Renewal ($30K, won)\nTotal value: $150,000',
-      actions: [
-        { label: '🏢 View Acme', action: Act('nav.go', { card: 'companyDetail', param: 'co1' }) },
-      ],
+      actions: [{ label: '🏢 View Acme', action: Act('nav.go', { card: 'companyDetail', param: 'co1' }) }],
     };
   }
 
   // ── Activities ──
-  if (lower.includes('activit') || lower.includes('recent') || lower.includes('last call') || lower.includes('follow up')) {
+  if (
+    lower.includes('activit') ||
+    lower.includes('recent') ||
+    lower.includes('last call') ||
+    lower.includes('follow up')
+  ) {
     return {
       text: 'Recent activities:\n\n• 📞 **Follow-up with Eve** (Feb 12) — Waiting on legal review\n• 📧 **Grace asked for discount** (Jan 10) — Cannot offer >10%\n• 📝 **Research on Initech** (Feb 10) — Budget-conscious, need lean proposal\n• 🤝 **Demo for Globex team** (Feb 8) — Good reception from Bob + 3 colleagues\n• 📧 **Sent proposal to Alice** (Feb 5) — Pricing deck + SOW attached',
       actions: [
@@ -99,7 +102,12 @@ export const crmResponseMatcher: ResponseMatcher = (input): FakeResponse | null 
   }
 
   // ── Pipeline / Report ──
-  if (lower.includes('pipeline') || lower.includes('report') || lower.includes('summary') || lower.includes('dashboard')) {
+  if (
+    lower.includes('pipeline') ||
+    lower.includes('report') ||
+    lower.includes('summary') ||
+    lower.includes('dashboard')
+  ) {
     return {
       text: 'CRM Dashboard Summary:\n\n📊 **Pipeline:** 4 open deals, $380K total, $198K weighted\n💰 **Revenue:** $38K won, $60K lost\n👤 **Contacts:** 7 total — 2 customers, 2 prospects, 2 leads, 1 churned\n🏢 **Companies:** 5 (2 enterprise, 1 medium, 1 small, 1 startup)\n📝 **Activities:** 6 logged\n\nTop priority: Umbrella Health Platform ($200K, awaiting legal)',
       actions: [
@@ -120,7 +128,7 @@ export const crmResponseMatcher: ResponseMatcher = (input): FakeResponse | null 
   // ── Greetings ──
   if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
     return {
-      text: 'Hello! I\'m your CRM assistant. I can help you with contacts, companies, deals, activities, and pipeline data.\n\nTry asking about your open deals, VIP contacts, or pipeline summary!',
+      text: "Hello! I'm your CRM assistant. I can help you with contacts, companies, deals, activities, and pipeline data.\n\nTry asking about your open deals, VIP contacts, or pipeline summary!",
       actions: [
         { label: '📊 Pipeline', action: Act('nav.go', { card: 'pipeline' }) },
         { label: '💰 Open Deals', action: Act('nav.go', { card: 'deals' }) },
@@ -131,8 +139,6 @@ export const crmResponseMatcher: ResponseMatcher = (input): FakeResponse | null 
   // ── Fallback ──
   return {
     text: `I understand you're asking about "${input}". I can help with contacts, companies, deals, activities, and pipeline data.\n\nTry being more specific, like "show open deals" or "tell me about Alice".`,
-    actions: [
-      { label: '❓ Help', action: Act('nav.go', { card: 'home' }) },
-    ],
+    actions: [{ label: '❓ Help', action: Act('nav.go', { card: 'home' }) }],
   };
 };

@@ -1,9 +1,4 @@
-import type {
-  ColumnConfig,
-  ComputedFieldConfig,
-  FieldConfig,
-  FilterConfig,
-} from '@hypercard/engine';
+import type { ColumnConfig, ComputedFieldConfig, FieldConfig, FilterConfig } from '@hypercard/engine';
 import type { Book } from '../types';
 
 export const BOOK_COLUMNS: ColumnConfig<Book>[] = [

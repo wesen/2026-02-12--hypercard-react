@@ -1,10 +1,10 @@
+import { hypercardRuntimeReducer, navigationReducer, notificationsReducer } from '@hypercard/engine';
+import { configureStore } from '@reduxjs/toolkit';
 import type { ReactNode } from 'react';
 import { Provider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit';
-import { hypercardRuntimeReducer, navigationReducer, notificationsReducer } from '@hypercard/engine';
+import { chatReducer } from '../features/chat/chatSlice';
 import { inventoryReducer } from '../features/inventory/inventorySlice';
 import { salesReducer } from '../features/sales/salesSlice';
-import { chatReducer } from '../features/chat/chatSlice';
 
 function createFreshStore() {
   return configureStore({
@@ -25,6 +25,8 @@ export function StoreDecorator({ children }: { children: ReactNode }) {
 
 export function storeDecorator() {
   return (Story: React.ComponentType) => (
-    <StoreDecorator><Story /></StoreDecorator>
+    <StoreDecorator>
+      <Story />
+    </StoreDecorator>
   );
 }

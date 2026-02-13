@@ -1,8 +1,8 @@
 import { configureStore, type Reducer } from '@reduxjs/toolkit';
 import { hypercardRuntimeReducer } from '../cards/runtimeStateSlice';
+import { debugReducer } from '../debug/debugSlice';
 import { navigationReducer } from '../features/navigation/navigationSlice';
 import { notificationsReducer } from '../features/notifications/notificationsSlice';
-import { debugReducer } from '../debug/debugSlice';
 
 /**
  * Creates a Redux store factory pre-wired with all HyperCard engine reducers

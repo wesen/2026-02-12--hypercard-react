@@ -10,7 +10,18 @@ export interface MenuGridProps {
 
 export function MenuGrid({ icon, labels, buttons, onAction }: MenuGridProps) {
   return (
-    <div data-part="card" style={{ padding: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, height: '100%', justifyContent: 'center' }}>
+    <div
+      data-part="card"
+      style={{
+        padding: 16,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 6,
+        height: '100%',
+        justifyContent: 'center',
+      }}
+    >
       {icon && <div style={{ fontSize: 32 }}>{icon}</div>}
       {labels?.map((l, i) => (
         <div
@@ -27,7 +38,12 @@ export function MenuGrid({ icon, labels, buttons, onAction }: MenuGridProps) {
       ))}
       <div data-part="menu-grid">
         {buttons.map((b) => (
-          <Btn key={b.label} variant={b.variant} onClick={() => onAction(b.action)} style={{ width: '100%', textAlign: 'left' }}>
+          <Btn
+            key={b.label}
+            variant={b.variant}
+            onClick={() => onAction(b.action)}
+            style={{ width: '100%', textAlign: 'left' }}
+          >
             {b.label}
           </Btn>
         ))}

@@ -1,7 +1,4 @@
-import {
-  type SharedActionRegistry,
-  type SharedSelectorRegistry,
-} from '@hypercard/engine';
+import type { SharedActionRegistry, SharedSelectorRegistry } from '@hypercard/engine';
 import { taskColumns } from '../domain/columnConfigs';
 import type { Task } from '../domain/types';
 import { selectTasks, type TasksStateSlice } from '../features/tasks/selectors';
@@ -24,18 +21,22 @@ export const todoSharedSelectors: SharedSelectorRegistry<TodoRootState> = {
 export const todoSharedActions: SharedActionRegistry<TodoRootState> = {
   'tasks.setStatus': (ctx, args) => {
     const data = (args ?? {}) as Record<string, unknown>;
-    ctx.dispatch(setStatus({
-      id: String(data.id ?? ''),
-      status: (data.status as Task['status']) ?? 'todo',
-    }));
+    ctx.dispatch(
+      setStatus({
+        id: String(data.id ?? ''),
+        status: (data.status as Task['status']) ?? 'todo',
+      }),
+    );
   },
 
   'tasks.save': (ctx, args) => {
     const data = (args ?? {}) as Record<string, unknown>;
-    ctx.dispatch(saveTask({
-      id: String(data.id ?? ''),
-      edits: (data.edits ?? {}) as Partial<Task>,
-    }));
+    ctx.dispatch(
+      saveTask({
+        id: String(data.id ?? ''),
+        edits: (data.edits ?? {}) as Partial<Task>,
+      }),
+    );
     ctx.patchScopedState('card', { edits: {} });
   },
 
@@ -54,11 +55,13 @@ export const todoSharedActions: SharedActionRegistry<TodoRootState> = {
       return;
     }
 
-    ctx.dispatch(createTask({
-      title,
-      priority: String(values.priority ?? 'medium'),
-      due: values.due ? String(values.due) : undefined,
-    }));
+    ctx.dispatch(
+      createTask({
+        title,
+        priority: String(values.priority ?? 'medium'),
+        due: values.due ? String(values.due) : undefined,
+      }),
+    );
 
     ctx.patchScopedState('card', {
       submitResult: '✅ Task created',

@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RuntimeDebugPane } from '../components/shell/RuntimeDebugPane';
 import {
   clearEvents,
+  type DebugStateSlice,
   selectDebugKinds,
   selectDebugState,
   selectEvent,
@@ -11,7 +12,6 @@ import {
   setKindFilter,
   setTextFilter,
   toggleCollapsed,
-  type DebugStateSlice,
 } from './debugSlice';
 
 export interface StandardDebugPaneProps {
@@ -26,10 +26,7 @@ export interface StandardDebugPaneProps {
  * RuntimeDebugPane component. Apps only need to provide a snapshotSelector
  * to include app-specific state in the inspector.
  */
-export function StandardDebugPane({
-  title = 'Debug Pane',
-  snapshotSelector,
-}: StandardDebugPaneProps) {
+export function StandardDebugPane({ title = 'Debug Pane', snapshotSelector }: StandardDebugPaneProps) {
   const dispatch = useDispatch();
   const debug = useSelector(selectDebugState);
   const kinds = useSelector(selectDebugKinds);

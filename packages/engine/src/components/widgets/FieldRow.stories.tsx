@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
+import { useState } from 'react';
 import { FieldRow } from './FieldRow';
 
 function TextFieldDemo() {
@@ -18,7 +18,13 @@ function ReadonlyDemo() {
 
 function SelectDemo() {
   const [value, setValue] = useState<unknown>('Kitchen');
-  return <FieldRow field={{ id: 'category', label: 'Category', type: 'select', options: ['Accessories', 'Kitchen', 'Home'] }} value={value} onChange={setValue} />;
+  return (
+    <FieldRow
+      field={{ id: 'category', label: 'Category', type: 'select', options: ['Accessories', 'Kitchen', 'Home'] }}
+      value={value}
+      onChange={setValue}
+    />
+  );
 }
 
 const meta = {
@@ -29,6 +35,6 @@ const meta = {
 export default meta;
 
 export const Text: StoryObj = { render: () => <TextFieldDemo /> };
-export const Number: StoryObj = { render: () => <NumberFieldDemo /> };
+export const NumberField: StoryObj = { render: () => <NumberFieldDemo /> };
 export const Readonly: StoryObj = { render: () => <ReadonlyDemo /> };
 export const Select: StoryObj = { render: () => <SelectDemo /> };

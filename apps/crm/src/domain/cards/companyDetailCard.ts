@@ -1,6 +1,6 @@
-import { Act, Ev, Sel, ui, type CardDefinition } from '@hypercard/engine';
-import { COMPANY_DETAIL_FIELDS, COMPANY_COMPUTED } from './common';
+import { Act, type CardDefinition, Ev, Sel, ui } from '@hypercard/engine';
 import type { CrmStateSlice } from '../types';
+import { COMPANY_COMPUTED, COMPANY_DETAIL_FIELDS } from './common';
 
 export const companyDetailCard: CardDefinition<CrmStateSlice> = {
   id: 'companyDetail',
@@ -18,17 +18,25 @@ export const companyDetailCard: CardDefinition<CrmStateSlice> = {
       {
         label: 'Save',
         variant: 'primary',
-        action: Act('companies.save', {
-          id: Sel('companies.paramId', undefined, { from: 'shared' }),
-          edits: Sel('state.edits'),
-        }, { to: 'shared' }),
+        action: Act(
+          'companies.save',
+          {
+            id: Sel('companies.paramId', undefined, { from: 'shared' }),
+            edits: Sel('state.edits'),
+          },
+          { to: 'shared' },
+        ),
       },
       {
         label: 'Delete',
         variant: 'danger',
-        action: Act('companies.delete', {
-          id: Sel('companies.paramId', undefined, { from: 'shared' }),
-        }, { to: 'shared' }),
+        action: Act(
+          'companies.delete',
+          {
+            id: Sel('companies.paramId', undefined, { from: 'shared' }),
+          },
+          { to: 'shared' },
+        ),
       },
     ],
   }),

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ChatMessage } from '../../types';
 import { Btn } from './Btn';
 import { Chip } from './Chip';
@@ -44,9 +44,7 @@ function ThinkingIndicator() {
           gap: 6,
         }}
       >
-        <span style={{ animation: 'hc-pulse 1.5s ease-in-out infinite' }}>
-          Thinking…
-        </span>
+        <span style={{ animation: 'hc-pulse 1.5s ease-in-out infinite' }}>Thinking…</span>
       </div>
     </div>
   );
@@ -67,7 +65,7 @@ export function StreamingChatView({
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, messages.length > 0 ? messages[messages.length - 1].text : '']);
+  }, []);
 
   function send(text: string) {
     if (!text.trim()) return;
@@ -75,27 +73,30 @@ export function StreamingChatView({
     setInput('');
   }
 
-  const showThinking = isStreaming && messages.length > 0 &&
+  const showThinking =
+    isStreaming &&
+    messages.length > 0 &&
     messages[messages.length - 1].status === 'streaming' &&
     messages[messages.length - 1].text === '';
 
   return (
     <div data-part="chat-view">
       {title && (
-        <div data-part="chat-header" style={{
-          padding: '6px 10px',
-          borderBottom: '1px solid var(--hc-color-border, #ccc)',
-          fontSize: 12,
-          fontWeight: 600,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexShrink: 0,
-        }}>
+        <div
+          data-part="chat-header"
+          style={{
+            padding: '6px 10px',
+            borderBottom: '1px solid var(--hc-color-border, #ccc)',
+            fontSize: 12,
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexShrink: 0,
+          }}
+        >
           <span>💬 {title}</span>
-          {isStreaming && onCancel && (
-            <Btn onClick={onCancel}>Cancel</Btn>
-          )}
+          {isStreaming && onCancel && <Btn onClick={onCancel}>Cancel</Btn>}
         </div>
       )}
 
@@ -108,22 +109,16 @@ export function StreamingChatView({
 
           return (
             <div key={m.id ?? i} data-part="chat-message" data-role={m.role}>
-              <div data-part="chat-role">
-                {m.role === 'user' ? 'You:' : m.role === 'system' ? 'System:' : 'AI:'}
-              </div>
+              <div data-part="chat-role">{m.role === 'user' ? 'You:' : m.role === 'system' ? 'System:' : 'AI:'}</div>
               <div style={{ fontSize: 11, whiteSpace: 'pre-wrap' }}>
                 {m.text}
                 {m.status === 'streaming' && m.text !== '' && <StreamingCursor />}
               </div>
               {m.status === 'error' && (
-                <div style={{ fontSize: 10, color: 'var(--hc-color-danger, #c00)', marginTop: 2 }}>
-                  ⚠️ Error
-                </div>
+                <div style={{ fontSize: 10, color: 'var(--hc-color-danger, #c00)', marginTop: 2 }}>⚠️ Error</div>
               )}
               {m.results && m.results.length > 0 && (
-                <div style={{ marginTop: 3, fontSize: 10, opacity: 0.8 }}>
-                  {m.results.length} result(s)
-                </div>
+                <div style={{ marginTop: 3, fontSize: 10, opacity: 0.8 }}>{m.results.length} result(s)</div>
               )}
               {m.actions && m.status !== 'streaming' && (
                 <div style={{ marginTop: 3, display: 'flex', gap: 3, flexWrap: 'wrap' }}>
@@ -143,7 +138,9 @@ export function StreamingChatView({
       {messages.length <= 1 && suggestions && !isStreaming && (
         <div data-part="chat-suggestions">
           {suggestions.map((s) => (
-            <Chip key={s} onClick={() => send(s)}>{s}</Chip>
+            <Chip key={s} onClick={() => send(s)}>
+              {s}
+            </Chip>
           ))}
         </div>
       )}
@@ -159,7 +156,9 @@ export function StreamingChatView({
           disabled={isStreaming}
         />
         {isStreaming ? (
-          onCancel ? <Btn onClick={onCancel}>⏹ Stop</Btn> : null
+          onCancel ? (
+            <Btn onClick={onCancel}>⏹ Stop</Btn>
+          ) : null
         ) : (
           <Btn onClick={() => send(input)}>Send</Btn>
         )}

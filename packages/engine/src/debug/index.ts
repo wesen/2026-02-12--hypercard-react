@@ -1,26 +1,24 @@
 export {
-  debugSlice,
-  debugReducer,
-  ingestEvent,
   clearEvents,
-  toggleCollapsed,
-  selectEvent,
-  setKindFilter,
-  setTextFilter,
-  selectDebugState,
-  selectDebugKinds,
-  selectFilteredDebugEvents,
-  selectSelectedDebugEvent,
   type DebugState,
   type DebugStateSlice,
+  debugReducer,
+  debugSlice,
+  ingestEvent,
+  selectDebugKinds,
+  selectDebugState,
+  selectEvent,
+  selectFilteredDebugEvents,
+  selectSelectedDebugEvent,
+  setKindFilter,
+  setTextFilter,
+  toggleCollapsed,
 } from './debugSlice';
-
-export {
-  useStandardDebugHooks,
-  sanitizeDebugValue,
-} from './useStandardDebugHooks';
-
 export {
   StandardDebugPane,
   type StandardDebugPaneProps,
 } from './StandardDebugPane';
+export {
+  sanitizeDebugValue,
+  useStandardDebugHooks,
+} from './useStandardDebugHooks';

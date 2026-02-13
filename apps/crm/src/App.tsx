@@ -1,14 +1,13 @@
 import {
+  ChatSidebar,
   HyperCardShell,
   StandardDebugPane,
-  useStandardDebugHooks,
   useChatStream,
-  ChatSidebar,
-  LayoutSplit,
+  useStandardDebugHooks,
 } from '@hypercard/engine';
 import { crmSharedActions, crmSharedSelectors } from './app/cardRuntime';
-import { CRM_STACK } from './domain/stack';
 import { crmResponseMatcher } from './chat/crmChatResponses';
+import { CRM_STACK } from './domain/stack';
 
 const snapshotSelector = (state: any) => ({
   navigation: state.navigation,
@@ -38,21 +37,13 @@ export function App() {
             isStreaming={chat.isStreaming}
             onSend={chat.send}
             onCancel={chat.cancel}
-            suggestions={[
-              'Show open deals',
-              'Who are my VIPs?',
-              'Pipeline summary',
-              'Recent activities',
-            ]}
+            suggestions={['Show open deals', 'Who are my VIPs?', 'Pipeline summary', 'Recent activities']}
             title="CRM Assistant"
             placeholder="Ask about contacts, deals, pipeline…"
             footer={<span>Model: fake-gpt-4 · Streaming</span>}
           />
           <div style={{ flex: '0 0 auto', height: '100%' }}>
-            <StandardDebugPane
-              title="CRM Debug"
-              snapshotSelector={snapshotSelector}
-            />
+            <StandardDebugPane title="CRM Debug" snapshotSelector={snapshotSelector} />
           </div>
         </div>
       )}

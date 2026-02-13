@@ -5,6 +5,12 @@ topics:
       description: Backend services
     - slug: websocket
       description: WebSocket lifecycle & events
+    - slug: review
+      description: Review and audit work
+    - slug: architecture
+      description: Architecture design and structure
+    - slug: code-quality
+      description: Code quality reviews and cleanup
 docTypes:
     - slug: design-doc
       description: Structured rationale and architecture notes

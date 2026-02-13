@@ -86,12 +86,15 @@ export const streamingChatSlice = createSlice({
       }
     },
 
-    finishStreaming(state, action: PayloadAction<{
-      conversationId?: string;
-      messageId: string;
-      actions?: ChatMessage['actions'];
-      results?: unknown[];
-    }>) {
+    finishStreaming(
+      state,
+      action: PayloadAction<{
+        conversationId?: string;
+        messageId: string;
+        actions?: ChatMessage['actions'];
+        results?: unknown[];
+      }>,
+    ) {
       const convId = action.payload.conversationId ?? state.activeConversationId;
       const conv = state.conversations[convId];
       if (!conv) return;
@@ -152,32 +155,20 @@ export interface StreamingChatStateSlice {
 
 const selectChatRoot = (state: StreamingChatStateSlice) => state.streamingChat;
 
-export const selectActiveConversationId = createSelector(
-  [selectChatRoot],
-  (chat) => chat.activeConversationId,
-);
+export const selectActiveConversationId = createSelector([selectChatRoot], (chat) => chat.activeConversationId);
 
 export const selectActiveConversation = createSelector(
   [selectChatRoot],
   (chat) => chat.conversations[chat.activeConversationId] ?? null,
 );
 
-export const selectActiveMessages = createSelector(
-  [selectActiveConversation],
-  (conv) => conv?.messages ?? [],
-);
+export const selectActiveMessages = createSelector([selectActiveConversation], (conv) => conv?.messages ?? []);
 
-export const selectIsStreaming = createSelector(
-  [selectActiveConversation],
-  (conv) => conv?.isStreaming ?? false,
-);
+export const selectIsStreaming = createSelector([selectActiveConversation], (conv) => conv?.isStreaming ?? false);
 
 export const selectStreamingMessageId = createSelector(
   [selectActiveConversation],
   (conv) => conv?.streamingMessageId ?? null,
 );
 
-export const selectChatError = createSelector(
-  [selectActiveConversation],
-  (conv) => conv?.error ?? null,
-);
+export const selectChatError = createSelector([selectActiveConversation], (conv) => conv?.error ?? null);

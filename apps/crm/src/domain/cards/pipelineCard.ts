@@ -1,4 +1,4 @@
-import { Act, Sel, ui, type CardDefinition } from '@hypercard/engine';
+import { Act, type CardDefinition, Sel, ui } from '@hypercard/engine';
 import type { CrmStateSlice } from '../types';
 
 export const pipelineCard: CardDefinition<CrmStateSlice> = {

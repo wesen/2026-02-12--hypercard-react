@@ -1,7 +1,7 @@
-import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { FilterBar } from './FilterBar';
+import { useState } from 'react';
 import type { FilterConfig } from '../../types';
+import { FilterBar } from './FilterBar';
 
 const filters: FilterConfig[] = [
   { field: 'category', type: 'select', options: ['All', 'Accessories', 'Kitchen', 'Home'] },
@@ -12,11 +12,7 @@ function FilterBarDemo() {
   const [values, setValues] = useState<Record<string, string>>({});
   return (
     <div>
-      <FilterBar
-        filters={filters}
-        values={values}
-        onChange={(f, v) => setValues((p) => ({ ...p, [f]: v }))}
-      />
+      <FilterBar filters={filters} values={values} onChange={(f, v) => setValues((p) => ({ ...p, [f]: v }))} />
       <pre style={{ fontSize: 10, marginTop: 8 }}>{JSON.stringify(values, null, 2)}</pre>
     </div>
   );

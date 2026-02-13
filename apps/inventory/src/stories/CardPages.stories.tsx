@@ -1,9 +1,9 @@
-import { useEffect } from 'react';
+import { HyperCardShell, type NavigationStateSlice, navigate, selectCurrentCardId } from '@hypercard/engine';
 import type { Meta, StoryObj } from '@storybook/react';
+import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { HyperCardShell, navigate, type NavigationStateSlice, selectCurrentCardId } from '@hypercard/engine';
-import { STACK } from '../domain/stack';
 import { inventorySharedActions, inventorySharedSelectors } from '../app/cardRuntime';
+import { STACK } from '../domain/stack';
 import { storeDecorator } from './decorators';
 
 type AppState = NavigationStateSlice;

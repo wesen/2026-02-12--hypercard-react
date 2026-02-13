@@ -1,5 +1,5 @@
 import type { StreamHandlers } from '../chatApi';
-import { defaultResponseMatcher, tokenize, type FakeResponse, type ResponseMatcher } from './fakeResponses';
+import { defaultResponseMatcher, type FakeResponse, type ResponseMatcher, tokenize } from './fakeResponses';
 
 export interface FakeStreamConfig {
   /** Delay before first token (ms) */
@@ -27,11 +27,7 @@ const DEFAULT_CONFIG: Required<FakeStreamConfig> = {
  * Works everywhere — no WebSocket or MSW required.
  * Returns a cancel function.
  */
-export function fakeStream(
-  userMessage: string,
-  handlers: StreamHandlers,
-  config: FakeStreamConfig = {},
-): () => void {
+export function fakeStream(userMessage: string, handlers: StreamHandlers, config: FakeStreamConfig = {}): () => void {
   const cfg = { ...DEFAULT_CONFIG, ...config };
   let cancelled = false;
   const timeouts: ReturnType<typeof setTimeout>[] = [];
@@ -56,7 +52,7 @@ export function fakeStream(
 
   // Get response
   const response: FakeResponse = cfg.responseMatcher(userMessage) ?? {
-    text: 'I\'m not sure how to help with that. Could you rephrase?',
+    text: "I'm not sure how to help with that. Could you rephrase?",
   };
 
   const tokens = tokenize(response.text);

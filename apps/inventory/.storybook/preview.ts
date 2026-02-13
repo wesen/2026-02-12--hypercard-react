@@ -4,9 +4,7 @@ import { HyperCardTheme } from '../../../packages/engine/src/theme/HyperCardThem
 import '../../../packages/engine/src/theme/base.css';
 
 const preview: Preview = {
-  decorators: [
-    (Story) => React.createElement(HyperCardTheme, null, React.createElement(Story)),
-  ],
+  decorators: [(Story) => React.createElement(HyperCardTheme, null, React.createElement(Story))],
   parameters: {
     controls: {
       matchers: {

@@ -1,7 +1,9 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { ChatMessage } from '@hypercard/engine';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-interface ChatState { messages: ChatMessage[] }
+interface ChatState {
+  messages: ChatMessage[];
+}
 
 const initialState: ChatState = { messages: [] };
 

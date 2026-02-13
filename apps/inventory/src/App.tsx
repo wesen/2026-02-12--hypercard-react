@@ -1,6 +1,6 @@
 import { HyperCardShell } from '@hypercard/engine';
-import { STACK } from './domain/stack';
 import { inventorySharedActions, inventorySharedSelectors } from './app/cardRuntime';
+import { STACK } from './domain/stack';
 
 export function App() {
   return (

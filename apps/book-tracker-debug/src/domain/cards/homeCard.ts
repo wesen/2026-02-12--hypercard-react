@@ -1,4 +1,4 @@
-import { Act, ui, type CardDefinition } from '@hypercard/engine';
+import { Act, type CardDefinition, ui } from '@hypercard/engine';
 import type { BooksStateSlice } from '../types';
 
 export const homeCard: CardDefinition<BooksStateSlice> = {
@@ -9,10 +9,7 @@ export const homeCard: CardDefinition<BooksStateSlice> = {
   ui: ui.menu({
     key: 'homeMenu',
     icon: '📚',
-    labels: [
-      { value: 'Book Tracker' },
-      { value: 'DSL runtime + debug pane', style: 'muted' },
-    ],
+    labels: [{ value: 'Book Tracker' }, { value: 'DSL runtime + debug pane', style: 'muted' }],
     buttons: [
       { label: 'Browse Books', action: Act('nav.go', { card: 'browse' }) },
       { label: 'Reading Now', action: Act('nav.go', { card: 'readingNow' }) },

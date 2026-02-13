@@ -19,7 +19,11 @@ export function FilterBar({ filters, values, onChange }: FilterBarProps) {
               value={values[f.field] ?? 'All'}
               onChange={(e) => onChange(f.field, e.target.value)}
             >
-              {f.options?.map((o) => <option key={o} value={o}>{o}</option>)}
+              {f.options?.map((o) => (
+                <option key={o} value={o}>
+                  {o}
+                </option>
+              ))}
             </select>
           );
         }

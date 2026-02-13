@@ -1,10 +1,10 @@
 import {
+  type HypercardRuntimeStateSlice,
   patchScopedState,
   resetScopedState,
   selectMergedScopedState,
   selectScopedState,
   setScopedState,
-  type HypercardRuntimeStateSlice,
 } from './runtimeStateSlice';
 import type {
   ActionDescriptor,
@@ -62,7 +62,8 @@ export interface RuntimeDebugContext {
   cardType: string;
 }
 
-export type RuntimeDebugEventInput = Omit<RuntimeDebugEvent, 'id' | 'ts' | 'stackId' | 'cardId' | 'cardType'> & Partial<Pick<RuntimeDebugEvent, 'stackId' | 'cardId' | 'cardType'>>;
+export type RuntimeDebugEventInput = Omit<RuntimeDebugEvent, 'id' | 'ts' | 'stackId' | 'cardId' | 'cardType'> &
+  Partial<Pick<RuntimeDebugEvent, 'stackId' | 'cardId' | 'cardType'>>;
 
 let runtimeDebugEventId = 0;
 
@@ -141,7 +142,7 @@ function selectorFromScope(
   if (name.startsWith('state.')) {
     return { found: true, value: deepGet(scoped, name.slice(6)) };
   }
-  if (Object.prototype.hasOwnProperty.call(scoped, name)) {
+  if (Object.hasOwn(scoped, name)) {
     return { found: true, value: scoped[name] };
   }
 
@@ -159,7 +160,7 @@ export function createSelectorResolver(
     const startedAt = Date.now();
 
     if (from === 'shared') {
-      const hasSharedSelector = Object.prototype.hasOwnProperty.call(sharedSelectors, name);
+      const hasSharedSelector = Object.hasOwn(sharedSelectors, name);
       const selector = hasSharedSelector ? sharedSelectors[name] : undefined;
       const value = selector?.(rootState, args, ctx);
       emitRuntimeDebugEvent(debugHooks, ctx, {
@@ -203,7 +204,7 @@ export function createSelectorResolver(
       }
     }
 
-    const hasSharedSelector = Object.prototype.hasOwnProperty.call(sharedSelectors, name);
+    const hasSharedSelector = Object.hasOwn(sharedSelectors, name);
     const sharedSelector = hasSharedSelector ? sharedSelectors[name] : undefined;
     const sharedValue = sharedSelector?.(rootState, args, ctx);
     if (hasSharedSelector) {
@@ -241,12 +242,7 @@ export function resolveValueExpr(
     return expr;
   }
 
-  if (
-    expr == null ||
-    typeof expr === 'string' ||
-    typeof expr === 'number' ||
-    typeof expr === 'boolean'
-  ) {
+  if (expr == null || typeof expr === 'string' || typeof expr === 'number' || typeof expr === 'boolean') {
     return expr;
   }
 
@@ -482,7 +478,7 @@ export function executeActionDescriptor(
     return;
   }
 
-  const hasSharedAction = Object.prototype.hasOwnProperty.call(sharedActions, actionType);
+  const hasSharedAction = Object.hasOwn(sharedActions, actionType);
   const shared = hasSharedAction ? sharedActions[actionType] : undefined;
   if (shared) {
     const result = shared(ctx, args);

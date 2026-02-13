@@ -1,6 +1,6 @@
 import type { FieldConfig } from '../../types';
-import { FieldRow } from './FieldRow';
 import { Btn } from './Btn';
+import { FieldRow } from './FieldRow';
 
 export interface FormViewProps {
   fields: FieldConfig[];
@@ -30,21 +30,14 @@ export function FormView({
     <div data-part="form-view">
       <div data-part="field-grid">
         {fields.map((f) => (
-          <FieldRow
-            key={f.id}
-            field={f}
-            value={values[f.id]}
-            onChange={(v) => onChange(f.id, v)}
-          />
+          <FieldRow key={f.id} field={f} value={values[f.id]} onChange={(v) => onChange(f.id, v)} />
         ))}
       </div>
       <div data-part="button-group">
         <Btn variant={submitVariant ?? 'primary'} onClick={handleSubmit}>
           {submitLabel ?? 'Submit'}
         </Btn>
-        {submitResult && (
-          <span data-part="field-value">{submitResult}</span>
-        )}
+        {submitResult && <span data-part="field-value">{submitResult}</span>}
       </div>
     </div>
   );

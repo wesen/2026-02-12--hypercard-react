@@ -1,23 +1,12 @@
-import {
-  Act,
-  type SharedActionRegistry,
-  type SharedSelectorRegistry,
-  type ChatMessage,
-} from '@hypercard/engine';
+import { Act, type ChatMessage, type SharedActionRegistry, type SharedSelectorRegistry } from '@hypercard/engine';
 import { itemColumns, salesColumns } from '../domain/columnConfigs';
 import { computeReportSections } from '../domain/reportCompute';
 import type { Item } from '../domain/types';
-import { selectMessages, type ChatStateSlice } from '../features/chat/selectors';
 import { addMessages } from '../features/chat/chatSlice';
-import { selectItems, type InventoryStateSlice } from '../features/inventory/selectors';
-import {
-  createItem,
-  deleteItem,
-  receiveStock,
-  saveItem,
-  updateQty,
-} from '../features/inventory/inventorySlice';
-import { selectSalesLog, type SalesStateSlice } from '../features/sales/selectors';
+import { type ChatStateSlice, selectMessages } from '../features/chat/selectors';
+import { createItem, deleteItem, receiveStock, saveItem, updateQty } from '../features/inventory/inventorySlice';
+import { type InventoryStateSlice, selectItems } from '../features/inventory/selectors';
+import { type SalesStateSlice, selectSalesLog } from '../features/sales/selectors';
 
 export type InventoryRootState = InventoryStateSlice & SalesStateSlice & ChatStateSlice;
 
@@ -83,10 +72,12 @@ export const inventorySharedActions: SharedActionRegistry<InventoryRootState> = 
 
   'inventory.saveItem': (ctx, args) => {
     const data = (args ?? {}) as Record<string, unknown>;
-    ctx.dispatch(saveItem({
-      sku: String(data.sku ?? ''),
-      edits: (data.edits ?? {}) as Partial<Item>,
-    }));
+    ctx.dispatch(
+      saveItem({
+        sku: String(data.sku ?? ''),
+        edits: (data.edits ?? {}) as Partial<Item>,
+      }),
+    );
     ctx.patchScopedState('card', { edits: {} });
   },
 

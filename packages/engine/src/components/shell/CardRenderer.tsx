@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 import { Fragment } from 'react';
+import type { RuntimeDebugEventInput } from '../../cards/runtime';
+import type { ActionDescriptor, CardDefinition, UINode } from '../../cards/types';
 import { Btn } from '../widgets/Btn';
 import { ChatView } from '../widgets/ChatView';
 import { DataTable } from '../widgets/DataTable';
@@ -8,8 +10,6 @@ import { FormView } from '../widgets/FormView';
 import { ListView } from '../widgets/ListView';
 import { MenuGrid } from '../widgets/MenuGrid';
 import { ReportView } from '../widgets/ReportView';
-import type { ActionDescriptor, CardDefinition, UINode } from '../../cards/types';
-import type { RuntimeDebugEventInput } from '../../cards/runtime';
 
 function isActionDescriptor(value: unknown): value is ActionDescriptor {
   return !!value && typeof value === 'object' && (value as { $?: unknown }).$ === 'act';
@@ -111,7 +111,11 @@ export function CardRenderer({ cardId, cardDef, runtime }: CardRendererProps) {
           <div key={keyHint} data-part="nav-bar" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
             {left.map((child, i) => renderNode(child as UINode, `${keyHint ?? node.key ?? 'toolbar'}:left:${i}`))}
             <span style={{ marginLeft: 'auto', fontSize: 10, opacity: 0.8 }}>
-              {typeof right === 'string' ? right : (right ? renderNode(right as UINode, `${keyHint ?? node.key ?? 'toolbar'}:right`) : null)}
+              {typeof right === 'string'
+                ? right
+                : right
+                  ? renderNode(right as UINode, `${keyHint ?? node.key ?? 'toolbar'}:right`)
+                  : null}
             </span>
           </div>
         );
@@ -139,11 +143,7 @@ export function CardRenderer({ cardId, cardDef, runtime }: CardRendererProps) {
         const label = runtime.resolve(node.label) ?? runtime.resolve(node.icon) ?? '';
         const disabled = Boolean(runtime.resolve(node.disabled));
         return (
-          <Btn
-            key={keyHint}
-            disabled={disabled}
-            onClick={() => emit(node, 'press', {})}
-          >
+          <Btn key={keyHint} disabled={disabled} onClick={() => emit(node, 'press', {})}>
             {String(label)}
           </Btn>
         );
@@ -161,12 +161,20 @@ export function CardRenderer({ cardId, cardDef, runtime }: CardRendererProps) {
           >
             {options.map((opt, i) => {
               if (typeof opt === 'string' || typeof opt === 'number') {
-                return <option key={i} value={String(opt)}>{String(opt)}</option>;
+                return (
+                  <option key={i} value={String(opt)}>
+                    {String(opt)}
+                  </option>
+                );
               }
               const o = (opt ?? {}) as Record<string, unknown>;
               const ov = String(o.value ?? '');
               const ol = String(o.label ?? ov);
-              return <option key={i} value={ov}>{ol}</option>;
+              return (
+                <option key={i} value={ov}>
+                  {ol}
+                </option>
+              );
             })}
           </select>
         );

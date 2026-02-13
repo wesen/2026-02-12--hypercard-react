@@ -1,4 +1,4 @@
-import { defineCardStack, type CardStackDefinition } from '@hypercard/engine';
+import { type CardStackDefinition, defineCardStack } from '@hypercard/engine';
 import {
   activityLogCard,
   addActivityCard,
@@ -8,8 +8,8 @@ import {
   companyDetailCard,
   contactDetailCard,
   contactsCard,
-  dealsCard,
   dealDetailCard,
+  dealsCard,
   homeCard,
   openDealsCard,
   pipelineCard,

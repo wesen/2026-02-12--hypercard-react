@@ -1,8 +1,10 @@
 import { createSlice } from '@reduxjs/toolkit';
-import type { SaleEntry } from '../../domain/types';
 import { SALES_LOG } from '../../domain/seedData';
+import type { SaleEntry } from '../../domain/types';
 
-interface SalesState { log: SaleEntry[] }
+interface SalesState {
+  log: SaleEntry[];
+}
 
 const initialState: SalesState = {
   log: JSON.parse(JSON.stringify(SALES_LOG)),

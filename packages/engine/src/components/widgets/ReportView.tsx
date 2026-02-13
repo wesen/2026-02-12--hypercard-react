@@ -1,4 +1,4 @@
-import type { ReportSection, ActionConfig } from '../../types';
+import type { ActionConfig, ReportSection } from '../../types';
 import { Btn } from './Btn';
 
 export interface ReportViewProps {

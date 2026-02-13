@@ -1,17 +1,7 @@
-import {
-  type SharedActionRegistry,
-  type SharedSelectorRegistry,
-} from '@hypercard/engine';
-import type { BooksStateSlice, BookStatus } from '../domain/types';
+import type { SharedActionRegistry, SharedSelectorRegistry } from '@hypercard/engine';
+import type { BookStatus, BooksStateSlice } from '../domain/types';
+import { createBook, deleteBook, markAllRead, resetDemo, saveBook, setStatus } from '../features/books/booksSlice';
 import { selectBooks } from '../features/books/selectors';
-import {
-  createBook,
-  deleteBook,
-  markAllRead,
-  resetDemo,
-  saveBook,
-  setStatus,
-} from '../features/books/booksSlice';
 
 export const bookSharedSelectors: SharedSelectorRegistry<BooksStateSlice> = {
   'books.all': (state) => selectBooks(state),
@@ -27,9 +17,7 @@ export const bookSharedSelectors: SharedSelectorRegistry<BooksStateSlice> = {
     const toRead = items.filter((b) => b.status === 'to-read').length;
     const reading = items.filter((b) => b.status === 'reading').length;
     const read = items.filter((b) => b.status === 'read').length;
-    const avgRating = total
-      ? (items.reduce((sum, b) => sum + Number(b.rating ?? 0), 0) / total).toFixed(1)
-      : '0.0';
+    const avgRating = total ? (items.reduce((sum, b) => sum + Number(b.rating ?? 0), 0) / total).toFixed(1) : '0.0';
 
     return [
       { label: 'Total Books', value: String(total) },
@@ -44,10 +32,12 @@ export const bookSharedSelectors: SharedSelectorRegistry<BooksStateSlice> = {
 export const bookSharedActions: SharedActionRegistry<BooksStateSlice> = {
   'books.save': (ctx, args) => {
     const data = (args ?? {}) as Record<string, unknown>;
-    ctx.dispatch(saveBook({
-      id: String(data.id ?? ''),
-      edits: (data.edits ?? {}) as Record<string, unknown>,
-    }));
+    ctx.dispatch(
+      saveBook({
+        id: String(data.id ?? ''),
+        edits: (data.edits ?? {}) as Record<string, unknown>,
+      }),
+    );
     ctx.patchScopedState('card', { edits: {} });
   },
   'books.delete': (ctx, args) => {
@@ -80,12 +70,14 @@ export const bookSharedActions: SharedActionRegistry<BooksStateSlice> = {
       return;
     }
 
-    ctx.dispatch(createBook({
-      title,
-      author,
-      status: values.status ? String(values.status) : 'to-read',
-      rating: Number(values.rating ?? 0),
-    }));
+    ctx.dispatch(
+      createBook({
+        title,
+        author,
+        status: values.status ? String(values.status) : 'to-read',
+        rating: Number(values.rating ?? 0),
+      }),
+    );
 
     ctx.patchScopedState('card', {
       submitResult: 'Book added',

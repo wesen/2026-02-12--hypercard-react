@@ -9,8 +9,7 @@ export function taskColumns(): ColumnConfig<Task>[] {
       key: 'status',
       label: 'STATUS',
       width: 55,
-      cellState: (v) =>
-        v === 'done' ? 'success' : v === 'doing' ? 'warning' : undefined,
+      cellState: (v) => (v === 'done' ? 'success' : v === 'doing' ? 'warning' : undefined),
       format: (v) => {
         if (v === 'done') return '✅';
         if (v === 'doing') return '🔥';

@@ -1,11 +1,11 @@
-import React, { useEffect, type ComponentType } from 'react';
+import { type ComponentType, useEffect } from 'react';
 import { Provider, useDispatch, useSelector } from 'react-redux';
+import type { CardStackDefinition, SharedActionRegistry, SharedSelectorRegistry } from '../cards/types';
 import { HyperCardShell } from '../components/shell/HyperCardShell';
 import { StandardDebugPane } from '../debug/StandardDebugPane';
 import { useStandardDebugHooks } from '../debug/useStandardDebugHooks';
 import { navigate } from '../features/navigation/navigationSlice';
-import { selectCurrentCardId, type NavigationStateSlice } from '../features/navigation/selectors';
-import type { CardStackDefinition, SharedActionRegistry, SharedSelectorRegistry } from '../cards/types';
+import { type NavigationStateSlice, selectCurrentCardId } from '../features/navigation/selectors';
 
 export interface CardStoriesConfig<TRootState = unknown> {
   /** The card stack definition */
@@ -92,10 +92,7 @@ export function createStoryHelpers<TRootState = unknown>(config: CardStoriesConf
         debugHooks={debugHooks}
         layoutMode="debugPane"
         renderDebugPane={() => (
-          <StandardDebugPane
-            title={debugTitle ?? `${stack.name} Debug`}
-            snapshotSelector={snapshotSelector}
-          />
+          <StandardDebugPane title={debugTitle ?? `${stack.name} Debug`} snapshotSelector={snapshotSelector} />
         )}
         navShortcuts={navShortcuts}
       />
@@ -113,10 +110,7 @@ export function createStoryHelpers<TRootState = unknown>(config: CardStoriesConf
         debugHooks={debugHooks}
         layoutMode="debugPane"
         renderDebugPane={() => (
-          <StandardDebugPane
-            title={debugTitle ?? `${stack.name} Debug`}
-            snapshotSelector={snapshotSelector}
-          />
+          <StandardDebugPane title={debugTitle ?? `${stack.name} Debug`} snapshotSelector={snapshotSelector} />
         )}
         navShortcuts={navShortcuts}
       />

@@ -1,6 +1,6 @@
-import { Act, Ev, Sel, ui, type CardDefinition } from '@hypercard/engine';
-import { CONTACT_DETAIL_FIELDS, CONTACT_COMPUTED } from './common';
+import { Act, type CardDefinition, Ev, Sel, ui } from '@hypercard/engine';
 import type { CrmStateSlice } from '../types';
+import { CONTACT_COMPUTED, CONTACT_DETAIL_FIELDS } from './common';
 
 export const contactDetailCard: CardDefinition<CrmStateSlice> = {
   id: 'contactDetail',
@@ -18,17 +18,25 @@ export const contactDetailCard: CardDefinition<CrmStateSlice> = {
       {
         label: 'Save',
         variant: 'primary',
-        action: Act('contacts.save', {
-          id: Sel('contacts.paramId', undefined, { from: 'shared' }),
-          edits: Sel('state.edits'),
-        }, { to: 'shared' }),
+        action: Act(
+          'contacts.save',
+          {
+            id: Sel('contacts.paramId', undefined, { from: 'shared' }),
+            edits: Sel('state.edits'),
+          },
+          { to: 'shared' },
+        ),
       },
       {
         label: 'Promote to Customer',
-        action: Act('contacts.setStatus', {
-          id: Sel('contacts.paramId', undefined, { from: 'shared' }),
-          status: 'customer',
-        }, { to: 'shared' }),
+        action: Act(
+          'contacts.setStatus',
+          {
+            id: Sel('contacts.paramId', undefined, { from: 'shared' }),
+            status: 'customer',
+          },
+          { to: 'shared' },
+        ),
       },
       {
         label: 'View Deals',
@@ -37,9 +45,13 @@ export const contactDetailCard: CardDefinition<CrmStateSlice> = {
       {
         label: 'Delete',
         variant: 'danger',
-        action: Act('contacts.delete', {
-          id: Sel('contacts.paramId', undefined, { from: 'shared' }),
-        }, { to: 'shared' }),
+        action: Act(
+          'contacts.delete',
+          {
+            id: Sel('contacts.paramId', undefined, { from: 'shared' }),
+          },
+          { to: 'shared' },
+        ),
       },
     ],
   }),

@@ -1,5 +1,5 @@
 export function formatCurrency(value: unknown): string {
-  return '$' + Number(value).toFixed(2);
+  return `$${Number(value).toFixed(2)}`;
 }
 
 export function qtyState(threshold: number) {

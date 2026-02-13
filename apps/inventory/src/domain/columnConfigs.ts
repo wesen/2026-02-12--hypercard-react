@@ -1,6 +1,6 @@
 import type { ColumnConfig } from '@hypercard/engine';
-import type { Item, SaleEntry } from './types';
 import { formatCurrency, qtyState } from './formatters';
+import type { Item, SaleEntry } from './types';
 
 export function itemColumns(threshold: number): ColumnConfig<Item>[] {
   return [

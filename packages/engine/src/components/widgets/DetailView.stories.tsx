@@ -1,9 +1,9 @@
-import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
+import { useState } from 'react';
+import type { ComputedFieldConfig, FieldConfig } from '../../types';
 import { DetailView } from './DetailView';
-import type { FieldConfig, ComputedFieldConfig } from '../../types';
 
-type Item = { sku: string; name: string; price: number; cost: number; qty: number; [key: string]: unknown }
+type Item = { sku: string; name: string; price: number; cost: number; qty: number; [key: string]: unknown };
 
 const record: Item = { sku: 'A-1002', name: 'Keychain - Brass', price: 9.99, cost: 3.25, qty: 2 };
 
@@ -15,7 +15,7 @@ const fields: FieldConfig[] = [
 ];
 
 const computed: ComputedFieldConfig<Item>[] = [
-  { id: 'margin', label: 'Margin', compute: (r) => ((r.price - r.cost) / r.price * 100).toFixed(1) + '%' },
+  { id: 'margin', label: 'Margin', compute: (r) => `${(((r.price - r.cost) / r.price) * 100).toFixed(1)}%` },
 ];
 
 function DetailDemo() {

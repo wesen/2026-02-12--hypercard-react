@@ -1,0 +1,43 @@
+# HyperCard Review Metrics
+generated_at=2026-02-13T20:47:25Z
+
+## Build/Setup Checks
+typecheck_command=npm run typecheck
+build_command=npm run build
+lint_command=npm run lint
+
+## Duplication Signals
+state.setField_bindings=16
+patchScopedState_edits_resets=12
+json_stringify_clone_sites=9
+as_any_casts=17
+manual_configure_store_sites=4
+create_app_store_sites=2
+
+## Identical File Hash Clusters
+[vite.config.ts]
+d3fcbacf7b433470f7e47fb2e1e67181  apps/book-tracker-debug/vite.config.ts
+d3fcbacf7b433470f7e47fb2e1e67181  apps/crm/vite.config.ts
+d3fcbacf7b433470f7e47fb2e1e67181  apps/inventory/vite.config.ts
+d3fcbacf7b433470f7e47fb2e1e67181  apps/todo/vite.config.ts
+
+[main.tsx]
+6fa5791a0fdf5e8fd5f1abc03a41730f  apps/book-tracker-debug/src/main.tsx
+6fa5791a0fdf5e8fd5f1abc03a41730f  apps/crm/src/main.tsx
+36207e3fd144d691c65db3aa12773294  apps/inventory/src/main.tsx
+0443821b6b9d386202b4b5feb2811ffe  apps/todo/src/main.tsx
+
+[app/store.ts]
+2995b91528d31703fb39906c3caf48bd  apps/book-tracker-debug/src/app/store.ts
+bbd2f4133a1d878003a2d355781571de  apps/crm/src/app/store.ts
+c02ed88233b0b3fe97571b6400bec0e7  apps/inventory/src/app/store.ts
+869324748f8f09bcda22af4b2b8fe293  apps/todo/src/app/store.ts
+
+## API Drift Signals
+missing_dispatchDSLAction_symbol_in_code=1
+missing_defineActionRegistry_symbol_in_code=1
+missing_selectDomainData_symbol_in_code=1
+action_descriptor_to_usage_sites=0
+
+## Test Surface
+test_file_count=0

@@ -34,7 +34,10 @@ export const companiesSlice = createSlice({
     deleteCompany(state, action: PayloadAction<{ id: string }>) {
       state.items = state.items.filter((c) => c.id !== action.payload.id);
     },
-    createCompany(state, action: PayloadAction<{ name: string; industry: string; website: string; size: Company['size'] }>) {
+    createCompany(
+      state,
+      action: PayloadAction<{ name: string; industry: string; website: string; size: Company['size'] }>,
+    ) {
       const p = action.payload;
       state.items.push({
         id: nextId(state.items),

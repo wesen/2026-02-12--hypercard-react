@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { ListView } from './ListView';
 import type { ColumnConfig, FilterConfig } from '../../types';
+import { ListView } from './ListView';
 
-type Item = { id: string; name: string; qty: number; price: number; category: string; [key: string]: unknown }
+type Item = { id: string; name: string; qty: number; price: number; category: string; [key: string]: unknown };
 
 const data: Item[] = [
   { id: '1', name: 'Keychain', qty: 2, price: 9.99, category: 'Accessories' },

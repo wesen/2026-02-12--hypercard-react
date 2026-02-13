@@ -1,7 +1,7 @@
-import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { FormView } from './FormView';
+import { useState } from 'react';
 import type { FieldConfig } from '../../types';
+import { FormView } from './FormView';
 
 const fields: FieldConfig[] = [
   { id: 'name', label: 'Name', type: 'text', placeholder: 'Enter name', required: true },
@@ -17,7 +17,9 @@ function FormDemo() {
       fields={fields}
       values={values}
       onChange={(id, v) => setValues((p) => ({ ...p, [id]: v }))}
-      onSubmit={(v) => { setResult(`Created: ${JSON.stringify(v)}`); }}
+      onSubmit={(v) => {
+        setResult(`Created: ${JSON.stringify(v)}`);
+      }}
       submitResult={result}
       submitLabel="💾 Create"
     />

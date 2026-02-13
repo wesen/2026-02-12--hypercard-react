@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type ReactNode } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import type { ChatMessage } from '../../types';
 import { Btn } from './Btn';
 import { Chip } from './Chip';
@@ -12,20 +12,13 @@ export interface ChatViewProps {
   placeholder?: string;
 }
 
-export function ChatView({
-  messages,
-  suggestions,
-  onSend,
-  onAction,
-  renderResults,
-  placeholder,
-}: ChatViewProps) {
+export function ChatView({ messages, suggestions, onSend, onAction, renderResults, placeholder }: ChatViewProps) {
   const [input, setInput] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, []);
 
   function send(text: string) {
     if (!text.trim()) return;
@@ -38,9 +31,7 @@ export function ChatView({
       <div data-part="chat-timeline">
         {messages.map((m, i) => (
           <div key={i} data-part="chat-message" data-role={m.role}>
-            <div data-part="chat-role">
-              {m.role === 'user' ? 'You:' : 'AI:'}
-            </div>
+            <div data-part="chat-role">{m.role === 'user' ? 'You:' : 'AI:'}</div>
             <div style={{ fontSize: 11, whiteSpace: 'pre-wrap' }}>{m.text}</div>
             {m.results && m.results.length > 0 && renderResults && (
               <div style={{ marginTop: 3 }}>{renderResults(m.results)}</div>
@@ -61,7 +52,9 @@ export function ChatView({
       {messages.length <= 1 && suggestions && (
         <div data-part="chat-suggestions">
           {suggestions.map((s) => (
-            <Chip key={s} onClick={() => send(s)}>{s}</Chip>
+            <Chip key={s} onClick={() => send(s)}>
+              {s}
+            </Chip>
           ))}
         </div>
       )}

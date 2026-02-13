@@ -1,8 +1,10 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { Task } from '../../domain/types';
 import { TASKS } from '../../domain/seedData';
+import type { Task } from '../../domain/types';
 
-interface TasksState { tasks: Task[] }
+interface TasksState {
+  tasks: Task[];
+}
 
 const initialState: TasksState = {
   tasks: JSON.parse(JSON.stringify(TASKS)),

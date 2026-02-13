@@ -1,8 +1,4 @@
-import {
-  HyperCardShell,
-  StandardDebugPane,
-  useStandardDebugHooks,
-} from '@hypercard/engine';
+import { HyperCardShell, StandardDebugPane, useStandardDebugHooks } from '@hypercard/engine';
 import { bookSharedActions, bookSharedSelectors } from './app/cardRuntime';
 import { BOOK_STACK } from './domain/stack';
 
@@ -22,12 +18,7 @@ export function App() {
       sharedActions={bookSharedActions}
       debugHooks={debugHooks}
       layoutMode="debugPane"
-      renderDebugPane={() => (
-        <StandardDebugPane
-          title="Book Tracker Debug"
-          snapshotSelector={snapshotSelector}
-        />
-      )}
+      renderDebugPane={() => <StandardDebugPane title="Book Tracker Debug" snapshotSelector={snapshotSelector} />}
       navShortcuts={[
         { card: 'home', icon: '🏠' },
         { card: 'browse', icon: '📋' },

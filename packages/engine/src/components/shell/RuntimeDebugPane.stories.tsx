@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { RuntimeDebugPane } from './RuntimeDebugPane';
+import { useMemo, useState } from 'react';
 import type { RuntimeDebugEvent } from '../../cards/runtime';
+import { RuntimeDebugPane } from './RuntimeDebugPane';
 
 function makeEvents(): RuntimeDebugEvent[] {
   const now = new Date();
@@ -58,10 +58,7 @@ function DemoPane() {
   const [events] = useState<RuntimeDebugEvent[]>(() => makeEvents());
   const [selectedId, setSelectedId] = useState<number | null>(events[events.length - 1]?.id ?? null);
 
-  const kinds = useMemo(
-    () => Array.from(new Set(events.map((event) => event.kind))).sort(),
-    [events],
-  );
+  const kinds = useMemo(() => Array.from(new Set(events.map((event) => event.kind))).sort(), [events]);
 
   const filteredEvents = useMemo(() => {
     const text = textFilter.trim().toLowerCase();

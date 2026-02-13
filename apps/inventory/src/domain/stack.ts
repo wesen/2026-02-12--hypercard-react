@@ -1,12 +1,4 @@
-import {
-  Act,
-  Ev,
-  Sel,
-  defineCardStack,
-  ui,
-  type CardStackDefinition,
-  type FieldConfig,
-} from '@hypercard/engine';
+import { Act, type CardStackDefinition, defineCardStack, Ev, type FieldConfig, Sel, ui } from '@hypercard/engine';
 import { itemColumns, salesColumns } from './columnConfigs';
 import { inventoryComputedFields } from './computeFields';
 import { formatCurrency } from './formatters';
@@ -60,10 +52,7 @@ export const STACK: CardStackDefinition = defineCardStack({
       ui: ui.menu({
         key: 'homeMenu',
         icon: '📇',
-        labels: [
-          { value: 'Welcome to Shop Inventory' },
-          { value: 'CardDefinition + JS API', style: 'muted' },
-        ],
+        labels: [{ value: 'Welcome to Shop Inventory' }, { value: 'CardDefinition + JS API', style: 'muted' }],
         buttons: [
           { label: '📋 Browse Items', action: Act('nav.go', { card: 'browse' }) },
           { label: '⚠️ Low Stock', action: Act('nav.go', { card: 'lowStock' }) },
@@ -133,7 +122,9 @@ export const STACK: CardStackDefinition = defineCardStack({
         key: 'salesList',
         items: Sel('sales.log', undefined, { from: 'shared' }),
         columns: Sel('inventory.columns', { kind: 'sales' }, { from: 'shared' }),
-        filters: [{ field: 'date', type: 'select', options: ['All', '2026-02-10', '2026-02-09', '2026-02-08', '2026-02-07'] }],
+        filters: [
+          { field: 'date', type: 'select', options: ['All', '2026-02-10', '2026-02-09', '2026-02-08', '2026-02-07'] },
+        ],
         rowKey: 'id',
         footer: { type: 'sum', field: 'total', label: 'Total Revenue', format: formatCurrency },
       }),
@@ -161,12 +152,48 @@ export const STACK: CardStackDefinition = defineCardStack({
         computed: inventoryComputedFields,
         edits: Sel('state.edits'),
         actions: [
-          { label: '🛒 Sell 1', action: Act('inventory.updateQty', { sku: Sel('inventory.paramSku', undefined, { from: 'shared' }), delta: -1 }), variant: 'primary' },
-          { label: '🛒 Sell 5', action: Act('inventory.updateQty', { sku: Sel('inventory.paramSku', undefined, { from: 'shared' }), delta: -5 }) },
-          { label: '📦 Receive +5', action: Act('inventory.updateQty', { sku: Sel('inventory.paramSku', undefined, { from: 'shared' }), delta: 5 }) },
-          { label: '📦 Receive +10', action: Act('inventory.updateQty', { sku: Sel('inventory.paramSku', undefined, { from: 'shared' }), delta: 10 }) },
-          { label: '✏️ Save Changes', action: Act('inventory.saveItem', { sku: Sel('inventory.paramSku', undefined, { from: 'shared' }), edits: Sel('state.edits') }), variant: 'primary' },
-          { label: '🗑 Delete', action: Act('inventory.deleteItem', { sku: Sel('inventory.paramSku', undefined, { from: 'shared' }) }), variant: 'danger' },
+          {
+            label: '🛒 Sell 1',
+            action: Act('inventory.updateQty', {
+              sku: Sel('inventory.paramSku', undefined, { from: 'shared' }),
+              delta: -1,
+            }),
+            variant: 'primary',
+          },
+          {
+            label: '🛒 Sell 5',
+            action: Act('inventory.updateQty', {
+              sku: Sel('inventory.paramSku', undefined, { from: 'shared' }),
+              delta: -5,
+            }),
+          },
+          {
+            label: '📦 Receive +5',
+            action: Act('inventory.updateQty', {
+              sku: Sel('inventory.paramSku', undefined, { from: 'shared' }),
+              delta: 5,
+            }),
+          },
+          {
+            label: '📦 Receive +10',
+            action: Act('inventory.updateQty', {
+              sku: Sel('inventory.paramSku', undefined, { from: 'shared' }),
+              delta: 10,
+            }),
+          },
+          {
+            label: '✏️ Save Changes',
+            action: Act('inventory.saveItem', {
+              sku: Sel('inventory.paramSku', undefined, { from: 'shared' }),
+              edits: Sel('state.edits'),
+            }),
+            variant: 'primary',
+          },
+          {
+            label: '🗑 Delete',
+            action: Act('inventory.deleteItem', { sku: Sel('inventory.paramSku', undefined, { from: 'shared' }) }),
+            variant: 'danger',
+          },
         ],
       }),
       bindings: {
@@ -310,7 +337,7 @@ export const STACK: CardStackDefinition = defineCardStack({
       ui: ui.chat({
         key: 'assistantChat',
         messages: Sel('chat.messages', undefined, { from: 'shared' }),
-        suggestions: ['What\'s low stock?', 'Best selling item?', 'Show accessories', 'Total inventory value'],
+        suggestions: ["What's low stock?", 'Best selling item?', 'Show accessories', 'Total inventory value'],
       }),
       bindings: {
         assistantChat: {

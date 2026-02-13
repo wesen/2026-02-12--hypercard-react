@@ -58,13 +58,6 @@ export const booksSlice = createSlice({
   },
 });
 
-export const {
-  saveBook,
-  setStatus,
-  deleteBook,
-  markAllRead,
-  resetDemo,
-  createBook,
-} = booksSlice.actions;
+export const { saveBook, setStatus, deleteBook, markAllRead, resetDemo, createBook } = booksSlice.actions;
 
 export const booksReducer = booksSlice.reducer;

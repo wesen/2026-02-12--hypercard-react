@@ -49,7 +49,17 @@ export function RuntimeDebugPane({
 }: RuntimeDebugPaneProps) {
   if (collapsed) {
     return (
-      <aside style={{ width: 44, height: '100%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 8, borderLeft: '1px solid rgba(0,0,0,0.08)' }}>
+      <aside
+        style={{
+          width: 44,
+          height: '100%',
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'center',
+          paddingTop: 8,
+          borderLeft: '1px solid rgba(0,0,0,0.08)',
+        }}
+      >
         <button type="button" onClick={onToggleCollapsed} title="Open debug pane">
           ▶
         </button>
@@ -58,13 +68,30 @@ export function RuntimeDebugPane({
   }
 
   return (
-    <aside style={{ width: 420, maxWidth: '48vw', minWidth: 320, height: '100%', borderLeft: '1px solid rgba(0,0,0,0.08)', background: '#f7f7f7', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 8, borderBottom: '1px solid rgba(0,0,0,0.1)' }}>
+    <aside
+      style={{
+        width: 420,
+        maxWidth: '48vw',
+        minWidth: 320,
+        height: '100%',
+        borderLeft: '1px solid rgba(0,0,0,0.08)',
+        background: '#f7f7f7',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <div
+        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 8, borderBottom: '1px solid rgba(0,0,0,0.1)' }}
+      >
         <strong style={{ fontSize: 12 }}>{title}</strong>
         <span style={{ fontSize: 11, opacity: 0.7 }}>{events.length} events</span>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
-          <button type="button" onClick={onClear}>Clear</button>
-          <button type="button" onClick={onToggleCollapsed} title="Collapse debug pane">◀</button>
+          <button type="button" onClick={onClear}>
+            Clear
+          </button>
+          <button type="button" onClick={onToggleCollapsed} title="Collapse debug pane">
+            ◀
+          </button>
         </div>
       </div>
 
@@ -82,44 +109,49 @@ export function RuntimeDebugPane({
         >
           <option value="all">all kinds</option>
           {kinds.map((kind) => (
-            <option key={kind} value={kind}>{kind}</option>
+            <option key={kind} value={kind}>
+              {kind}
+            </option>
           ))}
         </select>
       </div>
 
       <div style={{ display: 'grid', gridTemplateRows: '1.2fr 1fr 1.1fr', minHeight: 0, flex: 1 }}>
         <section style={{ minHeight: 0, overflow: 'auto', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-          {filteredEvents.slice().reverse().map((event) => {
-            const active = selectedEvent?.id === event.id;
-            return (
-              <button
-                key={event.id}
-                type="button"
-                onClick={() => onSelectEvent(event.id)}
-                style={{
-                  width: '100%',
-                  textAlign: 'left',
-                  fontSize: 11,
-                  border: 0,
-                  borderBottom: '1px solid rgba(0,0,0,0.05)',
-                  padding: '6px 8px',
-                  background: active ? 'rgba(46, 120, 255, 0.12)' : 'transparent',
-                  cursor: 'pointer',
-                }}
-              >
-                <div style={{ display: 'flex', gap: 6, alignItems: 'baseline' }}>
-                  <code style={{ fontSize: 10, opacity: 0.65 }}>#{event.id}</code>
-                  <strong>{event.kind}</strong>
-                  <span style={{ marginLeft: 'auto', opacity: 0.7 }}>{formatTs(event.ts)}</span>
-                </div>
-                <div style={{ opacity: 0.75, marginTop: 2 }}>
-                  {event.cardId}
-                  {event.actionType ? ` · ${event.actionType}` : ''}
-                  {event.selectorName ? ` · ${event.selectorName}` : ''}
-                </div>
-              </button>
-            );
-          })}
+          {filteredEvents
+            .slice()
+            .reverse()
+            .map((event) => {
+              const active = selectedEvent?.id === event.id;
+              return (
+                <button
+                  key={event.id}
+                  type="button"
+                  onClick={() => onSelectEvent(event.id)}
+                  style={{
+                    width: '100%',
+                    textAlign: 'left',
+                    fontSize: 11,
+                    border: 0,
+                    borderBottom: '1px solid rgba(0,0,0,0.05)',
+                    padding: '6px 8px',
+                    background: active ? 'rgba(46, 120, 255, 0.12)' : 'transparent',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'baseline' }}>
+                    <code style={{ fontSize: 10, opacity: 0.65 }}>#{event.id}</code>
+                    <strong>{event.kind}</strong>
+                    <span style={{ marginLeft: 'auto', opacity: 0.7 }}>{formatTs(event.ts)}</span>
+                  </div>
+                  <div style={{ opacity: 0.75, marginTop: 2 }}>
+                    {event.cardId}
+                    {event.actionType ? ` · ${event.actionType}` : ''}
+                    {event.selectorName ? ` · ${event.selectorName}` : ''}
+                  </div>
+                </button>
+              );
+            })}
         </section>
 
         <section style={{ minHeight: 0, overflow: 'auto', borderBottom: '1px solid rgba(0,0,0,0.08)', padding: 8 }}>

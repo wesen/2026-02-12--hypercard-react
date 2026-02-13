@@ -1,12 +1,5 @@
-import { defineCardStack, type CardStackDefinition } from '@hypercard/engine';
-import {
-  addBookCard,
-  bookDetailCard,
-  browseCard,
-  homeCard,
-  readingNowCard,
-  readingReportCard,
-} from './cards';
+import { type CardStackDefinition, defineCardStack } from '@hypercard/engine';
+import { addBookCard, bookDetailCard, browseCard, homeCard, readingNowCard, readingReportCard } from './cards';
 import type { BooksStateSlice } from './types';
 
 export const BOOK_STACK: CardStackDefinition<BooksStateSlice> = defineCardStack({

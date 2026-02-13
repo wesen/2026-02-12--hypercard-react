@@ -3,6 +3,8 @@
   "references": [
     { "path": "packages/engine" },
     { "path": "apps/inventory" },
-    { "path": "apps/book-tracker-debug" }
+    { "path": "apps/book-tracker-debug" },
+    { "path": "apps/todo" },
+    { "path": "apps/crm" }
   ]
 }

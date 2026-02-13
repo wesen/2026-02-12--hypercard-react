@@ -1,12 +1,4 @@
-import {
-  Act,
-  Ev,
-  Sel,
-  defineCardStack,
-  ui,
-  type CardStackDefinition,
-  type FieldConfig,
-} from '@hypercard/engine';
+import { Act, type CardStackDefinition, defineCardStack, Ev, type FieldConfig, Sel, ui } from '@hypercard/engine';
 
 const TASK_DETAIL_FIELDS: FieldConfig[] = [
   { id: 'id', label: 'ID', type: 'readonly' },
@@ -41,10 +33,7 @@ export const STACK: CardStackDefinition = defineCardStack({
       ui: ui.menu({
         key: 'homeMenu',
         icon: '✅',
-        labels: [
-          { value: 'My Tasks' },
-          { value: 'Get things done', style: 'muted' },
-        ],
+        labels: [{ value: 'My Tasks' }, { value: 'Get things done', style: 'muted' }],
         buttons: [
           { label: '📋 All Tasks', action: Act('nav.go', { card: 'browse' }) },
           { label: '🔥 In Progress', action: Act('nav.go', { card: 'inProgress' }) },
@@ -133,10 +122,32 @@ export const STACK: CardStackDefinition = defineCardStack({
         fields: TASK_DETAIL_FIELDS,
         edits: Sel('state.edits'),
         actions: [
-          { label: '▶️ Start', action: Act('tasks.setStatus', { id: Sel('tasks.paramId', undefined, { from: 'shared' }), status: 'doing' }), variant: 'primary' },
-          { label: '✅ Complete', action: Act('tasks.setStatus', { id: Sel('tasks.paramId', undefined, { from: 'shared' }), status: 'done' }), variant: 'primary' },
-          { label: '✏️ Save', action: Act('tasks.save', { id: Sel('tasks.paramId', undefined, { from: 'shared' }), edits: Sel('state.edits') }), variant: 'primary' },
-          { label: '🗑 Delete', action: Act('tasks.delete', { id: Sel('tasks.paramId', undefined, { from: 'shared' }) }), variant: 'danger' },
+          {
+            label: '▶️ Start',
+            action: Act('tasks.setStatus', {
+              id: Sel('tasks.paramId', undefined, { from: 'shared' }),
+              status: 'doing',
+            }),
+            variant: 'primary',
+          },
+          {
+            label: '✅ Complete',
+            action: Act('tasks.setStatus', { id: Sel('tasks.paramId', undefined, { from: 'shared' }), status: 'done' }),
+            variant: 'primary',
+          },
+          {
+            label: '✏️ Save',
+            action: Act('tasks.save', {
+              id: Sel('tasks.paramId', undefined, { from: 'shared' }),
+              edits: Sel('state.edits'),
+            }),
+            variant: 'primary',
+          },
+          {
+            label: '🗑 Delete',
+            action: Act('tasks.delete', { id: Sel('tasks.paramId', undefined, { from: 'shared' }) }),
+            variant: 'danger',
+          },
         ],
       }),
       bindings: {

@@ -4,13 +4,7 @@ export type ActionScope = LocalScope | 'shared' | 'auto';
 
 export type PrimitiveExpr = null | boolean | number | string;
 
-export type ValueExpr =
-  | PrimitiveExpr
-  | ValueExpr[]
-  | { [k: string]: ValueExpr }
-  | SelExpr
-  | ParamExpr
-  | EvExpr;
+export type ValueExpr = PrimitiveExpr | ValueExpr[] | { [k: string]: ValueExpr } | SelExpr | ParamExpr | EvExpr;
 
 export interface SelExpr {
   $: 'sel';
@@ -92,15 +86,9 @@ export type ScopeActionRegistry<TRootState = unknown> = Partial<
   Record<LocalScope, Record<string, CardActionHandler<TRootState>>>
 >;
 
-export type SharedSelectorRegistry<TRootState = unknown> = Record<
-  string,
-  CardSelectorFn<TRootState>
->;
+export type SharedSelectorRegistry<TRootState = unknown> = Record<string, CardSelectorFn<TRootState>>;
 
-export type SharedActionRegistry<TRootState = unknown> = Record<
-  string,
-  CardActionHandler<TRootState>
->;
+export type SharedActionRegistry<TRootState = unknown> = Record<string, CardActionHandler<TRootState>>;
 
 export interface CardDefinition<TRootState = unknown> {
   id: string;

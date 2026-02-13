@@ -1,8 +1,8 @@
-import { configureStore } from '@reduxjs/toolkit';
 import { hypercardRuntimeReducer, navigationReducer, notificationsReducer } from '@hypercard/engine';
+import { configureStore } from '@reduxjs/toolkit';
+import { chatReducer } from '../features/chat/chatSlice';
 import { inventoryReducer } from '../features/inventory/inventorySlice';
 import { salesReducer } from '../features/sales/salesSlice';
-import { chatReducer } from '../features/chat/chatSlice';
 
 export const store = configureStore({
   reducer: {

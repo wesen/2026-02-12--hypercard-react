@@ -12,14 +12,18 @@ export function FieldRow({ field, value, onChange, style }: FieldRowProps) {
   const { id, label, type, options, step, placeholder, required } = field;
 
   const labelEl = (
-    <span key={id + 'l'} data-part="field-label">{label ?? id}:</span>
+    <span key={`${id}l`} data-part="field-label">
+      {label ?? id}:
+    </span>
   );
 
   if (type === 'readonly' || type === 'label') {
     return (
       <>
         {labelEl}
-        <span data-part="field-value" style={style}>{String(value ?? '')}</span>
+        <span data-part="field-value" style={style}>
+          {String(value ?? '')}
+        </span>
       </>
     );
   }
@@ -45,7 +49,11 @@ export function FieldRow({ field, value, onChange, style }: FieldRowProps) {
           onChange={(e) => onChange(e.target.value)}
           style={{ padding: '2px 4px', ...style }}
         >
-          {options?.map((o) => <option key={o} value={o}>{o}</option>)}
+          {options?.map((o) => (
+            <option key={o} value={o}>
+              {o}
+            </option>
+          ))}
         </select>
       </>
     );
@@ -58,9 +66,7 @@ export function FieldRow({ field, value, onChange, style }: FieldRowProps) {
         data-part="field-input"
         type={type === 'number' ? 'number' : 'text'}
         value={String(value ?? '')}
-        onChange={(e) =>
-          onChange(type === 'number' ? Number(e.target.value) : e.target.value)
-        }
+        onChange={(e) => onChange(type === 'number' ? Number(e.target.value) : e.target.value)}
         step={step}
         placeholder={placeholder}
         required={required}

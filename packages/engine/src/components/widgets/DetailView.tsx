@@ -1,8 +1,8 @@
-import { Fragment } from 'react';
 import type { CSSProperties } from 'react';
-import type { FieldConfig, ComputedFieldConfig, ActionConfig } from '../../types';
-import { FieldRow } from './FieldRow';
+import { Fragment } from 'react';
+import type { ActionConfig, ComputedFieldConfig, FieldConfig } from '../../types';
 import { Btn } from './Btn';
+import { FieldRow } from './FieldRow';
 
 export interface DetailViewProps<T = Record<string, unknown>> {
   record: T;
@@ -33,15 +33,7 @@ export function DetailView<T extends Record<string, unknown>>({
         {fields.map((f) => {
           const val = current[f.id as keyof T] as unknown;
           const highlight = fieldHighlight?.(f.id, val, current);
-          return (
-            <FieldRow
-              key={f.id}
-              field={f}
-              value={val}
-              onChange={(v) => onEdit(f.id, v)}
-              style={highlight}
-            />
-          );
+          return <FieldRow key={f.id} field={f} value={val} onChange={(v) => onEdit(f.id, v)} style={highlight} />;
         })}
         {computed?.map((cf) => (
           <Fragment key={cf.id}>
@@ -53,11 +45,7 @@ export function DetailView<T extends Record<string, unknown>>({
       {actions && (
         <div data-part="button-group">
           {actions.map((a) => (
-            <Btn
-              key={a.label}
-              variant={a.variant}
-              onClick={() => onAction?.(a.action)}
-            >
+            <Btn key={a.label} variant={a.variant} onClick={() => onAction?.(a.action)}>
               {a.label}
             </Btn>
           ))}

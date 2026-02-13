@@ -60,10 +60,7 @@ function ensureStack(state: HypercardRuntimeState, stackId: string): RuntimeStac
   return state.stacks[stackId];
 }
 
-function ensureCard(
-  state: HypercardRuntimeState,
-  payload: RuntimeTarget,
-): RuntimeCardState {
+function ensureCard(state: HypercardRuntimeState, payload: RuntimeTarget): RuntimeCardState {
   const stack = ensureStack(state, payload.stackId);
 
   if (!stack.cardTypes[payload.cardType]) {
@@ -105,10 +102,7 @@ function deepSet(target: Record<string, unknown>, path: string, value: unknown) 
   cur[keys[keys.length - 1]] = value;
 }
 
-function getScopeStateRef(
-  state: HypercardRuntimeState,
-  payload: ScopedStatePayload,
-): Record<string, unknown> {
+function getScopeStateRef(state: HypercardRuntimeState, payload: ScopedStatePayload): Record<string, unknown> {
   const stack = ensureStack(state, payload.stackId);
   const card = ensureCard(state, payload);
 
@@ -125,7 +119,6 @@ function getScopeStateRef(
     case 'cardType':
       if (!stack.cardTypes[payload.cardType]) stack.cardTypes[payload.cardType] = { state: {} };
       return stack.cardTypes[payload.cardType].state;
-    case 'card':
     default:
       return card.state;
   }
@@ -199,7 +192,6 @@ const runtimeSlice = createSlice({
           if (!stack.cardTypes[payload.cardType]) stack.cardTypes[payload.cardType] = { state: {} };
           stack.cardTypes[payload.cardType].state = {};
           return;
-        case 'card':
         default:
           card.state = {};
       }
@@ -207,12 +199,7 @@ const runtimeSlice = createSlice({
   },
 });
 
-export const {
-  ensureCardRuntime,
-  setScopedState,
-  patchScopedState,
-  resetScopedState,
-} = runtimeSlice.actions;
+export const { ensureCardRuntime, setScopedState, patchScopedState, resetScopedState } = runtimeSlice.actions;
 
 export const hypercardRuntimeReducer = runtimeSlice.reducer;
 
@@ -224,10 +211,7 @@ export interface ScopedLookup extends RuntimeTarget {
   scope: LocalScope;
 }
 
-export function selectScopedState(
-  root: HypercardRuntimeStateSlice,
-  lookup: ScopedLookup,
-): Record<string, unknown> {
+export function selectScopedState(root: HypercardRuntimeStateSlice, lookup: ScopedLookup): Record<string, unknown> {
   const runtime = root.hypercardRuntime;
   const stack = runtime.stacks[lookup.stackId];
   if (!stack) return {};
@@ -245,7 +229,6 @@ export function selectScopedState(
     }
     case 'cardType':
       return stack.cardTypes[lookup.cardType]?.state ?? {};
-    case 'card':
     default:
       return card?.state ?? {};
   }

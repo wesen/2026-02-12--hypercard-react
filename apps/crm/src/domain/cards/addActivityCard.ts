@@ -1,6 +1,6 @@
-import { Act, Ev, Sel, ui, type CardDefinition } from '@hypercard/engine';
-import { ACTIVITY_FORM_FIELDS } from './common';
+import { Act, type CardDefinition, Ev, Sel, ui } from '@hypercard/engine';
 import type { CrmStateSlice } from '../types';
+import { ACTIVITY_FORM_FIELDS } from './common';
 
 export const addActivityCard: CardDefinition<CrmStateSlice> = {
   id: 'addActivity',

@@ -55,14 +55,8 @@ export const debugSlice = createSlice({
   },
 });
 
-export const {
-  ingestEvent,
-  clearEvents,
-  toggleCollapsed,
-  selectEvent,
-  setKindFilter,
-  setTextFilter,
-} = debugSlice.actions;
+export const { ingestEvent, clearEvents, toggleCollapsed, selectEvent, setKindFilter, setTextFilter } =
+  debugSlice.actions;
 
 export const debugReducer = debugSlice.reducer;
 
@@ -72,38 +66,33 @@ export interface DebugStateSlice {
 
 export const selectDebugState = (state: DebugStateSlice) => state.debug;
 
-export const selectDebugKinds = createSelector(
-  [selectDebugState],
-  (debug) => Array.from(new Set(debug.events.map((event) => event.kind))).sort(),
+export const selectDebugKinds = createSelector([selectDebugState], (debug) =>
+  Array.from(new Set(debug.events.map((event) => event.kind))).sort(),
 );
 
-export const selectFilteredDebugEvents = createSelector(
-  [selectDebugState],
-  (debug) => {
-    const kindFilter = debug.filters.kind;
-    const textFilter = debug.filters.text.trim().toLowerCase();
+export const selectFilteredDebugEvents = createSelector([selectDebugState], (debug) => {
+  const kindFilter = debug.filters.kind;
+  const textFilter = debug.filters.text.trim().toLowerCase();
 
-    return debug.events.filter((event) => {
-      if (kindFilter !== 'all' && event.kind !== kindFilter) return false;
-      if (!textFilter) return true;
+  return debug.events.filter((event) => {
+    if (kindFilter !== 'all' && event.kind !== kindFilter) return false;
+    if (!textFilter) return true;
 
-      const searchable = [
-        event.kind,
-        event.cardId,
-        event.actionType ?? '',
-        event.selectorName ?? '',
-        JSON.stringify(event.payload ?? null),
-      ].join(' ').toLowerCase();
+    const searchable = [
+      event.kind,
+      event.cardId,
+      event.actionType ?? '',
+      event.selectorName ?? '',
+      JSON.stringify(event.payload ?? null),
+    ]
+      .join(' ')
+      .toLowerCase();
 
-      return searchable.includes(textFilter);
-    });
-  },
-);
+    return searchable.includes(textFilter);
+  });
+});
 
-export const selectSelectedDebugEvent = createSelector(
-  [selectDebugState],
-  (debug) => {
-    if (debug.selectedEventId == null) return null;
-    return debug.events.find((event) => event.id === debug.selectedEventId) ?? null;
-  },
-);
+export const selectSelectedDebugEvent = createSelector([selectDebugState], (debug) => {
+  if (debug.selectedEventId == null) return null;
+  return debug.events.find((event) => event.id === debug.selectedEventId) ?? null;
+});

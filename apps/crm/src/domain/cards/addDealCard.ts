@@ -1,6 +1,6 @@
-import { Act, Ev, Sel, ui, type CardDefinition } from '@hypercard/engine';
-import { DEAL_FORM_FIELDS } from './common';
+import { Act, type CardDefinition, Ev, Sel, ui } from '@hypercard/engine';
 import type { CrmStateSlice } from '../types';
+import { DEAL_FORM_FIELDS } from './common';
 
 export const addDealCard: CardDefinition<CrmStateSlice> = {
   id: 'addDeal',
@@ -9,7 +9,15 @@ export const addDealCard: CardDefinition<CrmStateSlice> = {
   icon: '➕',
   state: {
     initial: {
-      formValues: { title: '', contactId: '', companyId: '', stage: 'qualification', value: 0, probability: 25, closeDate: '' },
+      formValues: {
+        title: '',
+        contactId: '',
+        companyId: '',
+        stage: 'qualification',
+        value: 0,
+        probability: 25,
+        closeDate: '',
+      },
       submitResult: '',
     },
   },

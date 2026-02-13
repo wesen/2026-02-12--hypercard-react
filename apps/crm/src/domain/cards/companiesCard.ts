@@ -1,6 +1,6 @@
-import { Act, Ev, Sel, ui, type CardDefinition } from '@hypercard/engine';
-import { COMPANY_COLUMNS, COMPANY_FILTERS } from './common';
+import { Act, type CardDefinition, Ev, Sel, ui } from '@hypercard/engine';
 import type { CrmStateSlice } from '../types';
+import { COMPANY_COLUMNS, COMPANY_FILTERS } from './common';
 
 export const companiesCard: CardDefinition<CrmStateSlice> = {
   id: 'companies',
@@ -14,9 +14,7 @@ export const companiesCard: CardDefinition<CrmStateSlice> = {
     filters: COMPANY_FILTERS,
     searchFields: ['name', 'industry'],
     rowKey: 'id',
-    toolbar: [
-      { label: 'Reset', action: Act('companies.reset', undefined, { to: 'shared' }) },
-    ],
+    toolbar: [{ label: 'Reset', action: Act('companies.reset', undefined, { to: 'shared' }) }],
   }),
   bindings: {
     companiesList: {
