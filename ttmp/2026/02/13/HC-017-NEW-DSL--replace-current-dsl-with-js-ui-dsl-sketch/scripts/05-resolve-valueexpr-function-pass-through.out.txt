@@ -1,0 +1,6 @@
+PASS: computed remains an array after resolution
+PASS: computed[0].compute remains a function
+PASS: compute function remains callable with expected result
+PASS: non-plain objects are preserved
+
+resolveValueExpr function pass-through regression checks passed.

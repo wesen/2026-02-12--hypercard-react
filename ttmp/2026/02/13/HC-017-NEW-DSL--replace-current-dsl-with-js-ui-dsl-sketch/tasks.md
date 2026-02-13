@@ -18,3 +18,4 @@
 - [x] Port todo app to new DSL/JS API card stack and shared selectors/actions; remove old overrides/domain registries
 - [x] Port BookTracker and app story examples to new DSL/JS API
 - [x] Run typecheck/build validation, fix fallout, finalize docs/diary/changelog, and upload refreshed migration bundle
+- [x] Fix `cf.compute is not a function` regression in Detail Cards by preserving function-valued config fields through expression resolution

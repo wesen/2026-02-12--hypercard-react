@@ -10,6 +10,8 @@ DocType: reference
 Intent: long-term
 Owners: []
 RelatedFiles:
+    - Path: packages/engine/src/cards/runtime.ts
+      Note: Fix resolveValueExpr to preserve function-valued config and non-plain objects (commit c306120).
     - Path: ttmp/2026/02/13/HC-017-NEW-DSL--replace-current-dsl-with-js-ui-dsl-sketch/design/01-current-dsl-deep-dive-and-migration-guide-to-new-screen-dsl.md
       Note: Primary deliverable documented by diary steps.
     - Path: ttmp/2026/02/13/HC-017-NEW-DSL--replace-current-dsl-with-js-ui-dsl-sketch/design/02-carddefinition-scoped-state-architecture-card-background-stack-global.md
@@ -20,6 +22,10 @@ RelatedFiles:
       Note: Experiment auditing migration surface and encountered/fixed script path bug.
     - Path: ttmp/2026/02/13/HC-017-NEW-DSL--replace-current-dsl-with-js-ui-dsl-sketch/scripts/04-carddefinition-state-scope-simulation.mjs
       Note: Follow-up simulation script validating local scope precedence and action targeting.
+    - Path: ttmp/2026/02/13/HC-017-NEW-DSL--replace-current-dsl-with-js-ui-dsl-sketch/scripts/05-resolve-valueexpr-function-pass-through.mjs
+      Note: Regression experiment script for cf.compute crash path.
+    - Path: ttmp/2026/02/13/HC-017-NEW-DSL--replace-current-dsl-with-js-ui-dsl-sketch/scripts/05-resolve-valueexpr-function-pass-through.out.txt
+      Note: Captured output proving function pass-through and non-plain object preservation.
     - Path: ttmp/2026/02/13/HC-017-NEW-DSL--replace-current-dsl-with-js-ui-dsl-sketch/sources/local/js-ui-dsl.md
       Note: Imported spec source referenced throughout diary.
 ExternalSources:
@@ -29,6 +35,7 @@ LastUpdated: 2026-02-13T10:17:00-05:00
 WhatFor: Capture exact process, decisions, failures, and validation artifacts for replacing the current DSL with the new screen DSL sketch.
 WhenToUse: Use when reviewing how the guide was produced and replaying experiments.
 ---
+
 
 
 
@@ -1032,3 +1039,107 @@ I ran final validation passes, resolved remaining compile blockers, and publishe
 
 - Final task status: all tasks in `tasks.md` marked complete.
 
+
+## Step 15: Regression Fix - `cf.compute is not a function` in Storybook Detail Cards
+
+While validating the completed migration, a runtime regression surfaced in the `Shell Browse / Detail Cards` Storybook path: clicking a row crashed rendering because `computed[].compute` had been transformed away. I traced the crash to expression resolution behavior introduced during the new CardDefinition runtime work.
+
+The fix was to preserve function-valued fields and non-plain object values during `resolveValueExpr` recursion, then validate with typecheck/builds and a ticket-scoped regression experiment script.
+
+### Prompt Context
+
+**User prompt (verbatim):**
+
+```text
+I clicked on a row in the Shell Browse / Detail Cards and got: 
+cf.compute is not a function
+
+The component failed to render properly, likely due to a configuration issue in Storybook. Here are some common causes and how you can address them:
+
+    Missing Context/Providers: You can use decorators to supply specific contexts or providers, which are sometimes necessary for components to render correctly. For detailed instructions on using decorators, please visit the Decorators documentation.
+    Misconfigured Webpack or Vite: Verify that Storybook picks up all necessary settings for loaders, plugins, and other relevant parameters. You can find step-by-step guides for configuring Webpack or Vite with Storybook.
+    Missing Environment Variables: Your Storybook may require specific environment variables to function as intended. You can set up custom environment variables as outlined in the Environment Variables documentation.
+
+DetailView/<.children<.children<@http://localhost:6006/@fs/home/manuel/code/wesen/2026-02-12--hypercard-react/packages/engine/src/components/widgets/DetailView.tsx:64:85
+DetailView@http://localhost:6006/@fs/home/manuel/code/wesen/2026-02-12--hypercard-react/packages/engine/src/components/widgets/DetailView.tsx:54:20
+react_stack_bottom_frame@http://localhost:6006/@fs/home/manuel/code/wesen/2026-02-12--hypercard-react/node_modules/.cache/storybook/10.2.8/bc1c6206bd6f9347cdd9dea10b4b8f618359500036faf005e7ef5a73a624996d/sb-vite/deps/chunk-FTKD626A.js?v=4b44966e:18509:20
+renderWithHooks@http://localhost:6006/@fs/home/manuel/code/wesen/2026-02-12--hypercard-react/node_modules/.cache/storybook/10.2.8/bc1c6206bd6f9347cdd9dea10b4b8f618359500036faf005e7ef5a73a624996d/sb-vite/deps/chunk-FTKD626A.js?v=4b44966e:5654:42
+updateFunctionComponent@http://localhost:6006/@fs/home/manuel/code/wesen/2026-02-12--hypercard-react/node_modules/.cache/storybook/10.2.8/bc1c6206bd6f9347cdd9dea10b4b8f618359500036faf005e7ef5a73a624996d/sb-vite/deps/chunk-FTKD626A.js?v=4b44966e:7475:21
+beginWork@http://localhost:6006/@fs/home/manuel/code/wesen/2026-02-12--hypercard-react/node_modules/.cache/storybook/10.2.8/bc1c6206bd6f9347cdd9dea10b4b8f618359500036faf005e7ef5a73a624996d/sb-vite/deps/chunk-FTKD626A.js?v=4b44966e:8525:20
+runWithFiberInDEV@http://localhost:6006/@fs/home/manuel/code/wesen/2026-02-12--hypercard-react/node_modules/.cache/storybook/10.2.8/bc1c6206bd6f9347cdd9dea10b4b8f618359500036faf005e7ef5a73a624996d/sb-vite/deps/chunk-FTKD626A.js?v=4b44966e:999:15
+performUnitOfWork@http://localhost:6006/@fs/home/manuel/code/wesen/2026-02-12--hypercard-react/node_modules/.cache/storybook/10.2.8/bc1c6206bd6f9347cdd9dea10b4b8f618359500036faf005e7ef5a73a624996d/sb-vite/deps/chunk-FTKD626A.js?v=4b44966e:12561:98
+workLoopSync@http://localhost:6006/@fs/home/manuel/code/wesen/2026-02-12--hypercard-react/node_modules/.cache/storybook/10.2.8/bc1c6206bd6f9347cdd9dea10b4b8f618359500036faf005e7ef5a73a624996d/sb-vite/deps/chunk-FTKD626A.js?v=4b44966e:12424:60
+renderRootSync@http://localhost:6006/@fs/home/manuel/code/wesen/2026-02-12--hypercard-react/node_modules/.cache/storybook/10.2.8/bc1c6206bd6f9347cdd9dea10b4b8f618359500036faf005e7ef5a73a624996d/sb-vite/deps/chunk-FTKD626A.js?v=4b44966e:12408:13
+performWorkOnRoot@http://localhost:6006/@fs/home/manuel/code/wesen/2026-02-12--hypercard-react/node_modules/.cache/storybook/10.2.8/bc1c6206bd6f9347cdd9dea10b4b8f618359500036faf005e7ef5a73a624996d/sb-vite/deps/chunk-FTKD626A.js?v=4b44966e:11827:37
+performSyncWorkOnRoot@http://localhost:6006/@fs/home/manuel/code/wesen/2026-02-12--hypercard-react/node_modules/.cache/storybook/10.2.8/bc1c6206bd6f9347cdd9dea10b4b8f618359500036faf005e7ef5a73a624996d/sb-vite/deps/chunk-FTKD626A.js?v=4b44966e:13517:26
+flushSyncWorkAcrossRoots_impl@http://localhost:6006/@fs/home/manuel/code/wesen/2026-02-12--hypercard-react/node_modules/.cache/storybook/10.2.8/bc1c6206bd6f9347cdd9dea10b4b8f618359500036faf005e7ef5a73a624996d/sb-vite/deps/chunk-FTKD626A.js?v=4b44966e:13414:122
+processRootScheduleInMicrotask@http://localhost:6006/@fs/home/manuel/code/wesen/2026-02-12--hypercard-react/node_modules/.cache/storybook/10.2.8/bc1c6206bd6f9347cdd9dea10b4b8f618359500036faf005e7ef5a73a624996d/sb-vite/deps/chunk-FTKD626A.js?v=4b44966e:13437:106
+node_modules/react-dom/cjs/react-dom-client.development.js/scheduleImmediateRootScheduleTask/<@http://localhost:6006/@fs/home/manuel/code/wesen/2026-02-12--hypercard-react/node_modules/.cache/storybook/10.2.8/bc1c6206bd6f9347cdd9dea10b4b8f618359500036faf005e7ef5a73a624996d/sb-vite/deps/chunk-FTKD626A.js?v=4b44966e:13531:15
+```
+
+**Assistant interpretation:** Investigate and fix the runtime crash in Detail Cards where `cf.compute` is no longer callable after migration.
+
+**Inferred user intent:** Restore working interactive story behavior and ensure migrated DSL runtime preserves widget config semantics.
+
+**Commit (code):** c306120 — "fix(runtime): preserve function and non-plain values in resolveValueExpr"
+
+### What I did
+
+- Located crash use-site at `packages/engine/src/components/widgets/DetailView.tsx` where `computed[].compute(current)` is invoked.
+- Traced resolution path through `packages/engine/src/cards/runtime.ts` and confirmed `resolveValueExpr` dropped function-valued fields.
+- Patched `resolveValueExpr`:
+- preserve raw function values (`typeof expr === 'function'`)
+- preserve non-plain objects instead of coercing to `undefined`
+- tightened `isPlainObject` to `Object.prototype`/`null` prototypes only.
+- Added experiment script and captured output:
+- `scripts/05-resolve-valueexpr-function-pass-through.mjs`
+- `scripts/05-resolve-valueexpr-function-pass-through.out.txt`
+- Validation commands:
+- `npm run -s typecheck`
+- `npm run -w apps/inventory build`
+- `npm run -w apps/todo build`
+
+### Why
+
+- `resolveValueExpr` is used on widget props; dropping function fields breaks compute/render hooks used by `DetailView` and potentially other widgets.
+
+### What worked
+
+- Function-valued `computed[].compute` now survives expression resolution and remains callable.
+- Additional preservation behavior for non-plain object values is now consistent with code comment intent.
+- Typecheck and both app builds pass after the fix.
+
+### What didn't work
+
+- Initial experiment run surfaced a failing assertion and highlighted shell pipeline masking:
+- Command: `npm exec -y tsx .../05-resolve-valueexpr-function-pass-through.mjs | tee ...out.txt`
+- Output included: `FAIL: non-plain objects are preserved`
+- Since `tee` can mask upstream exit status, reran with `set -o pipefail` after fix.
+
+### What I learned
+
+- Value-expression resolution in the new DSL runtime must treat function-valued config as first-class data, not evaluable expressions.
+- Using strict plain-object checks avoids accidental recursion into class instances.
+
+### What was tricky to build
+
+- The regression appeared as a widget-level error, but the root cause was generic resolver recursion. The tricky part was distinguishing intentional expression handling from raw config pass-through behavior.
+
+### What warrants a second pair of eyes
+
+- Review any other runtime call sites using `resolveValueExpr` with rich config values (functions, dates, class instances) to confirm expected pass-through semantics.
+
+### What should be done in the future
+
+- Add automated tests around `resolveValueExpr` for function values, arrays of config blocks, and custom object instances to catch regressions earlier.
+
+### Code review instructions
+
+- Start in `packages/engine/src/cards/runtime.ts`, reviewing `isPlainObject` and `resolveValueExpr`.
+- Re-run experiment: `npm exec -y tsx ttmp/2026/02/13/HC-017-NEW-DSL--replace-current-dsl-with-js-ui-dsl-sketch/scripts/05-resolve-valueexpr-function-pass-through.mjs`
+- Confirm full checks: `npm run -s typecheck`, `npm run -w apps/inventory build`, `npm run -w apps/todo build`.
+
+### Technical details
+
+- Root cause path: row click -> `DetailView` render -> `computed[].compute` invocation on value resolved by runtime.
+- Resolution bug pattern before fix: function/class instance values hit non-plain branch and were lost as `undefined`.

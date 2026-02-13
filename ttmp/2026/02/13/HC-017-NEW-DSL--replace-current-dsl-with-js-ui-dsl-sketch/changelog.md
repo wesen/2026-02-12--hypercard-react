@@ -74,3 +74,14 @@ Executed implementation tasks 9-16: added CardDefinition DSL core + scoped runti
 - /home/manuel/code/wesen/2026-02-12--hypercard-react/packages/engine/src/components/widgets/BookTracker.stories.tsx — BookTracker stories ported to CardDefinition stack and shared registries.
 - /home/manuel/code/wesen/2026-02-12--hypercard-react/ttmp/2026/02/13/HC-017-NEW-DSL--replace-current-dsl-with-js-ui-dsl-sketch/reference/01-diary.md — Diary steps 8-14 documenting task-by-task execution and validation.
 
+
+## 2026-02-13
+
+Fixed Storybook Detail Cards regression 'cf.compute is not a function' by preserving function-valued and non-plain values in resolveValueExpr; added regression experiment artifact and revalidated typecheck + app builds.
+
+### Related Files
+
+- /home/manuel/code/wesen/2026-02-12--hypercard-react/packages/engine/src/cards/runtime.ts — Core runtime resolver fix for compute function pass-through.
+- /home/manuel/code/wesen/2026-02-12--hypercard-react/ttmp/2026/02/13/HC-017-NEW-DSL--replace-current-dsl-with-js-ui-dsl-sketch/reference/01-diary.md — Step 15 diary narrative for debugging and validation details.
+- /home/manuel/code/wesen/2026-02-12--hypercard-react/ttmp/2026/02/13/HC-017-NEW-DSL--replace-current-dsl-with-js-ui-dsl-sketch/scripts/05-resolve-valueexpr-function-pass-through.mjs — Experiment that reproduces and validates the regression fix.
+
