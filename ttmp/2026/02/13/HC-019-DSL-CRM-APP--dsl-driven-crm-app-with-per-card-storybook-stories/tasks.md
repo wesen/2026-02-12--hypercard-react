@@ -13,4 +13,4 @@
 - [x] Assemble card stack and App shell
 - [x] Create per-card Storybook stories
 - [x] Wire into monorepo (package.json, vite, storybook config)
-- [ ] Verify typecheck and storybook build
+- [x] Verify typecheck and storybook build
