@@ -1,189 +1,327 @@
-import type { Stack } from '@hypercard/engine';
-import type { InventoryData, InventorySettings } from './types';
+import {
+  Act,
+  Ev,
+  Sel,
+  defineCardStack,
+  ui,
+  type CardStackDefinition,
+  type FieldConfig,
+} from '@hypercard/engine';
+import { itemColumns, salesColumns } from './columnConfigs';
+import { inventoryComputedFields } from './computeFields';
+import { formatCurrency } from './formatters';
 
-export const STACK: Stack<InventoryData, InventorySettings> = {
+const ITEM_FIELDS: FieldConfig[] = [
+  { id: 'sku', label: 'SKU', type: 'readonly' },
+  { id: 'name', label: 'Name', type: 'text' },
+  { id: 'category', label: 'Category', type: 'select', options: ['Accessories', 'Kitchen', 'Home', 'Merch'] },
+  { id: 'price', label: 'Price ($)', type: 'number', step: 0.01 },
+  { id: 'cost', label: 'Cost ($)', type: 'number', step: 0.01 },
+  { id: 'qty', label: 'Quantity', type: 'number' },
+  { id: 'tags', label: 'Tags', type: 'tags' },
+];
+
+const NEW_ITEM_FIELDS: FieldConfig[] = [
+  { id: 'sku', label: 'SKU', type: 'text', placeholder: 'e.g. E-5001', required: true },
+  { id: 'name', label: 'Name', type: 'text', placeholder: 'Item name', required: true },
+  { id: 'category', label: 'Category', type: 'select', options: ['Accessories', 'Kitchen', 'Home', 'Merch'] },
+  { id: 'price', label: 'Price ($)', type: 'number', step: 0.01 },
+  { id: 'cost', label: 'Cost ($)', type: 'number', step: 0.01 },
+  { id: 'qty', label: 'Initial Qty', type: 'number' },
+];
+
+const RECEIVE_FIELDS: FieldConfig[] = [
+  { id: 'sku', label: 'SKU', type: 'text', placeholder: 'Scan or type SKU', required: true },
+  { id: 'qty', label: 'Quantity', type: 'number', required: true },
+  { id: 'note', label: 'Note', type: 'text', placeholder: 'PO#, condition…' },
+];
+
+const PRICE_CHECK_FIELDS: FieldConfig[] = [
+  { id: 'sku', label: 'Scan / Type SKU', type: 'text', placeholder: 'e.g. A-1002', required: true },
+];
+
+export const STACK: CardStackDefinition = defineCardStack({
+  id: 'inventory',
   name: 'Shop Inventory',
   icon: '📇',
   homeCard: 'home',
-  settings: {
-    aiModel: 'Local LLM',
-    lowStockThreshold: 3,
-  },
-  data: {
-    items: [
-      { sku: 'A-1002', qty: 2,  price: 9.99,  cost: 3.25,  name: 'Keychain - Brass',    category: 'Accessories', tags: ['gift', 'sale'] },
-      { sku: 'A-1021', qty: 0,  price: 8.99,  cost: 2.80,  name: 'Keychain - Silver',   category: 'Accessories', tags: ['gift'] },
-      { sku: 'A-1033', qty: 5,  price: 7.99,  cost: 2.10,  name: 'Keychain - Steel',    category: 'Accessories', tags: ['new'] },
-      { sku: 'A-1055', qty: 1,  price: 12.99, cost: 4.50,  name: 'Ring - Copper Band',  category: 'Accessories', tags: ['artisan'] },
-      { sku: 'B-2001', qty: 14, price: 24.99, cost: 8.00,  name: 'Mug - Ceramic Blue',  category: 'Kitchen',     tags: ['popular'] },
-      { sku: 'B-2015', qty: 3,  price: 19.99, cost: 7.50,  name: 'Mug - Hand-thrown',   category: 'Kitchen',     tags: ['artisan'] },
-      { sku: 'C-3010', qty: 0,  price: 34.99, cost: 12.00, name: 'Candle - Beeswax Lg', category: 'Home',        tags: ['seasonal'] },
-      { sku: 'C-3011', qty: 8,  price: 14.99, cost: 5.00,  name: 'Candle - Soy Sm',     category: 'Home',        tags: ['popular', 'gift'] },
-      { sku: 'D-4001', qty: 20, price: 4.99,  cost: 1.20,  name: 'Sticker Pack - Logo', category: 'Merch',       tags: ['cheap', 'popular'] },
-      { sku: 'D-4002', qty: 6,  price: 18.99, cost: 6.00,  name: 'Tote Bag - Canvas',   category: 'Merch',       tags: ['new', 'eco'] },
-    ],
-    salesLog: [
-      { id: 's1', date: '2026-02-10', sku: 'A-1002', qty: 2, total: 19.98 },
-      { id: 's2', date: '2026-02-10', sku: 'B-2001', qty: 1, total: 24.99 },
-      { id: 's3', date: '2026-02-09', sku: 'A-1002', qty: 3, total: 29.97 },
-      { id: 's4', date: '2026-02-09', sku: 'D-4001', qty: 5, total: 24.95 },
-      { id: 's5', date: '2026-02-08', sku: 'A-1002', qty: 4, total: 39.96 },
-      { id: 's6', date: '2026-02-08', sku: 'C-3011', qty: 2, total: 29.98 },
-      { id: 's7', date: '2026-02-07', sku: 'B-2015', qty: 1, total: 19.99 },
-    ],
+  stack: {
+    state: {
+      lowStockThreshold: 3,
+      aiModel: 'Local LLM',
+    },
   },
   cards: {
     home: {
-      type: 'menu', title: 'Home', icon: '🏠',
-      fields: [
-        { id: 'welcome', type: 'label', value: 'Welcome to Shop Inventory' },
-        { id: 'sub', type: 'label', value: 'HyperCard + AI', style: 'muted' },
-      ],
-      buttons: [
-        { label: '📋 Browse Items',    action: { type: 'navigate', card: 'browse' } },
-        { label: '⚠️ Low Stock',        action: { type: 'navigate', card: 'lowStock' } },
-        { label: '💰 Sales Today',      action: { type: 'navigate', card: 'salesToday' } },
-        { label: '📊 Inventory Report', action: { type: 'navigate', card: 'report' } },
-        { label: '📦 Receive Shipment', action: { type: 'navigate', card: 'receive' } },
-        { label: '💬 Ask AI',           action: { type: 'navigate', card: 'assistant' } },
-        { label: '➕ New Item',          action: { type: 'navigate', card: 'newItem' } },
-        { label: '🏷 Price Checker',    action: { type: 'navigate', card: 'priceCheck' } },
-      ],
+      id: 'home',
+      type: 'menu',
+      title: 'Home',
+      icon: '🏠',
+      ui: ui.menu({
+        key: 'homeMenu',
+        icon: '📇',
+        labels: [
+          { value: 'Welcome to Shop Inventory' },
+          { value: 'CardDefinition + JS API', style: 'muted' },
+        ],
+        buttons: [
+          { label: '📋 Browse Items', action: Act('nav.go', { card: 'browse' }) },
+          { label: '⚠️ Low Stock', action: Act('nav.go', { card: 'lowStock' }) },
+          { label: '💰 Sales Today', action: Act('nav.go', { card: 'salesToday' }) },
+          { label: '📊 Inventory Report', action: Act('nav.go', { card: 'report' }) },
+          { label: '📦 Receive Shipment', action: Act('nav.go', { card: 'receive' }) },
+          { label: '💬 Ask AI', action: Act('nav.go', { card: 'assistant' }) },
+          { label: '➕ New Item', action: Act('nav.go', { card: 'newItem' }) },
+          { label: '🏷 Price Checker', action: Act('nav.go', { card: 'priceCheck' }) },
+        ],
+      }),
     },
+
     browse: {
-      type: 'list', title: 'Browse Inventory', icon: '📋',
-      dataSource: 'items', columns: ['sku', 'qty', 'price', 'name', 'category'], sortable: true,
-      filters: [
-        { field: 'category', type: 'select', options: ['All', 'Accessories', 'Kitchen', 'Home', 'Merch'] },
-        { field: '_search', type: 'text', placeholder: 'Search name or SKU…' },
-      ],
-      rowAction: { type: 'navigate', card: 'itemDetail', param: 'sku' },
-      toolbar: [{ label: '➕ New', action: { type: 'navigate', card: 'newItem' } }],
+      id: 'browse',
+      type: 'list',
+      title: 'Browse Inventory',
+      icon: '📋',
+      ui: ui.list({
+        key: 'browseList',
+        items: Sel('inventory.items', undefined, { from: 'shared' }),
+        columns: Sel('inventory.columns', { kind: 'items' }, { from: 'shared' }),
+        filters: [
+          { field: 'category', type: 'select', options: ['All', 'Accessories', 'Kitchen', 'Home', 'Merch'] },
+          { field: '_search', type: 'text', placeholder: 'Search name or SKU…' },
+        ],
+        searchFields: ['name', 'sku'],
+        toolbar: [{ label: '➕ New', action: Act('nav.go', { card: 'newItem' }) }],
+        rowKey: 'sku',
+      }),
+      bindings: {
+        browseList: {
+          rowClick: Act('nav.go', { card: 'itemDetail', param: Ev('row.sku') }),
+        },
+      },
     },
+
     lowStock: {
-      type: 'list', title: 'Low Stock', icon: '⚠️',
-      dataSource: 'items', columns: ['sku', 'qty', 'price', 'name', 'category'],
-      dataFilter: { field: 'qty', op: '<=', value: '$settings.lowStockThreshold' },
-      emptyMessage: 'All stocked up! 🎉',
-      toolbar: [
-        { label: '📧 Email Supplier', action: { type: 'toast', message: 'Reorder email drafted (mock)' } },
-        { label: '🖨 Print', action: { type: 'toast', message: 'Sent to printer (mock)' } },
-      ],
+      id: 'lowStock',
+      type: 'list',
+      title: 'Low Stock',
+      icon: '⚠️',
+      ui: ui.list({
+        key: 'lowStockList',
+        items: Sel('inventory.lowStock', undefined, { from: 'shared' }),
+        columns: Sel('inventory.columns', { kind: 'items' }, { from: 'shared' }),
+        toolbar: [
+          { label: '📧 Email Supplier', action: Act('toast.show', { message: 'Reorder email drafted (mock)' }) },
+          { label: '🖨 Print', action: Act('toast.show', { message: 'Sent to printer (mock)' }) },
+        ],
+        rowKey: 'sku',
+        emptyMessage: 'All stocked up! 🎉',
+      }),
+      bindings: {
+        lowStockList: {
+          rowClick: Act('nav.go', { card: 'itemDetail', param: Ev('row.sku') }),
+        },
+      },
     },
+
     salesToday: {
-      type: 'list', title: 'Sales Log', icon: '💰',
-      dataSource: 'salesLog', columns: ['date', 'sku', 'qty', 'total'],
-      filters: [{ field: 'date', type: 'select', options: ['All', '2026-02-10', '2026-02-09', '2026-02-08', '2026-02-07'] }],
-      footer: { type: 'sum', field: 'total', label: 'Total Revenue' },
+      id: 'salesToday',
+      type: 'list',
+      title: 'Sales Log',
+      icon: '💰',
+      ui: ui.list({
+        key: 'salesList',
+        items: Sel('sales.log', undefined, { from: 'shared' }),
+        columns: Sel('inventory.columns', { kind: 'sales' }, { from: 'shared' }),
+        filters: [{ field: 'date', type: 'select', options: ['All', '2026-02-10', '2026-02-09', '2026-02-08', '2026-02-07'] }],
+        rowKey: 'id',
+        footer: { type: 'sum', field: 'total', label: 'Total Revenue', format: formatCurrency },
+      }),
+      bindings: {
+        salesList: {
+          rowClick: Act('nav.go', { card: 'itemDetail', param: Ev('row.sku') }),
+        },
+      },
     },
+
     itemDetail: {
-      type: 'detail', title: 'Item: {{name}}', icon: '📦',
-      dataSource: 'items', keyField: 'sku',
-      fields: [
-        { id: 'sku', label: 'SKU', type: 'readonly' },
-        { id: 'name', label: 'Name', type: 'text' },
-        { id: 'category', label: 'Category', type: 'select', options: ['Accessories', 'Kitchen', 'Home', 'Merch'] },
-        { id: 'price', label: 'Price ($)', type: 'number', step: 0.01 },
-        { id: 'cost', label: 'Cost ($)', type: 'number', step: 0.01 },
-        { id: 'qty', label: 'Quantity', type: 'number', highlight: 'lowStock' },
-        { id: 'tags', label: 'Tags', type: 'tags' },
-      ],
-      computed: [
-        { id: 'margin', label: 'Margin', expr: "((price - cost) / price * 100).toFixed(1) + '%'" },
-        { id: 'value', label: 'Inventory Value', expr: "'$' + (price * qty).toFixed(2)" },
-      ],
-      buttons: [
-        { label: '🛒 Sell 1', action: { type: 'updateQty', delta: -1 }, style: 'primary' },
-        { label: '🛒 Sell 5', action: { type: 'updateQty', delta: -5 } },
-        { label: '📦 Receive +5', action: { type: 'updateQty', delta: 5 } },
-        { label: '📦 Receive +10', action: { type: 'updateQty', delta: 10 } },
-        { label: '✏️ Save Changes', action: { type: 'saveItem' }, style: 'primary' },
-        { label: '🗑 Delete', action: { type: 'deleteItem' }, style: 'danger' },
-      ],
+      id: 'itemDetail',
+      type: 'detail',
+      title: 'Item Detail',
+      icon: '📦',
+      state: {
+        initial: {
+          edits: {},
+        },
+      },
+      ui: ui.detail({
+        key: 'itemDetailView',
+        record: Sel('inventory.itemByParam', undefined, { from: 'shared' }),
+        fields: ITEM_FIELDS,
+        computed: inventoryComputedFields,
+        edits: Sel('state.edits'),
+        actions: [
+          { label: '🛒 Sell 1', action: Act('inventory.updateQty', { sku: Sel('inventory.paramSku', undefined, { from: 'shared' }), delta: -1 }), variant: 'primary' },
+          { label: '🛒 Sell 5', action: Act('inventory.updateQty', { sku: Sel('inventory.paramSku', undefined, { from: 'shared' }), delta: -5 }) },
+          { label: '📦 Receive +5', action: Act('inventory.updateQty', { sku: Sel('inventory.paramSku', undefined, { from: 'shared' }), delta: 5 }) },
+          { label: '📦 Receive +10', action: Act('inventory.updateQty', { sku: Sel('inventory.paramSku', undefined, { from: 'shared' }), delta: 10 }) },
+          { label: '✏️ Save Changes', action: Act('inventory.saveItem', { sku: Sel('inventory.paramSku', undefined, { from: 'shared' }), edits: Sel('state.edits') }), variant: 'primary' },
+          { label: '🗑 Delete', action: Act('inventory.deleteItem', { sku: Sel('inventory.paramSku', undefined, { from: 'shared' }) }), variant: 'danger' },
+        ],
+      }),
+      bindings: {
+        itemDetailView: {
+          change: Act('state.setField', {
+            scope: 'card',
+            path: 'edits',
+            key: Ev('field'),
+            value: Ev('value'),
+          }),
+        },
+      },
     },
+
     newItem: {
-      type: 'form', title: 'New Item', icon: '➕',
-      fields: [
-        { id: 'sku', label: 'SKU', type: 'text', placeholder: 'e.g. E-5001', required: true },
-        { id: 'name', label: 'Name', type: 'text', placeholder: 'Item name', required: true },
-        { id: 'category', label: 'Category', type: 'select', options: ['Accessories', 'Kitchen', 'Home', 'Merch'] },
-        { id: 'price', label: 'Price ($)', type: 'number', step: 0.01, default: 0 },
-        { id: 'cost', label: 'Cost ($)', type: 'number', step: 0.01, default: 0 },
-        { id: 'qty', label: 'Initial Qty', type: 'number', default: 0 },
-      ],
-      submitAction: { type: 'createItem' },
-      submitLabel: '💾 Create Item',
+      id: 'newItem',
+      type: 'form',
+      title: 'New Item',
+      icon: '➕',
+      state: {
+        initial: {
+          formValues: {
+            sku: '',
+            name: '',
+            category: 'Accessories',
+            price: 0,
+            cost: 0,
+            qty: 0,
+          },
+          submitResult: '',
+        },
+      },
+      ui: ui.form({
+        key: 'newItemForm',
+        fields: NEW_ITEM_FIELDS,
+        values: Sel('state.formValues'),
+        submitLabel: '💾 Create Item',
+        submitResult: Sel('state.submitResult'),
+      }),
+      bindings: {
+        newItemForm: {
+          change: Act('state.setField', {
+            scope: 'card',
+            path: 'formValues',
+            key: Ev('field'),
+            value: Ev('value'),
+          }),
+          submit: Act('inventory.createItem', { values: Ev('values') }, { to: 'shared' }),
+        },
+      },
     },
+
     receive: {
-      type: 'form', title: 'Receive Shipment', icon: '📦',
-      fields: [
-        { id: 'sku', label: 'SKU', type: 'text', placeholder: 'Scan or type SKU', required: true },
-        { id: 'qty', label: 'Quantity', type: 'number', default: 1, required: true },
-        { id: 'note', label: 'Note', type: 'text', placeholder: 'PO#, condition…' },
-      ],
-      submitAction: { type: 'receiveStock' },
-      submitLabel: '📦 Receive Stock',
+      id: 'receive',
+      type: 'form',
+      title: 'Receive Shipment',
+      icon: '📦',
+      state: {
+        initial: {
+          formValues: {
+            sku: '',
+            qty: 1,
+            note: '',
+          },
+          submitResult: '',
+        },
+      },
+      ui: ui.form({
+        key: 'receiveForm',
+        fields: RECEIVE_FIELDS,
+        values: Sel('state.formValues'),
+        submitLabel: '📦 Receive Stock',
+        submitResult: Sel('state.submitResult'),
+      }),
+      bindings: {
+        receiveForm: {
+          change: Act('state.setField', {
+            scope: 'card',
+            path: 'formValues',
+            key: Ev('field'),
+            value: Ev('value'),
+          }),
+          submit: Act('inventory.receiveStock', { values: Ev('values') }, { to: 'shared' }),
+        },
+      },
     },
+
     priceCheck: {
-      type: 'form', title: 'Price Checker', icon: '🏷',
-      fields: [
-        { id: 'sku', label: 'Scan / Type SKU', type: 'text', placeholder: 'e.g. A-1002', required: true },
-      ],
-      submitAction: { type: 'priceCheck' },
-      submitLabel: '🔍 Look Up Price',
+      id: 'priceCheck',
+      type: 'form',
+      title: 'Price Checker',
+      icon: '🏷',
+      state: {
+        initial: {
+          formValues: {
+            sku: '',
+          },
+          submitResult: '',
+        },
+      },
+      ui: ui.form({
+        key: 'priceCheckForm',
+        fields: PRICE_CHECK_FIELDS,
+        values: Sel('state.formValues'),
+        submitLabel: '🔍 Look Up Price',
+        submitResult: Sel('state.submitResult'),
+      }),
+      bindings: {
+        priceCheckForm: {
+          change: Act('state.setField', {
+            scope: 'card',
+            path: 'formValues',
+            key: Ev('field'),
+            value: Ev('value'),
+          }),
+          submit: Act('inventory.priceCheck', { values: Ev('values') }, { to: 'shared' }),
+        },
+      },
     },
+
     report: {
-      type: 'report', title: 'Inventory Report', icon: '📊',
-      sections: [
-        { label: 'Total SKUs', compute: 'totalSkus' },
-        { label: 'Total Units', compute: 'totalUnits' },
-        { label: 'Retail Value', compute: 'retailValue' },
-        { label: 'Cost Basis', compute: 'costBasis' },
-        { label: 'Potential Profit', compute: 'potentialProfit' },
-        { label: 'Low Stock Items', compute: 'lowStockCount' },
-        { label: 'Out of Stock', compute: 'outOfStockCount' },
-        { label: 'Best Margin', compute: 'bestMargin' },
-        { label: 'Sales (last 3 days)', compute: 'recentSalesTotal' },
-      ],
+      id: 'report',
+      type: 'report',
+      title: 'Inventory Report',
+      icon: '📊',
+      ui: ui.report({
+        key: 'inventoryReport',
+        sections: Sel('inventory.reportSections', undefined, { from: 'shared' }),
+        actions: [
+          { label: '🖨 Print', action: Act('toast.show', { message: 'Report sent to printer (mock)' }) },
+          { label: '📧 Email', action: Act('toast.show', { message: 'Report emailed (mock)' }) },
+        ],
+      }),
     },
+
     assistant: {
-      type: 'chat', title: 'AI Assistant', icon: '💬',
-      welcome: 'Hello! I can help with inventory queries, sales data, restocking, and more.',
-      suggestions: ['What\'s low stock?', 'Best selling item?', 'Show accessories', 'Total inventory value'],
+      id: 'assistant',
+      type: 'chat',
+      title: 'AI Assistant',
+      icon: '💬',
+      ui: ui.chat({
+        key: 'assistantChat',
+        messages: Sel('chat.messages', undefined, { from: 'shared' }),
+        suggestions: ['What\'s low stock?', 'Best selling item?', 'Show accessories', 'Total inventory value'],
+      }),
+      bindings: {
+        assistantChat: {
+          send: Act('chat.send', { text: Ev('text') }, { to: 'shared' }),
+        },
+      },
     },
   },
-  ai: {
-    intents: [
-      { patterns: ['low stock', 'reorder', 'out of stock', 'running low'],
-        response: 'Items at or below the low-stock threshold (qty ≤ {{threshold}}):',
-        query: { source: 'items', filter: { field: 'qty', op: '<=', value: '$settings.lowStockThreshold' } },
-        actions: [{ label: '📋 Open Low Stock', action: { type: 'navigate', card: 'lowStock' } }] },
-      { patterns: ['accessories', 'kitchen', 'home', 'merch'],
-        response: 'Items in the {{matchCap}} category:',
-        query: { source: 'items', filter: { field: 'category', op: 'iequals', value: '$match' } },
-        actions: [{ label: '📋 Browse all', action: { type: 'navigate', card: 'browse' } }] },
-      { patterns: ['best sell', 'top sell', 'popular', 'most sold'],
-        response: 'Based on recent sales log, top sellers by volume:',
-        compute: 'bestSellers',
-        actions: [{ label: '💰 Sales log', action: { type: 'navigate', card: 'salesToday' } }] },
-      { patterns: ['total value', 'inventory value', 'worth'],
-        compute: 'inventoryValue',
-        actions: [{ label: '📊 Full report', action: { type: 'navigate', card: 'report' } }] },
-      { patterns: ['margin', 'profit', 'markup'],
-        compute: 'marginReport',
-        actions: [{ label: '📊 Full report', action: { type: 'navigate', card: 'report' } }] },
-      { patterns: ['sell', 'sale', 'transaction'],
-        response: 'Recent sales data:',
-        query: { source: 'salesLog', limit: 5 },
-        actions: [{ label: '💰 Full sales log', action: { type: 'navigate', card: 'salesToday' } }] },
-    ],
-    fallback: {
-      response: "I'm not sure about that. Here are some things I can help with:",
-      actions: [
-        { label: '⚠️ Low stock', action: { type: 'aiSend', text: 'low stock' } },
-        { label: '💰 Best sellers', action: { type: 'aiSend', text: 'best sellers' } },
-        { label: '📊 Inventory value', action: { type: 'aiSend', text: 'total inventory value' } },
-      ],
-    },
-  },
+});
+
+export const INVENTORY_COLUMNS = {
+  items: itemColumns,
+  sales: salesColumns,
 };

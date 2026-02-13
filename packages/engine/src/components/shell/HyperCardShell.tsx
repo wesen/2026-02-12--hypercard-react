@@ -49,16 +49,16 @@ const LAYOUT_TABS = [
 type ShellState = NavigationStateSlice & NotificationsStateSlice & { hypercardRuntime?: unknown };
 
 export interface HyperCardShellProps<TRootState = unknown> {
-  stack: CardStackDefinition<TRootState>;
-  sharedSelectors?: SharedSelectorRegistry<TRootState>;
-  sharedActions?: SharedActionRegistry<TRootState>;
+  stack: CardStackDefinition<any>;
+  sharedSelectors?: SharedSelectorRegistry<any>;
+  sharedActions?: SharedActionRegistry<any>;
   navShortcuts?: Array<{ card: string; icon: string }>;
   renderAIPanel?: (dispatch: (action: ActionDescriptor) => void) => ReactNode;
   themeClass?: string;
   mode?: 'interactive' | 'preview';
 }
 
-export function HyperCardShell<TRootState = unknown>({
+export function HyperCardShell({
   stack,
   sharedSelectors,
   sharedActions,
@@ -66,9 +66,9 @@ export function HyperCardShell<TRootState = unknown>({
   renderAIPanel,
   themeClass,
   mode = 'interactive',
-}: HyperCardShellProps<TRootState>) {
+}: HyperCardShellProps) {
   const dispatch = useDispatch();
-  const store = useStore<TRootState & ShellState>();
+  const store = useStore<ShellState>();
 
   const layout = useSelector((s: ShellState) => selectLayout(s));
   const current = useSelector((s: ShellState) => selectCurrentNav(s));

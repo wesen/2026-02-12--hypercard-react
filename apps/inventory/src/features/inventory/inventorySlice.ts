@@ -1,11 +1,11 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { Item } from '../../domain/types';
-import { STACK } from '../../domain/stack';
+import { ITEMS } from '../../domain/seedData';
 
 interface InventoryState { items: Item[] }
 
 const initialState: InventoryState = {
-  items: JSON.parse(JSON.stringify(STACK.data.items)),
+  items: JSON.parse(JSON.stringify(ITEMS)),
 };
 
 const inventorySlice = createSlice({

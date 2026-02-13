@@ -1,11 +1,11 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { Task } from '../../domain/types';
-import { STACK } from '../../domain/stack';
+import { TASKS } from '../../domain/seedData';
 
 interface TasksState { tasks: Task[] }
 
 const initialState: TasksState = {
-  tasks: JSON.parse(JSON.stringify(STACK.data.tasks)),
+  tasks: JSON.parse(JSON.stringify(TASKS)),
 };
 
 let nextId = initialState.tasks.length + 1;

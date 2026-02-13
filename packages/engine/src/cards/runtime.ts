@@ -258,6 +258,17 @@ export function executeActionDescriptor(
     return;
   }
 
+  if (actionType === 'state.setField') {
+    const data = args as Record<string, unknown>;
+    const scope = (data.scope as LocalScope | undefined) ?? 'card';
+    const key = String(data.key ?? '');
+    const path = String(data.path ?? '');
+    if (!key) return;
+    const fullPath = path ? `${path}.${key}` : key;
+    ctx.setScopedState(scope, fullPath, data.value);
+    return;
+  }
+
   if (actionType === 'state.patch') {
     const data = args as Record<string, unknown>;
     const scope = (data.scope as LocalScope | undefined) ?? 'card';
