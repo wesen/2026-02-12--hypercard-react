@@ -12,7 +12,7 @@ function shouldRedact(key: string): boolean {
   return REDACT_KEYS.some((needle) => lower.includes(needle));
 }
 
-function sanitizeValue(value: unknown): unknown {
+export function sanitizeDebugValue(value: unknown): unknown {
   if (typeof value === 'string') {
     return value.length > MAX_STRING
       ? `${value.slice(0, MAX_STRING)}...<truncated:${value.length - MAX_STRING}>`
@@ -21,16 +21,16 @@ function sanitizeValue(value: unknown): unknown {
 
   if (Array.isArray(value)) {
     if (value.length > MAX_ARRAY_ITEMS) {
-      const head = value.slice(0, MAX_ARRAY_ITEMS).map(sanitizeValue);
+      const head = value.slice(0, MAX_ARRAY_ITEMS).map(sanitizeDebugValue);
       return [...head, `<truncated:${value.length - MAX_ARRAY_ITEMS} items>`];
     }
-    return value.map(sanitizeValue);
+    return value.map(sanitizeDebugValue);
   }
 
   if (value && typeof value === 'object') {
     const out: Record<string, unknown> = {};
     for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
-      out[key] = shouldRedact(key) ? '<redacted>' : sanitizeValue(nested);
+      out[key] = shouldRedact(key) ? '<redacted>' : sanitizeDebugValue(nested);
     }
     return out;
   }
@@ -47,7 +47,7 @@ export function useRuntimeDebugHooks(): RuntimeDebugHooks {
         dispatch(ingestEvent(event));
       },
       shouldCapture: () => true,
-      sanitize: (payload) => sanitizeValue(payload),
+      sanitize: (payload) => sanitizeDebugValue(payload),
     }),
     [dispatch],
   );

@@ -1,0 +1,4 @@
+PASS runtime-hook-emission
+PASS ring-buffer-retention-and-filtering
+PASS redaction-and-truncation
+All HC-018 Task 4 checks passed.
