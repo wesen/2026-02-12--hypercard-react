@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-interface NotificationsState {
+export interface NotificationsState {
   toast: string | null;
 }
 

@@ -22,6 +22,12 @@ export * from './components/widgets';
 // ── Shell ──
 export * from './components/shell';
 
+// ── Debug utilities ──
+export * from './debug';
+
+// ── App utilities ──
+export * from './app';
+
 // ── State ──
 export {
   navigationReducer,

@@ -7,7 +7,7 @@ export interface NavEntry {
   param?: string;
 }
 
-interface NavigationState {
+export interface NavigationState {
   layout: LayoutMode;
   stack: NavEntry[];
 }
