@@ -13,9 +13,8 @@ export * from './parts';
 // ── Theme ──
 export { HyperCardTheme, type HyperCardThemeProps } from './theme/HyperCardTheme';
 
-// ── DSL ──
-export * from './dsl/types';
-export { resolveValue, matchFilter, interpolateTemplate, type ResolveContext } from './dsl/resolver';
+// ── Card DSL ──
+export * from './cards';
 
 // ── Widgets ──
 export * from './components/widgets';
@@ -40,12 +39,3 @@ export {
   clearToast,
 } from './features/notifications/notificationsSlice';
 export * from './features/notifications/selectors';
-
-// ── App ──
-export {
-  dispatchDSLAction,
-  type DomainActionHandler,
-} from './app/dispatchDSLAction';
-
-// ── Registry APIs ──
-export * from './api';
