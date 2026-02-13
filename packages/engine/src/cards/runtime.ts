@@ -155,7 +155,8 @@ export function resolveValueExpr(
     return context.selectors(String(expr.name ?? ''), expr.from as SelectorScope | undefined, resolvedArgs);
   }
 
-  return undefined;
+  // Keep non-value-expression tagged objects (e.g. {$:'act', ...}) intact.
+  return expr;
 }
 
 export function createCardContext<TRootState>(
