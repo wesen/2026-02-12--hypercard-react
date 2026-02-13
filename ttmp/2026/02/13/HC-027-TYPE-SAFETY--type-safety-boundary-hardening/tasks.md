@@ -3,17 +3,17 @@
 ## TODO
 
 - [ ] Review and align with deep-dive plan in `HC-022` finding-14 document
-- [ ] Replace `HyperCardShellProps` generic collapse:
-  - [ ] use `CardStackDefinition<TRootState>`
-  - [ ] use `SharedSelectorRegistry<TRootState>`
-  - [ ] use `SharedActionRegistry<TRootState>`
-- [ ] Remove shell boundary `any` casts where feasible:
-  - [ ] runtime slice selector cast
-  - [ ] dispatch cast usage
-  - [ ] layout key cast usage
-- [ ] Harden `createDSLApp` boundary types:
-  - [ ] `snapshotSelector` typed with root state generic
-- [ ] Harden `createStoryHelpers` boundary types:
+- [x] Replace `HyperCardShellProps` generic collapse:
+- [x] use `CardStackDefinition<TRootState>`
+- [x] use `SharedSelectorRegistry<TRootState>`
+- [x] use `SharedActionRegistry<TRootState>`
+- [x] Remove shell boundary `any` casts where feasible:
+- [x] runtime slice selector cast
+- [x] dispatch cast usage
+- [x] layout key cast usage
+- [x] Harden `createDSLApp` boundary types:
+- [x] `snapshotSelector` typed with root state generic
+- [x] Harden `createStoryHelpers` boundary types:
   - [ ] `createStore` return type no longer `any`
   - [ ] `snapshotSelector` typed with root state generic
 - [ ] Propagate runtime generics:

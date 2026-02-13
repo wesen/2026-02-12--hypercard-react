@@ -11,9 +11,11 @@
     "storybook": "npx storybook dev -p 6006 --config-dir apps/inventory/.storybook",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
-    "typecheck": "tsc --build"
+    "typecheck": "tsc --build",
+    "test": "npm run test -w packages/engine"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.3.15"
+    "@biomejs/biome": "^2.3.15",
+    "vitest": "^4.0.18"
   }
 }
