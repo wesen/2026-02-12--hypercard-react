@@ -10,3 +10,4 @@ export { DetailView, type DetailViewProps } from './DetailView';
 export { FormView, type FormViewProps } from './FormView';
 export { ReportView, type ReportViewProps } from './ReportView';
 export { ChatView, type ChatViewProps } from './ChatView';
+export { StreamingChatView, type StreamingChatViewProps } from './StreamingChatView';

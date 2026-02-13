@@ -7,3 +7,4 @@ export { LayoutCardChat, type LayoutCardChatProps } from './LayoutCardChat';
 export { CardRenderer, type CardRendererProps, type CardRendererRuntime } from './CardRenderer';
 export { HyperCardShell, type HyperCardShellProps } from './HyperCardShell';
 export { RuntimeDebugPane, type RuntimeDebugPaneProps } from './RuntimeDebugPane';
+export { ChatSidebar, type ChatSidebarProps } from './ChatSidebar';

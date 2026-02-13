@@ -25,6 +25,9 @@ export * from './components/shell';
 // ── Debug utilities ──
 export * from './debug';
 
+// ── Chat ──
+export * from './chat';
+
 // ── App utilities ──
 export * from './app';
 
