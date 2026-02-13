@@ -605,3 +605,74 @@ The main output is a standalone `packages/engine/src/cards` module with scope-aw
 - Task tracking: Task 9 checked complete in `tasks.md`.
 - Build check after this step: `npm run -s typecheck` (pass).
 
+
+## Step 9: Task 10 - Add Scoped Runtime Redux State Slice
+
+I implemented scoped runtime state in Redux to support card-local and layered scope state (`card`, `cardType`, `background`, `stack`, `global`) with reducer actions for initialization and mutation.
+
+This is the persistence backbone required by the new CardDefinition model so selectors/actions can read/write scope state deterministically.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 6)
+
+**Assistant interpretation:** Continue execution tasks with per-task commits and diary updates.
+
+**Inferred user intent:** Land the scoped state mechanism as real code, not only design docs.
+
+**Commit (code):** `4e20683` — "engine: add scoped runtime redux state slice"
+
+### What I did
+
+- Added `packages/engine/src/cards/runtimeStateSlice.ts` with:
+- state shape for `hypercardRuntime` (`global`, `stacks`, `backgrounds`, `cardTypes`, `cards`)
+- reducers:
+- `ensureCardRuntime`
+- `setScopedState`
+- `patchScopedState`
+- `resetScopedState`
+- selectors:
+- `selectScopedState`
+- `selectMergedScopedState`
+- Exported new runtime slice actions/types/selectors through `packages/engine/src/cards/index.ts`.
+- Checked off Task 10 in `docmgr`.
+
+### Why
+
+- Runtime expression/action execution needs a concrete, centralized scoped state store before shell/runtime integration can be rewritten.
+
+### What worked
+
+- Scope initialization and mutation APIs compiled cleanly.
+- Merge selector precedence aligns with design (`global -> stack -> background -> cardType -> card`).
+
+### What didn't work
+
+- N/A.
+
+### What I learned
+
+- Defining a single `ensureCardRuntime` path early simplifies all downstream runtime operations and avoids repeated guard logic.
+
+### What was tricky to build
+
+- Correctly creating nested scope records lazily while preserving reducer simplicity.
+- Addressed by central `ensureStack` and `ensureCard` helpers.
+
+### What warrants a second pair of eyes
+
+- Review reset semantics for broad scopes (`global`/`stack`) since these are intentionally destructive across many cards.
+
+### What should be done in the future
+
+- Add focused reducer unit tests for scope initialization, path writes, and reset behavior.
+
+### Code review instructions
+
+- Start with `runtimeStateSlice.ts` helpers (`ensureStack`, `ensureCard`, `getScopeStateRef`).
+- Verify payload contracts and merge order in `selectMergedScopedState`.
+
+### Technical details
+
+- Build check after this step: `npm run -s typecheck` (pass).
+
