@@ -199,3 +199,57 @@ deals.save/create/delete/setStage/reset
 activities.create/reset
 crm.resetAll
 ```
+
+
+## Step 3: Engineering Postmortem and User Guide Gap Analysis
+
+Wrote a detailed postmortem analyzing what the HC-018 user guide covers well and what it's missing, based on real experience building the CRM app. Identified 12 specific gaps, categorized by severity, and produced a prioritized improvement plan.
+
+### Prompt Context
+
+**User prompt (verbatim):** "Create a postmortem, especially detailing what was missing from the user guide. Store the postmortem in the ticket and upload to remarkable."
+
+**Assistant interpretation:** Write a postmortem document focused on user guide gaps, store it in the HC-019 ticket, and upload to reMarkable.
+
+**Inferred user intent:** Improve the DSL documentation by capturing what a real build exposed as missing.
+
+**Commit (code):** 9cb6f01 — "docs(HC-019): engineering postmortem with user guide gap analysis"
+
+### What I did
+- Wrote 363-line postmortem document (`design/01-engineering-postmortem-crm-app-build-and-user-guide-gap-analysis.md`)
+- Cataloged 12 gaps: 1 blocker (RTK types), 7 significant (multi-entity, configs, templates, stories, actions, cross-entity, storybook wiring), 4 minor
+- Included quantitative coverage assessment (guide step × gap matrix)
+- Produced prioritized 3-tier improvement plan
+- Uploaded to reMarkable at `/ai/2026/02/13/HC-019-DSL-CRM-APP/`
+- Updated changelog and committed
+
+### Why
+- The user guide is the primary onboarding artifact — gaps reduce its value
+- A structured gap analysis makes improvements actionable rather than anecdotal
+
+### What worked
+- Having just built the CRM gave immediate recall of every friction point
+- The severity categorization (🔴/🟡/🟢) makes prioritization obvious
+- reMarkable upload succeeded on first try
+
+### What didn't work
+- N/A
+
+### What I learned
+- The guide covers architecture and mental model excellently but under-serves API reference and multi-entity patterns
+- 4 out of 12 gaps required reading engine source — that's the clearest signal of documentation debt
+
+### What was tricky to build
+- Distinguishing between "gap in the guide" vs. "reasonable thing to look up in source" required judgment. The threshold used was: if a developer following the guide step-by-step would be blocked or confused, it's a gap.
+
+### What warrants a second pair of eyes
+- The severity assessments are subjective — the guide author may disagree on what's 🟡 vs. 🟢
+
+### What should be done in the future
+- Implement the Priority 1 guide improvements (widget config reference, RTK pitfall, scaffold templates)
+- Consider automated guide validation: a script that builds a minimal app following only guide instructions
+
+### Code review instructions
+- Read the postmortem: `ttmp/.../design/01-engineering-postmortem-crm-app-build-and-user-guide-gap-analysis.md`
+- Focus on §3 (the 12 gaps) and §5 (prioritized improvements)
+- Verify on reMarkable: `/ai/2026/02/13/HC-019-DSL-CRM-APP/`
