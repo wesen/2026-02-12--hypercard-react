@@ -11,7 +11,11 @@ Intent: long-term
 Owners: []
 RelatedFiles:
     - Path: packages/engine/src/cards/runtime.ts
-      Note: Fix resolveValueExpr to preserve function-valued config and non-plain objects (commit c306120).
+      Note: |-
+        Fix resolveValueExpr to preserve function-valued config and non-plain objects (commit c306120).
+        Resolver now preserves non-value-expression tagged objects like {$:'act'} in widget props.
+    - Path: packages/engine/src/components/widgets/BookTracker.stories.tsx
+      Note: Expanded into full CardDefinition-driven app flow with shared selectors/actions and report card.
     - Path: ttmp/2026/02/13/HC-017-NEW-DSL--replace-current-dsl-with-js-ui-dsl-sketch/design/01-current-dsl-deep-dive-and-migration-guide-to-new-screen-dsl.md
       Note: Primary deliverable documented by diary steps.
     - Path: ttmp/2026/02/13/HC-017-NEW-DSL--replace-current-dsl-with-js-ui-dsl-sketch/design/02-carddefinition-scoped-state-architecture-card-background-stack-global.md
@@ -26,6 +30,10 @@ RelatedFiles:
       Note: Regression experiment script for cf.compute crash path.
     - Path: ttmp/2026/02/13/HC-017-NEW-DSL--replace-current-dsl-with-js-ui-dsl-sketch/scripts/05-resolve-valueexpr-function-pass-through.out.txt
       Note: Captured output proving function pass-through and non-plain object preservation.
+    - Path: ttmp/2026/02/13/HC-017-NEW-DSL--replace-current-dsl-with-js-ui-dsl-sketch/scripts/06-resolve-valueexpr-action-descriptor-pass-through.mjs
+      Note: Regression experiment for action descriptor pass-through.
+    - Path: ttmp/2026/02/13/HC-017-NEW-DSL--replace-current-dsl-with-js-ui-dsl-sketch/scripts/06-resolve-valueexpr-action-descriptor-pass-through.out.txt
+      Note: Captured experiment output for resolver pass-through checks.
     - Path: ttmp/2026/02/13/HC-017-NEW-DSL--replace-current-dsl-with-js-ui-dsl-sketch/sources/local/js-ui-dsl.md
       Note: Imported spec source referenced throughout diary.
 ExternalSources:
@@ -35,6 +43,7 @@ LastUpdated: 2026-02-13T10:17:00-05:00
 WhatFor: Capture exact process, decisions, failures, and validation artifacts for replacing the current DSL with the new screen DSL sketch.
 WhenToUse: Use when reviewing how the guide was produced and replaying experiments.
 ---
+
 
 
 
@@ -1148,3 +1157,94 @@ node_modules/react-dom/cjs/react-dom-client.development.js/scheduleImmediateRoot
 
 - Root cause path: row click -> `DetailView` render -> `computed[].compute` invocation on value resolved by runtime.
 - Resolution bug pattern before fix: function/class instance values hit non-plain branch and were lost as `undefined`.
+
+## Step 16: BookTracker Full App via CardDefinition Home + Action Descriptor Pass-Through Fix
+
+I expanded the BookTracker CardDefinition story into a fuller app flow that is navigable from the home card and exercises shared store mutations (status updates, mark-all-read, delete, reset) through DSL-defined buttons and bindings. During validation I found a second resolver issue where `{$:'act'}` objects embedded in resolved widget props were being dropped.
+
+I fixed that resolver behavior, added a focused regression experiment, and validated the updated full-flow story in Storybook.
+
+### Prompt Context
+
+**User prompt (verbatim):** "furthermore, should I be able to use the full book app from storybook's home card carddefinition? Can you build the full app using only DSL widgets for the most part. That way I can make sure we can do all the different store manipulations and such."
+
+**Assistant interpretation:** Expand the BookTracker story so the CardDefinition shell from home behaves like a full app and demonstrates realistic shared-state mutations.
+
+**Inferred user intent:** Prove the new DSL runtime is sufficient for end-to-end interaction and data mutation flows without falling back to custom React logic.
+
+**Commit (code):** f9ae020 — "feat(storybook): build BookTracker full app flow with CardDefinition DSL"
+
+### What I did
+
+- Extended `BookTracker.stories.tsx` CardDefinition stack to include richer app flow:
+- new cards: `readingNow`, `readingReport`
+- home menu actions for browse/reading/report/add + shared actions (`markAllRead`, `resetDemo`)
+- detail actions for `setStatus` and delete
+- report actions for browse/mark-all-read/reset
+- added additional nav shortcuts for these cards
+- Added shared selectors:
+- `books.reading`
+- `books.reportSections`
+- Added shared actions:
+- `books.setStatus`
+- `books.markAllRead`
+- `books.resetDemo`
+- Added stable demo reset/create semantics in `booksSlice` (`resetDemo`, robust next id generation).
+- Discovered and fixed resolver issue in `resolveValueExpr`:
+- non-value-expression tagged objects (notably `{$:'act'}`) now pass through unchanged.
+- Added experiment artifacts:
+- `scripts/06-resolve-valueexpr-action-descriptor-pass-through.mjs`
+- `scripts/06-resolve-valueexpr-action-descriptor-pass-through.out.txt`
+- Validation:
+- `npm run -s typecheck`
+- `npm run -w apps/inventory build`
+- `npm run -w apps/todo build`
+- Storybook smoke (BookTracker shell full app):
+- home `✅ Mark All Read` -> report shows `Read: 5`, `Reading: 0`
+- report `📋 Browse` navigates to browse list
+- browse row event opens detail
+- detail `🗑 Delete` returns to browse with row count reduced (5 -> 4)
+- console errors: 0
+
+### Why
+
+- The previous story set demonstrated isolated cards, but did not strongly prove complete app behavior from the home card or mutation-heavy flows in one scenario.
+
+### What worked
+
+- Full-flow navigation and shared store mutations now work through CardDefinition-defined actions and bindings.
+- The resolver fix restored action descriptors inside resolved UI props so menu/report/list button actions execute.
+
+### What didn't work
+
+- Storybook automation has pointer interception around list rows (`status-bar` / filter overlays), which makes direct click automation flaky.
+- I used event dispatch for row-click validation in the preview frame where necessary.
+
+### What I learned
+
+- `resolveValueExpr` must discriminate between actual value expression tags (`sel`, `param`, `event`) and other tagged payload objects (`act`) that must remain opaque data.
+
+### What was tricky to build
+
+- The hardest part was recognizing why home/menu actions looked wired but did nothing: they were being resolved away before widget `onAction` handlers saw them.
+
+### What warrants a second pair of eyes
+
+- Consider adding an explicit `ActionDescriptor` type guard path in resolver to make this behavior structural rather than relying on unknown-tag pass-through.
+
+### What should be done in the future
+
+- Add runtime unit coverage around mixed resolved widget-prop objects containing selector expressions and embedded action descriptors.
+
+### Code review instructions
+
+- Start at `packages/engine/src/cards/runtime.ts` (`resolveValueExpr` fallthrough behavior).
+- Review `packages/engine/src/components/widgets/BookTracker.stories.tsx` for full app flow and shared selector/action contracts.
+- Run experiment: `npm exec -y tsx ttmp/2026/02/13/HC-017-NEW-DSL--replace-current-dsl-with-js-ui-dsl-sketch/scripts/06-resolve-valueexpr-action-descriptor-pass-through.mjs`
+
+### Technical details
+
+- Commits for this step:
+- `1e325fe` (`resolveValueExpr` pass-through fix for non-value-expression tagged objects)
+- `f9ae020` (BookTracker full app DSL expansion)
+- `33d5edc` (ignore `.idea/` workspace noise)

@@ -19,3 +19,4 @@
 - [x] Port BookTracker and app story examples to new DSL/JS API
 - [x] Run typecheck/build validation, fix fallout, finalize docs/diary/changelog, and upload refreshed migration bundle
 - [x] Fix `cf.compute is not a function` regression in Detail Cards by preserving function-valued config fields through expression resolution
+- [x] Build BookTracker full app shell path from CardDefinition home card (with shared store mutations) and fix action-descriptor pass-through in expression resolver

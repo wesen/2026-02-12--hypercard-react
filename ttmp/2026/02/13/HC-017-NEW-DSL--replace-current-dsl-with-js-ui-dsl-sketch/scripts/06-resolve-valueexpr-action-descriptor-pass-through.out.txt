@@ -1,0 +1,6 @@
+PASS: buttons array survives resolution
+PASS: first action descriptor keeps $=act
+PASS: first action descriptor keeps type
+PASS: action args survive resolution
+
+resolveValueExpr action-descriptor pass-through checks passed.

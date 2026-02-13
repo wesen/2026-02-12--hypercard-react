@@ -94,3 +94,14 @@ Added direct Storybook smoke validation evidence for the Detail Cards row-click 
 
 - /home/manuel/code/wesen/2026-02-12--hypercard-react/ttmp/2026/02/13/HC-017-NEW-DSL--replace-current-dsl-with-js-ui-dsl-sketch/reference/01-diary.md — Documented browser-level verification for cf.compute fix.
 
+
+## 2026-02-13
+
+Expanded BookTracker story into a fuller CardDefinition-driven shell app from home (browse/reading/report/detail/add + shared mutations), and fixed resolver to preserve embedded action descriptors in resolved widget props.
+
+### Related Files
+
+- /home/manuel/code/wesen/2026-02-12--hypercard-react/packages/engine/src/cards/runtime.ts — Action descriptor pass-through fix in resolveValueExpr.
+- /home/manuel/code/wesen/2026-02-12--hypercard-react/packages/engine/src/components/widgets/BookTracker.stories.tsx — Full app story flow and shared selectors/actions expansion.
+- /home/manuel/code/wesen/2026-02-12--hypercard-react/ttmp/2026/02/13/HC-017-NEW-DSL--replace-current-dsl-with-js-ui-dsl-sketch/reference/01-diary.md — Step 16 debugging and validation record.
+
