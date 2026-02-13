@@ -1098,6 +1098,10 @@ node_modules/react-dom/cjs/react-dom-client.development.js/scheduleImmediateRoot
 - `npm run -s typecheck`
 - `npm run -w apps/inventory build`
 - `npm run -w apps/todo build`
+- Storybook smoke validation (Playwright):
+- Opened `http://localhost:6006/?path=/story/booktracker-home--shell-browse-and-detail-from-dsl-cards`
+- Triggered first table-row click in preview iframe and confirmed route transition (`Browse Books` -> `Book Detail`)
+- Collected console errors at level `error` (0 messages)
 
 ### Why
 
@@ -1108,6 +1112,7 @@ node_modules/react-dom/cjs/react-dom-client.development.js/scheduleImmediateRoot
 - Function-valued `computed[].compute` now survives expression resolution and remains callable.
 - Additional preservation behavior for non-plain object values is now consistent with code comment intent.
 - Typecheck and both app builds pass after the fix.
+- Storybook `Shell Browse / Detail Cards (CardDefinition)` row-click flow now reaches detail card without `cf.compute` runtime error.
 
 ### What didn't work
 
