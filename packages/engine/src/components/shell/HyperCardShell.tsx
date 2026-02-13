@@ -1,46 +1,44 @@
-import { useCallback } from 'react';
-import type { Stack, DSLAction, CardDefinition } from '../../dsl/types';
-import type { DomainActionHandler } from '../../app/dispatchDSLAction';
-import { dispatchDSLAction } from '../../app/dispatchDSLAction';
-import type { CardTypeRenderer } from './CardRenderer';
-import { CardRenderer } from './CardRenderer';
-import { WindowChrome } from './WindowChrome';
-import { TabBar } from './TabBar';
-import { NavBar } from './NavBar';
-import { LayoutSplit } from './LayoutSplit';
-import { LayoutDrawer } from './LayoutDrawer';
-import { LayoutCardChat } from './LayoutCardChat';
-import { Toast } from '../widgets/Toast';
-import { HyperCardTheme } from '../../theme/HyperCardTheme';
-
-import { useDispatch, useSelector } from 'react-redux';
-import { setLayout } from '../../features/navigation/navigationSlice';
+import { useCallback, useEffect, useMemo, type ReactNode } from 'react';
 import {
-  selectCurrentNav,
-  selectNavDepth,
-  selectLayout,
-  type NavigationStateSlice,
-} from '../../features/navigation/selectors';
+  useDispatch,
+  useSelector,
+  useStore,
+} from 'react-redux';
+import { clearToast, showToast } from '../../features/notifications/notificationsSlice';
 import {
   selectToast,
   type NotificationsStateSlice,
 } from '../../features/notifications/selectors';
-import { clearToast } from '../../features/notifications/notificationsSlice';
-
-type ShellState = NavigationStateSlice & NotificationsStateSlice;
-
-export interface HyperCardShellProps {
-  stack: Stack;
-  domainActionHandler?: DomainActionHandler;
-  customRenderers?: Record<string, CardTypeRenderer>;
-  /** Additional data from domain slices (merged with stack.data) */
-  domainData?: Record<string, unknown[]>;
-  navShortcuts?: Array<{ card: string; icon: string }>;
-  /** Render function for AI panel (chat) — only used in split/drawer layouts */
-  renderAIPanel?: (dispatch: (action: DSLAction) => void) => React.ReactNode;
-  /** Theme class name to apply (e.g. 'theme-classic', 'theme-modern') */
-  themeClass?: string;
-}
+import { goBack, navigate, setLayout } from '../../features/navigation/navigationSlice';
+import {
+  selectCurrentNav,
+  selectLayout,
+  selectNavDepth,
+  type NavigationStateSlice,
+} from '../../features/navigation/selectors';
+import { CardRenderer } from './CardRenderer';
+import { LayoutCardChat } from './LayoutCardChat';
+import { LayoutDrawer } from './LayoutDrawer';
+import { LayoutSplit } from './LayoutSplit';
+import { NavBar } from './NavBar';
+import { TabBar } from './TabBar';
+import { WindowChrome } from './WindowChrome';
+import { Toast } from '../widgets/Toast';
+import { HyperCardTheme } from '../../theme/HyperCardTheme';
+import {
+  ensureCardRuntime,
+  type ActionDescriptor,
+  type CardStackDefinition,
+  type SharedActionRegistry,
+  type SharedSelectorRegistry,
+} from '../../cards';
+import {
+  createCardContext,
+  createSelectorResolver,
+  executeCommand,
+  resolveValueExpr,
+  type RuntimeLookup,
+} from '../../cards/runtime';
 
 const LAYOUT_TABS = [
   { key: 'split', label: '1 · Split Pane' },
@@ -48,61 +46,214 @@ const LAYOUT_TABS = [
   { key: 'cardChat', label: '3 · Card as Chat' },
 ];
 
-export function HyperCardShell({
+type ShellState = NavigationStateSlice & NotificationsStateSlice & { hypercardRuntime?: unknown };
+
+export interface HyperCardShellProps<TRootState = unknown> {
+  stack: CardStackDefinition<TRootState>;
+  sharedSelectors?: SharedSelectorRegistry<TRootState>;
+  sharedActions?: SharedActionRegistry<TRootState>;
+  navShortcuts?: Array<{ card: string; icon: string }>;
+  renderAIPanel?: (dispatch: (action: ActionDescriptor) => void) => ReactNode;
+  themeClass?: string;
+  mode?: 'interactive' | 'preview';
+}
+
+export function HyperCardShell<TRootState = unknown>({
   stack,
-  domainActionHandler,
-  customRenderers,
-  domainData,
+  sharedSelectors,
+  sharedActions,
   navShortcuts,
   renderAIPanel,
   themeClass,
-}: HyperCardShellProps) {
+  mode = 'interactive',
+}: HyperCardShellProps<TRootState>) {
   const dispatch = useDispatch();
+  const store = useStore<TRootState & ShellState>();
+
   const layout = useSelector((s: ShellState) => selectLayout(s));
   const current = useSelector((s: ShellState) => selectCurrentNav(s));
   const navDepth = useSelector((s: ShellState) => selectNavDepth(s));
   const toast = useSelector((s: ShellState) => selectToast(s));
+  const runtimeSlice = useSelector((s: ShellState) => s.hypercardRuntime as any);
 
-  const dslDispatch = useCallback(
-    (action: DSLAction) => dispatchDSLAction(dispatch, action, domainActionHandler),
-    [dispatch, domainActionHandler],
+  const currentCardId = stack.cards[current.card] ? current.card : stack.homeCard;
+  const cardDef = stack.cards[currentCardId];
+  const cardTypeDef = stack.cardTypes?.[cardDef.type];
+  const backgroundId = cardDef.backgroundId;
+  const backgroundDef = backgroundId ? stack.backgrounds?.[backgroundId] : undefined;
+
+  const params = useMemo<Record<string, string>>(
+    () => ({
+      card: currentCardId,
+      param: current.param ?? '',
+    }),
+    [currentCardId, current.param],
   );
 
-  const cardDef = stack.cards[current.card];
+  useEffect(() => {
+    dispatch(ensureCardRuntime({
+      stackId: stack.id,
+      cardId: currentCardId,
+      cardType: cardDef.type,
+      backgroundId,
+      defaults: {
+        global: stack.global?.state,
+        stack: stack.stack?.state,
+        background: backgroundDef?.state,
+        cardType: cardTypeDef?.state,
+        card: cardDef.state?.initial,
+      },
+    }));
+  }, [
+    dispatch,
+    stack.id,
+    stack.global?.state,
+    stack.stack?.state,
+    currentCardId,
+    cardDef.type,
+    cardDef.state?.initial,
+    cardTypeDef?.state,
+    backgroundId,
+    backgroundDef?.state,
+  ]);
 
-  // Merge stack.data with any domain-provided data
-  const data: Record<string, Record<string, unknown>[]> = domainData
-    ? { ...stack.data, ...(domainData as Record<string, Record<string, unknown>[]>) }
-    : stack.data;
+  const runtimeRoot = useMemo(
+    () => ({
+      hypercardRuntime: runtimeSlice ?? { global: {}, stacks: {} },
+    }),
+    [runtimeSlice],
+  );
 
-  const context = {
-    data,
-    settings: stack.settings,
-    dispatch: dslDispatch,
-    paramValue: current.param,
-  };
+  const lookup: RuntimeLookup = useMemo(() => ({
+    cardDef,
+    stackDef: stack,
+    cardTypeDef,
+    backgroundDef,
+  }), [cardDef, stack, cardTypeDef, backgroundDef]);
+
+  const runAction = useCallback((action: ActionDescriptor, event?: { name: string; payload: unknown }) => {
+    const context = createCardContext(runtimeRoot, {
+      stackId: stack.id,
+      cardId: currentCardId,
+      cardType: cardDef.type,
+      backgroundId,
+      mode,
+      params,
+      getState: () => store.getState(),
+      dispatch: (a) => dispatch(a as any),
+      nav: {
+        go: (card, param) => dispatch(navigate({ card, paramValue: param })),
+        back: () => dispatch(goBack()),
+      },
+    });
+
+    executeCommand(
+      { command: action, event },
+      store.getState(),
+      context,
+      lookup,
+      (sharedSelectors ?? {}) as SharedSelectorRegistry,
+      (sharedActions ?? {}) as SharedActionRegistry,
+      {
+        showToast: (message) => dispatch(showToast(message)),
+      },
+    );
+  }, [
+    runtimeRoot,
+    stack.id,
+    currentCardId,
+    cardDef.type,
+    backgroundId,
+    mode,
+    params,
+    store,
+    dispatch,
+    lookup,
+    sharedSelectors,
+    sharedActions,
+  ]);
+
+  const resolve = useCallback((expr: unknown, event?: { name: string; payload: unknown }) => {
+    const context = createCardContext(runtimeRoot, {
+      stackId: stack.id,
+      cardId: currentCardId,
+      cardType: cardDef.type,
+      backgroundId,
+      mode,
+      params,
+      getState: () => store.getState(),
+      dispatch: (a) => dispatch(a as any),
+      nav: {
+        go: (card, param) => dispatch(navigate({ card, paramValue: param })),
+        back: () => dispatch(goBack()),
+      },
+    });
+
+    const selectorResolver = createSelectorResolver(
+      store.getState(),
+      context,
+      lookup,
+      (sharedSelectors ?? {}) as SharedSelectorRegistry,
+    );
+
+    return resolveValueExpr(expr, {
+      state: store.getState(),
+      params,
+      event,
+      selectors: selectorResolver,
+    });
+  }, [
+    runtimeRoot,
+    stack.id,
+    currentCardId,
+    cardDef.type,
+    backgroundId,
+    mode,
+    params,
+    store,
+    dispatch,
+    lookup,
+    sharedSelectors,
+  ]);
+
+  const emit = useCallback((nodeKey: string, eventName: string, payload: unknown) => {
+    const command = cardDef.bindings?.[nodeKey]?.[eventName];
+    if (!command) return;
+    runAction(command, { name: eventName, payload });
+  }, [cardDef.bindings, runAction]);
+
+  const runtime = useMemo(
+    () => ({
+      mode,
+      resolve,
+      emit,
+      execute: runAction,
+    }),
+    [mode, resolve, emit, runAction],
+  );
 
   const mainContent = (
     <>
       <NavBar
-        currentCard={current.card}
-        cardDef={cardDef}
+        currentCard={currentCardId}
+        cardTitle={cardDef.title}
+        cardIcon={cardDef.icon}
         navDepth={navDepth}
-        onAction={dslDispatch}
+        onBack={() => runAction({ $: 'act', type: 'nav.back' })}
+        onGo={(card) => runAction({ $: 'act', type: 'nav.go', args: { card } })}
         shortcuts={navShortcuts}
       />
       <div style={{ flex: 1, overflow: 'auto' }}>
         <CardRenderer
-          cardId={current.card}
+          cardId={currentCardId}
           cardDef={cardDef}
-          context={context}
-          customRenderers={customRenderers}
+          runtime={runtime}
         />
       </div>
     </>
   );
 
-  const aiPanel = renderAIPanel ? renderAIPanel(dslDispatch) : null;
+  const aiPanel = renderAIPanel ? renderAIPanel(runAction) : null;
 
   let layoutContent;
   if (layout === 'split' && aiPanel) {
@@ -128,9 +279,7 @@ export function HyperCardShell({
           {layoutContent}
         </div>
         <div data-part="footer-line">
-          DSL-driven · {Object.keys(stack.cards).length} cards
-          {domainData?.items ? ` · ${(domainData.items as unknown[]).length} items` : ''}
-          {stack.ai ? ` · ${stack.ai.intents.length} AI intents` : ''}
+          CardDefinition runtime · {Object.keys(stack.cards).length} cards
         </div>
         {toast && <Toast message={toast} onDone={() => dispatch(clearToast())} />}
       </WindowChrome>

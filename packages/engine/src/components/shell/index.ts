@@ -4,5 +4,5 @@ export { NavBar, type NavBarProps } from './NavBar';
 export { LayoutSplit, type LayoutSplitProps } from './LayoutSplit';
 export { LayoutDrawer, type LayoutDrawerProps } from './LayoutDrawer';
 export { LayoutCardChat, type LayoutCardChatProps } from './LayoutCardChat';
-export { CardRenderer, type CardRendererProps, type CardRendererContext, type CardTypeRenderer } from './CardRenderer';
+export { CardRenderer, type CardRendererProps, type CardRendererRuntime } from './CardRenderer';
 export { HyperCardShell, type HyperCardShellProps } from './HyperCardShell';
