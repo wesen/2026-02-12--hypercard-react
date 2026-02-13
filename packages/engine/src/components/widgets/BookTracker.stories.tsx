@@ -35,6 +35,10 @@ type Book = {
   [key: string]: unknown;
 };
 
+function cloneBookSeed(): Book[] {
+  return JSON.parse(JSON.stringify(BOOKS)) as Book[];
+}
+
 const BOOKS: Book[] = [
   { id: 'b1', title: 'Dune', author: 'Herbert', status: 'read', rating: 5 },
   { id: 'b2', title: '1984', author: 'Orwell', status: 'reading', rating: 4 },
@@ -172,7 +176,7 @@ type BooksState = { books: { items: Book[] } };
 
 const booksSlice = createSlice({
   name: 'books',
-  initialState: { items: JSON.parse(JSON.stringify(BOOKS)) as Book[] },
+  initialState: { items: cloneBookSeed() },
   reducers: {
     saveBook(state, action: PayloadAction<{ id: string; edits: Partial<Book> }>) {
       const idx = state.items.findIndex((b) => b.id === action.payload.id);
@@ -180,11 +184,28 @@ const booksSlice = createSlice({
         state.items[idx] = { ...state.items[idx], ...action.payload.edits };
       }
     },
+    setStatus(state, action: PayloadAction<{ id: string; status: Book['status'] }>) {
+      const idx = state.items.findIndex((b) => b.id === action.payload.id);
+      if (idx !== -1) {
+        state.items[idx].status = action.payload.status;
+      }
+    },
     deleteBook(state, action: PayloadAction<{ id: string }>) {
       state.items = state.items.filter((b) => b.id !== action.payload.id);
     },
+    markAllRead(state) {
+      state.items = state.items.map((book) => ({ ...book, status: 'read' as const }));
+    },
+    resetDemo(state) {
+      state.items = cloneBookSeed();
+    },
     createBook(state, action: PayloadAction<{ title: string; author: string; status?: string; rating?: number }>) {
-      const nextId = `b${state.items.length + 1}`;
+      const nextId = `b${
+        state.items.reduce((max, b) => {
+          const n = Number.parseInt(b.id.replace(/^b/, ''), 10);
+          return Number.isNaN(n) ? max : Math.max(max, n);
+        }, 0) + 1
+      }`;
       state.items.push({
         id: nextId,
         title: action.payload.title,
@@ -212,11 +233,15 @@ const BOOK_STACK: CardStackDefinition<BooksState> = defineCardStack({
         icon: '📚',
         labels: [
           { value: 'Book Tracker' },
-          { value: 'CardDefinition story example', style: 'muted' },
+          { value: 'Full app via CardDefinition widgets', style: 'muted' },
         ],
         buttons: [
           { label: '📋 Browse Books', action: Act('nav.go', { card: 'browse' }) },
+          { label: '🔥 Reading Now', action: Act('nav.go', { card: 'readingNow' }) },
+          { label: '📊 Reading Report', action: Act('nav.go', { card: 'readingReport' }) },
           { label: '➕ Add Book', action: Act('nav.go', { card: 'addBook' }) },
+          { label: '✅ Mark All Read', action: Act('books.markAllRead', undefined, { to: 'shared' }) },
+          { label: '♻️ Reset Demo Data', action: Act('books.resetDemo', undefined, { to: 'shared' }) },
         ],
       }),
     },
@@ -232,10 +257,38 @@ const BOOK_STACK: CardStackDefinition<BooksState> = defineCardStack({
         filters: BOOK_FILTERS,
         searchFields: ['title', 'author'],
         rowKey: 'id',
-        toolbar: [{ label: '➕ Add', action: Act('nav.go', { card: 'addBook' }) }],
+        toolbar: [
+          { label: '➕ Add', action: Act('nav.go', { card: 'addBook' }) },
+          { label: '✅ Mark All Read', action: Act('books.markAllRead', undefined, { to: 'shared' }) },
+          { label: '♻️ Reset', action: Act('books.resetDemo', undefined, { to: 'shared' }) },
+        ],
       }),
       bindings: {
         browseList: {
+          rowClick: Act('nav.go', { card: 'bookDetail', param: Ev('row.id') }),
+        },
+      },
+    },
+    readingNow: {
+      id: 'readingNow',
+      type: 'list',
+      title: 'Reading Now',
+      icon: '🔥',
+      ui: ui.list({
+        key: 'readingNowList',
+        items: Sel('books.reading', undefined, { from: 'shared' }),
+        columns: BOOK_COLUMNS,
+        filters: BOOK_FILTERS,
+        searchFields: ['title', 'author'],
+        rowKey: 'id',
+        toolbar: [
+          { label: '📋 Browse All', action: Act('nav.go', { card: 'browse' }) },
+          { label: '✅ Mark All Read', action: Act('books.markAllRead', undefined, { to: 'shared' }) },
+        ],
+        emptyMessage: 'No active reading books right now.',
+      }),
+      bindings: {
+        readingNowList: {
           rowClick: Act('nav.go', { card: 'bookDetail', param: Ev('row.id') }),
         },
       },
@@ -254,6 +307,8 @@ const BOOK_STACK: CardStackDefinition<BooksState> = defineCardStack({
         edits: Sel('state.edits'),
         actions: [
           { label: '✏️ Save', variant: 'primary', action: Act('books.save', { id: Sel('books.paramId', undefined, { from: 'shared' }), edits: Sel('state.edits') }, { to: 'shared' }) },
+          { label: '📖 Mark Reading', action: Act('books.setStatus', { id: Sel('books.paramId', undefined, { from: 'shared' }), status: 'reading' }, { to: 'shared' }) },
+          { label: '✅ Mark Read', action: Act('books.setStatus', { id: Sel('books.paramId', undefined, { from: 'shared' }), status: 'read' }, { to: 'shared' }) },
           { label: '🗑 Delete', variant: 'danger', action: Act('books.delete', { id: Sel('books.paramId', undefined, { from: 'shared' }) }, { to: 'shared' }) },
         ],
       }),
@@ -288,13 +343,49 @@ const BOOK_STACK: CardStackDefinition<BooksState> = defineCardStack({
         },
       },
     },
+    readingReport: {
+      id: 'readingReport',
+      type: 'report',
+      title: 'Reading Report',
+      icon: '📊',
+      ui: ui.report({
+        key: 'readingReportView',
+        sections: Sel('books.reportSections', undefined, { from: 'shared' }),
+        actions: [
+          { label: '📋 Browse', action: Act('nav.go', { card: 'browse' }) },
+          { label: '✅ Mark All Read', action: Act('books.markAllRead', undefined, { to: 'shared' }) },
+          { label: '♻️ Reset Demo', action: Act('books.resetDemo', undefined, { to: 'shared' }) },
+        ],
+      }),
+    },
   },
 });
 
 const bookSharedSelectors: SharedSelectorRegistry<BooksState> = {
   'books.all': (state) => state.books.items,
+  'books.reading': (state) => state.books.items.filter((b) => b.status === 'reading'),
   'books.paramId': (_state, _args, ctx) => String(ctx.params.param ?? ''),
   'books.byParam': (state, _args, ctx) => state.books.items.find((b) => b.id === String(ctx.params.param ?? '')) ?? null,
+  'books.reportSections': (state) => {
+    const items = state.books.items;
+    const total = items.length;
+    const byStatus = {
+      toRead: items.filter((b) => b.status === 'to-read').length,
+      reading: items.filter((b) => b.status === 'reading').length,
+      read: items.filter((b) => b.status === 'read').length,
+    };
+    const avgRating = total
+      ? (items.reduce((sum, b) => sum + Number(b.rating ?? 0), 0) / total).toFixed(1)
+      : '0.0';
+
+    return [
+      { label: 'Total Books', value: String(total) },
+      { label: 'To Read', value: String(byStatus.toRead) },
+      { label: 'Reading', value: String(byStatus.reading) },
+      { label: 'Read', value: String(byStatus.read) },
+      { label: 'Average Rating', value: avgRating },
+    ];
+  },
 };
 
 const bookSharedActions: SharedActionRegistry<BooksState> = {
@@ -310,6 +401,21 @@ const bookSharedActions: SharedActionRegistry<BooksState> = {
     const data = (args ?? {}) as Record<string, unknown>;
     ctx.dispatch(booksSlice.actions.deleteBook({ id: String(data.id ?? '') }));
     ctx.nav.back();
+  },
+  'books.setStatus': (ctx, args) => {
+    const data = (args ?? {}) as Record<string, unknown>;
+    const id = String(data.id ?? '');
+    const status = String(data.status ?? '') as Book['status'];
+    if (!id || !status) return;
+    ctx.dispatch(booksSlice.actions.setStatus({ id, status }));
+    ctx.patchScopedState('card', { edits: {} });
+  },
+  'books.markAllRead': (ctx) => {
+    ctx.dispatch(booksSlice.actions.markAllRead());
+  },
+  'books.resetDemo': (ctx) => {
+    ctx.dispatch(booksSlice.actions.resetDemo());
+    ctx.patchScopedState('card', { edits: {} });
   },
   'books.create': (ctx, args) => {
     const data = (args ?? {}) as Record<string, unknown>;
@@ -361,6 +467,9 @@ function ShellDemo({ initialCard, paramValue }: { initialCard?: string; paramVal
           navShortcuts={[
             { card: 'home', icon: '🏠' },
             { card: 'browse', icon: '📋' },
+            { card: 'readingNow', icon: '🔥' },
+            { card: 'readingReport', icon: '📊' },
+            { card: 'addBook', icon: '➕' },
           ]}
         />
       </Provider>
@@ -370,6 +479,11 @@ function ShellDemo({ initialCard, paramValue }: { initialCard?: string; paramVal
 
 export const ShellHomeFromDSLCard: MenuStory = {
   name: 'Shell Home Card (CardDefinition)',
+  render: () => <ShellDemo />,
+};
+
+export const ShellFullAppFromDSLCards: MenuStory = {
+  name: 'Shell Full App (CardDefinition DSL)',
   render: () => <ShellDemo />,
 };
 
