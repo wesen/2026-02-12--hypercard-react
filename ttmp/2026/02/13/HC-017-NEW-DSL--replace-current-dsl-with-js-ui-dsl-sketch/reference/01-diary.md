@@ -676,3 +676,73 @@ This is the persistence backbone required by the new CardDefinition model so sel
 
 - Build check after this step: `npm run -s typecheck` (pass).
 
+
+## Step 10: Task 11 - Rewrite Shell Runtime to Execute New CardDefinition DSL
+
+I replaced the old shell execution path with a CardDefinition-oriented runtime that resolves expressions/selectors and executes action descriptors directly. This is the first runtime path that no longer depends on `dispatchDSLAction` and old card renderer contracts.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 6)
+
+**Assistant interpretation:** Continue implementing migration tasks sequentially with commits and diary updates.
+
+**Inferred user intent:** Move the running app architecture onto the new DSL runtime core instead of leaving contracts unused.
+
+**Commit (code):** `2cd6b7c` — "engine: rewrite shell runtime for CardDefinition execution"
+
+### What I did
+
+- Added `packages/engine/src/cards/runtime.ts`:
+- expression resolution (`resolveValueExpr`)
+- scoped/shared selector resolution (`createSelectorResolver`)
+- card context adapter (`createCardContext`)
+- action execution pipeline (`executeCommand`, built-ins for nav/toast/state.*)
+- local/shared action lookup
+- Rewrote `packages/engine/src/components/shell/HyperCardShell.tsx` to:
+- initialize scoped runtime state with `ensureCardRuntime`
+- execute bindings/actions via new runtime functions
+- pass runtime handlers into card renderer
+- Rewrote `packages/engine/src/components/shell/CardRenderer.tsx` to render AST-style nodes and emit/execute action descriptors.
+- Rewrote `packages/engine/src/components/shell/NavBar.tsx` to a DSL-agnostic API (`onBack`, `onGo`).
+- Updated shell barrel export in `packages/engine/src/components/shell/index.ts`.
+- Checked off Task 11 in ticket tasks.
+
+### Why
+
+- The shell had to move first before app-level porting; otherwise apps cannot consume the new CardDefinition stack model.
+
+### What worked
+
+- New runtime modules and shell compile internally.
+- Binding/event/action flow is now centralized through one command pipeline.
+
+### What didn't work
+
+- Repository typecheck still fails at this point because app code and stories still target old shell props/types; this is expected and is addressed by upcoming Tasks 12-15.
+
+### What I learned
+
+- Keeping built-in compatibility aliases (`navigate`/`back`/`toast`) in action execution reduces migration friction while examples are being ported.
+
+### What was tricky to build
+
+- Keeping runtime context pure enough for selector/action execution while also exposing Redux and navigation helpers.
+
+### What warrants a second pair of eyes
+
+- Review whether current built-in action aliases should remain temporary compatibility only or be retained as permanent synonyms.
+
+### What should be done in the future
+
+- Consolidate runtime function signatures once old DSL compatibility aliases are fully removed.
+
+### Code review instructions
+
+- Start in `cards/runtime.ts`.
+- Then follow runtime usage in `HyperCardShell.tsx` and UI event wiring in `CardRenderer.tsx`.
+
+### Technical details
+
+- This task intentionally landed before app/story ports, so interim type errors in old consumers were expected.
+
