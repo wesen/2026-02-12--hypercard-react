@@ -1,192 +1,320 @@
-import { configureStore } from '@reduxjs/toolkit';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Provider } from 'react-redux';
-import { Act, defineCardStack, ui } from '../../../cards/helpers';
-import { hypercardRuntimeReducer } from '../../../cards/runtimeStateSlice';
-import type { CardStackDefinition } from '../../../cards/types';
-import { notificationsReducer } from '../../../features/notifications/notificationsSlice';
-import { openWindow, windowingReducer } from '../../../features/windowing/windowingSlice';
-import { CardSessionHost, type CardSessionHostProps } from './CardSessionHost';
+import { createAppStore } from '../../../app/createAppStore';
+import type { CardDefinition, CardStackDefinition } from '../../../cards/types';
+import { openWindow } from '../../../features/windowing/windowingSlice';
+import { PluginCardSessionHost, type PluginCardSessionHostProps } from './PluginCardSessionHost';
 
-// ── Demo stacks ──
+const NAV_PLUGIN_BUNDLE = String.raw`
+defineStackBundle(({ ui }) => {
+  function asRecord(value) {
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  }
 
-/** Stack with two navigable cards — menu → detail → back */
-const NAV_STACK: CardStackDefinition = defineCardStack({
+  function navParam(globalState) {
+    const param = asRecord(asRecord(globalState).nav).param;
+    return typeof param === 'string' ? param : '';
+  }
+
+  function item(id) {
+    const records = {
+      'widget-a': {
+        name: 'Widget A',
+        sku: 'W-1001',
+        category: 'Widgets',
+        price: '$12.00',
+        stock: '45 units',
+        supplier: 'Acme Corp',
+        lastRestock: 'Feb 10, 2026',
+      },
+      'widget-b': {
+        name: 'Widget B',
+        sku: 'W-1002',
+        category: 'Widgets',
+        price: '$15.00',
+        stock: '12 units',
+        supplier: 'Acme Corp',
+        lastRestock: 'Feb 12, 2026',
+      },
+      'widget-c': {
+        name: 'Widget C',
+        sku: 'W-1003',
+        category: 'Widgets',
+        price: '$19.00',
+        stock: '9 units',
+        supplier: 'Globex',
+        lastRestock: 'Feb 14, 2026',
+      },
+    };
+    return records[id] || records['widget-a'];
+  }
+
+  return {
+    id: 'nav-demo',
+    title: 'Nav Demo',
+    cards: {
+      list: {
+        render() {
+          return ui.panel([
+            ui.text('Items'),
+            ui.button('🔍 View Widget A', { onClick: { handler: 'go', args: { cardId: 'detail', param: 'widget-a' } } }),
+            ui.button('🔍 View Widget B', { onClick: { handler: 'go', args: { cardId: 'detail', param: 'widget-b' } } }),
+            ui.button('🔍 View Widget C', { onClick: { handler: 'go', args: { cardId: 'detail', param: 'widget-c' } } }),
+          ]);
+        },
+        handlers: {
+          go({ dispatchSystemCommand }, args) {
+            const payload = asRecord(args);
+            dispatchSystemCommand('nav.go', { cardId: String(payload.cardId || 'list'), param: String(payload.param || '') });
+          },
+        },
+      },
+      detail: {
+        render({ globalState }) {
+          const current = item(navParam(globalState));
+          return ui.panel([
+            ui.text('Item Detail'),
+            ui.table(
+              [
+                ['Name', current.name],
+                ['SKU', current.sku],
+                ['Category', current.category],
+                ['Price', current.price],
+                ['Stock', current.stock],
+                ['Supplier', current.supplier],
+                ['Last Restock', current.lastRestock],
+              ],
+              { headers: ['Field', 'Value'] }
+            ),
+            ui.row([
+              ui.button('← Back', { onClick: { handler: 'back' } }),
+              ui.button('🛒 Reorder', { onClick: { handler: 'notify', args: { message: 'Reorder placed' } } }),
+            ]),
+          ]);
+        },
+        handlers: {
+          back({ dispatchSystemCommand }) {
+            dispatchSystemCommand('nav.back');
+          },
+          notify({ dispatchSystemCommand }, args) {
+            dispatchSystemCommand('notify', { message: String(asRecord(args).message || '') });
+          },
+        },
+      },
+    },
+  };
+});
+`;
+
+const CHAT_PLUGIN_BUNDLE = String.raw`
+defineStackBundle(({ ui }) => {
+  function asRecord(value) {
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  }
+
+  return {
+    id: 'chat-demo',
+    title: 'Chat Demo',
+    initialCardState: {
+      chat: {
+        draft: '',
+        messages: [
+          'Hello! How can I help you today?',
+          'Try asking about report export or low stock alerts.',
+        ],
+      },
+    },
+    cards: {
+      chat: {
+        render({ cardState }) {
+          const state = asRecord(cardState);
+          const messages = Array.isArray(state.messages) ? state.messages : [];
+          const draft = String(state.draft || '');
+
+          return ui.panel([
+            ui.text('Assistant'),
+            ui.column(messages.map((message) => ui.text('• ' + String(message)))),
+            ui.input(draft, { onChange: { handler: 'changeDraft' } }),
+            ui.row([
+              ui.button('Send', { onClick: { handler: 'send' } }),
+              ui.button('Clear', { onClick: { handler: 'clear' } }),
+            ]),
+          ]);
+        },
+        handlers: {
+          changeDraft({ dispatchCardAction }, args) {
+            dispatchCardAction('set', { path: 'draft', value: asRecord(args).value });
+          },
+          send({ cardState, dispatchCardAction }) {
+            const state = asRecord(cardState);
+            const draft = String(state.draft || '').trim();
+            if (!draft) return;
+            const messages = Array.isArray(state.messages) ? state.messages : [];
+            dispatchCardAction('patch', {
+              draft: '',
+              messages: messages.concat(['You: ' + draft, 'Assistant: Thanks, received.']).slice(-10),
+            });
+          },
+          clear({ dispatchCardAction }) {
+            dispatchCardAction('patch', { draft: '', messages: [] });
+          },
+        },
+      },
+    },
+  };
+});
+`;
+
+const REPORT_PLUGIN_BUNDLE = String.raw`
+defineStackBundle(({ ui }) => {
+  return {
+    id: 'report-demo',
+    title: 'Report Demo',
+    cards: {
+      report: {
+        render() {
+          return ui.panel([
+            ui.text('Monthly Report'),
+            ui.table(
+              [
+                ['Gross Revenue', '$12,450.00'],
+                ['Net Revenue', '$10,830.00'],
+                ['Refunds', '$620.00'],
+                ['Items in Stock', '156'],
+                ['Low Stock Alerts', '3'],
+                ['Out of Stock', '0'],
+              ],
+              { headers: ['Metric', 'Value'] }
+            ),
+            ui.button('📄 Export CSV', { onClick: { handler: 'notify' } }),
+          ]);
+        },
+        handlers: {
+          notify({ dispatchSystemCommand }) {
+            dispatchSystemCommand('notify', { message: 'Export not available in demo' });
+          },
+        },
+      },
+    },
+  };
+});
+`;
+
+const LIST_PLUGIN_BUNDLE = String.raw`
+defineStackBundle(({ ui }) => {
+  const ITEMS = [
+    ['W-1001', 'Widget A', 'Widgets', '$12.00', '45'],
+    ['G-2001', 'Gadget B', 'Gadgets', '$25.50', '38'],
+    ['P-3001', 'Doohickey C', 'Parts', '$8.75', '73'],
+    ['W-1002', 'Widget D', 'Widgets', '$15.00', '12'],
+    ['G-2002', 'Gizmo E', 'Gadgets', '$42.00', '5'],
+    ['P-3002', 'Thingamajig F', 'Parts', '$3.25', '120'],
+  ];
+
+  return {
+    id: 'list-demo',
+    title: 'List Demo',
+    cards: {
+      browse: {
+        render() {
+          return ui.panel([
+            ui.text('Browse Items'),
+            ui.table(ITEMS, { headers: ['SKU', 'Name', 'Category', 'Price', 'Qty'] }),
+            ui.text('Use Desktop Shell stories for richer interactions.'),
+          ]);
+        },
+        handlers: {},
+      },
+    },
+  };
+});
+`;
+
+interface PluginCardMeta {
+  id: string;
+  title: string;
+  icon: string;
+}
+
+function toPluginCard(card: PluginCardMeta): CardDefinition {
+  return {
+    id: card.id,
+    type: 'plugin',
+    title: card.title,
+    icon: card.icon,
+    ui: {
+      t: 'text',
+      value: `Plugin card placeholder: ${card.id}`,
+    },
+  };
+}
+
+function createPluginStack(options: {
+  id: string;
+  name: string;
+  icon: string;
+  homeCard: string;
+  bundleCode: string;
+  cards: PluginCardMeta[];
+}): CardStackDefinition {
+  return {
+    id: options.id,
+    name: options.name,
+    icon: options.icon,
+    homeCard: options.homeCard,
+    plugin: {
+      bundleCode: options.bundleCode,
+      capabilities: {
+        system: ['nav.go', 'nav.back', 'notify'],
+      },
+    },
+    cards: Object.fromEntries(options.cards.map((card) => [card.id, toPluginCard(card)])),
+  };
+}
+
+const NAV_STACK = createPluginStack({
   id: 'nav-demo',
   name: 'Nav Demo',
   icon: '🧭',
   homeCard: 'list',
-  cards: {
-    list: {
-      id: 'list',
-      type: 'menu',
-      title: 'Item List',
-      icon: '📋',
-      ui: ui.menu({
-        icon: '📋',
-        labels: [{ value: 'Items' }],
-        buttons: [
-          { label: '🔍 View Widget A', action: Act('nav.go', { card: 'detail', param: 'widget-a' }) },
-          { label: '🔍 View Widget B', action: Act('nav.go', { card: 'detail', param: 'widget-b' }) },
-          { label: '🔍 View Widget C', action: Act('nav.go', { card: 'detail', param: 'widget-c' }) },
-        ],
-      }),
-    },
-    detail: {
-      id: 'detail',
-      type: 'detail',
-      title: 'Item Detail',
-      icon: '📄',
-      ui: ui.detail({
-        record: {
-          name: 'Widget A',
-          sku: 'W-1001',
-          category: 'Widgets',
-          price: '$12.00',
-          stock: '45 units',
-          supplier: 'Acme Corp',
-          lastRestock: 'Feb 10, 2026',
-        },
-        fields: [
-          { id: 'name', label: 'Name', type: 'readonly' },
-          { id: 'sku', label: 'SKU', type: 'readonly' },
-          { id: 'category', label: 'Category', type: 'readonly' },
-          { id: 'price', label: 'Price', type: 'readonly' },
-          { id: 'stock', label: 'Stock', type: 'readonly' },
-          { id: 'supplier', label: 'Supplier', type: 'readonly' },
-          { id: 'lastRestock', label: 'Last Restock', type: 'readonly' },
-        ],
-        actions: [
-          { label: '← Back', action: Act('nav.back') },
-          { label: '🛒 Reorder', action: Act('toast', { message: 'Reorder placed' }) },
-        ],
-      }),
-      bindings: {
-        backBtn: {
-          press: Act('nav.back'),
-        },
-      },
-    },
-  },
+  bundleCode: NAV_PLUGIN_BUNDLE,
+  cards: [
+    { id: 'list', title: 'Item List', icon: '📋' },
+    { id: 'detail', title: 'Item Detail', icon: '📄' },
+  ],
 });
 
-/** Chat card stack with conversation history */
-const CHAT_STACK: CardStackDefinition = defineCardStack({
+const CHAT_STACK = createPluginStack({
   id: 'chat-demo',
   name: 'Chat Demo',
   icon: '💬',
   homeCard: 'chat',
-  cards: {
-    chat: {
-      id: 'chat',
-      type: 'chat',
-      title: 'Assistant',
-      icon: '💬',
-      ui: ui.chat({
-        key: 'chatView',
-        messages: [
-          { role: 'assistant', content: 'Hello! How can I help you today?' },
-          { role: 'user', content: 'Show me the inventory report.' },
-          {
-            role: 'assistant',
-            content:
-              'Here is a summary:\n\n• **Widgets**: 45 items ($540.00)\n• **Gadgets**: 38 items ($969.00)\n• **Parts**: 73 items ($237.25)\n\nTotal value: **$1,746.25**\n\nWould you like more details on any category?',
-          },
-          { role: 'user', content: 'Which items are low on stock?' },
-          {
-            role: 'assistant',
-            content:
-              'These items are below the reorder threshold:\n\n1. **Gizmo E** (G-2002) — 5 units remaining\n2. **Widget D** (W-1002) — 12 units remaining\n\nShall I create a purchase order?',
-          },
-        ],
-        placeholder: 'Type a message…',
-        suggestions: ['Show all items', 'Generate purchase order', 'Export to CSV'],
-      }),
-    },
-  },
+  bundleCode: CHAT_PLUGIN_BUNDLE,
+  cards: [{ id: 'chat', title: 'Assistant', icon: '💬' }],
 });
 
-/** Report card stack with data rows */
-const REPORT_STACK: CardStackDefinition = defineCardStack({
+const REPORT_STACK = createPluginStack({
   id: 'report-demo',
   name: 'Report Demo',
   icon: '📊',
   homeCard: 'report',
-  cards: {
-    report: {
-      id: 'report',
-      type: 'report',
-      title: 'Monthly Report',
-      icon: '📊',
-      ui: ui.report({
-        sections: [
-          { label: 'Gross Revenue', value: '$12,450.00' },
-          { label: 'Net Revenue', value: '$10,830.00' },
-          { label: 'Refunds', value: '$620.00' },
-          { label: 'Items in Stock', value: '156' },
-          { label: 'Low Stock Alerts', value: '3' },
-          { label: 'Out of Stock', value: '0' },
-          { label: 'Orders This Month', value: '89' },
-          { label: 'Avg. Order Value', value: '$139.89' },
-        ],
-        actions: [{ label: '📄 Export CSV', action: Act('toast', { message: 'Export not available in demo' }) }],
-      }),
-    },
-  },
+  bundleCode: REPORT_PLUGIN_BUNDLE,
+  cards: [{ id: 'report', title: 'Monthly Report', icon: '📊' }],
 });
 
-/** List card stack with data and filters */
-const LIST_STACK: CardStackDefinition = defineCardStack({
+const LIST_STACK = createPluginStack({
   id: 'list-demo',
   name: 'List Demo',
   icon: '📋',
   homeCard: 'browse',
-  cards: {
-    browse: {
-      id: 'browse',
-      type: 'list',
-      title: 'Browse Items',
-      icon: '📋',
-      ui: ui.list({
-        key: 'browseList',
-        items: [
-          { id: '1', sku: 'W-1001', name: 'Widget A', category: 'Widgets', price: '$12.00', qty: 45 },
-          { id: '2', sku: 'G-2001', name: 'Gadget B', category: 'Gadgets', price: '$25.50', qty: 38 },
-          { id: '3', sku: 'P-3001', name: 'Doohickey C', category: 'Parts', price: '$8.75', qty: 73 },
-          { id: '4', sku: 'W-1002', name: 'Widget D', category: 'Widgets', price: '$15.00', qty: 12 },
-          { id: '5', sku: 'G-2002', name: 'Gizmo E', category: 'Gadgets', price: '$42.00', qty: 5 },
-          { id: '6', sku: 'P-3002', name: 'Thingamajig F', category: 'Parts', price: '$3.25', qty: 120 },
-        ],
-        columns: [
-          { id: 'sku', label: 'SKU' },
-          { id: 'name', label: 'Name' },
-          { id: 'category', label: 'Category' },
-          { id: 'price', label: 'Price' },
-          { id: 'qty', label: 'Qty' },
-        ],
-        filters: [
-          { field: 'category', type: 'select', options: ['All', 'Widgets', 'Gadgets', 'Parts'] },
-          { field: '_search', type: 'text', placeholder: 'Search name or SKU…' },
-        ],
-        searchFields: ['name', 'sku'],
-        rowKey: 'id',
-        emptyMessage: 'No items found',
-        footer: { countLabel: 'items' },
-      }),
-    },
-  },
+  bundleCode: LIST_PLUGIN_BUNDLE,
+  cards: [{ id: 'browse', title: 'Browse Items', icon: '📋' }],
 });
 
-// ── Store factories ──
+const { createStore } = createAppStore({});
 
 function createStoreWithSession(stack: CardStackDefinition, sessionId: string, cardId?: string) {
-  const store = configureStore({
-    reducer: {
-      hypercardRuntime: hypercardRuntimeReducer,
-      windowing: windowingReducer,
-      notifications: notificationsReducer,
-    },
-  });
+  const store = createStore();
 
   store.dispatch(
     openWindow({
@@ -201,41 +329,34 @@ function createStoreWithSession(stack: CardStackDefinition, sessionId: string, c
           cardSessionId: sessionId,
         },
       },
-    }),
+    })
   );
 
   return store;
 }
 
-// ── Story wrapper ──
-
-function CardSessionHostWrapper(props: CardSessionHostProps) {
+function PluginCardSessionHostWrapper(props: PluginCardSessionHostProps) {
   const store = createStoreWithSession(props.stack, props.sessionId);
   return (
     <Provider store={store}>
       <div style={{ width: 440, height: 380, border: '2px solid #000', overflow: 'auto', background: '#fff' }}>
-        <CardSessionHost {...props} />
+        <PluginCardSessionHost {...props} />
       </div>
     </Provider>
   );
 }
 
-// ── Meta ──
-
 const meta = {
-  title: 'Shell/Windowing/CardSessionHost',
-  component: CardSessionHostWrapper,
+  title: 'Shell/Windowing/PluginCardSessionHost',
+  component: PluginCardSessionHostWrapper,
   parameters: {
     layout: 'centered',
   },
-} satisfies Meta<typeof CardSessionHostWrapper>;
+} satisfies Meta<typeof PluginCardSessionHostWrapper>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// ── Stories ──
-
-/** Menu card with nav buttons — click to navigate within session */
 export const NavigableMenu: Story = {
   args: {
     windowId: 'window:s1',
@@ -244,7 +365,6 @@ export const NavigableMenu: Story = {
   },
 };
 
-/** Chat card with conversation history */
 export const ChatCard: Story = {
   args: {
     windowId: 'window:s2',
@@ -253,7 +373,6 @@ export const ChatCard: Story = {
   },
 };
 
-/** Report card with data rows and action buttons */
 export const ReportCard: Story = {
   args: {
     windowId: 'window:s3',
@@ -262,7 +381,6 @@ export const ReportCard: Story = {
   },
 };
 
-/** List card with data, columns, filters, and search */
 export const ListCard: Story = {
   args: {
     windowId: 'window:s4',
@@ -271,7 +389,6 @@ export const ListCard: Story = {
   },
 };
 
-/** Preview mode — interactions disabled */
 export const PreviewMode: Story = {
   args: {
     windowId: 'window:s5',
@@ -281,7 +398,6 @@ export const PreviewMode: Story = {
   },
 };
 
-/** Two session hosts side by side — proves session isolation */
 export const TwoSessionsIsolated: Story = {
   args: {
     windowId: 'window:session-a',
@@ -299,7 +415,7 @@ export const TwoSessionsIsolated: Story = {
           </div>
           <Provider store={storeA}>
             <div style={{ width: 380, height: 340, border: '2px solid #000', overflow: 'auto', background: '#fff' }}>
-              <CardSessionHost windowId="window:session-a" sessionId="session-a" stack={NAV_STACK} />
+              <PluginCardSessionHost windowId="window:session-a" sessionId="session-a" stack={NAV_STACK} />
             </div>
           </Provider>
         </div>
@@ -309,7 +425,7 @@ export const TwoSessionsIsolated: Story = {
           </div>
           <Provider store={storeB}>
             <div style={{ width: 380, height: 340, border: '2px solid #000', overflow: 'auto', background: '#fff' }}>
-              <CardSessionHost windowId="window:session-b" sessionId="session-b" stack={NAV_STACK} />
+              <PluginCardSessionHost windowId="window:session-b" sessionId="session-b" stack={NAV_STACK} />
             </div>
           </Provider>
         </div>
