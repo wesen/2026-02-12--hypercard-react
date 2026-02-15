@@ -16,10 +16,10 @@
 - [x] [C7] Update app story files that rely on `createStoryHelpers` config shape.
 - [x] [C8] Record C4-C7 in HC-030 diary and changelog.
 
-- [ ] [C9] Migrate app entrypoints: `todo`, `crm`, `book-tracker-debug` to DesktopShell.
-- [ ] [C10] Migrate inventory themed story away from HyperCardShell.
-- [ ] [C11] Update snapshot selectors/usages that rely on `state.navigation`.
-- [ ] [C12] Record C9-C11 in HC-030 diary and changelog.
+- [x] [C9] Migrate app entrypoints: `todo`, `crm`, `book-tracker-debug` to DesktopShell.
+- [x] [C10] Migrate inventory themed story away from HyperCardShell.
+- [x] [C11] Update snapshot selectors/usages that rely on `state.navigation`.
+- [x] [C12] Record C9-C11 in HC-030 diary and changelog.
 
 - [ ] [C13] Delete legacy shell component files (`HyperCardShell`, `Layout*`, `TabBar`, `WindowChrome`, `NavBar`).
 - [ ] [C14] Remove legacy shell exports from `components/shell/index.ts` and root engine barrels.

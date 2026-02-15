@@ -256,3 +256,73 @@ This step removes major architectural coupling to legacy navigation in app/story
 
 - Completed tasks: C4, C5, C6, C7, C8
 - Validation status: green (`typecheck`, `test`)
+
+## Step 4: Complete C9-C12 — app entrypoint cutover and navigation-snapshot cleanup
+
+I completed the direct app entrypoint migration to DesktopShell and removed remaining themed-story usage of HyperCardShell. This finished the app-facing migration prerequisites for hard deleting legacy shell code.
+
+These changes were delivered in commit `d9de1c2` together with helper/story migration from Step 3.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 1)
+
+**Assistant interpretation:** Continue task execution sequentially, including concrete app migration work.
+
+**Inferred user intent:** Make legacy shell genuinely unused in apps before deleting it.
+
+**Commit (code):** `d9de1c2` — "refactor(HC-030): migrate helpers and app stories to DesktopShell"
+
+### What I did
+
+- Migrated app entrypoints to DesktopShell:
+  - `apps/todo/src/App.tsx`
+  - `apps/crm/src/App.tsx`
+  - `apps/book-tracker-debug/src/App.tsx`
+- Migrated themed inventory story off HyperCardShell:
+  - `apps/inventory/src/stories/Themed.stories.tsx`
+- Removed snapshot-selector configuration blocks in app story helper callsites that depended on legacy navigation assumptions.
+
+### Why
+
+- Needed to ensure app layer no longer blocks legacy shell deletion.
+- Removing app-level legacy references makes final cutover safer and auditable.
+
+### What worked
+
+- App entrypoint migration was straightforward once helpers were DesktopShell-ready.
+- Typecheck/tests remained green after app migration.
+
+### What didn't work
+
+- CRM app previously used legacy debug-pane/chat split composition from HyperCardShell; DesktopShell currently has no equivalent pane mode, so that composition was removed in this migration slice.
+
+### What I learned
+
+- Most app cutover complexity came from legacy helper/config contracts rather than app runtime logic itself.
+
+### What was tricky to build
+
+- The biggest decision point was whether to preserve debug-pane UX parity immediately. I chose hard-cut simplification (as requested) and removed legacy pane composition instead of adding compatibility scaffolding.
+
+### What warrants a second pair of eyes
+
+- Confirm that removing legacy debug-pane composition in CRM and book-tracker-debug is acceptable for current workflow expectations.
+
+### What should be done in the future
+
+- If needed, reintroduce debug UX as explicit desktop windows under DesktopShell instead of resurrecting legacy split-pane shell APIs.
+
+### Code review instructions
+
+- Review migrated app entrypoints:
+  - `apps/todo/src/App.tsx`
+  - `apps/crm/src/App.tsx`
+  - `apps/book-tracker-debug/src/App.tsx`
+- Review themed story migration:
+  - `apps/inventory/src/stories/Themed.stories.tsx`
+
+### Technical details
+
+- Completed tasks: C9, C10, C11, C12
+- Commit carrying these changes: `d9de1c2`
