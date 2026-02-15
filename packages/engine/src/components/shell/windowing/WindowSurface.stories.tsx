@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { createWindow } from './storyFixtures';
 import type { DesktopWindowDef } from './types';
+import { useWindowInteractionController } from './useWindowInteractionController';
 import { WindowSurface } from './WindowSurface';
 
 interface WindowSurfaceHarnessProps {
@@ -11,38 +12,44 @@ interface WindowSurfaceHarnessProps {
 
 function WindowSurfaceHarness({ window: initialWindow, content }: WindowSurfaceHarnessProps) {
   const [window, setWindow] = useState(initialWindow);
-  const [status, setStatus] = useState('Ready');
 
-  const body = useMemo(() => {
-    return (
-      <div>
-        <div style={{ fontWeight: 'bold', marginBottom: 6 }}>{window.title}</div>
-        <p style={{ margin: 0, lineHeight: 1.4 }}>{content}</p>
-      </div>
-    );
-  }, [content, window.title]);
+  const moveWindow = useCallback((_id: string, next: { x: number; y: number }) => {
+    setWindow((prev) => ({ ...prev, x: next.x, y: next.y }));
+  }, []);
+
+  const resizeWindow = useCallback((_id: string, next: { width: number; height: number }) => {
+    setWindow((prev) => ({ ...prev, width: next.width, height: next.height }));
+  }, []);
+
+  const focusWindow = useCallback(() => {
+    setWindow((prev) => ({ ...prev, focused: true }));
+  }, []);
+
+  const { beginMove, beginResize } = useWindowInteractionController({
+    getWindowById: () => window,
+    onMoveWindow: moveWindow,
+    onResizeWindow: resizeWindow,
+    onFocusWindow: focusWindow,
+    constraints: { minX: 0, minY: 0, minWidth: 180, minHeight: 120 },
+  });
 
   return (
-    <div style={{ width: 720, height: 420, position: 'relative', border: '1px solid #7f8899' }}>
+    <div style={{ position: 'absolute', inset: 0, background: '#c0c0c0' }}>
       <WindowSurface
         window={window}
-        onFocusWindow={() => {
-          setWindow((prev) => ({ ...prev, focused: true }));
-          setStatus('Focused window');
-        }}
-        onCloseWindow={() => {
-          setStatus('Close requested');
-        }}
-        onWindowDragStart={() => {
-          setStatus('Drag start requested');
-        }}
-        onWindowResizeStart={() => {
-          setStatus('Resize start requested');
-        }}
+        onFocusWindow={focusWindow}
+        onCloseWindow={() => setWindow((prev) => ({ ...prev, width: 0, height: 0 }))}
+        onWindowDragStart={beginMove}
+        onWindowResizeStart={beginResize}
       >
-        {body}
+        <div style={{ padding: 10 }}>
+          <div style={{ fontWeight: 'bold', marginBottom: 6 }}>{window.title}</div>
+          <p style={{ margin: 0, lineHeight: 1.4 }}>{content}</p>
+          <div style={{ fontSize: 11, color: '#666', marginTop: 8 }}>
+            ({window.x}, {window.y}) {window.width}×{window.height}
+          </div>
+        </div>
       </WindowSurface>
-      <div style={{ position: 'absolute', left: 8, bottom: 8, fontSize: 10 }}>{status}</div>
     </div>
   );
 }
@@ -51,7 +58,7 @@ const meta = {
   title: 'Shell/Windowing/WindowSurface',
   component: WindowSurfaceHarness,
   parameters: {
-    layout: 'centered',
+    layout: 'fullscreen',
   },
 } satisfies Meta<typeof WindowSurfaceHarness>;
 
@@ -71,7 +78,7 @@ export const FocusedWindow: Story = {
       zIndex: 2,
       focused: true,
     }),
-    content: 'Focused state with close, drag, and resize affordances active.',
+    content: 'Focused window — drag the title bar to move, use the corner handle to resize.',
   },
 };
 
@@ -88,7 +95,7 @@ export const UnfocusedWindow: Story = {
       zIndex: 1,
       focused: false,
     }),
-    content: 'Unfocused state for depth comparison and pointer focus handoff.',
+    content: 'Unfocused state. Click to focus, then drag or resize.',
   },
 };
 
@@ -106,7 +113,7 @@ export const TallContent: Story = {
       focused: true,
     }),
     content:
-      'Longer body content can scroll inside the window surface. The window frame remains stable while body content overflows.',
+      'Longer body content can scroll inside the window surface. The window frame remains stable while body content overflows. Drag the title bar to move this window around.',
   },
 };
 
