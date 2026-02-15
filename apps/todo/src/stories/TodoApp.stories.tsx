@@ -1,13 +1,10 @@
 import { createStoryHelpers } from '@hypercard/engine';
 import type { Meta, StoryObj } from '@storybook/react';
-import { todoSharedActions, todoSharedSelectors } from '../app/cardRuntime';
 import { createTodoStore } from '../app/store';
 import { STACK } from '../domain/stack';
 
 const { storeDecorator, createStory, FullApp } = createStoryHelpers({
   stack: STACK,
-  sharedSelectors: todoSharedSelectors,
-  sharedActions: todoSharedActions,
   createStore: createTodoStore,
   cardParams: { taskDetail: 't1' },
 });
