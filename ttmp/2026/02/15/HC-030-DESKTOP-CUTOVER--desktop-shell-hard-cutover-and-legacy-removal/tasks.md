@@ -10,11 +10,11 @@
 - [x] [C2] Validate extraction with `npm test` and `npm run typecheck`.
 - [x] [C3] Record C1-C2 in HC-030 diary and changelog.
 
-- [ ] [C4] Add DesktopShell affordances needed by helper migration (story/app bootstrapping hooks).
-- [ ] [C5] Migrate `createDSLApp` to DesktopShell configuration (remove HyperCardShell/navShortcuts assumptions).
-- [ ] [C6] Migrate `createStoryHelpers` to DesktopShell semantics (remove navigation slice dependence).
-- [ ] [C7] Update app story files that rely on `createStoryHelpers` config shape.
-- [ ] [C8] Record C4-C7 in HC-030 diary and changelog.
+- [x] [C4] Add DesktopShell affordances needed by helper migration (story/app bootstrapping hooks).
+- [x] [C5] Migrate `createDSLApp` to DesktopShell configuration (remove HyperCardShell/navShortcuts assumptions).
+- [x] [C6] Migrate `createStoryHelpers` to DesktopShell semantics (remove navigation slice dependence).
+- [x] [C7] Update app story files that rely on `createStoryHelpers` config shape.
+- [x] [C8] Record C4-C7 in HC-030 diary and changelog.
 
 - [ ] [C9] Migrate app entrypoints: `todo`, `crm`, `book-tracker-debug` to DesktopShell.
 - [ ] [C10] Migrate inventory themed story away from HyperCardShell.

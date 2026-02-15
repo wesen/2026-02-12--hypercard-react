@@ -13,10 +13,10 @@ import {
   ui,
 } from '../../cards';
 import { hypercardRuntimeReducer } from '../../cards/runtimeStateSlice';
-import { navigate, navigationReducer } from '../../features/navigation/navigationSlice';
 import { notificationsReducer } from '../../features/notifications/notificationsSlice';
+import { windowingReducer } from '../../features/windowing/windowingSlice';
 import type { ColumnConfig, ComputedFieldConfig, FieldConfig, FilterConfig } from '../../types';
-import { HyperCardShell } from '../shell/HyperCardShell';
+import { DesktopShell } from '../shell/windowing/DesktopShell';
 import { DetailView } from './DetailView';
 import { FormView } from './FormView';
 import { ListView } from './ListView';
@@ -456,39 +456,28 @@ const bookSharedActions: SharedActionRegistry<BooksState> = {
 };
 
 function createStoryStore(initialCard?: string, paramValue?: string) {
-  const store = configureStore({
+  return configureStore({
     reducer: {
       hypercardRuntime: hypercardRuntimeReducer,
-      navigation: navigationReducer,
+      windowing: windowingReducer,
       notifications: notificationsReducer,
       books: booksSlice.reducer,
     },
   });
-
-  if (initialCard && initialCard !== 'home') {
-    store.dispatch(navigate({ card: initialCard, paramValue }));
-  }
-
-  return store;
 }
 
 function ShellDemo({ initialCard, paramValue }: { initialCard?: string; paramValue?: string }) {
   const store = createStoryStore(initialCard, paramValue);
+  const stackAtCard = initialCard ? { ...BOOK_STACK, homeCard: initialCard } : BOOK_STACK;
 
   return (
     <div style={{ width: 760, height: 520 }}>
       <Provider store={store}>
-        <HyperCardShell
-          stack={BOOK_STACK}
+        <DesktopShell
+          stack={stackAtCard}
           sharedSelectors={bookSharedSelectors}
           sharedActions={bookSharedActions}
-          navShortcuts={[
-            { card: 'home', icon: '🏠' },
-            { card: 'browse', icon: '📋' },
-            { card: 'readingNow', icon: '🔥' },
-            { card: 'readingReport', icon: '📊' },
-            { card: 'addBook', icon: '➕' },
-          ]}
+          homeParam={paramValue}
         />
       </Provider>
     </div>

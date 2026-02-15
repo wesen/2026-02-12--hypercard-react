@@ -9,21 +9,7 @@ const { storeDecorator, createStory, FullApp } = createStoryHelpers({
   sharedSelectors: inventorySharedSelectors,
   sharedActions: inventorySharedActions,
   createStore: createInventoryStore,
-  navShortcuts: [
-    { card: 'home', icon: '🏠' },
-    { card: 'browse', icon: '📋' },
-    { card: 'report', icon: '📊' },
-    { card: 'assistant', icon: '💬' },
-  ],
   cardParams: { itemDetail: 'A-1002' },
-  snapshotSelector: (state: any) => ({
-    navigation: state.navigation,
-    inventory: state.inventory,
-    sales: state.sales,
-    chat: state.chat,
-    runtime: state.hypercardRuntime,
-  }),
-  debugTitle: 'Inventory Debug',
 });
 
 const meta = {

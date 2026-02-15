@@ -1,11 +1,9 @@
-import { type ComponentType, useEffect } from 'react';
-import { Provider, useDispatch, useSelector } from 'react-redux';
+import { type ComponentType } from 'react';
+import { Provider } from 'react-redux';
 import type { CardStackDefinition, SharedActionRegistry, SharedSelectorRegistry } from '../cards/types';
-import { HyperCardShell } from '../components/shell/HyperCardShell';
-import { StandardDebugPane } from '../debug/StandardDebugPane';
+import type { DesktopIconDef } from '../components/shell/windowing/types';
+import { DesktopShell } from '../components/shell/windowing/DesktopShell';
 import { useStandardDebugHooks } from '../debug/useStandardDebugHooks';
-import { navigate } from '../features/navigation/navigationSlice';
-import { type NavigationStateSlice, selectCurrentCardId } from '../features/navigation/selectors';
 
 export interface CardStoriesConfig<TRootState = unknown> {
   /** The card stack definition */
@@ -16,14 +14,10 @@ export interface CardStoriesConfig<TRootState = unknown> {
   sharedActions: SharedActionRegistry<TRootState>;
   /** Factory to create a fresh store (for story isolation). Use createAppStore().createStore. */
   createStore: () => any; // eslint-disable-line -- Store type varies per app; typed at call site
-  /** Navigation shortcut buttons */
-  navShortcuts: Array<{ card: string; icon: string }>;
+  /** Optional desktop icon overrides for DesktopShell stories */
+  icons?: DesktopIconDef[];
   /** Map of card → param value for detail/param cards in stories */
   cardParams?: Record<string, string>;
-  /** Snapshot selector for the debug pane state inspector */
-  snapshotSelector?: (state: unknown) => Record<string, unknown>;
-  /** Debug pane title */
-  debugTitle?: string;
 }
 
 /**
@@ -57,10 +51,8 @@ export function createStoryHelpers<TRootState = unknown>(config: CardStoriesConf
     sharedSelectors,
     sharedActions,
     createStore,
-    navShortcuts,
+    icons,
     cardParams = {},
-    snapshotSelector,
-    debugTitle,
   } = config;
 
   // Store decorator for story isolation
@@ -75,26 +67,19 @@ export function createStoryHelpers<TRootState = unknown>(config: CardStoriesConf
   // Shell-at-card component for navigating to a specific card
   function ShellAtCard({ card, param }: { card: string; param?: string }) {
     const debugHooks = useStandardDebugHooks();
-    const dispatch = useDispatch();
-    const currentCard = useSelector((state: NavigationStateSlice) => selectCurrentCardId(state));
-
-    useEffect(() => {
-      if (currentCard !== card) {
-        dispatch(navigate({ card, paramValue: param }));
-      }
-    }, [dispatch, card, param, currentCard]);
+    const stackAtCard = {
+      ...stack,
+      homeCard: card,
+    };
 
     return (
-      <HyperCardShell
-        stack={stack}
+      <DesktopShell
+        stack={stackAtCard}
         sharedSelectors={sharedSelectors}
         sharedActions={sharedActions}
         debugHooks={debugHooks}
-        layoutMode="debugPane"
-        renderDebugPane={() => (
-          <StandardDebugPane title={debugTitle ?? `${stack.name} Debug`} snapshotSelector={snapshotSelector} />
-        )}
-        navShortcuts={navShortcuts}
+        icons={icons}
+        homeParam={param}
       />
     );
   }
@@ -103,16 +88,12 @@ export function createStoryHelpers<TRootState = unknown>(config: CardStoriesConf
   function FullApp() {
     const debugHooks = useStandardDebugHooks();
     return (
-      <HyperCardShell
+      <DesktopShell
         stack={stack}
         sharedSelectors={sharedSelectors}
         sharedActions={sharedActions}
         debugHooks={debugHooks}
-        layoutMode="debugPane"
-        renderDebugPane={() => (
-          <StandardDebugPane title={debugTitle ?? `${stack.name} Debug`} snapshotSelector={snapshotSelector} />
-        )}
-        navShortcuts={navShortcuts}
+        icons={icons}
       />
     );
   }

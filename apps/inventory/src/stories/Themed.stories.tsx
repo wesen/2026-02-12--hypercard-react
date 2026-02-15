@@ -1,4 +1,4 @@
-import { HyperCardShell } from '@hypercard/engine';
+import { DesktopShell } from '@hypercard/engine';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Provider } from 'react-redux';
 import { inventorySharedActions, inventorySharedSelectors } from '../app/cardRuntime';
@@ -9,16 +9,10 @@ import '../../../../packages/engine/src/theme/modern.css';
 
 function ThemedShell({ themeClass }: { themeClass?: string }) {
   return (
-    <HyperCardShell
+    <DesktopShell
       stack={STACK}
       sharedSelectors={inventorySharedSelectors}
       sharedActions={inventorySharedActions}
-      navShortcuts={[
-        { card: 'home', icon: '🏠' },
-        { card: 'browse', icon: '📋' },
-        { card: 'report', icon: '📊' },
-        { card: 'assistant', icon: '💬' },
-      ]}
       themeClass={themeClass}
     />
   );

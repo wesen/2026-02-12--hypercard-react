@@ -1,7 +1,7 @@
 import type { Reducer } from '@reduxjs/toolkit';
 import type { CardStackDefinition, SharedActionRegistry, SharedSelectorRegistry } from '../cards/types';
-import { HyperCardShell } from '../components/shell/HyperCardShell';
-import { StandardDebugPane } from '../debug/StandardDebugPane';
+import type { DesktopIconDef } from '../components/shell/windowing/types';
+import { DesktopShell } from '../components/shell/windowing/DesktopShell';
 import { useStandardDebugHooks } from '../debug/useStandardDebugHooks';
 import { createAppStore } from './createAppStore';
 
@@ -14,12 +14,8 @@ export interface DSLAppConfig<TRootState = unknown> {
   sharedActions: SharedActionRegistry<TRootState>;
   /** Domain-specific reducers (engine reducers are added automatically) */
   domainReducers: Record<string, Reducer>;
-  /** Navigation shortcut buttons */
-  navShortcuts: Array<{ card: string; icon: string }>;
-  /** Snapshot selector for the debug pane state inspector */
-  snapshotSelector?: (state: unknown) => Record<string, unknown>;
-  /** Debug pane title */
-  debugTitle?: string;
+  /** Optional desktop icon overrides */
+  icons?: DesktopIconDef[];
 }
 
 /**
@@ -39,7 +35,7 @@ export interface DSLAppConfig<TRootState = unknown> {
  * ```
  */
 export function createDSLApp<TRootState = unknown>(config: DSLAppConfig<TRootState>) {
-  const { stack, sharedSelectors, sharedActions, domainReducers, navShortcuts, snapshotSelector, debugTitle } = config;
+  const { stack, sharedSelectors, sharedActions, domainReducers, icons } = config;
 
   const { store, createStore } = createAppStore(domainReducers);
 
@@ -47,16 +43,12 @@ export function createDSLApp<TRootState = unknown>(config: DSLAppConfig<TRootSta
     const debugHooks = useStandardDebugHooks();
 
     return (
-      <HyperCardShell
+      <DesktopShell
         stack={stack}
         sharedSelectors={sharedSelectors}
         sharedActions={sharedActions}
         debugHooks={debugHooks}
-        layoutMode="debugPane"
-        renderDebugPane={() => (
-          <StandardDebugPane title={debugTitle ?? `${stack.name} Debug`} snapshotSelector={snapshotSelector} />
-        )}
-        navShortcuts={navShortcuts}
+        icons={icons}
       />
     );
   }

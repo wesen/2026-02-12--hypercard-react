@@ -9,25 +9,7 @@ const { storeDecorator, createStory, FullApp } = createStoryHelpers({
   sharedSelectors: crmSharedSelectors,
   sharedActions: crmSharedActions,
   createStore: createCrmStore,
-  navShortcuts: [
-    { card: 'home', icon: '🏠' },
-    { card: 'contacts', icon: '👤' },
-    { card: 'companies', icon: '🏢' },
-    { card: 'deals', icon: '💰' },
-    { card: 'pipeline', icon: '📊' },
-    { card: 'activityLog', icon: '📝' },
-  ],
   cardParams: { contactDetail: 'c1', companyDetail: 'co1', dealDetail: 'd1' },
-  snapshotSelector: (state: any) => ({
-    navigation: state.navigation,
-    contacts: state.contacts,
-    companies: state.companies,
-    deals: state.deals,
-    activities: state.activities,
-    streamingChat: state.streamingChat,
-    runtime: state.hypercardRuntime,
-  }),
-  debugTitle: 'CRM Debug',
 });
 
 const meta = {

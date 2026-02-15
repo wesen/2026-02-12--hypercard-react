@@ -58,6 +58,8 @@ export interface DesktopShellProps {
   debugHooks?: RuntimeDebugHooks;
   mode?: 'interactive' | 'preview';
   themeClass?: string;
+  /** Optional initial param injected into the first auto-opened home-card window. */
+  homeParam?: string;
   /** Custom menu sections. If omitted, a default menu is generated. */
   menus?: DesktopMenuSection[];
   /** Custom desktop icons. If omitted, icons are generated from stack cards. */
@@ -77,6 +79,7 @@ export function DesktopShell({
   debugHooks,
   mode = 'interactive',
   themeClass,
+  homeParam,
   menus: menusProp,
   icons: iconsProp,
 }: DesktopShellProps) {
@@ -147,15 +150,15 @@ export function DesktopShell({
         id: `window:${stack.homeCard}:${sid}`,
         title: homeCard.title ?? stack.homeCard,
         icon: homeCard.icon,
-        bounds: { x: 140, y: 20, w: 420, h: 340 },
-        content: {
-          kind: 'card',
-          card: { stackId: stack.id, cardId: stack.homeCard, cardSessionId: sid },
-        },
-        dedupeKey: stack.homeCard,
-      }),
-    );
-  }, [dispatch, stack.id, stack.homeCard, stack.cards]);
+          bounds: { x: 140, y: 20, w: 420, h: 340 },
+          content: {
+            kind: 'card',
+            card: { stackId: stack.id, cardId: stack.homeCard, cardSessionId: sid, param: homeParam },
+          },
+          dedupeKey: stack.homeCard,
+        }),
+      );
+  }, [dispatch, homeParam, stack.id, stack.homeCard, stack.cards]);
 
   const windowDefs = useMemo(
     () => windows.map((w) => toWindowDef(w, w.id === focusedWin?.id)),

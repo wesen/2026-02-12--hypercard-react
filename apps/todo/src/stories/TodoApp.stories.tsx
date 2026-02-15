@@ -9,18 +9,7 @@ const { storeDecorator, createStory, FullApp } = createStoryHelpers({
   sharedSelectors: todoSharedSelectors,
   sharedActions: todoSharedActions,
   createStore: createTodoStore,
-  navShortcuts: [
-    { card: 'home', icon: '🏠' },
-    { card: 'browse', icon: '📋' },
-    { card: 'inProgress', icon: '🔥' },
-  ],
   cardParams: { taskDetail: 't1' },
-  snapshotSelector: (state: any) => ({
-    navigation: state.navigation,
-    tasks: state.tasks,
-    runtime: state.hypercardRuntime,
-  }),
-  debugTitle: 'Todo Debug',
 });
 
 const meta = {

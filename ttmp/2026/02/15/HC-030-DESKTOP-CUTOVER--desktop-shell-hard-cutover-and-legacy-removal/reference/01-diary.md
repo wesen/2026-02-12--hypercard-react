@@ -174,3 +174,85 @@ I validated this extraction with the required test/typecheck commands before pro
 
 - Net duplication reduction (two callsites): ~423 deleted lines, 37 inserted lines
 - New shared runtime-host module: 293 lines
+
+## Step 3: Complete C4-C8 — helper migration to DesktopShell semantics
+
+I completed the helper and story-layer migration slice needed before hard deletion of legacy shell code. This included adding a minimal DesktopShell bootstrapping affordance (`homeParam`) and rewriting helper APIs that were previously anchored to `HyperCardShell` and the navigation slice.
+
+This step removes major architectural coupling to legacy navigation in app/story scaffolding.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 1)
+
+**Assistant interpretation:** Continue migration tasks sequentially, with commits and diary updates.
+
+**Inferred user intent:** Make the new DesktopShell architecture the default flow even in scaffolding and Storybook tooling.
+
+**Commit (code):** (recorded in this step's implementation commit)
+
+### What I did
+
+- Added DesktopShell story bootstrap support:
+  - `homeParam` prop in `packages/engine/src/components/shell/windowing/DesktopShell.tsx`
+- Migrated helper APIs away from legacy shell assumptions:
+  - `packages/engine/src/app/createDSLApp.tsx`
+  - `packages/engine/src/app/generateCardStories.tsx`
+- Removed legacy `navShortcuts`, `snapshotSelector`, and debug-pane-only helper behavior.
+- Migrated helper call sites (story configs):
+  - `apps/inventory/src/stories/CardPages.stories.tsx`
+  - `apps/crm/src/stories/CrmApp.stories.tsx`
+  - `apps/todo/src/stories/TodoApp.stories.tsx`
+  - `apps/book-tracker-debug/src/stories/BookTrackerDebugApp.stories.tsx`
+- Migrated remaining direct legacy-shell usage in a widget story:
+  - `packages/engine/src/components/widgets/BookTracker.stories.tsx`
+- Validation:
+  - `npm run typecheck` (pass)
+  - `npm test` (pass, 95 tests)
+
+### Why
+
+- Helper migration is a prerequisite to deleting legacy shell/navigation files.
+- Story layers were the biggest remaining dependence on navigation-slice orchestration.
+
+### What worked
+
+- Helpers now instantiate DesktopShell directly.
+- Per-card stories use stack home-card override + `homeParam` instead of dispatching legacy `navigate()`.
+- Typecheck/tests stayed green after the shift.
+
+### What didn't work
+
+- Initial edit in `BookTracker.stories.tsx` mistakenly imported `DesktopShell` from `../../cards`; fixed by importing from `../shell/windowing/DesktopShell`.
+
+### What I learned
+
+- The migration path is cleaner if story bootstrapping manipulates DesktopShell inputs directly rather than mutating global navigation state in effects.
+
+### What was tricky to build
+
+- The trickiest part was preserving per-card Storybook scenarios without navigation slice APIs. The replacement strategy (`homeCard` override + `homeParam`) kept stories deterministic while removing the old navigation dependency.
+
+### What warrants a second pair of eyes
+
+- Verify Storybook UX for per-card stories still matches previous expectations (especially detail-card param scenarios).
+
+### What should be done in the future
+
+- Add explicit `initialWindows`/multi-window helper support if Storybook needs richer desktop setup scenarios.
+
+### Code review instructions
+
+- Review helper migrations:
+  - `packages/engine/src/app/createDSLApp.tsx`
+  - `packages/engine/src/app/generateCardStories.tsx`
+- Review DesktopShell affordance:
+  - `packages/engine/src/components/shell/windowing/DesktopShell.tsx`
+- Re-run validation:
+  - `npm run typecheck`
+  - `npm test`
+
+### Technical details
+
+- Completed tasks: C4, C5, C6, C7, C8
+- Validation status: green (`typecheck`, `test`)

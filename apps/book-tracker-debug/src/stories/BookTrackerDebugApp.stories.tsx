@@ -9,20 +9,7 @@ const { storeDecorator, createStory, FullApp } = createStoryHelpers({
   sharedSelectors: bookSharedSelectors,
   sharedActions: bookSharedActions,
   createStore: createBookStore,
-  navShortcuts: [
-    { card: 'home', icon: '🏠' },
-    { card: 'browse', icon: '📋' },
-    { card: 'readingNow', icon: '🔥' },
-    { card: 'readingReport', icon: '📊' },
-    { card: 'addBook', icon: '➕' },
-  ],
   cardParams: { bookDetail: 'b1' },
-  snapshotSelector: (state: any) => ({
-    navigation: state.navigation,
-    books: state.books,
-    runtime: state.hypercardRuntime,
-  }),
-  debugTitle: 'Book Tracker Debug',
 });
 
 const meta = {
