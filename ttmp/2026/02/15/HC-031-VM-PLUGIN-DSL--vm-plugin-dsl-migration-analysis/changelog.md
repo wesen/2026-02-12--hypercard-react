@@ -146,3 +146,27 @@ Implemented HC-031 Phase C shell integration: Desktop now mounts `PluginCardSess
 ### Commit
 
 - `d69a427` — `feat(engine): integrate plugin session host into desktop shell (Phase C)`
+
+
+## 2026-02-15
+
+Implemented HC-031 Phase D helper migration for Storybook/runtime integration: app/story helper APIs now support plugin-runtime path with optional legacy registries, structured params encoding, deterministic store seeding, and smoke checks for inventory/todo/crm/book-tracker-debug story groups.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/app/createDSLApp.tsx — Updated helper contract to optional legacy shared registries
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/app/generateCardStories.tsx — Added structured params support (`params?: unknown`), deterministic `seedStore`, and `toStoryParam`
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/app/index.ts — Exported `toStoryParam`
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/__tests__/story-helpers.test.ts — Added helper behavior tests
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/__tests__/storybook-app-smoke.test.ts — Added app story group smoke checks
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/15/HC-031-VM-PLUGIN-DSL--vm-plugin-dsl-migration-analysis/tasks.md — Marked D1-D5 complete
+
+### Validation
+
+- `npm run test -w packages/engine` — pass (`12` files, `114` tests)
+- `npm run typecheck -w packages/engine` — pass
+- `npm run build -w packages/engine` — pass
+
+### Commit
+
+- `a869dda` — `feat(engine): migrate app/story helpers for plugin runtime stories (Phase D)`

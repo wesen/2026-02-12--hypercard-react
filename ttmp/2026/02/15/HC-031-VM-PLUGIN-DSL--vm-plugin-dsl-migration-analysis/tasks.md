@@ -55,11 +55,11 @@
 
 ### Phase D: Storybook Runtime Migration
 
-- [ ] [D1] Replace internals of `createDSLApp` to bootstrap plugin runtime instead of descriptor runtime.
-- [ ] [D2] Replace internals of `createStoryHelpers` to plugin-runtime adapter flow.
-- [ ] [D3] Add helper API for per-card Storybook scenarios with structured params (`params?: unknown`).
-- [ ] [D4] Add Storybook decorator/runtime harness for deterministic store + session seeds.
-- [ ] [D5] Add Storybook smoke specs for each app story group (`inventory`, `todo`, `crm`, `book-tracker-debug`).
+- [x] [D1] Replace internals of `createDSLApp` to bootstrap plugin runtime instead of descriptor runtime.
+- [x] [D2] Replace internals of `createStoryHelpers` to plugin-runtime adapter flow.
+- [x] [D3] Add helper API for per-card Storybook scenarios with structured params (`params?: unknown`).
+- [x] [D4] Add Storybook decorator/runtime harness for deterministic store + session seeds.
+- [x] [D5] Add Storybook smoke specs for each app story group (`inventory`, `todo`, `crm`, `book-tracker-debug`).
 
 ### Phase E: App Authoring Migration (Hard Cut)
 

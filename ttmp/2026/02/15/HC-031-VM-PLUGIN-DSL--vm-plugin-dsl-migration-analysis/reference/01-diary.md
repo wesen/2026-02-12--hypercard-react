@@ -24,7 +24,7 @@ RelatedFiles:
         Primary deliverable documented by diary steps
 ExternalSources: []
 Summary: Detailed implementation diary for HC-031 analysis and documentation workflow.
-LastUpdated: 2026-02-15T19:05:00-05:00
+LastUpdated: 2026-02-15T19:15:00-05:00
 WhatFor: Record how the migration analysis document was produced, with command evidence and constraints encountered.
 WhenToUse: Use when reviewing the provenance and reliability of HC-031 conclusions.
 ---
@@ -865,3 +865,92 @@ I added intent routing glue (`dispatchRuntimeIntent`) to connect runtime intents
 
 - `PluginCardSessionHost` projects runtime `globalState` with `self/domains/nav/system`.
 - Runtime bundle loading applies `initialSessionState` / `initialCardState` via intent ingestion rather than out-of-band state mutation.
+
+## Step 11: Implement Phase D Storybook/runtime helper migration
+
+I updated app/story helper internals so plugin-runtime-capable stacks can be exercised through existing helper APIs without introducing a second story harness. The main changes were making legacy selector/action registries optional, introducing structured story params support, and adding deterministic store seeding for story decorators.
+
+I also added smoke coverage for the four app story groups requested in HC-031 (`inventory`, `todo`, `crm`, `book-tracker-debug`) by validating that their story modules contain expected Storybook exports.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 8)
+
+**Assistant interpretation:** Continue phase execution with migration and validation steps, documenting each checkpoint.
+
+**Inferred user intent:** Ensure Storybook integration does not block cutover and remains verifiably healthy across all app story groups.
+
+**Commit (code):** a869dda — "feat(engine): migrate app/story helpers for plugin runtime stories (Phase D)"
+
+### What I did
+
+- Updated app bootstrap helper:
+  - `packages/engine/src/app/createDSLApp.tsx`
+  - `sharedSelectors/sharedActions` are now optional (legacy fallback only), matching plugin runtime path.
+- Updated Storybook helper internals:
+  - `packages/engine/src/app/generateCardStories.tsx`
+  - Added `toStoryParam(value: unknown)` encoder for structured params.
+  - `createStory(card, params?: unknown)` now accepts structured params.
+  - Added `seedStore?: (store) => void` for deterministic story seed setup.
+  - Made shared selector/action registries optional.
+- Updated app exports:
+  - `packages/engine/src/app/index.ts` now exports `toStoryParam`.
+- Added tests:
+  - `packages/engine/src/__tests__/story-helpers.test.ts` (param encoding behavior)
+  - `packages/engine/src/__tests__/storybook-app-smoke.test.ts` (smoke checks for inventory/todo/crm/book-tracker-debug story files)
+- Validation commands:
+  - `npm run test -w packages/engine`
+  - `npm run typecheck -w packages/engine`
+  - `npm run build -w packages/engine`
+- Checked off `D1..D5` in `tasks.md`.
+
+### Why
+
+- Story helpers are a critical surface for migration visibility; they must accept plugin-oriented params and deterministic store setup without forcing immediate story rewrites.
+- Structured params were explicitly required for plugin cards where nav inputs are no longer reliably string-only at authoring level.
+
+### What worked
+
+- All engine tests pass after helper migration:
+  - `12` files, `114` tests.
+- Typecheck and build pass.
+- Story smoke test now validates all four app story groups requested in Phase D.
+
+### What didn't work
+
+- Initial story smoke approach (dynamic `import(...)` of app story modules from engine test path) failed with module resolution errors.
+- First regex for story export detection was over-escaped and failed matching valid story files.
+- Fixes:
+  - Switched smoke test to static file-content checks (`readFileSync`) for Storybook export markers.
+  - Corrected regex to `/export const\\s+[A-Za-z0-9_]+\\s*:/`.
+
+### What I learned
+
+- Cross-workspace dynamic imports from package-local Vitest runs are brittle in this monorepo layout; file-content smoke checks provide stable, low-friction validation for story module presence and structure.
+
+### What was tricky to build
+
+- The subtle part was evolving APIs without breaking existing stories. Making shared registries optional had to preserve old story behavior while enabling plugin stacks to omit legacy registries entirely. The helper layer now supports both paths until hard deletion phase.
+
+### What warrants a second pair of eyes
+
+- Review whether JSON-string encoding in `toStoryParam` is sufficient for future typed nav param handling, or whether a dedicated nav param codec should be introduced before Phase F cleanup.
+
+### What should be done in the future
+
+- Start Phase E migrations for app stacks (`inventory`, `todo`, `crm`, `book-tracker-debug`) onto plugin runtime stack bundles and remove function-valued VM boundary payloads.
+
+### Code review instructions
+
+- Start in:
+  - `packages/engine/src/app/generateCardStories.tsx`
+  - `packages/engine/src/__tests__/storybook-app-smoke.test.ts`
+  - `packages/engine/src/__tests__/story-helpers.test.ts`
+- Validate with:
+  - `npm run test -w packages/engine`
+  - `npm run typecheck -w packages/engine`
+  - `npm run build -w packages/engine`
+
+### Technical details
+
+- Story smoke checks assert both `export default` and at least one `export const ...: Story` declaration in each app story module file.
