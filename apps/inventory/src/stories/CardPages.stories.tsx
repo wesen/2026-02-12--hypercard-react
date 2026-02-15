@@ -1,13 +1,10 @@
 import { createStoryHelpers } from '@hypercard/engine';
 import type { Meta, StoryObj } from '@storybook/react';
-import { inventorySharedActions, inventorySharedSelectors } from '../app/cardRuntime';
 import { createInventoryStore } from '../app/store';
 import { STACK } from '../domain/stack';
 
 const { storeDecorator, createStory, FullApp } = createStoryHelpers({
   stack: STACK,
-  sharedSelectors: inventorySharedSelectors,
-  sharedActions: inventorySharedActions,
   createStore: createInventoryStore,
   cardParams: { itemDetail: 'A-1002' },
 });
