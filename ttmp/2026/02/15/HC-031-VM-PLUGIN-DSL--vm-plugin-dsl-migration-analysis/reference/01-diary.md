@@ -24,7 +24,7 @@ RelatedFiles:
         Primary deliverable documented by diary steps
 ExternalSources: []
 Summary: Detailed implementation diary for HC-031 analysis and documentation workflow.
-LastUpdated: 2026-02-15T19:15:00-05:00
+LastUpdated: 2026-02-15T19:30:00-05:00
 WhatFor: Record how the migration analysis document was produced, with command evidence and constraints encountered.
 WhenToUse: Use when reviewing the provenance and reliability of HC-031 conclusions.
 ---
@@ -954,3 +954,95 @@ I also added smoke coverage for the four app story groups requested in HC-031 (`
 ### Technical details
 
 - Story smoke checks assert both `export default` and at least one `export const ...: Story` declaration in each app story module file.
+
+## Step 12: Validate in tmux + Playwright and fix low-stock recursion
+
+I ran live runtime validation with Storybook and inventory dev server in `tmux`, then used Playwright to reproduce the low-stock page recursion issue directly in-browser. The first run reproduced `Maximum update depth exceeded` exactly on `http://localhost:6006/?path=/story/pages-cards--low-stock`, so I implemented a targeted runtime stabilization patch and reran Playwright until the error disappeared.
+
+The fix included reducing unnecessary shell subscriptions, making runtime ensure behavior idempotent, and disabling debug-hook emission by default in helper bootstraps (opt-in remains possible). After patching, Playwright reported `0` console errors on the same story URL.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 8)
+
+**Assistant interpretation:** Keep progressing with implementation and test continuously, including browser-level validation where useful.
+
+**Inferred user intent:** Ensure migration work does not regress runtime stability, especially around the known recursion failure.
+
+**Commit (code):** 0c537dd — "fix(engine): stop low-stock story render recursion"
+
+### What I did
+
+- Started processes in tmux:
+  - `npm run storybook` (session: `hc_storybook`)
+  - `npm run dev -w apps/inventory` (session: `hc_inventory_dev`)
+- Reproduced failure via Playwright:
+  - Opened `http://localhost:6006/?path=/story/pages-cards--low-stock`
+  - Observed `Maximum update depth exceeded` in preview iframe console.
+- Implemented stabilization fixes:
+  - `packages/engine/src/components/shell/useCardRuntimeHost.ts`
+    - Added idempotence guard so `ensureCardRuntime` dispatch is not repeated for the same runtime key.
+  - `packages/engine/src/components/shell/windowing/DesktopShell.tsx`
+    - Use `CardSessionHost` directly for non-plugin stacks; only mount `PluginCardSessionHost` when stack has `plugin.bundleCode`.
+  - `packages/engine/src/components/shell/windowing/PluginCardSessionHost.tsx`
+    - Removed root-state subscription and switched global projection to `store.getState()` reads.
+  - `packages/engine/src/app/createDSLApp.tsx`
+  - `packages/engine/src/app/generateCardStories.tsx`
+    - Added `enableDebugHooks` flag (default `false`) to prevent debug-event dispatch loops in default runtime path.
+  - `packages/engine/src/features/windowing/selectors.ts`
+    - Memoized `selectWindowsInOrder` and `selectWindowsByZ` with `createSelector` to avoid unstable selector outputs.
+- Re-ran checks:
+  - `npm run test -w packages/engine`
+  - `npm run typecheck -w packages/engine`
+  - Playwright retest on low-stock story showed `0` errors.
+- Marked task progress:
+  - `G3.1/G3.2/G3.3` complete
+  - `G4.2/G4.3` complete
+
+### Why
+
+- Browser-level reproduction was necessary because unit tests did not capture this runtime recursion.
+- Stabilization work needed to target both render-time dispatch risk and subscription churn.
+
+### What worked
+
+- Playwright reproduction matched user-reported failure.
+- Post-fix Playwright run on same story URL rendered successfully without recursion errors.
+- Engine tests and typecheck remained green after fix.
+
+### What didn't work
+
+- Initial mitigation attempts (plugin-host subscription cleanup alone) reduced warnings but did not fully eliminate the recursion.
+- Full resolution required combining idempotent runtime ensure + debug emission default-off + selector memoization.
+
+### What I learned
+
+- This class of recursion can hide outside strict unit tests and requires real Storybook runtime verification.
+- Memoization and idempotence at host/runtime boundaries materially reduce risk when React-Redux subscriptions are dense.
+
+### What was tricky to build
+
+- Isolating the failure source was non-trivial because the error surfaced in legacy `CardSessionHost` while migration code had already introduced additional wrappers. The practical path was iterative: reproduce, reduce noise (selector warnings), add idempotence, then retest in-browser until the stack stabilized.
+
+### What warrants a second pair of eyes
+
+- Review default `enableDebugHooks: false` decision to confirm expected observability tradeoffs for development workflows.
+- Review whether we should add a dedicated regression test harness for Storybook runtime recursion in CI (Playwright-based).
+
+### What should be done in the future
+
+- Continue Phase E app migrations so non-plugin fallback path can eventually be removed in Phase F.
+
+### Code review instructions
+
+- Start in:
+  - `packages/engine/src/components/shell/useCardRuntimeHost.ts`
+  - `packages/engine/src/app/generateCardStories.tsx`
+  - `packages/engine/src/features/windowing/selectors.ts`
+- Validate with:
+  - `npm run test -w packages/engine`
+  - Launch Storybook and open `http://localhost:6006/?path=/story/pages-cards--low-stock` to confirm no recursion errors.
+
+### Technical details
+
+- Playwright verification was run against live Storybook in tmux and captured console diagnostics before/after the fix.

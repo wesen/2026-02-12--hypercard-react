@@ -170,3 +170,33 @@ Implemented HC-031 Phase D helper migration for Storybook/runtime integration: a
 ### Commit
 
 - `a869dda` — `feat(engine): migrate app/story helpers for plugin runtime stories (Phase D)`
+
+
+## 2026-02-15
+
+Ran tmux + Playwright runtime validation and fixed the low-stock Storybook recursion (`Maximum update depth exceeded`) by stabilizing runtime ensure flow, reducing unnecessary shell subscriptions, memoizing window selectors, and making debug hook emission opt-in (default off) in app/story helper bootstraps.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/shell/useCardRuntimeHost.ts — Added idempotent ensure-runtime guard to prevent repeated ensure dispatch cycles
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/shell/windowing/DesktopShell.tsx — Mount legacy `CardSessionHost` directly for non-plugin stacks
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/shell/windowing/PluginCardSessionHost.tsx — Removed root-state selector churn and switched global projection strategy
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/features/windowing/selectors.ts — Memoized window list selectors to avoid unstable selector outputs
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/app/createDSLApp.tsx — Added `enableDebugHooks` option (default `false`)
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/app/generateCardStories.tsx — Added `enableDebugHooks` option (default `false`) for story runtime path
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/15/HC-031-VM-PLUGIN-DSL--vm-plugin-dsl-migration-analysis/tasks.md — Marked G3 and partial G4 verification tasks complete
+
+### Validation
+
+- `npm run test -w packages/engine` — pass (`12` files, `114` tests)
+- `npm run typecheck -w packages/engine` — pass
+- tmux sessions:
+  - `npm run storybook`
+  - `npm run dev -w apps/inventory`
+- Playwright:
+  - Reproduced and then re-tested `http://localhost:6006/?path=/story/pages-cards--low-stock`
+  - Final run: `0` console errors, recursion resolved
+
+### Commit
+
+- `0c537dd` — `fix(engine): stop low-stock story render recursion`

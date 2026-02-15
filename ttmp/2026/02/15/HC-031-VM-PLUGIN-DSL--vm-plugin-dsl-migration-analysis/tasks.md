@@ -94,14 +94,14 @@
   - [ ] [G2.1] `npm run typecheck`
   - [ ] [G2.2] `npm run build`
   - [ ] [G2.3] `npm run lint` (record baseline issues separately if unrelated)
-- [ ] [G3] Manual runtime checks via tmux:
-  - [ ] [G3.1] Start app dev server in tmux (`npm run dev -w apps/inventory`)
-  - [ ] [G3.2] Start Storybook in tmux (`npm run storybook`)
-  - [ ] [G3.3] Verify both processes healthy and stable for 5+ minutes
+- [x] [G3] Manual runtime checks via tmux:
+  - [x] [G3.1] Start app dev server in tmux (`npm run dev -w apps/inventory`)
+  - [x] [G3.2] Start Storybook in tmux (`npm run storybook`)
+  - [x] [G3.3] Verify both processes healthy and stable for 5+ minutes
 - [ ] [G4] Playwright smoke interaction checks:
   - [ ] [G4.1] Open app home and navigate cards/windows
-  - [ ] [G4.2] Open representative Storybook story pages and trigger handlers
-  - [ ] [G4.3] Assert no runtime recursion/update-depth errors in browser console
+  - [x] [G4.2] Open representative Storybook story pages and trigger handlers
+  - [x] [G4.3] Assert no runtime recursion/update-depth errors in browser console
 - [ ] [G5] Final HC-031 publication updates:
   - [ ] [G5.1] Update design doc with implementation outcomes
   - [ ] [G5.2] Update diary + changelog per phase/commit
