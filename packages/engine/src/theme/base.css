@@ -245,6 +245,7 @@
 [data-part="windowing-icon-glyph"] {
   font-size: 28px;
   line-height: 1;
+  filter: grayscale(1) contrast(1.2);
 }
 [data-part="windowing-icon-label"] {
   font-size: 10px;
