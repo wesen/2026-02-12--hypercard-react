@@ -1,9 +1,16 @@
+import { createSelector } from '@reduxjs/toolkit';
 import type { NavEntry, WindowInstance, WindowingState } from './types';
 
 /** Store shape for selectors — just needs the windowing slice. */
 export interface WindowingStateSlice {
   windowing: WindowingState;
 }
+
+const selectWindowingState = (state: WindowingStateSlice): WindowingState => state.windowing;
+
+const selectWindowOrder = (state: WindowingStateSlice) => selectWindowingState(state).order;
+
+const selectWindowMap = (state: WindowingStateSlice) => selectWindowingState(state).windows;
 
 // ── Desktop state ──
 
@@ -16,12 +23,15 @@ export const selectSelectedIconId = (state: WindowingStateSlice) => state.window
 // ── Windows ──
 
 /** All windows in insertion order. */
-export const selectWindowsInOrder = (state: WindowingStateSlice): WindowInstance[] =>
-  state.windowing.order.map((id) => state.windowing.windows[id]).filter(Boolean);
+export const selectWindowsInOrder = createSelector(
+  [selectWindowOrder, selectWindowMap],
+  (order, windows): WindowInstance[] => order.map((id) => windows[id]).filter(Boolean),
+);
 
 /** All windows sorted by z-index (paint order, lowest first). */
-export const selectWindowsByZ = (state: WindowingStateSlice): WindowInstance[] =>
-  [...selectWindowsInOrder(state)].sort((a, b) => a.z - b.z);
+export const selectWindowsByZ = createSelector([selectWindowsInOrder], (windows): WindowInstance[] =>
+  [...windows].sort((a, b) => a.z - b.z),
+);
 
 /** The currently focused window, or undefined if none. */
 export const selectFocusedWindow = (state: WindowingStateSlice): WindowInstance | undefined => {

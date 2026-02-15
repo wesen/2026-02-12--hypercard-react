@@ -20,6 +20,8 @@ export interface CardStoriesConfig<TRootState = unknown> {
   cardParams?: Record<string, unknown>;
   /** Optional store seeding hook for deterministic story runtime state. */
   seedStore?: (store: any) => void;
+  /** Enable runtime debug event capture in stories. Defaults to false. */
+  enableDebugHooks?: boolean;
 }
 
 /** Story params are stored in window nav as strings; encode structured params deterministically. */
@@ -61,7 +63,16 @@ export function toStoryParam(value: unknown): string | undefined {
  * ```
  */
 export function createStoryHelpers<TRootState = unknown>(config: CardStoriesConfig<TRootState>) {
-  const { stack, sharedSelectors, sharedActions, createStore, icons, cardParams = {}, seedStore } = config;
+  const {
+    stack,
+    sharedSelectors,
+    sharedActions,
+    createStore,
+    icons,
+    cardParams = {},
+    seedStore,
+    enableDebugHooks = false,
+  } = config;
 
   function StoryStoreProvider({ Story }: { Story: ComponentType }) {
     const storeRef = useRef<any>(null);
@@ -88,7 +99,8 @@ export function createStoryHelpers<TRootState = unknown>(config: CardStoriesConf
 
   // Shell-at-card component for navigating to a specific card
   function ShellAtCard({ card, params }: { card: string; params?: unknown }) {
-    const debugHooks = useStandardDebugHooks();
+    const runtimeDebugHooks = useStandardDebugHooks();
+    const debugHooks = enableDebugHooks ? runtimeDebugHooks : undefined;
     const stackAtCard = {
       ...stack,
       homeCard: card,
@@ -108,7 +120,8 @@ export function createStoryHelpers<TRootState = unknown>(config: CardStoriesConf
 
   // Full app component (for default story / meta.component)
   function FullApp() {
-    const debugHooks = useStandardDebugHooks();
+    const runtimeDebugHooks = useStandardDebugHooks();
+    const debugHooks = enableDebugHooks ? runtimeDebugHooks : undefined;
     return (
       <DesktopShell
         stack={stack}

@@ -16,6 +16,8 @@ export interface DSLAppConfig<TRootState = unknown> {
   domainReducers: Record<string, Reducer>;
   /** Optional desktop icon overrides */
   icons?: DesktopIconDef[];
+  /** Enable runtime debug event capture into Redux debug slice. Defaults to false. */
+  enableDebugHooks?: boolean;
 }
 
 /**
@@ -35,12 +37,13 @@ export interface DSLAppConfig<TRootState = unknown> {
  * ```
  */
 export function createDSLApp<TRootState = unknown>(config: DSLAppConfig<TRootState>) {
-  const { stack, sharedSelectors, sharedActions, domainReducers, icons } = config;
+  const { stack, sharedSelectors, sharedActions, domainReducers, icons, enableDebugHooks = false } = config;
 
   const { store, createStore } = createAppStore(domainReducers);
 
   function App() {
-    const debugHooks = useStandardDebugHooks();
+    const runtimeDebugHooks = useStandardDebugHooks();
+    const debugHooks = enableDebugHooks ? runtimeDebugHooks : undefined;
 
     return (
       <DesktopShell

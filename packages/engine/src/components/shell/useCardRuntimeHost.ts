@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   type ActionDescriptor,
   type CardStackDefinition,
@@ -67,6 +67,7 @@ export function useCardRuntimeHost({
   windowId,
   sessionId,
 }: UseCardRuntimeHostOptions): UseCardRuntimeHostResult {
+  const ensuredRuntimeKeyRef = useRef<string | null>(null);
   const cardDef = stack.cards[currentCardId];
   const cardTypeDef = stack.cardTypes?.[cardDef.type];
   const backgroundId = cardDef.backgroundId;
@@ -81,6 +82,11 @@ export function useCardRuntimeHost({
   );
 
   useEffect(() => {
+    const ensureKey = `${stack.id}:${runtimeCardId}:${cardDef.type}:${backgroundId ?? ''}`;
+    if (ensuredRuntimeKeyRef.current === ensureKey) {
+      return;
+    }
+
     dispatch(
       ensureCardRuntime({
         stackId: stack.id,
@@ -96,6 +102,7 @@ export function useCardRuntimeHost({
         },
       }),
     );
+    ensuredRuntimeKeyRef.current = ensureKey;
   }, [
     dispatch,
     stack.id,

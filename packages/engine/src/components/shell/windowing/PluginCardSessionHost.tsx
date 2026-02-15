@@ -90,7 +90,6 @@ export function PluginCardSessionHost({
 }: PluginCardSessionHostProps) {
   const dispatch = useDispatch();
   const store = useStore<StoreState>();
-  const rootState = useSelector((state: StoreState) => state);
 
   const pluginConfig = useMemo(() => getPluginConfig(stack), [stack]);
   const currentNav = useSelector((state: StoreState) => selectSessionCurrentNav(state as any, sessionId));
@@ -218,9 +217,9 @@ export function PluginCardSessionHost({
     };
   }, [dispatch, pluginConfig, sessionId]);
 
-  const projectedGlobalState = useMemo(
+  const projectGlobal = useCallback(
     () =>
-      projectGlobalState(rootState, {
+      projectGlobalState(store.getState(), {
         stackId: stack.id,
         sessionId,
         cardId: currentCardId,
@@ -230,13 +229,25 @@ export function PluginCardSessionHost({
         focusedWindowId,
         runtimeStatus: runtimeSession?.status ?? 'missing',
       }),
-    [rootState, stack.id, sessionId, currentCardId, windowId, navDepth, currentNav?.param, focusedWindowId, runtimeSession?.status]
+    [
+      store,
+      stack.id,
+      sessionId,
+      currentCardId,
+      windowId,
+      navDepth,
+      currentNav?.param,
+      focusedWindowId,
+      runtimeSession?.status,
+    ]
   );
 
   const tree = useMemo<UINode | null>(() => {
     if (!pluginConfig || !runtimeSession || runtimeSession.status !== 'ready') {
       return null;
     }
+
+    const projectedGlobalState = projectGlobal();
 
     try {
       return runtimeServiceRef.current?.renderCard(
@@ -252,7 +263,7 @@ export function PluginCardSessionHost({
       );
       return null;
     }
-  }, [cardState, currentCardId, dispatch, pluginConfig, projectedGlobalState, runtimeSession, sessionId, sessionState]);
+  }, [cardState, currentCardId, dispatch, pluginConfig, projectGlobal, runtimeSession, sessionId, sessionState]);
 
   const emitRuntimeEvent = useCallback(
     (handler: string, args?: unknown) => {
@@ -262,6 +273,7 @@ export function PluginCardSessionHost({
 
       let intents: RuntimeIntent[];
       try {
+        const projectedGlobalState = projectGlobal();
         intents = runtimeServiceRef.current?.eventCard(
           sessionId,
           currentCardId,
@@ -291,7 +303,7 @@ export function PluginCardSessionHost({
       currentCardId,
       dispatch,
       pluginConfig,
-      projectedGlobalState,
+      projectGlobal,
       runtimeSession,
       sessionId,
       sessionState,
