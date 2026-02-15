@@ -60,6 +60,8 @@ export function createWindow(
     height: overrides.height ?? 220,
     zIndex: overrides.zIndex ?? 1,
     focused: overrides.focused ?? false,
+    isDialog: overrides.isDialog,
+    isResizable: overrides.isResizable,
   };
 }
 

@@ -109,3 +109,20 @@ export const TallContent: Story = {
       'Longer body content can scroll inside the window surface. The window frame remains stable while body content overflows.',
   },
 };
+
+export const DialogWindow: Story = {
+  args: {
+    window: createWindow({
+      id: 'window:about',
+      title: 'About HyperCard Desktop',
+      x: 140,
+      y: 80,
+      width: 320,
+      height: 200,
+      zIndex: 2,
+      focused: true,
+      isDialog: true,
+    }),
+    content: 'Dialog windows have no close box, no drag handle, and no resize handle. They are modal prompts.',
+  },
+};

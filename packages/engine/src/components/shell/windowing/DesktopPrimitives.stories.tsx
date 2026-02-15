@@ -24,6 +24,8 @@ const MENU_SECTIONS: DesktopMenuSection[] = [
     items: [
       { id: 'new-window', label: 'New Window', commandId: 'file.new-window', shortcut: 'Ctrl+N' },
       { id: 'close-window', label: 'Close Focused', commandId: 'file.close-focused', shortcut: 'Ctrl+W' },
+      { separator: true },
+      { id: 'about', label: 'About', commandId: 'help.about' },
     ],
   },
   {
@@ -32,12 +34,14 @@ const MENU_SECTIONS: DesktopMenuSection[] = [
     items: [
       { id: 'tile', label: 'Tile Windows', commandId: 'window.tile' },
       { id: 'cascade', label: 'Cascade Windows', commandId: 'window.cascade' },
+      { separator: true },
+      { id: 'bring-all', label: 'Bring All To Front', commandId: 'window.front' },
     ],
   },
   {
     id: 'help',
     label: 'Help',
-    items: [{ id: 'about', label: 'About Windowing', commandId: 'help.about' }],
+    items: [{ id: 'about-windowing', label: 'About Windowing', commandId: 'help.about' }],
   },
 ];
 
@@ -316,6 +320,35 @@ export const DenseWindowSet: Story = {
         height: 220,
         zIndex: 4,
         focused: true,
+      },
+    ],
+  },
+};
+
+export const WithDialogWindow: Story = {
+  args: {
+    initialWindows: [
+      {
+        id: 'window:inventory',
+        title: 'Inventory',
+        icon: '📦',
+        x: 140,
+        y: 72,
+        width: 340,
+        height: 240,
+        zIndex: 1,
+        focused: false,
+      },
+      {
+        id: 'window:about',
+        title: 'About HyperCard Desktop',
+        x: 280,
+        y: 140,
+        width: 300,
+        height: 200,
+        zIndex: 2,
+        focused: true,
+        isDialog: true,
       },
     ],
   },
