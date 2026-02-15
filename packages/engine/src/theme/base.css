@@ -237,7 +237,7 @@
   border-radius: 4px;
 }
 [data-part="windowing-icon"][data-state="selected"] [data-part="windowing-icon-glyph"] {
-  filter: grayscale(1) invert(1) contrast(1.2);
+  filter: invert(1);
 }
 [data-part="windowing-icon"][data-state="selected"] [data-part="windowing-icon-label"] {
   color: var(--hc-icon-selected-fg);
