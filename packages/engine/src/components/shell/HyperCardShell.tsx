@@ -1,22 +1,13 @@
-import { type ReactNode, useCallback, useEffect, useMemo } from 'react';
+import { type ReactNode, useEffect } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import {
   type ActionDescriptor,
   type CardStackDefinition,
-  ensureCardRuntime,
   type HypercardRuntimeStateSlice,
   type SharedActionRegistry,
   type SharedSelectorRegistry,
 } from '../../cards';
-import {
-  createCardContext,
-  createSelectorResolver,
-  emitRuntimeDebugEvent,
-  executeCommand,
-  type RuntimeDebugHooks,
-  type RuntimeLookup,
-  resolveValueExpr,
-} from '../../cards/runtime';
+import { type RuntimeDebugHooks } from '../../cards/runtime';
 import {
   goBack,
   initializeNavigation,
@@ -30,7 +21,7 @@ import {
   selectLayout,
   selectNavDepth,
 } from '../../features/navigation/selectors';
-import { clearToast, showToast } from '../../features/notifications/notificationsSlice';
+import { clearToast } from '../../features/notifications/notificationsSlice';
 import { type NotificationsStateSlice, selectToast } from '../../features/notifications/selectors';
 import { HyperCardTheme } from '../../theme/HyperCardTheme';
 import { Toast } from '../widgets/Toast';
@@ -40,6 +31,7 @@ import { LayoutDrawer } from './LayoutDrawer';
 import { LayoutSplit } from './LayoutSplit';
 import { NavBar } from './NavBar';
 import { TabBar } from './TabBar';
+import { useCardRuntimeHost } from './useCardRuntimeHost';
 import { WindowChrome } from './WindowChrome';
 
 const LAYOUT_TABS = [
@@ -97,208 +89,22 @@ export function HyperCardShell({
     | undefined;
 
   const currentCardId = stack.cards[current.card] ? current.card : stack.homeCard;
-  const cardDef = stack.cards[currentCardId];
-  const cardTypeDef = stack.cardTypes?.[cardDef.type];
-  const backgroundId = cardDef.backgroundId;
-  const backgroundDef = backgroundId ? stack.backgrounds?.[backgroundId] : undefined;
-
-  const params = useMemo<Record<string, string>>(
-    () => ({
-      card: currentCardId,
-      param: current.param ?? '',
-    }),
-    [currentCardId, current.param],
-  );
-
-  useEffect(() => {
-    dispatch(
-      ensureCardRuntime({
-        stackId: stack.id,
-        cardId: currentCardId,
-        cardType: cardDef.type,
-        backgroundId,
-        defaults: {
-          global: stack.global?.state,
-          stack: stack.stack?.state,
-          background: backgroundDef?.state,
-          cardType: cardTypeDef?.state,
-          card: cardDef.state?.initial,
-        },
-      }),
-    );
-  }, [
-    dispatch,
-    stack.id,
-    stack.global?.state,
-    stack.stack?.state,
+  const { cardDef, runtime, runAction } = useCardRuntimeHost({
+    stack,
     currentCardId,
-    cardDef.type,
-    cardDef.state?.initial,
-    cardTypeDef?.state,
-    backgroundId,
-    backgroundDef?.state,
-  ]);
-
-  const runtimeRoot = useMemo(
-    () => ({
-      hypercardRuntime: runtimeSlice ?? { global: {}, stacks: {} },
-    }),
-    [runtimeSlice],
-  );
-
-  const lookup: RuntimeLookup = useMemo(
-    () => ({
-      cardDef,
-      stackDef: stack,
-      cardTypeDef,
-      backgroundDef,
-    }),
-    [cardDef, stack, cardTypeDef, backgroundDef],
-  );
-
-  const debugContext = useMemo(
-    () => ({
-      stackId: stack.id,
-      cardId: currentCardId,
-      cardType: cardDef.type,
-    }),
-    [stack.id, currentCardId, cardDef.type],
-  );
-
-  const dispatchWithDebug = useCallback(
-    (action: unknown) => {
-      emitRuntimeDebugEvent(debugHooks, debugContext, {
-        kind: 'redux.dispatch.start',
-        payload: { action },
-      });
-      const startedAt = Date.now();
-      // Internal cast: dispatch expects AnyAction but we accept unknown from DSL runtime
-      const result = dispatch(action as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-      emitRuntimeDebugEvent(debugHooks, debugContext, {
-        kind: 'redux.dispatch',
-        durationMs: Date.now() - startedAt,
-        payload: { action },
-      });
-      return result;
+    currentParam: current.param,
+    mode,
+    runtimeSlice,
+    sharedSelectors,
+    sharedActions,
+    debugHooks,
+    dispatch: (action) => dispatch(action as any),
+    store,
+    nav: {
+      go: (card, param) => navigate({ card, paramValue: param }),
+      back: () => goBack(),
     },
-    [dispatch, debugHooks, debugContext],
-  );
-
-  const runAction = useCallback(
-    (action: ActionDescriptor, event?: { name: string; payload: unknown }) => {
-      const context = createCardContext(runtimeRoot, {
-        stackId: stack.id,
-        cardId: currentCardId,
-        cardType: cardDef.type,
-        backgroundId,
-        mode,
-        params,
-        getState: () => store.getState(),
-        dispatch: dispatchWithDebug,
-        nav: {
-          go: (card, param) => dispatchWithDebug(navigate({ card, paramValue: param })),
-          back: () => dispatchWithDebug(goBack()),
-        },
-      });
-
-      executeCommand(
-        { command: action, event },
-        store.getState(),
-        context,
-        lookup,
-        (sharedSelectors ?? {}) as SharedSelectorRegistry,
-        (sharedActions ?? {}) as SharedActionRegistry,
-        {
-          showToast: (message) => dispatchWithDebug(showToast(message)),
-        },
-        debugHooks,
-      );
-    },
-    [
-      runtimeRoot,
-      stack.id,
-      currentCardId,
-      cardDef.type,
-      backgroundId,
-      mode,
-      params,
-      store,
-      dispatchWithDebug,
-      lookup,
-      sharedSelectors,
-      sharedActions,
-      debugHooks,
-    ],
-  );
-
-  const resolve = useCallback(
-    (expr: unknown, event?: { name: string; payload: unknown }) => {
-      const context = createCardContext(runtimeRoot, {
-        stackId: stack.id,
-        cardId: currentCardId,
-        cardType: cardDef.type,
-        backgroundId,
-        mode,
-        params,
-        getState: () => store.getState(),
-        dispatch: dispatchWithDebug,
-        nav: {
-          go: (card, param) => dispatchWithDebug(navigate({ card, paramValue: param })),
-          back: () => dispatchWithDebug(goBack()),
-        },
-      });
-
-      const selectorResolver = createSelectorResolver(
-        store.getState(),
-        context,
-        lookup,
-        (sharedSelectors ?? {}) as SharedSelectorRegistry,
-        debugHooks,
-      );
-
-      return resolveValueExpr(expr, {
-        state: store.getState(),
-        params,
-        event,
-        selectors: selectorResolver,
-      });
-    },
-    [
-      runtimeRoot,
-      stack.id,
-      currentCardId,
-      cardDef.type,
-      backgroundId,
-      mode,
-      params,
-      store,
-      dispatchWithDebug,
-      lookup,
-      sharedSelectors,
-      debugHooks,
-    ],
-  );
-
-  const emit = useCallback(
-    (nodeKey: string, eventName: string, payload: unknown) => {
-      const command = cardDef.bindings?.[nodeKey]?.[eventName];
-      if (!command) return;
-      runAction(command, { name: eventName, payload });
-    },
-    [cardDef.bindings, runAction],
-  );
-
-  const runtime = useMemo(
-    () => ({
-      mode,
-      resolve,
-      emit,
-      execute: runAction,
-      debugEvent: (event: Parameters<typeof emitRuntimeDebugEvent>[2]) =>
-        emitRuntimeDebugEvent(debugHooks, debugContext, event),
-    }),
-    [mode, resolve, emit, runAction, debugHooks, debugContext],
-  );
+  });
 
   const mainContent = (
     <>

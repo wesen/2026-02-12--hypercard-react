@@ -96,3 +96,81 @@ The ticket now contains both planning artifacts and an actionable task list, so 
 
 - Ticket ID: `HC-030-DESKTOP-CUTOVER`
 - New docs: design-doc + diary + task expansion
+
+## Step 2: Complete C1-C3 — shared runtime-host extraction and validation
+
+I completed the first code migration slice by extracting duplicated runtime orchestration out of `HyperCardShell` and `CardSessionHost` into one shared hook. This is the biggest duplication reduction in the shell layer and lowers risk for later hard deletion of legacy shell files.
+
+I validated this extraction with the required test/typecheck commands before proceeding.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 1)
+
+**Assistant interpretation:** Execute migration tasks incrementally with commits and diary updates.
+
+**Inferred user intent:** Improve clarity first by shrinking oversized/duplicated runtime code paths.
+
+**Commit (code):** (recorded in this step's implementation commit)
+
+### What I did
+
+- Added new shared hook:
+  - `packages/engine/src/components/shell/useCardRuntimeHost.ts`
+- Refactored:
+  - `packages/engine/src/components/shell/HyperCardShell.tsx`
+  - `packages/engine/src/components/shell/windowing/CardSessionHost.tsx`
+- Behavior retained:
+  - runtime initialization via `ensureCardRuntime`
+  - DSL action execution via `executeCommand`
+  - selector resolution via `createSelectorResolver`
+  - runtime debug events
+- Validation:
+  - `npm run typecheck` (pass)
+  - `npm test` (pass, 95 tests)
+
+### Why
+
+- Needed to remove the largest duplication before deleting legacy shell code.
+- A shared runtime host reduces drift between legacy and windowing paths while both still exist.
+
+### What worked
+
+- Refactor removed hundreds of duplicated lines from two large files.
+- Tests/typecheck stayed green after extraction.
+
+### What didn't work
+
+- Initial typecheck failed because shared hook typed `store.getState()` too narrowly (`Record<string, unknown>`). Fixed by widening to `unknown`.
+
+### What I learned
+
+- The shell/runtime duplication was structurally very close, making extraction low-risk once nav adapter boundaries were explicit.
+
+### What was tricky to build
+
+- The key edge was preserving action dispatch/debug semantics while making nav behavior pluggable (`navigate/goBack` in legacy vs session nav actions in windowing).
+
+### What warrants a second pair of eyes
+
+- Verify nav adapter behavior remains identical in both shell modes for DSL `nav.go` and `nav.back` commands.
+
+### What should be done in the future
+
+- Keep all future runtime wiring changes inside `useCardRuntimeHost` to prevent reintroducing duplication.
+
+### Code review instructions
+
+- Start here:
+  - `packages/engine/src/components/shell/useCardRuntimeHost.ts`
+- Then review callsites:
+  - `packages/engine/src/components/shell/HyperCardShell.tsx`
+  - `packages/engine/src/components/shell/windowing/CardSessionHost.tsx`
+- Re-run validation:
+  - `npm run typecheck`
+  - `npm test`
+
+### Technical details
+
+- Net duplication reduction (two callsites): ~423 deleted lines, 37 inserted lines
+- New shared runtime-host module: 293 lines

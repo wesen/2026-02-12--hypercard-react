@@ -6,9 +6,9 @@
 - [x] [T2] Write detailed implementation design doc with impact and phased migration plan.
 - [x] [T3] Add granular task checklist for migration and validation.
 
-- [ ] [C1] Extract shared runtime-host logic used by both shell paths.
-- [ ] [C2] Validate extraction with `npm test` and `npm run typecheck`.
-- [ ] [C3] Record C1-C2 in HC-030 diary and changelog.
+- [x] [C1] Extract shared runtime-host logic used by both shell paths.
+- [x] [C2] Validate extraction with `npm test` and `npm run typecheck`.
+- [x] [C3] Record C1-C2 in HC-030 diary and changelog.
 
 - [ ] [C4] Add DesktopShell affordances needed by helper migration (story/app bootstrapping hooks).
 - [ ] [C5] Migrate `createDSLApp` to DesktopShell configuration (remove HyperCardShell/navShortcuts assumptions).
