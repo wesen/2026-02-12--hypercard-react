@@ -140,8 +140,8 @@
   align-items: center;
   gap: 2px;
   padding: 0 6px;
-  border: 2px solid var(--hc-color-border);
-  border-bottom-width: 1px;
+  border: none;
+  border-bottom: 2px solid var(--hc-color-border);
   background: var(--hc-color-bg);
   position: relative;
   z-index: var(--hc-desktop-menubar-z);
