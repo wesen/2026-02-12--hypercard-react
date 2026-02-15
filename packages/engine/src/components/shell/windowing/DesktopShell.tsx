@@ -25,9 +25,9 @@ import {
 import { PARTS } from '../../../parts';
 import { HyperCardTheme } from '../../../theme/HyperCardTheme';
 import { Toast } from '../../widgets/Toast';
-import { CardSessionHost } from './CardSessionHost';
 import { DesktopIconLayer } from './DesktopIconLayer';
 import { DesktopMenuBar } from './DesktopMenuBar';
+import { PluginCardSessionHost } from './PluginCardSessionHost';
 import type { DesktopIconDef, DesktopMenuSection, DesktopWindowDef } from './types';
 import { useWindowInteractionController } from './useWindowInteractionController';
 import { WindowLayer } from './WindowLayer';
@@ -261,7 +261,7 @@ export function DesktopShell({
       const cardRef = winInstance.content.card;
       if (winInstance.content.kind === 'card' && cardRef) {
         return (
-          <CardSessionHost
+          <PluginCardSessionHost
             windowId={winInstance.id}
             sessionId={cardRef.cardSessionId}
             stack={stack}

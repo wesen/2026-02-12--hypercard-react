@@ -120,11 +120,20 @@ export interface CardTypeDefinition<TRootState = unknown> {
   actions?: Record<string, CardActionHandler<TRootState>>;
 }
 
+export interface PluginRuntimeStackConfig {
+  bundleCode: string;
+  capabilities?: {
+    domain?: 'all' | string[];
+    system?: 'all' | string[];
+  };
+}
+
 export interface CardStackDefinition<TRootState = unknown> {
   id: string;
   name: string;
   icon: string;
   homeCard: string;
+  plugin?: PluginRuntimeStackConfig;
   global?: {
     state?: Record<string, unknown>;
     selectors?: Record<string, CardSelectorFn<TRootState>>;
