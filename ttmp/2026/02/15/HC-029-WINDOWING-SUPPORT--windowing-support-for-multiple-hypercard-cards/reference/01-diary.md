@@ -42,6 +42,8 @@ RelatedFiles:
       Note: Primary long-form design study documented in this diary
     - Path: ttmp/2026/02/15/HC-029-WINDOWING-SUPPORT--windowing-support-for-multiple-hypercard-cards/design-doc/02-clean-cutover-implementation-plan.md
       Note: Clean cutover plan added in Step 7
+    - Path: ttmp/2026/02/15/HC-029-WINDOWING-SUPPORT--windowing-support-for-multiple-hypercard-cards/design-doc/03-css-mapping-and-design-improvements.md
+      Note: CSS mapping and design improvements doc added in Step 12
     - Path: ttmp/2026/02/15/HC-029-WINDOWING-SUPPORT--windowing-support-for-multiple-hypercard-cards/sources/local/mac1-windowing.jsx
       Note: Imported source analyzed during research steps
 ExternalSources: []
@@ -50,6 +52,7 @@ LastUpdated: 2026-02-15T14:30:00-05:00
 WhatFor: Preserve full implementation/research trace and design rationale for HC-029.
 WhenToUse: Use when reviewing why design decisions were made and how to validate them.
 ---
+
 
 
 
@@ -982,3 +985,111 @@ The new stories are harness-style where needed so reviewers can click/trigger lo
 
 - Commit:
   - `git commit -m "feat(storybook): add windowing subcomponent stories"`
+
+## Step 12: CSS mapping audit — mac1 inline styles → engine tokenized CSS
+
+I performed a comprehensive property-by-property mapping from every visual element in mac1-windowing.jsx (the `st` object at line 570+) to the existing engine CSS in `base.css`. The goal was to identify exactly which mac1 visual characteristics were lost during the initial ticket port, and design a concrete CSS-only restoration plan plus architecture improvements.
+
+This produced a new design doc (`03-css-mapping-and-design-improvements.md`) that catalogs all gaps and proposes tiered implementation priorities.
+
+### Prompt Context
+
+**User prompt (verbatim):**
+```text
+work on docmgr ticket HC-029-WINDOWING-SUPPORT, read the doc, the input jsx we used as inspiration, and then first design how to map the mac1 look css to the already existing css, because we lost it in the first few ticket port and I want to get that right. Also go over the proposed design and suggest improvements.
+
+Store the CSS approach + improvements into a design document in the ticket and upload to remarkable.
+
+Keep a frequent diary as you go.
+
+DO not start writing code yet.
+```
+
+**Assistant interpretation:** Audit every visual element in mac1-windowing.jsx against the current engine CSS, identify what was lost, produce a concrete CSS restoration plan with property-level mappings, suggest design improvements, store as a ticket design doc, and upload to reMarkable.
+
+**Inferred user intent:** Get the visual fidelity right before writing any more code — avoid building on a visually wrong foundation.
+
+**Commit (code):** N/A (design only, no code changes)
+
+### What I did
+
+- Read all existing ticket docs (index, design-doc/01, design-doc/02, diary, tasks)
+- Read mac1-windowing.jsx in full (644 lines), focusing on the `st` style object (line 570+)
+- Read engine base.css (all windowing selectors), parts.ts, and all windowing component TSX files
+- Read existing HyperCardShell.tsx and WindowChrome.tsx for context
+- Created systematic property-by-property mapping for all 10 visual areas:
+  1. Screen/root container
+  2. Menu bar + buttons + dropdown + hover
+  3. Desktop background / icon layer
+  4. Icon styling + selection
+  5. Window frame
+  6. Title bar (identified as **biggest gap** — stripes missing)
+  7. Close box
+  8. Window content/body
+  9. Scrollbar chrome
+  10. Resize handle
+- Identified 9 design improvements beyond CSS mapping
+- Organized into 3 implementation tiers
+- Produced a complete CSS patch preview showing all additions/modifications
+- Created summary comparison table
+
+### Why
+
+- The first implementation pass (Steps 9-11) built correct component structure but used the engine's existing modernized aesthetic instead of capturing mac1 visual character.
+- Key losses: title bar stripes, inverted menu highlights, inverted icon selection, window border-radius, default body padding.
+
+### What worked
+
+- The `data-part` attribute selector architecture makes CSS-only visual changes very clean — most restoration requires zero JSX changes.
+- The existing CSS custom property system supports adding new tokens without breaking current consumers.
+- The title bar stripe pattern can be achieved with CSS pseudo-elements (`::before`/`::after`) using `repeating-linear-gradient`, avoiding DOM changes to `WindowTitleBar.tsx`.
+
+### What didn't work
+
+- N/A — this was a design/analysis step with no implementation failures.
+
+### What I learned
+
+- The single biggest visual character loss was **title bar stripes** (the horizontal line pattern flanking the title text on active windows). This is the most iconic mac1 element and was completely absent.
+- The second biggest loss was **menu/icon hover/selection treatment**: mac1 uses stark black/white inversions while the engine used subtle border changes and yellow highlights.
+- Most gaps can be fixed with CSS-only changes — only menu separators, dialog variant support, and the DesktopShell root component require TSX changes.
+- CSS pseudo-elements with `order` properties can achieve the title stripe layout without adding DOM nodes, but require careful ordering to position correctly around the close button and title text.
+
+### What was tricky to build
+
+- The title bar stripe approach required careful thought about pseudo-element ordering. The `::before` pseudo-element inserts before all children, but we need it between the close button and the title text. Using CSS `order` properties solves this but is a non-obvious pattern.
+- Deciding whether to adopt mac1 aesthetic as the default or as an optional theme variant. Concluded that the whole HyperCard identity is retro, so the mac1-inspired look should be the default.
+
+### What warrants a second pair of eyes
+
+- The title bar stripe implementation via CSS pseudo-elements + `order` properties — verify this works correctly with the existing flexbox layout of `WindowTitleBar`.
+- The icon selection `filter: brightness(0) invert(1)` approach — test with various emoji across browsers to confirm consistent appearance.
+- The decision to remove default 10px padding from window body — existing card renderers may depend on this.
+
+### What should be done in the future
+
+- Implement Tier 1 CSS changes (visual fidelity restoration)
+- Implement Tier 2 structural additions (DesktopShell root, menu separators, dialog variant)
+- Test title bar stripes at retina scaling (may need SVG pattern fallback if gradient looks wrong)
+- Upload design doc to reMarkable for offline review
+
+### Code review instructions
+
+- Review the new design doc:
+  - `ttmp/2026/02/15/HC-029-WINDOWING-SUPPORT--windowing-support-for-multiple-hypercard-cards/design-doc/03-css-mapping-and-design-improvements.md`
+- Focus on:
+  - Part 1 (CSS Mapping) — validate property-level accuracy
+  - Part 2 (Missing Parts/Tokens) — confirm token naming conventions
+  - Part 3 (Design Improvements) — evaluate title stripe pseudo-element approach
+  - Part 5 (CSS Patch Preview) — this is the implementation blueprint
+
+### Technical details
+
+- Files read during analysis:
+  - `ttmp/.../sources/local/mac1-windowing.jsx` (644 lines, style object at ~570+)
+  - `packages/engine/src/theme/base.css` (full file)
+  - `packages/engine/src/parts.ts` (full file)
+  - `packages/engine/src/components/shell/windowing/*.tsx` (7 components)
+  - `packages/engine/src/components/shell/HyperCardShell.tsx`
+  - `packages/engine/src/components/shell/WindowChrome.tsx`
+- Design doc created via `docmgr doc add --ticket HC-029-WINDOWING-SUPPORT --doc-type design-doc --title "CSS Mapping and Design Improvements"`

@@ -54,3 +54,17 @@
 - [ ] [Phase 7] Perform manual UX verification checklist (mouse + keyboard + accessibility).
 - [ ] [Gate] Verify no compatibility wrappers, no deprecated shell APIs, and no dead legacy files remain.
 - [ ] [Gate] Update HC-029 docs and changelog with final implementation outcomes and follow-up risks.
+- [ ] [CSS-T1] Add new CSS tokens to base.css (--hc-window-border-radius, --hc-window-title-stripe-fg/bg, --hc-menu-hover-bg/fg, --hc-icon-selected-bg/fg, --hc-desktop-menubar-z)
+- [ ] [CSS-T1] Title bar stripes via ::before/::after pseudo-elements on focused title bar
+- [ ] [CSS-T1] Menu item hover inversion (black bg / white text) and menu button open-state inversion
+- [ ] [CSS-T1] Icon selection inversion (black bg, glyph filter, label color swap)
+- [ ] [CSS-T1] Window frame border-radius (3px) and overflow:hidden
+- [ ] [CSS-T1] Remove default 10px padding from windowing-window-body (cards manage own padding)
+- [ ] [CSS-T2] Add windowing-desktop-shell part to parts.ts and root CSS rule
+- [ ] [CSS-T2] Add menu separator type to types.ts and render in DesktopMenuBar
+- [ ] [CSS-T2] Add dialog window variant (isDialog/isResizable on DesktopWindowDef, data-variant=dialog CSS)
+- [ ] [CSS-T2] Increase resize handle to 16x16
+- [ ] [CSS-T3] Add window open animation keyframe (hc-window-open, 120ms scale)
+- [ ] [CSS-T3] Add webkit scrollbar styling approximation for windowing-window-body
+- [ ] [CSS-T3] Add keyboard focus ring for windowing-window (:focus-visible)
+- [ ] [CSS-T3] Update Storybook stories to verify all CSS improvements visually

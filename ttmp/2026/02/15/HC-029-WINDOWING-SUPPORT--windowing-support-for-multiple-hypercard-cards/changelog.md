@@ -67,3 +67,12 @@ Expanded Storybook coverage with dedicated suites for windowing subcomponents (m
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/shell/windowing/WindowLayer.stories.tsx — New subcomponent stories for z-order/focus behavior
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/15/HC-029-WINDOWING-SUPPORT--windowing-support-for-multiple-hypercard-cards/reference/01-diary.md — Step 11 logs subcomponent story expansion and validation
 
+
+## 2026-02-15
+
+Added CSS Mapping and Design Improvements design doc (03): comprehensive property-by-property mapping from mac1 inline styles to engine tokenized CSS, identified 6 major visual gaps (title bar stripes, menu hover inversion, icon selection inversion, window border-radius, body padding, scrollbar chrome), proposed 9 design improvements, and organized into 3 implementation tiers.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/15/HC-029-WINDOWING-SUPPORT--windowing-support-for-multiple-hypercard-cards/design-doc/03-css-mapping-and-design-improvements.md — New design doc with CSS mapping and improvements
+
