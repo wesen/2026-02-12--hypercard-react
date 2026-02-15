@@ -18,6 +18,12 @@ RelatedFiles:
       Note: Runtime action plumbing reviewed during feasibility analysis
     - Path: packages/engine/src/components/shell/HyperCardShell.tsx
       Note: Current shell architecture inspected during mapping
+    - Path: packages/engine/src/components/shell/windowing/DesktopPrimitives.stories.tsx
+      Note: Storybook-first desktop primitive scenarios for HC-029
+    - Path: packages/engine/src/components/shell/windowing/WindowLayer.tsx
+      Note: Deterministic z-order window rendering primitive
+    - Path: packages/engine/src/theme/base.css
+      Note: Windowing shell tokenized styles for menu/icons/windows
     - Path: ttmp/2026/02/15/HC-029-WINDOWING-SUPPORT--windowing-support-for-multiple-hypercard-cards/design-doc/01-windowing-container-framework-study.md
       Note: Primary long-form design study documented in this diary
     - Path: ttmp/2026/02/15/HC-029-WINDOWING-SUPPORT--windowing-support-for-multiple-hypercard-cards/design-doc/02-clean-cutover-implementation-plan.md
@@ -30,6 +36,7 @@ LastUpdated: 2026-02-15T14:30:00-05:00
 WhatFor: Preserve full implementation/research trace and design rationale for HC-029.
 WhenToUse: Use when reviewing why design decisions were made and how to validate them.
 ---
+
 
 
 
@@ -686,3 +693,109 @@ First fix this: ■  SB_CORE-SERVER_0002 (CriticalPresetLoadError): Storybook fa
   - `npm ls @storybook/react-vite @storybook/addon-docs storybook --all --depth=2`
   - `npm install`
   - `npm run storybook -- --smoke-test --ci`
+
+## Step 9: Implement desktop windowing primitives + Storybook scenarios
+
+With Storybook unblocked, I moved directly into a Storybook-first Phase 2 slice so progress is visible and testable while deeper runtime cutover work is still pending. I implemented desktop shell primitives (menu bar, icon layer, window layer/surface/title/resize) and shipped a dedicated story suite for idle/overlap/dense desktop states.
+
+I kept this step scoped to reusable visual/interaction primitives and Storybook behavior, without touching `HyperCardShell` runtime orchestration yet.
+
+### Prompt Context
+
+**User prompt (verbatim):**
+```text
+Start working on docmgr HC-029-WINDOWING-SUPPORT and keep a frequent diary. Commit at appropriate intervals, focus on storybook so I can track your progress
+```
+
+**Assistant interpretation:** Begin implementation immediately on HC-029, prioritize Storybook-visible progress, and keep frequent ticket diary updates tied to commits.
+
+**Inferred user intent:** Track concrete implementation momentum in short, reviewable checkpoints rather than waiting for a large end-state merge.
+
+**Commit (code):** d41894c — "feat(shell): add desktop windowing primitives and stories"
+
+### What I did
+
+- Added new windowing primitive module:
+  - `packages/engine/src/components/shell/windowing/types.ts`
+  - `packages/engine/src/components/shell/windowing/DesktopMenuBar.tsx`
+  - `packages/engine/src/components/shell/windowing/DesktopIconLayer.tsx`
+  - `packages/engine/src/components/shell/windowing/WindowLayer.tsx`
+  - `packages/engine/src/components/shell/windowing/WindowSurface.tsx`
+  - `packages/engine/src/components/shell/windowing/WindowTitleBar.tsx`
+  - `packages/engine/src/components/shell/windowing/WindowResizeHandle.tsx`
+  - `packages/engine/src/components/shell/windowing/index.ts`
+- Added Storybook primitive scenarios:
+  - `packages/engine/src/components/shell/windowing/DesktopPrimitives.stories.tsx`
+  - Stories: `Idle`, `TwoWindowOverlap`, `DenseWindowSet`
+- Added new part tokens:
+  - `packages/engine/src/parts.ts`
+- Added windowing base styles:
+  - `packages/engine/src/theme/base.css`
+- Exported windowing primitives from shell barrel:
+  - `packages/engine/src/components/shell/index.ts`
+- Updated ticket tasks as complete:
+  - `[15]`, `[16]`, `[17]`, `[18]`, `[21]`
+- Verification runs:
+  - `npm run -w packages/engine typecheck`
+  - `npx biome check --write packages/engine/src/components/shell/windowing packages/engine/src/components/shell/index.ts packages/engine/src/theme/base.css packages/engine/src/parts.ts`
+  - `npm run storybook -- --smoke-test --ci`
+
+### Why
+
+- Needed visible Storybook progress first so desktop/windowing design can be iterated before wiring full runtime state/session logic.
+- Establishing typed component contracts now reduces risk when Phase 3 rewires `HyperCardShell`.
+
+### What worked
+
+- Windowing primitives compile and export cleanly.
+- Storybook smoke test passes with the new stories in place.
+- Task checklist now reflects concrete Phase 2 progress.
+
+### What didn't work
+
+- Initial Biome checks failed with semantic/a11y issues:
+  - `lint/a11y/useSemanticElements` for `role=\"list\"` on `<div>` and `role=\"region\"` on `<div>`
+  - `lint/a11y/noNoninteractiveTabindex` for `tabIndex={0}` on the window surface
+  - plus import/format ordering errors.
+- Resolution:
+  - switched icon layer container to semantic `<ul>/<li>`
+  - switched window layer container to `<section>`
+  - removed non-interactive `tabIndex`
+  - ran `biome --write` and re-checked.
+
+### What I learned
+
+- Storybook-first progress works well here: we can validate component boundaries and basic desktop interactions early while keeping runtime/refactor risk isolated for later phases.
+
+### What was tricky to build
+
+- The sharp edge was balancing minimal primitives with enough interaction realism (drag/resize/open/focus) to make Storybook scenarios meaningful, while not prematurely coupling to the final Redux windowing slice.
+
+### What warrants a second pair of eyes
+
+- Review whether current menu/icon/window accessibility semantics are sufficient for Task 20 closure or whether additional keyboard roving/focus management is required.
+
+### What should be done in the future
+
+- Implement Task 19 (pointer interaction controller) as a reusable hook/module instead of story-local logic.
+- Start Phase 1 state slice (`features/windowing`) and then connect primitives in Phase 3 shell orchestration.
+
+### Code review instructions
+
+- Start with:
+  - `packages/engine/src/components/shell/windowing/DesktopPrimitives.stories.tsx`
+  - `packages/engine/src/components/shell/windowing/WindowLayer.tsx`
+  - `packages/engine/src/components/shell/windowing/DesktopMenuBar.tsx`
+  - `packages/engine/src/components/shell/windowing/DesktopIconLayer.tsx`
+- Then inspect styling/parts:
+  - `packages/engine/src/theme/base.css`
+  - `packages/engine/src/parts.ts`
+- Validation:
+  - `npm run -w packages/engine typecheck`
+  - `npm run storybook -- --smoke-test --ci`
+
+### Technical details
+
+- Checkpoint commands:
+  - `docmgr task check --ticket HC-029-WINDOWING-SUPPORT --id 15,16,17,18,21`
+  - `git commit -m \"feat(shell): add desktop windowing primitives and stories\"`

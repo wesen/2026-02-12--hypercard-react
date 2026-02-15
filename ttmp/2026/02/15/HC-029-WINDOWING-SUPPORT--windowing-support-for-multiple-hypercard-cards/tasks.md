@@ -17,13 +17,13 @@
 - [ ] [Phase 1] Implement per-session nav reducers (sessionNavGo, sessionNavBack, sessionNavHome).
 - [ ] [Phase 1] Add selectors for ordered windows, focused window, active menu, selected icon, session nav.
 - [ ] [Phase 1] Add unit tests for all windowing reducers and selector invariants.
-- [ ] [Phase 2] Build DesktopMenuBar component with typed menu sections and command IDs.
-- [ ] [Phase 2] Build DesktopIconLayer component with single-select + double-open + keyboard open behavior.
-- [ ] [Phase 2] Build WindowLayer component rendering windows in deterministic z order.
-- [ ] [Phase 2] Build WindowSurface + WindowTitleBar + WindowResizeHandle components.
+- [x] [Phase 2] Build DesktopMenuBar component with typed menu sections and command IDs.
+- [x] [Phase 2] Build DesktopIconLayer component with single-select + double-open + keyboard open behavior.
+- [x] [Phase 2] Build WindowLayer component rendering windows in deterministic z order.
+- [x] [Phase 2] Build WindowSurface + WindowTitleBar + WindowResizeHandle components.
 - [ ] [Phase 2] Implement pointer interaction controller (drag/resize) with listener cleanup guarantees.
 - [ ] [Phase 2] Add accessibility roles and keyboard interactions for menubar/menu/menuitem/icon/window.
-- [ ] [Phase 2] Add Storybook stories for desktop primitives (idle, 2-window overlap, dense window set).
+- [x] [Phase 2] Add Storybook stories for desktop primitives (idle, 2-window overlap, dense window set).
 - [ ] [Phase 3] Rewrite HyperCardShell.tsx to orchestrate DesktopMenuBar, DesktopIconLayer, WindowLayer.
 - [ ] [Phase 3] Remove legacy layoutMode branching and split/drawer/cardChat shell logic.
 - [ ] [Phase 3] Replace navShortcuts/top nav model with desktop menu/icon launch model.

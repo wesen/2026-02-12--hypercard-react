@@ -35,3 +35,14 @@ Unblocked Storybook preset loading by installing workspace dependencies and chan
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/package.json — Storybook invocation now uses workspace binary
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/15/HC-029-WINDOWING-SUPPORT--windowing-support-for-multiple-hypercard-cards/reference/01-diary.md — Step 8 captures triage details and verification commands
 
+
+## 2026-02-15
+
+Implemented first Storybook-visible Phase 2 slice: added desktop windowing primitives (menu bar, icon layer, window layer/surface/title/resize), styled new parts, exported the module, and added Idle/TwoWindowOverlap/DenseWindowSet stories (commit d41894c).
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/shell/windowing/DesktopPrimitives.stories.tsx — New HC-029 story suite for primitive desktop states
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/shell/windowing/index.ts — New public windowing primitive exports
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/15/HC-029-WINDOWING-SUPPORT--windowing-support-for-multiple-hypercard-cards/tasks.md — Phase 2 tasks 15
+
