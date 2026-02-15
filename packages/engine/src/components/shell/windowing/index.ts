@@ -1,5 +1,7 @@
+export { CardSessionHost, type CardSessionHostProps } from './CardSessionHost';
 export { DesktopIconLayer, type DesktopIconLayerProps } from './DesktopIconLayer';
 export { DesktopMenuBar, type DesktopMenuBarProps } from './DesktopMenuBar';
+export { DesktopShell, type DesktopShellProps } from './DesktopShell';
 export type {
   DesktopIconDef,
   DesktopMenuEntry,
