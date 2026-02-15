@@ -142,7 +142,7 @@
   padding: 0 6px;
   border: 2px solid var(--hc-color-border);
   border-bottom-width: 1px;
-  background: linear-gradient(180deg, #f9fbff 0%, #dbe2ef 100%);
+  background: var(--hc-color-bg);
   position: relative;
   z-index: var(--hc-desktop-menubar-z);
   flex-shrink: 0;
@@ -209,11 +209,9 @@
 [data-part="windowing-icon-layer"] {
   position: absolute;
   inset: var(--hc-desktop-menubar-height) 0 0 0;
-  background:
-    linear-gradient(var(--hc-color-desktop-grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--hc-color-desktop-grid) 1px, transparent 1px),
-    var(--hc-color-desktop-bg);
-  background-size: 22px 22px, 22px 22px, auto;
+  /* Classic dithered checkerboard desktop pattern (4×4 tile) */
+  background-color: #a8a8a8;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%23a8a8a8'/%3E%3Crect width='1' height='1' x='0' y='0' fill='%23fff'/%3E%3Crect width='1' height='1' x='2' y='2' fill='%23fff'/%3E%3C/svg%3E");
   overflow: hidden;
   margin: 0;
   padding: 0;
@@ -358,7 +356,7 @@
   border: 0;
   border-top: 2px solid var(--hc-color-border);
   border-left: 2px solid var(--hc-color-border);
-  background: linear-gradient(135deg, transparent 50%, #ddd 50%);
+  background: var(--hc-color-bg);
   cursor: nwse-resize;
 }
 /* Dialog variant — no close, no drag, no resize */

@@ -128,7 +128,7 @@ function DesktopDemo({ initialWindows }: DesktopDemoProps) {
     onMoveWindow: moveWindow,
     onResizeWindow: resizeWindow,
     onFocusWindow: focusWindow,
-    constraints: { minX: 0, minY: 30, minWidth: 220, minHeight: 140 },
+    constraints: { minX: 0, minY: 0, minWidth: 220, minHeight: 140 },
   });
 
   const onCommand = useCallback(
