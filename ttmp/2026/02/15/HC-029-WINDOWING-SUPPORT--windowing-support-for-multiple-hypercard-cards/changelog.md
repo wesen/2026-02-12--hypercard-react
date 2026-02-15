@@ -119,3 +119,14 @@ Wired windowingReducer into createAppStore, exported windowing from engine barre
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/shell/windowing/DesktopPrimitives.stories.tsx — Redux-backed stories with real windowing slice
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/index.ts — Exported windowing feature from barrel
 
+
+## 2026-02-15
+
+Phase 3+4 complete: DesktopShell replaces HyperCardShell for windowing mode. CardSessionHost renders cards per-window with session-isolated runtime keys. Inventory app migrated. Production build clean. Tasks 22-30, 32 done. Commit 676e5aa.
+
+### Related Files
+
+- apps/inventory/src/App.tsx — Migrated from HyperCardShell to DesktopShell
+- packages/engine/src/components/shell/windowing/CardSessionHost.tsx — Per-window card rendering with session-aware runtime keying
+- packages/engine/src/components/shell/windowing/DesktopShell.tsx — Multi-window shell orchestrating menus
+

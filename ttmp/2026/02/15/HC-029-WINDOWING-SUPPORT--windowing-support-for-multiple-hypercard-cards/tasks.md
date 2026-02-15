@@ -24,17 +24,17 @@
 - [x] [Phase 2] Implement pointer interaction controller (drag/resize) with listener cleanup guarantees.
 - [ ] [Phase 2] Add accessibility roles and keyboard interactions for menubar/menu/menuitem/icon/window.
 - [x] [Phase 2] Add Storybook stories for desktop primitives (idle, 2-window overlap, dense window set).
-- [ ] [Phase 3] Rewrite HyperCardShell.tsx to orchestrate DesktopMenuBar, DesktopIconLayer, WindowLayer.
-- [ ] [Phase 3] Remove legacy layoutMode branching and split/drawer/cardChat shell logic.
-- [ ] [Phase 3] Replace navShortcuts/top nav model with desktop menu/icon launch model.
-- [ ] [Phase 3] Add command router for menu/icon/window command dispatch.
-- [ ] [Phase 4] Implement CardSessionHost for per-window card rendering.
-- [ ] [Phase 4] Implement WindowContentHost for card/app/dialog content resolution.
-- [ ] [Phase 4] Introduce session-aware runtime card key derivation (cardId::cardSessionId).
-- [ ] [Phase 4] Update runtime context creation to route nav.go/nav.back by target window session.
-- [ ] [Phase 4] Update runtime debug metadata to include window/session identifiers.
+- [x] [Phase 3] Rewrite HyperCardShell.tsx to orchestrate DesktopMenuBar, DesktopIconLayer, WindowLayer.
+- [x] [Phase 3] Remove legacy layoutMode branching and split/drawer/cardChat shell logic.
+- [x] [Phase 3] Replace navShortcuts/top nav model with desktop menu/icon launch model.
+- [x] [Phase 3] Add command router for menu/icon/window command dispatch.
+- [x] [Phase 4] Implement CardSessionHost for per-window card rendering.
+- [x] [Phase 4] Implement WindowContentHost for card/app/dialog content resolution.
+- [x] [Phase 4] Introduce session-aware runtime card key derivation (cardId::cardSessionId).
+- [x] [Phase 4] Update runtime context creation to route nav.go/nav.back by target window session.
+- [x] [Phase 4] Update runtime debug metadata to include window/session identifiers.
 - [ ] [Phase 4] Add integration tests for duplicate same-card windows with isolated local state.
-- [ ] [Phase 5] Update apps/inventory/src/App.tsx to new desktop shell configuration.
+- [x] [Phase 5] Update apps/inventory/src/App.tsx to new desktop shell configuration.
 - [ ] [Phase 5] Update apps/todo/src/App.tsx to new desktop shell configuration.
 - [ ] [Phase 5] Update apps/crm/src/App.tsx to new desktop shell configuration.
 - [ ] [Phase 5] Update apps/book-tracker-debug/src/App.tsx to new desktop shell configuration.

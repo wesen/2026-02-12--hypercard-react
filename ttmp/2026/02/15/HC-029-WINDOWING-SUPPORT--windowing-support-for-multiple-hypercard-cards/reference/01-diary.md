@@ -1451,3 +1451,87 @@ Ok, replace navigation and introduce redux store, and use that in the stories to
 ### Technical details
 
 - Verification: `npm run -w packages/engine typecheck` clean, `npx biome check --write` clean, `npx vitest run` 95/95 pass, Storybook smoke clean
+
+## Step 17: DesktopShell + CardSessionHost — Phase 3+4 implementation
+
+Built the two main components that make windowing actually work: `DesktopShell` (the multi-window shell) and `CardSessionHost` (per-window card rendering with session isolation). Migrated the inventory app as pilot.
+
+### Prompt Context
+
+**User prompt:** "Ok, let's continue"
+
+**Assistant interpretation:** Continue to Phase 3+4 — build the actual shell replacement and card session hosting.
+
+### What I did
+
+1. **`CardSessionHost.tsx`** — Per-window card rendering component:
+   - Takes `windowId`, `sessionId`, `stack`, `sharedSelectors`, `sharedActions`, `debugHooks`
+   - Uses `selectSessionCurrentNav(state, sessionId)` to determine which card to render
+   - Session-aware runtime key: `cardId::sessionId` — ensures each window's runtime state is isolated
+   - Dispatches `sessionNavGo`/`sessionNavBack` for within-window navigation (not global navigation)
+   - Creates full runtime context: `resolve`, `emit`, `execute`, `debugEvent` — same as HyperCardShell but scoped to the session
+   - `ensureCardRuntime` uses the session-keyed card id for isolated state initialization
+
+2. **`DesktopShell.tsx`** — Multi-window shell orchestrator:
+   - Props: `stack`, `sharedSelectors`, `sharedActions`, `debugHooks`, `mode`, `themeClass`, optional `menus`/`icons`
+   - Auto-generates desktop icons from `stack.cards` (icon, title, position) if not provided
+   - Auto-generates menu sections (File, Cards, Window) from stack if not provided
+   - Opens `homeCard` window on mount with a fresh session
+   - `openCardWindow(cardId)` creates a new session + dispatches `openWindow` with deduplication
+   - Window commands: `window.open.home`, `window.close-focused`, `window.open.card.<cardId>`, `window.tile`, `window.cascade`
+   - `renderWindowBody` resolves the window's content → renders `CardSessionHost` for card windows
+   - Wraps everything in `HyperCardTheme` and uses `data-part="windowing-desktop-shell"`
+   - Toast support via notifications slice
+
+3. **Updated inventory app** (`apps/inventory/src/App.tsx`):
+   - Replaced `HyperCardShell` with `DesktopShell` — just `<DesktopShell stack={STACK} sharedSelectors={...} sharedActions={...} />`
+   - No more `navShortcuts` prop (icons are auto-generated from stack cards)
+   - Production build verified: `npm run -w apps/inventory build` succeeds
+
+4. **Barrel exports**: Added `CardSessionHost` and `DesktopShell` to `windowing/index.ts`
+
+**Commit:** `676e5aa` — "feat(windowing): DesktopShell + CardSessionHost (Phase 3+4)"
+
+### Why
+
+These two components are the core of the windowing system. Without them, the Redux slice and presentational components don't do anything useful. `DesktopShell` replaces `HyperCardShell` for the windowing paradigm, and `CardSessionHost` solves the hard problem of per-window isolated card state.
+
+### What worked
+
+- Session-aware keying (`cardId::sessionId`) cleanly isolates card state between windows. The same card opened twice gets separate runtime state entries in the Redux store.
+- The `dedupeKey` mechanism means clicking an icon for an already-open card just focuses the existing window rather than creating a duplicate.
+- Auto-generating icons/menus from the card stack definition means apps can migrate with zero configuration — just swap `HyperCardShell` for `DesktopShell`.
+
+### What was tricky
+
+- The `CardSessionHost` is essentially a fork of the runtime-wiring portion of `HyperCardShell.tsx` (lines 88-290), adapted for session-scoped navigation instead of global navigation. A lot of the code is necessarily similar — `createCardContext`, `createSelectorResolver`, `executeCommand` wiring.
+- Had to be careful about the `nav.go`/`nav.back` dispatch targets: `sessionNavGo({ sessionId, card, param })` instead of global `navigate`/`goBack`.
+- The `runtimeCardId = ${currentCardId}::${sessionId}` means the runtime store gets entries like `browse::session-3` — this is correct but means existing single-window tests using bare card IDs still work against the old `HyperCardShell`.
+
+### What didn't work
+
+- Nothing broke — clean implementation.
+
+### What warrants a second pair of eyes
+
+- The `sessionCounter` module-level counter in `DesktopShell` for generating session IDs is simple but not deterministic across HMR reloads. For production, a UUID or timestamp-based ID would be more robust.
+- The `renderWindowBody` function does a `windows.find(w => w.id === winDef.id)` lookup — this is O(n) per window render. With many windows this could be optimized, but in practice N < 20.
+
+### What should be done in the future
+
+- Phase 5: Migrate todo, crm, book-tracker-debug apps to `DesktopShell`
+- Phase 6: Delete legacy shell files
+- Phase 7: Integration tests, QA hardening
+- Consider extracting the runtime-wiring logic from both `CardSessionHost` and `HyperCardShell` into a shared hook to reduce duplication
+
+### Code review instructions
+
+- `packages/engine/src/components/shell/windowing/DesktopShell.tsx` — main shell
+- `packages/engine/src/components/shell/windowing/CardSessionHost.tsx` — per-window card host
+- `apps/inventory/src/App.tsx` — migration
+- Run: `npx vitest run` (95/95), `npm run -w apps/inventory build` (clean)
+
+### Technical details
+
+- Tasks completed: 22, 23, 24, 25, 26, 27, 28, 29, 30, 32
+- Verification: typecheck clean, biome clean, all tests pass, production build succeeds
