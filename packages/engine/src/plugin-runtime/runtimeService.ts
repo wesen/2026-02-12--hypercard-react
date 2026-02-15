@@ -1,5 +1,6 @@
-import { getQuickJS } from 'quickjs-emscripten';
-import type { QuickJSContext, QuickJSRuntime } from 'quickjs-emscripten';
+import SINGLEFILE_RELEASE_SYNC from '@jitl/quickjs-singlefile-mjs-release-sync';
+import { newQuickJSWASMModule } from 'quickjs-emscripten';
+import type { QuickJSContext, QuickJSRuntime, QuickJSWASMModule } from 'quickjs-emscripten';
 import { validateRuntimeIntents } from './intentSchema';
 import type {
   CardId,
@@ -173,6 +174,15 @@ const DEFAULT_OPTIONS: Required<QuickJSCardRuntimeServiceOptions> = {
   eventTimeoutMs: 100,
 };
 
+let quickJsModulePromise: Promise<QuickJSWASMModule> | null = null;
+
+function getSharedQuickJsModule() {
+  if (!quickJsModulePromise) {
+    quickJsModulePromise = newQuickJSWASMModule(SINGLEFILE_RELEASE_SYNC);
+  }
+  return quickJsModulePromise;
+}
+
 function toJsLiteral(value: unknown): string {
   const encoded = JSON.stringify(value);
   return encoded === undefined ? 'undefined' : encoded;
@@ -292,7 +302,7 @@ export class QuickJSCardRuntimeService {
   }
 
   private async createSessionVm(stackId: StackId, sessionId: SessionId): Promise<SessionVm> {
-    const QuickJS = await getQuickJS();
+    const QuickJS = await getSharedQuickJsModule();
     const runtime = QuickJS.newRuntime();
     const context = runtime.newContext();
 
