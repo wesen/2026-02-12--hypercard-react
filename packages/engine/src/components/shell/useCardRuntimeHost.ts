@@ -237,7 +237,9 @@ export function useCardRuntimeHost({
         context,
         lookup,
         (sharedSelectors ?? {}) as SharedSelectorRegistry,
-        debugHooks,
+        // `resolve()` is used heavily during React render. Emitting debug events from this
+        // path dispatches to Redux during render and can trigger update-depth recursion.
+        undefined,
       );
 
       return resolveValueExpr(expr, {
