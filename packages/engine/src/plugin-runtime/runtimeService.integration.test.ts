@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import COLUMN_STACK from './fixtures/column-stack.vm.js?raw';
+import DYNAMIC_CARD from './fixtures/dynamic-card.vm.js?raw';
 import INVENTORY_STACK from './fixtures/inventory-stack.vm.js?raw';
 import LOOP_STACK from './fixtures/loop-stack.vm.js?raw';
+import PATCHED_LOW_STOCK_HANDLER from './fixtures/patched-low-stock-handler.vm.js?raw';
+import PATCHED_LOW_STOCK_RENDER from './fixtures/patched-low-stock-render.vm.js?raw';
 import { QuickJSCardRuntimeService } from './runtimeService';
 
 describe('QuickJSCardRuntimeService', () => {
@@ -110,5 +113,51 @@ describe('QuickJSCardRuntimeService', () => {
     await service.loadStackBundle('loop', 'loop@one', LOOP_STACK);
 
     expect(() => service.renderCard('loop@one', 'loop', {}, {}, {})).toThrow(/interrupted/i);
+  });
+
+  it('supports defining cards and patching render/handlers at runtime', async () => {
+    const service = new QuickJSCardRuntimeService();
+    services.push(service);
+
+    await service.loadStackBundle('inventory', 'inventory@dynamic', INVENTORY_STACK);
+
+    const withDynamicCard = service.defineCard('inventory@dynamic', 'onDemand', DYNAMIC_CARD);
+    expect(withDynamicCard.cards).toContain('onDemand');
+
+    const dynamicTree = service.renderCard('inventory@dynamic', 'onDemand', { name: 'Backorder' }, {}, {});
+    expect(dynamicTree.kind).toBe('panel');
+
+    const dynamicIntents = service.eventCard('inventory@dynamic', 'onDemand', 'back', {}, {}, {}, {});
+    expect(dynamicIntents).toEqual([
+      {
+        scope: 'system',
+        command: 'nav.back',
+      },
+    ]);
+
+    service.defineCardRender('inventory@dynamic', 'lowStock', PATCHED_LOW_STOCK_RENDER);
+    const patchedTree = service.renderCard('inventory@dynamic', 'lowStock', { limit: 9 }, { filter: 'all' }, {});
+    expect(patchedTree.kind).toBe('panel');
+    expect((patchedTree as { children?: Array<{ kind?: string; text?: string }> }).children?.[0]?.text).toContain(
+      'Patched limit: 9'
+    );
+
+    service.defineCardHandler('inventory@dynamic', 'lowStock', 'patchedNotify', PATCHED_LOW_STOCK_HANDLER);
+    const patchedIntents = service.eventCard(
+      'inventory@dynamic',
+      'lowStock',
+      'patchedNotify',
+      {},
+      {},
+      {},
+      {}
+    );
+    expect(patchedIntents).toEqual([
+      {
+        scope: 'system',
+        command: 'notify',
+        payload: { level: 'info', message: 'patched-handler' },
+      },
+    ]);
   });
 });

@@ -42,6 +42,89 @@ function defineStackBundle(factory) {
   __stackBundle = factory({ ui: __ui });
 }
 
+function assertStackBundleReady() {
+  if (!__stackBundle || typeof __stackBundle !== 'object') {
+    throw new Error('Stack bundle did not register via defineStackBundle');
+  }
+}
+
+function assertCardsMap() {
+  assertStackBundleReady();
+  if (!__stackBundle.cards || typeof __stackBundle.cards !== 'object') {
+    __stackBundle.cards = {};
+  }
+  return __stackBundle.cards;
+}
+
+function normalizeCardDefinition(cardId, definitionOrFactory) {
+  const definition =
+    typeof definitionOrFactory === 'function'
+      ? definitionOrFactory({ ui: __ui })
+      : definitionOrFactory;
+
+  if (!definition || typeof definition !== 'object') {
+    throw new Error('Card definition must be an object for card: ' + String(cardId));
+  }
+
+  if (typeof definition.render !== 'function') {
+    throw new Error('Card definition render() is required for card: ' + String(cardId));
+  }
+
+  if (definition.handlers !== undefined) {
+    if (!definition.handlers || typeof definition.handlers !== 'object' || Array.isArray(definition.handlers)) {
+      throw new Error('Card definition handlers must be an object for card: ' + String(cardId));
+    }
+  } else {
+    definition.handlers = {};
+  }
+
+  return definition;
+}
+
+function ensureCardRecord(cardId) {
+  const cards = assertCardsMap();
+  const key = String(cardId);
+  const existing = cards[key];
+  if (!existing || typeof existing !== 'object') {
+    cards[key] = {
+      handlers: {},
+    };
+  } else if (!existing.handlers || typeof existing.handlers !== 'object') {
+    existing.handlers = {};
+  }
+  return cards[key];
+}
+
+function defineCard(cardId, definitionOrFactory) {
+  const cards = assertCardsMap();
+  const key = String(cardId);
+  cards[key] = normalizeCardDefinition(key, definitionOrFactory);
+}
+
+function defineCardRender(cardId, renderFn) {
+  if (typeof renderFn !== 'function') {
+    throw new Error('defineCardRender requires a render function');
+  }
+
+  const card = ensureCardRecord(cardId);
+  card.render = renderFn;
+}
+
+function defineCardHandler(cardId, handlerName, handlerFn) {
+  if (typeof handlerFn !== 'function') {
+    throw new Error('defineCardHandler requires a handler function');
+  }
+
+  const card = ensureCardRecord(cardId);
+  card.handlers[String(handlerName)] = handlerFn;
+}
+
+globalThis.defineStackBundle = defineStackBundle;
+globalThis.defineCard = defineCard;
+globalThis.defineCardRender = defineCardRender;
+globalThis.defineCardHandler = defineCardHandler;
+globalThis.ui = __ui;
+
 globalThis.__stackHost = {
   getMeta() {
     if (!__stackBundle || typeof __stackBundle !== 'object') {
@@ -131,5 +214,20 @@ globalThis.__stackHost = {
     );
 
     return __runtimeIntents.slice();
+  },
+
+  defineCard(cardId, definitionOrFactory) {
+    defineCard(cardId, definitionOrFactory);
+    return this.getMeta();
+  },
+
+  defineCardRender(cardId, renderFn) {
+    defineCardRender(cardId, renderFn);
+    return this.getMeta();
+  },
+
+  defineCardHandler(cardId, handlerName, handlerFn) {
+    defineCardHandler(cardId, handlerName, handlerFn);
+    return this.getMeta();
   },
 };

@@ -193,6 +193,11 @@ export class QuickJSCardRuntimeService {
     return vm;
   }
 
+  private readBundleMeta(vm: SessionVm): LoadedStackBundle {
+    const meta = evalToNative<unknown>(vm, 'globalThis.__stackHost.getMeta()', 'stack-meta.js', this.options.loadTimeoutMs);
+    return validateLoadedStackBundleMeta(vm.stackId, vm.sessionId, meta);
+  }
+
   async loadStackBundle(stackId: StackId, sessionId: SessionId, code: string): Promise<LoadedStackBundle> {
     if (this.vms.has(sessionId)) {
       throw new Error(`Runtime session already exists: ${sessionId}`);
@@ -202,13 +207,7 @@ export class QuickJSCardRuntimeService {
 
     try {
       evalCodeOrThrow(vm, code, `${sessionId}.stack.js`, this.options.loadTimeoutMs);
-      const meta = evalToNative<unknown>(
-        vm,
-        'globalThis.__stackHost.getMeta()',
-        'stack-meta.js',
-        this.options.loadTimeoutMs
-      );
-      const bundle = validateLoadedStackBundleMeta(stackId, sessionId, meta);
+      const bundle = this.readBundleMeta(vm);
       this.vms.set(sessionId, vm);
       return bundle;
     } catch (error) {
@@ -216,6 +215,39 @@ export class QuickJSCardRuntimeService {
       vm.runtime.dispose();
       throw error;
     }
+  }
+
+  defineCard(sessionId: SessionId, cardId: CardId, code: string): LoadedStackBundle {
+    const vm = this.getVmOrThrow(sessionId);
+    evalCodeOrThrow(
+      vm,
+      `globalThis.__stackHost.defineCard(${toJsLiteral(cardId)}, (${code}))`,
+      `${sessionId}.define-card.js`,
+      this.options.loadTimeoutMs
+    );
+    return this.readBundleMeta(vm);
+  }
+
+  defineCardRender(sessionId: SessionId, cardId: CardId, code: string): LoadedStackBundle {
+    const vm = this.getVmOrThrow(sessionId);
+    evalCodeOrThrow(
+      vm,
+      `globalThis.__stackHost.defineCardRender(${toJsLiteral(cardId)}, (${code}))`,
+      `${sessionId}.define-card-render.js`,
+      this.options.loadTimeoutMs
+    );
+    return this.readBundleMeta(vm);
+  }
+
+  defineCardHandler(sessionId: SessionId, cardId: CardId, handler: string, code: string): LoadedStackBundle {
+    const vm = this.getVmOrThrow(sessionId);
+    evalCodeOrThrow(
+      vm,
+      `globalThis.__stackHost.defineCardHandler(${toJsLiteral(cardId)}, ${toJsLiteral(handler)}, (${code}))`,
+      `${sessionId}.define-card-handler.js`,
+      this.options.loadTimeoutMs
+    );
+    return this.readBundleMeta(vm);
   }
 
   renderCard(

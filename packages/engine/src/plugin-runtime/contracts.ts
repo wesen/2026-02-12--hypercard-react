@@ -78,6 +78,31 @@ export interface EventCardRequest {
   globalState: unknown;
 }
 
+export interface DefineCardRequest {
+  id: number;
+  type: 'defineCard';
+  sessionId: SessionId;
+  cardId: CardId;
+  code: string;
+}
+
+export interface DefineCardRenderRequest {
+  id: number;
+  type: 'defineCardRender';
+  sessionId: SessionId;
+  cardId: CardId;
+  code: string;
+}
+
+export interface DefineCardHandlerRequest {
+  id: number;
+  type: 'defineCardHandler';
+  sessionId: SessionId;
+  cardId: CardId;
+  handler: string;
+  code: string;
+}
+
 export interface DisposeSessionRequest {
   id: number;
   type: 'disposeSession';
@@ -93,6 +118,9 @@ export type WorkerRequest =
   | LoadStackBundleRequest
   | RenderCardRequest
   | EventCardRequest
+  | DefineCardRequest
+  | DefineCardRenderRequest
+  | DefineCardHandlerRequest
   | DisposeSessionRequest
   | HealthRequest;
 
@@ -108,6 +136,10 @@ export interface EventCardResult {
   intents: RuntimeIntent[];
 }
 
+export interface DefineCardResult {
+  bundle: LoadedStackBundle;
+}
+
 export interface DisposeSessionResult {
   disposed: boolean;
 }
@@ -121,6 +153,7 @@ export type WorkerResult =
   | LoadStackBundleResult
   | RenderCardResult
   | EventCardResult
+  | DefineCardResult
   | DisposeSessionResult
   | HealthResult;
 

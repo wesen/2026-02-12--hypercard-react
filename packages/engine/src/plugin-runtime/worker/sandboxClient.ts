@@ -1,6 +1,9 @@
 import type { UINode } from '../uiTypes';
 import type {
   CardId,
+  DefineCardHandlerRequest,
+  DefineCardRenderRequest,
+  DefineCardRequest,
   EventCardRequest,
   HealthRequest,
   HealthResult,
@@ -24,6 +27,9 @@ type RequestWithoutId =
   | Omit<LoadStackBundleRequest, 'id'>
   | Omit<RenderCardRequest, 'id'>
   | Omit<EventCardRequest, 'id'>
+  | Omit<DefineCardRequest, 'id'>
+  | Omit<DefineCardRenderRequest, 'id'>
+  | Omit<DefineCardHandlerRequest, 'id'>
   | Omit<DisposeSessionRequest, 'id'>
   | Omit<HealthRequest, 'id'>;
 
@@ -137,6 +143,51 @@ export class QuickJSCardSandboxClient {
     );
 
     return result.intents;
+  }
+
+  async defineCard(sessionId: SessionId, cardId: CardId, code: string): Promise<LoadedStackBundle> {
+    const result = await this.postRequest<{ bundle: LoadedStackBundle }>(
+      {
+        type: 'defineCard',
+        sessionId,
+        cardId,
+        code,
+      } satisfies Omit<DefineCardRequest, 'id'>
+    );
+
+    return result.bundle;
+  }
+
+  async defineCardRender(sessionId: SessionId, cardId: CardId, code: string): Promise<LoadedStackBundle> {
+    const result = await this.postRequest<{ bundle: LoadedStackBundle }>(
+      {
+        type: 'defineCardRender',
+        sessionId,
+        cardId,
+        code,
+      } satisfies Omit<DefineCardRenderRequest, 'id'>
+    );
+
+    return result.bundle;
+  }
+
+  async defineCardHandler(
+    sessionId: SessionId,
+    cardId: CardId,
+    handler: string,
+    code: string
+  ): Promise<LoadedStackBundle> {
+    const result = await this.postRequest<{ bundle: LoadedStackBundle }>(
+      {
+        type: 'defineCardHandler',
+        sessionId,
+        cardId,
+        handler,
+        code,
+      } satisfies Omit<DefineCardHandlerRequest, 'id'>
+    );
+
+    return result.bundle;
   }
 
   async disposeSession(sessionId: SessionId): Promise<boolean> {

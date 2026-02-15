@@ -36,6 +36,21 @@ async function handleRequest(request: WorkerRequest) {
         ),
       };
 
+    case 'defineCard':
+      return {
+        bundle: runtimeService.defineCard(request.sessionId, request.cardId, request.code),
+      };
+
+    case 'defineCardRender':
+      return {
+        bundle: runtimeService.defineCardRender(request.sessionId, request.cardId, request.code),
+      };
+
+    case 'defineCardHandler':
+      return {
+        bundle: runtimeService.defineCardHandler(request.sessionId, request.cardId, request.handler, request.code),
+      };
+
     case 'disposeSession':
       return { disposed: runtimeService.disposeSession(request.sessionId) };
 
