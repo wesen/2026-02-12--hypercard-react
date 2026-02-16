@@ -7,6 +7,8 @@
   ],
   "scripts": {
     "dev": "npm run dev -w apps/inventory",
+    "chat:backend:seed": "cd go-inventory-chat && GOWORK=off go run ./cmd/inventory-chat seed --db ./data/inventory.db --force",
+    "chat:backend:serve": "cd go-inventory-chat && GOWORK=off go run ./cmd/inventory-chat serve --db ./data/inventory.db --addr :8081 --allow-origin http://localhost:5173",
     "build": "npm run build -w packages/engine && npm run build -w apps/inventory && npm run build -w apps/todo && npm run build -w apps/crm && npm run build -w apps/book-tracker-debug",
     "storybook": "npm run -w apps/inventory storybook -- --config-dir .storybook",
     "lint": "biome check .",
