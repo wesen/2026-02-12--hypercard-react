@@ -327,6 +327,10 @@ function onSemEnvelope(envelope: SemEventEnvelope, dispatch: ReturnType<typeof u
     const name = stringField(data, 'name') ?? 'tool';
     const input = data.input;
     const argsText = typeof input === 'undefined' ? '' : ` args=${compactJSON(input)}`;
+    const rawData: Record<string, unknown> = { name };
+    if (typeof input !== 'undefined') {
+      rawData.input = input;
+    }
     dispatch(
       upsertTimelineItem({
         id: `tool:${toolId}`,
@@ -334,6 +338,7 @@ function onSemEnvelope(envelope: SemEventEnvelope, dispatch: ReturnType<typeof u
         status: 'running',
         detail: shortText(argsText.trim()),
         kind: 'tool',
+        rawData,
       }),
     );
     return;
@@ -350,6 +355,7 @@ function onSemEnvelope(envelope: SemEventEnvelope, dispatch: ReturnType<typeof u
         status: 'running',
         detail: shortText(patchText),
         kind: 'tool',
+        rawData: typeof patch !== 'undefined' ? { patch } : undefined,
       }),
     );
     return;
@@ -365,6 +371,7 @@ function onSemEnvelope(envelope: SemEventEnvelope, dispatch: ReturnType<typeof u
         status: 'running',
         detail: shortText(`result=${result}`),
         kind: 'tool',
+        rawData: typeof data.result !== 'undefined' ? { result: data.result } : undefined,
       }),
     );
     return;

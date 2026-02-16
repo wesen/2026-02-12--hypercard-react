@@ -13,6 +13,8 @@ export interface TimelineWidgetItem {
   template?: string;
   artifactId?: string;
   updatedAt: number;
+  /** Structured payload for expanded display (tool args, results, etc.) */
+  rawData?: Record<string, unknown>;
 }
 
 const TIMELINE_WIDGET_MESSAGE_ID = 'timeline-widget-message';
@@ -215,18 +217,21 @@ function ensureWidgetPanelMessage(state: ChatState): ChatWindowMessage {
   );
 }
 
+export interface TimelineItemUpsertPayload {
+  id: string;
+  title: string;
+  status: TimelineItemStatus;
+  detail?: string;
+  kind?: 'tool' | 'widget' | 'card' | 'timeline';
+  template?: string;
+  artifactId?: string;
+  updatedAt?: number;
+  rawData?: Record<string, unknown>;
+}
+
 function applyTimelineItemUpsert(
   message: ChatWindowMessage,
-  payload: {
-    id: string;
-    title: string;
-    status: TimelineItemStatus;
-    detail?: string;
-    kind?: 'tool' | 'widget' | 'card' | 'timeline';
-    template?: string;
-    artifactId?: string;
-    updatedAt?: number;
-  },
+  payload: TimelineItemUpsertPayload,
   maxItems: number,
   defaultKind?: 'tool' | 'widget' | 'card' | 'timeline',
 ) {
@@ -249,6 +254,9 @@ function applyTimelineItemUpsert(
   }
   if (payload.artifactId) {
     nextItem.artifactId = payload.artifactId.trim();
+  }
+  if (payload.rawData) {
+    nextItem.rawData = payload.rawData;
   }
 
   if (existingIndex >= 0) {
@@ -406,16 +414,7 @@ const chatSlice = createSlice({
     },
     upsertTimelineItem(
       state,
-      action: PayloadAction<{
-        id: string;
-        title: string;
-        status: TimelineItemStatus;
-        detail?: string;
-        kind?: 'tool' | 'widget' | 'card' | 'timeline';
-        template?: string;
-        artifactId?: string;
-        updatedAt?: number;
-      }>,
+      action: PayloadAction<TimelineItemUpsertPayload>,
     ) {
       const id = action.payload.id.trim();
       const title = action.payload.title.trim();
@@ -436,16 +435,7 @@ const chatSlice = createSlice({
     },
     upsertCardPanelItem(
       state,
-      action: PayloadAction<{
-        id: string;
-        title: string;
-        status: TimelineItemStatus;
-        detail?: string;
-        kind?: 'tool' | 'widget' | 'card' | 'timeline';
-        template?: string;
-        artifactId?: string;
-        updatedAt?: number;
-      }>,
+      action: PayloadAction<TimelineItemUpsertPayload>,
     ) {
       const id = action.payload.id.trim();
       const title = action.payload.title.trim();
@@ -466,16 +456,7 @@ const chatSlice = createSlice({
     },
     upsertWidgetPanelItem(
       state,
-      action: PayloadAction<{
-        id: string;
-        title: string;
-        status: TimelineItemStatus;
-        detail?: string;
-        kind?: 'tool' | 'widget' | 'card' | 'timeline';
-        template?: string;
-        artifactId?: string;
-        updatedAt?: number;
-      }>,
+      action: PayloadAction<TimelineItemUpsertPayload>,
     ) {
       const id = action.payload.id.trim();
       const title = action.payload.title.trim();
