@@ -1,6 +1,6 @@
 /**
- * Story: a DesktopShell with a ChatWindow that can open card windows
- * and inject new cards via the plugin runtime.
+ * Story: a DesktopShell with a ChatWindow rendered inside a desktop window.
+ * Chat actions open other card windows and inject new cards via the runtime.
  */
 import type { Meta, StoryObj } from '@storybook/react';
 import { type ReactNode, useCallback, useRef, useState } from 'react';
@@ -21,14 +21,10 @@ import type { DesktopIconDef } from './types';
 import DEMO_PLUGIN_BUNDLE from './DesktopShell.demo.vm.js?raw';
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Stack definition — reuses the demo plugin bundle
+   Stack definition
    ═══════════════════════════════════════════════════════════════════════ */
 
-interface PluginCardMeta {
-  id: string;
-  title: string;
-  icon: string;
-}
+interface PluginCardMeta { id: string; title: string; icon: string }
 
 const CARD_META: PluginCardMeta[] = [
   { id: 'home', title: 'Home', icon: '🏠' },
@@ -55,9 +51,7 @@ const STACK: CardStackDefinition = {
   homeCard: 'home',
   plugin: {
     bundleCode: DEMO_PLUGIN_BUNDLE,
-    capabilities: {
-      system: ['nav.go', 'nav.back', 'notify'],
-    },
+    capabilities: { system: ['nav.go', 'nav.back', 'notify'] },
   },
   cards: Object.fromEntries(CARD_META.map((c) => [c.id, toPluginCard(c)])),
 };
@@ -98,10 +92,6 @@ const REPORT_SECTIONS = [
   { label: 'Avg Price', value: '$17.75' },
 ];
 
-/* ═══════════════════════════════════════════════════════════════════════
-   Widget renderer
-   ═══════════════════════════════════════════════════════════════════════ */
-
 function renderWidget(widget: InlineWidget): ReactNode {
   switch (widget.type) {
     case 'data-table': {
@@ -118,18 +108,17 @@ function renderWidget(widget: InlineWidget): ReactNode {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   New-card code templates
+   Card templates for "Create a card…"
    ═══════════════════════════════════════════════════════════════════════ */
 
-/** Template for a dynamically-injected "notes" card */
 const NOTES_CARD_CODE = `({ ui }) => ({
   render({ cardState }) {
     var notes = Array.isArray(cardState && cardState.items) ? cardState.items : [];
-    var lines = notes.map(function(n) { return ui.text('📝 ' + String(n)); });
+    var lines = notes.map(function(n) { return ui.text('\\u{1F4DD} ' + String(n)); });
     return ui.panel([
       ui.text('Notes (' + notes.length + ')'),
       ui.column(lines.length ? lines : [ui.text('No notes yet.')]),
-      ui.button('🏠 Home', { onClick: { handler: 'goHome' } }),
+      ui.button('\\u{1F3E0} Home', { onClick: { handler: 'goHome' } }),
     ]);
   },
   handlers: {
@@ -137,7 +126,6 @@ const NOTES_CARD_CODE = `({ ui }) => ({
   },
 })`;
 
-/** Template for a dynamically-injected "calculator" card */
 const CALC_CARD_CODE = `({ ui }) => ({
   render({ cardState }) {
     var val = Number(cardState && cardState.value) || 0;
@@ -149,7 +137,7 @@ const CALC_CARD_CODE = `({ ui }) => ({
         ui.button('-1', { onClick: { handler: 'dec' } }),
         ui.button('Reset', { onClick: { handler: 'reset' } }),
       ]),
-      ui.button('🏠 Home', { onClick: { handler: 'goHome' } }),
+      ui.button('\\u{1F3E0} Home', { onClick: { handler: 'goHome' } }),
     ]);
   },
   handlers: {
@@ -160,20 +148,19 @@ const CALC_CARD_CODE = `({ ui }) => ({
   },
 })`;
 
-/** Template for a dynamically-injected "todo" card */
 const TODO_CARD_CODE = `({ ui }) => ({
   render({ cardState }) {
     var items = Array.isArray(cardState && cardState.todos) ? cardState.todos : ['Buy groceries', 'Fix bug #42'];
     var lines = items.map(function(t, i) {
       return ui.row([
-        ui.text('☐ ' + String(t)),
-        ui.button('✕', { onClick: { handler: 'remove', args: { index: i } } }),
+        ui.text('\\u{2610} ' + String(t)),
+        ui.button('\\u{2715}', { onClick: { handler: 'remove', args: { index: i } } }),
       ]);
     });
     return ui.panel([
       ui.text('Todo List (' + items.length + ')'),
-      ui.column(lines.length ? lines : [ui.text('All done! 🎉')]),
-      ui.button('🏠 Home', { onClick: { handler: 'goHome' } }),
+      ui.column(lines.length ? lines : [ui.text('All done! \\u{1F389}')]),
+      ui.button('\\u{1F3E0} Home', { onClick: { handler: 'goHome' } }),
     ]);
   },
   handlers: {
@@ -202,7 +189,7 @@ const CARD_TEMPLATES: CardTemplate[] = [
 ];
 
 /* ═══════════════════════════════════════════════════════════════════════
-   ChatWindow as a desktop window body
+   ChatWindow wired to the desktop
    ═══════════════════════════════════════════════════════════════════════ */
 
 let windowCounter = 100;
@@ -211,36 +198,25 @@ function nextWindowId(prefix: string) {
   return `window:${prefix}:${windowCounter}`;
 }
 
-/**
- * ChatWindow wired to open desktop windows on action clicks
- * and inject new plugin cards via the runtime service.
- */
 function DesktopChatWindow({ stack }: { stack: CardStackDefinition }) {
   const dispatch = useDispatch();
   const [messages, setMessages] = useState<ChatWindowMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [createdCards, setCreatedCards] = useState<string[]>([]);
 
-  // Track which sessions exist for opening card windows
   const sessionCounterRef = useRef(200);
   function nextSessionId() {
     sessionCounterRef.current += 1;
     return `chat-session-${sessionCounterRef.current}`;
   }
 
-  /** Open a card in a new desktop window */
   const openCardWindow = useCallback(
-    (cardId: string, param?: string) => {
+    (cardId: string) => {
       const cardDef = stack.cards[cardId];
       if (!cardDef) {
         setMessages((prev) => [
           ...prev,
-          {
-            id: `sys-${Date.now()}`,
-            role: 'system',
-            text: `⚠️ Card "${cardId}" not found.`,
-            status: 'complete',
-          },
+          { id: `sys-${Date.now()}`, role: 'system', text: `Card "${cardId}" not found.`, status: 'complete' },
         ]);
         return;
       }
@@ -251,14 +227,14 @@ function DesktopChatWindow({ stack }: { stack: CardStackDefinition }) {
           title: cardDef.title ?? cardId,
           icon: cardDef.icon,
           bounds: {
-            x: 180 + (sessionCounterRef.current % 5) * 30,
-            y: 40 + (sessionCounterRef.current % 4) * 25,
-            w: 420,
-            h: 340,
+            x: 200 + (sessionCounterRef.current % 5) * 30,
+            y: 30 + (sessionCounterRef.current % 4) * 25,
+            w: 400,
+            h: 320,
           },
           content: {
             kind: 'card',
-            card: { stackId: stack.id, cardId, cardSessionId: sid, param },
+            card: { stackId: stack.id, cardId, cardSessionId: sid },
           },
         }),
       );
@@ -266,12 +242,10 @@ function DesktopChatWindow({ stack }: { stack: CardStackDefinition }) {
     [dispatch, stack],
   );
 
-  /** Handle action chip clicks from chat messages */
   const handleAction = useCallback(
     (action: unknown) => {
       if (typeof action !== 'string') return;
 
-      // Actions that open card windows
       const cardActions: Record<string, string> = {
         'open-browse': 'browse',
         'open-report': 'report',
@@ -284,22 +258,16 @@ function DesktopChatWindow({ stack }: { stack: CardStackDefinition }) {
         return;
       }
 
-      // Actions for dynamically-created cards
       if (action.startsWith('open-created:')) {
-        const cardId = action.replace('open-created:', '');
-        openCardWindow(cardId);
+        openCardWindow(action.replace('open-created:', ''));
         return;
       }
 
-      // "Create card" action
       if (action.startsWith('create-card:')) {
         const templateId = action.replace('create-card:', '');
         const template = CARD_TEMPLATES.find((t) => t.id === templateId);
         if (!template) return;
 
-        // Add the card definition to the stack (runtime)
-        // In a real app this would call runtimeService.defineCard()
-        // For the story we mutate the stack cards directly and open the window
         stack.cards[template.id] = {
           id: template.id,
           type: 'plugin',
@@ -309,75 +277,56 @@ function DesktopChatWindow({ stack }: { stack: CardStackDefinition }) {
         };
 
         setCreatedCards((prev) => [...prev, template.id]);
-
         setMessages((prev) => [
           ...prev,
-          {
-            id: `sys-${Date.now()}`,
-            role: 'system',
-            text: `✅ Card "${template.title}" created and added to the desktop.`,
-            status: 'complete',
-          },
+          { id: `sys-${Date.now()}`, role: 'system', text: `✅ Card "${template.title}" created.`, status: 'complete' },
           {
             id: `ai-${Date.now()}`,
             role: 'ai',
-            text: `I've created the ${template.icon} ${template.title} card. You can open it from the action below, or find it on the desktop.`,
+            text: `I've created the ${template.icon} ${template.title} card. Open it below or find it on the desktop.`,
             status: 'complete',
-            actions: [
-              { label: `${template.icon} Open ${template.title}`, action: `open-created:${template.id}` },
-            ],
+            actions: [{ label: `${template.icon} Open ${template.title}`, action: `open-created:${template.id}` }],
           },
         ]);
         return;
       }
 
-      // Default: show a toast-like message
+      if (action === 'prompt-create') {
+        handleSend('create a card');
+        return;
+      }
+
       setMessages((prev) => [
         ...prev,
-        {
-          id: `sys-${Date.now()}`,
-          role: 'system',
-          text: `Action dispatched: ${action}`,
-          status: 'complete',
-        },
+        { id: `sys-${Date.now()}`, role: 'system', text: `Action: ${action}`, status: 'complete' },
       ]);
     },
     [openCardWindow, stack],
   );
 
-  /** Smart response based on keywords */
   const handleSend = useCallback(
     (text: string) => {
       if (isStreaming) return;
 
       const userMsg: ChatWindowMessage = {
-        id: `u-${Date.now()}`,
-        role: 'user',
-        text,
-        status: 'complete',
+        id: `u-${Date.now()}`, role: 'user', text, status: 'complete',
       };
       setMessages((prev) => [...prev, userMsg]);
       setIsStreaming(true);
 
-      // Simulate thinking
       setTimeout(() => {
         const lower = text.toLowerCase();
         let aiMsg: ChatWindowMessage;
 
         if (lower.includes('browse') || lower.includes('items') || lower.includes('inventory')) {
           aiMsg = {
-            id: `ai-${Date.now()}`,
-            role: 'ai',
-            text: '',
-            status: 'complete',
+            id: `ai-${Date.now()}`, role: 'ai', text: '', status: 'complete',
             content: [
               { kind: 'text', text: 'Here are the current inventory items:' },
               {
                 kind: 'widget',
                 widget: {
-                  id: `items-${Date.now()}`,
-                  type: 'data-table',
-                  label: 'Inventory',
+                  id: `items-${Date.now()}`, type: 'data-table', label: 'Inventory',
                   props: { items: ITEMS_DATA, columns: ITEMS_COLUMNS },
                 },
               },
@@ -390,127 +339,82 @@ function DesktopChatWindow({ stack }: { stack: CardStackDefinition }) {
           };
         } else if (lower.includes('report') || lower.includes('summary') || lower.includes('stats')) {
           aiMsg = {
-            id: `ai-${Date.now()}`,
-            role: 'ai',
-            text: '',
-            status: 'complete',
+            id: `ai-${Date.now()}`, role: 'ai', text: '', status: 'complete',
             content: [
               { kind: 'text', text: "Here's the inventory summary:" },
               {
                 kind: 'widget',
                 widget: {
-                  id: `report-${Date.now()}`,
-                  type: 'report-view',
-                  label: 'Inventory Summary',
+                  id: `report-${Date.now()}`, type: 'report-view', label: 'Inventory Summary',
                   props: { sections: REPORT_SECTIONS },
                 },
               },
             ],
-            actions: [
-              { label: '📊 Open Full Report', action: 'open-report' },
-            ],
+            actions: [{ label: '📊 Open Full Report', action: 'open-report' }],
           };
         } else if (lower.includes('create') || lower.includes('new card') || lower.includes('add card')) {
-          aiMsg = {
-            id: `ai-${Date.now()}`,
-            role: 'ai',
-            text: "I can create a new card for you! Pick a template below and I'll inject it into the desktop:",
-            status: 'complete',
-            actions: CARD_TEMPLATES
-              .filter((t) => !createdCards.includes(t.id))
-              .map((t) => ({
-                label: `${t.icon} Create ${t.title}`,
-                action: `create-card:${t.id}`,
-              }))
-              .concat(
-                createdCards.length > 0
-                  ? [{ label: '📄 Show created cards', action: 'list-created' }]
-                  : [],
-              ),
-          };
-
-          if (CARD_TEMPLATES.every((t) => createdCards.includes(t.id))) {
+          const available = CARD_TEMPLATES.filter((t) => !createdCards.includes(t.id));
+          if (available.length > 0) {
             aiMsg = {
-              id: `ai-${Date.now()}`,
-              role: 'ai',
-              text: "You've already created all available card templates! Here they are:",
+              id: `ai-${Date.now()}`, role: 'ai',
+              text: "Pick a template and I'll create it on the desktop:",
+              status: 'complete',
+              actions: available.map((t) => ({
+                label: `${t.icon} Create ${t.title}`, action: `create-card:${t.id}`,
+              })),
+            };
+          } else {
+            aiMsg = {
+              id: `ai-${Date.now()}`, role: 'ai',
+              text: "All templates created! Open them below:",
               status: 'complete',
               actions: createdCards.map((id) => {
                 const t = CARD_TEMPLATES.find((t) => t.id === id);
-                return { label: `${t?.icon ?? '📄'} Open ${t?.title ?? id}`, action: `open-created:${id}` };
+                return { label: `${t?.icon} Open ${t?.title}`, action: `open-created:${id}` };
               }),
             };
           }
-        } else if (lower.includes('settings') || lower.includes('config')) {
+        } else if (lower.includes('settings')) {
           aiMsg = {
-            id: `ai-${Date.now()}`,
-            role: 'ai',
+            id: `ai-${Date.now()}`, role: 'ai',
             text: 'Opening the Settings card for you.',
             status: 'complete',
             actions: [{ label: '⚙️ Open Settings', action: 'open-settings' }],
           };
         } else if (lower.includes('help')) {
           aiMsg = {
-            id: `ai-${Date.now()}`,
-            role: 'ai',
-            text: "Here's what I can do:\n\n• **Show items** — Ask about inventory, browse, or items to see an inline table\n• **Show reports** — Ask for stats or summary to see a report widget\n• **Open windows** — I'll open card windows on the desktop\n• **Create cards** — Say \"create a card\" to inject new cards into the runtime\n• **Navigate** — Click any action chip to open the relevant window",
+            id: `ai-${Date.now()}`, role: 'ai',
+            text: "I can:\n\n• Show items — inline table\n• Show reports — inline report\n• Open windows on the desktop\n• Create new cards on the fly\n\nTry the suggestions or type a question!",
             status: 'complete',
             actions: [
               { label: '📋 Browse', action: 'open-browse' },
               { label: '📊 Reports', action: 'open-report' },
-              { label: '⚙️ Settings', action: 'open-settings' },
-              { label: '✨ Create a card…', action: 'create-card-prompt' },
+              { label: '✨ Create a card…', action: 'prompt-create' },
             ],
           };
-        } else if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
+        } else if (lower.includes('hello') || lower.includes('hi')) {
           aiMsg = {
-            id: `ai-${Date.now()}`,
-            role: 'ai',
-            text: "Hello! I'm your desktop assistant. I can show you data, open windows, and even create new cards on the fly. Try asking for help!",
+            id: `ai-${Date.now()}`, role: 'ai',
+            text: "Hello! I'm your desktop assistant. I can show data, open windows, and create new cards. Try \"help\"!",
             status: 'complete',
           };
         } else {
           aiMsg = {
-            id: `ai-${Date.now()}`,
-            role: 'ai',
-            text: `I understand you're asking about "${text}". Try:\n• "show items" for inventory data\n• "show report" for stats\n• "create a card" to add new cards\n• "help" for all options`,
+            id: `ai-${Date.now()}`, role: 'ai',
+            text: `Try: "show items", "show report", "create a card", or "help"`,
             status: 'complete',
             actions: [
-              { label: '📋 Browse Items', action: 'open-browse' },
-              { label: '✨ Create a card…', action: 'create-card-prompt' },
+              { label: '📋 Browse', action: 'open-browse' },
+              { label: '✨ Create a card…', action: 'prompt-create' },
             ],
           };
         }
 
-        // Special: "create-card-prompt" action actually prompts
-        if (
-          aiMsg.actions?.some((a) => a.action === 'create-card-prompt')
-        ) {
-          // Replace it with the real create actions
-          aiMsg.actions = aiMsg.actions!.map((a) =>
-            a.action === 'create-card-prompt'
-              ? { label: '✨ Create a card…', action: 'prompt-create' }
-              : a,
-          );
-        }
-
         setMessages((prev) => [...prev, aiMsg]);
         setIsStreaming(false);
-      }, 600);
+      }, 500);
     },
     [isStreaming, createdCards],
-  );
-
-  /** Handle "prompt-create" specially — insert the template menu */
-  const wrappedAction = useCallback(
-    (action: unknown) => {
-      if (action === 'prompt-create') {
-        handleSend('create a card');
-        return;
-      }
-      handleAction(action);
-    },
-    [handleAction, handleSend],
   );
 
   return (
@@ -519,79 +423,57 @@ function DesktopChatWindow({ stack }: { stack: CardStackDefinition }) {
       isStreaming={isStreaming}
       onSend={handleSend}
       onCancel={() => setIsStreaming(false)}
-      onAction={wrappedAction}
-      suggestions={[
-        'Show me the inventory',
-        'Give me a report',
-        'Create a card…',
-        'Help',
-      ]}
-      title="Desktop Assistant"
-      subtitle="Opens windows · Creates cards"
+      onAction={handleAction}
+      suggestions={['Show me the inventory', 'Give me a report', 'Create a card…', 'Help']}
+      title="Assistant"
       placeholder="Ask about items, reports, or create new cards…"
       renderWidget={renderWidget}
-      footer={<span>Chat actions open desktop windows · "Create a card" injects plugin code</span>}
+      footer={<span>Actions open desktop windows · "Create a card" injects plugin code</span>}
     />
   );
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Full demo: DesktopShell + ChatWindow side panel
+   Full demo: DesktopShell with ChatWindow inside a desktop window
    ═══════════════════════════════════════════════════════════════════════ */
 
-function ChatDesktopFull() {
-  const stackRef = useRef<CardStackDefinition>({
-    ...STACK,
-    cards: { ...STACK.cards },
-  });
-
+function ChatDesktopDemo() {
+  const stackRef = useRef<CardStackDefinition>({ ...STACK, cards: { ...STACK.cards } });
   const { createStore } = createAppStore({});
   const storeRef = useRef<ReturnType<typeof createStore> | null>(null);
   if (!storeRef.current) {
     storeRef.current = createStore();
+
+    // Pre-open the chat window on the desktop
+    storeRef.current.dispatch(
+      openWindow({
+        id: 'window:chat-assistant',
+        title: '💬 Assistant',
+        icon: '💬',
+        bounds: { x: 360, y: 20, w: 460, h: 420 },
+        content: { kind: 'app', appKey: 'chat-window' },
+        dedupeKey: 'chat-window',
+      }),
+    );
   }
+
+  const renderAppWindow = useCallback(
+    (appKey: string, _windowId: string): ReactNode => {
+      if (appKey === 'chat-window') {
+        return <DesktopChatWindow stack={stackRef.current} />;
+      }
+      return null;
+    },
+    [],
+  );
 
   return (
     <Provider store={storeRef.current}>
-      {/*
-        Override the theme wrapper sizing so the desktop fills its flex cell
-        and the chat panel sits inside the same viewport.
-      */}
-      <style>{`
-        .chat-desktop-layout [data-widget="hypercard"] {
-          width: 100% !important;
-          max-width: 100% !important;
-          height: 100% !important;
-          margin: 0 !important;
-        }
-      `}</style>
-      <div
-        className="chat-desktop-layout"
-        style={{
-          display: 'flex',
-          width: '100vw',
-          height: '100vh',
-          overflow: 'hidden',
-        }}
-      >
-        <div style={{ flex: 1, minWidth: 0, height: '100%' }}>
-          <DesktopShell stack={stackRef.current} icons={ICONS} />
-        </div>
-        <div
-          style={{
-            width: 380,
-            flexShrink: 0,
-            borderLeft: '2px solid #000',
-            display: 'flex',
-            flexDirection: 'column',
-            background: '#fff',
-            height: '100%',
-            overflow: 'hidden',
-          }}
-        >
-          <DesktopChatWindow stack={stackRef.current} />
-        </div>
-      </div>
+      <DesktopShell
+        stack={stackRef.current}
+        icons={ICONS}
+        renderAppWindow={renderAppWindow}
+      />
     </Provider>
   );
 }
@@ -609,5 +491,5 @@ export default meta;
 type Story = StoryObj;
 
 export const Default: Story = {
-  render: () => <ChatDesktopFull />,
+  render: () => <ChatDesktopDemo />,
 };

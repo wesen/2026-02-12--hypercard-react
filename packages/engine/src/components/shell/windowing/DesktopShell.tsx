@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import type { CardStackDefinition } from '../../../cards';
 import { clearToast } from '../../../features/notifications/notificationsSlice';
@@ -60,6 +60,12 @@ export interface DesktopShellProps {
   menus?: DesktopMenuSection[];
   /** Custom desktop icons. If omitted, icons are generated from stack cards. */
   icons?: DesktopIconDef[];
+  /**
+   * Render a custom window body for non-card windows (content.kind === 'app').
+   * Receives the appKey from the window's content and the window id.
+   * Return null to fall back to the default placeholder.
+   */
+  renderAppWindow?: (appKey: string, windowId: string) => ReactNode;
 }
 
 let sessionCounter = 0;
@@ -75,6 +81,7 @@ export function DesktopShell({
   homeParam,
   menus: menusProp,
   icons: iconsProp,
+  renderAppWindow,
 }: DesktopShellProps) {
   const dispatch = useDispatch();
   const lastOpenedHomeKeyRef = useRef<string | null>(null);
@@ -249,6 +256,12 @@ export function DesktopShell({
       const winInstance = windows.find((w) => w.id === winDef.id);
       if (!winInstance) return null;
 
+      // App windows — delegate to host-provided renderer
+      if (winInstance.content.kind === 'app' && winInstance.content.appKey && renderAppWindow) {
+        const rendered = renderAppWindow(winInstance.content.appKey, winInstance.id);
+        if (rendered) return rendered;
+      }
+
       const cardRef = winInstance.content.card;
       if (winInstance.content.kind === 'card' && cardRef) {
         return (
@@ -268,7 +281,7 @@ export function DesktopShell({
         </div>
       );
     },
-    [windows, stack, mode],
+    [windows, stack, mode, renderAppWindow],
   );
 
   return (
