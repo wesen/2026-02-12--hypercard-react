@@ -114,7 +114,7 @@ Implemented backend Phases 5/6 end-to-end: middleware-driven artifact policy/gen
 
 ## 2026-02-16
 
-Replaced event-spam system lines with a persistent in-chat timeline widget (`inventory.timeline`) that upserts tool/hypercard/timeline states in place, including tool call args and success/error transitions.
+Replaced event-spam system lines with a persistent in-chat timeline widget (`inventory.timeline`) that upserts tool/hypercard/timeline states in place, including tool call args and success/error transitions (commit 43751e6). Restarted tmux backend/frontend sessions and verified live round-trip behavior with Playwright.
 
 ### Related Files
 

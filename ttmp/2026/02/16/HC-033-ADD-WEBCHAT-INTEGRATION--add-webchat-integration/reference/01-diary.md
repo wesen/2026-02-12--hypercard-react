@@ -959,3 +959,33 @@ This step implemented a real timeline widget inside the inventory chat stream so
   - `apps/inventory/src/features/chat/InventoryChatWindow.tsx`
 - Reducer behavior test:
   - `apps/inventory/src/features/chat/chatSlice.test.ts`
+
+## Step 12: Restart Runtime in tmux and Verify In-Place Timeline Updates
+
+After commit `43751e6`, I restarted backend/frontend tmux sessions and ran a live Playwright interaction against `http://127.0.0.1:5173` to validate the timeline widget behavior from the real chat loop.
+
+### What I ran
+
+- Restart sessions:
+  - `tmux kill-session -t hc033-backend || true`
+  - `tmux kill-session -t hc033-frontend || true`
+  - `tmux new-session -d -s hc033-backend 'cd .../go-inventory-chat && go run ./cmd/hypercard-inventory-server hypercard-inventory-server --addr :8091'`
+  - `tmux new-session -d -s hc033-frontend 'cd .../2026-02-12--hypercard-react && INVENTORY_CHAT_BACKEND=http://127.0.0.1:8091 pnpm dev -- --host 127.0.0.1 --port 5173'`
+- Verified listeners:
+  - `lsof -iTCP:8091 -sTCP:LISTEN -n -P`
+  - `lsof -iTCP:5173 -sTCP:LISTEN -n -P`
+- Playwright sanity:
+  - Navigate to app, send prompt, wait for response, inspect chat timeline/widget DOM.
+
+### Live verification outcomes
+
+- Backend and frontend both came up successfully in tmux.
+- Chat conversation showed one persistent `Run Timeline` widget message (not repeated event lines).
+- During a prompt run, tool/hypercard/timeline rows updated in place with status transitions (`...`/`OK`/`ERR`/`i`) and updated detail text.
+- Final DOM check confirmed only one timeline widget label:
+  - `timelineLabels: 1`
+  - message stream continued normally with AI final text.
+
+### Follow-up task status update
+
+- Marked `F7.5` complete (round-trip regression validation after timeline widget cutover).

@@ -93,7 +93,7 @@
 - [x] F7.2 Extend reducer model to handle widget/card lifecycle events.
 - [x] F7.3 Add reducer/UI state for spinner rows driven by `*.start` and `*.update`.
 - [ ] F7.4 Add reducer tests for streaming order, title-gated starts, and event attachment.
-- [ ] F7.5 Validate regression-free behavior for minimal round-trip flow introduced in Phase 2.5.
+- [x] F7.5 Validate regression-free behavior for minimal round-trip flow introduced in Phase 2.5.
 
 ### 8. Chat window integration
 
