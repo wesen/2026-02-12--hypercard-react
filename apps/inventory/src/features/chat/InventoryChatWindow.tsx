@@ -176,6 +176,7 @@ function formatHypercardLifecycle(
       detail: 'started',
       kind: 'widget',
       template: stringField(data, 'widgetType'),
+      rawData: data,
     };
   }
   if (type === 'hypercard.widget.update') {
@@ -187,6 +188,7 @@ function formatHypercardLifecycle(
       detail: 'updating',
       kind: 'widget',
       template: stringField(data, 'widgetType'),
+      rawData: data,
     };
   }
   if (type === 'hypercard.widget.v1') {
@@ -203,6 +205,7 @@ function formatHypercardLifecycle(
       kind: 'widget',
       template: widgetType,
       artifactId,
+      rawData: data,
     };
   }
   if (type === 'hypercard.widget.error') {
@@ -214,16 +217,17 @@ function formatHypercardLifecycle(
       detail: shortText(stringField(data, 'error') ?? 'unknown error'),
       kind: 'widget',
       template: stringField(data, 'widgetType'),
+      rawData: data,
     };
   }
 
   if (type === 'hypercard.card.start') {
     const id = itemId ?? 'unknown';
-    return { id: `card:${id}`, title: title ?? 'Card', status: 'running', detail: 'started', kind: 'card' };
+    return { id: `card:${id}`, title: title ?? 'Card', status: 'running', detail: 'started', kind: 'card', rawData: data };
   }
   if (type === 'hypercard.card.update') {
     const id = itemId ?? 'unknown';
-    return { id: `card:${id}`, title: title ?? 'Card', status: 'running', detail: 'updating', kind: 'card' };
+    return { id: `card:${id}`, title: title ?? 'Card', status: 'running', detail: 'updating', kind: 'card', rawData: data };
   }
   if (type === 'hypercard.card_proposal.v1') {
     const template = stringField(data, 'template');
@@ -239,6 +243,7 @@ function formatHypercardLifecycle(
       kind: 'card',
       template,
       artifactId,
+      rawData: data,
     };
   }
   if (type === 'hypercard.card.error') {

@@ -148,6 +148,7 @@ export interface TimelineItemUpdate {
   kind?: 'tool' | 'widget' | 'card' | 'timeline';
   template?: string;
   artifactId?: string;
+  rawData?: Record<string, unknown>;
 }
 
 export function formatTimelineUpsert(data: Record<string, unknown>): TimelineItemUpdate | undefined {
@@ -175,12 +176,16 @@ export function formatTimelineUpsert(data: Record<string, unknown>): TimelineIte
             : 'done'
           : 'started'
         : shortText(`args=${compactJSON(input)}`);
+    const rawData: Record<string, unknown> = { name };
+    if (typeof input !== 'undefined') rawData.input = input;
+    if (done && toolCall.output !== undefined) rawData.output = toolCall.output;
     return {
       id: `tool:${id}`,
       title: `Tool ${name}`,
       status,
       detail,
       kind: 'tool',
+      rawData,
     };
   }
   const status = recordField(entity, 'status');
@@ -204,6 +209,7 @@ export function formatTimelineUpsert(data: Record<string, unknown>): TimelineIte
       status: timelineStatus,
       detail: shortText(projected?.detail ?? (statusType ? `timeline status=${statusType}` : undefined)),
       kind: timelineKind,
+      rawData: entity as Record<string, unknown>,
     };
   }
 
@@ -226,6 +232,7 @@ export function formatTimelineUpsert(data: Record<string, unknown>): TimelineIte
         kind: 'widget',
         template: resultWidgetType,
         artifactId: resultArtifactId,
+        rawData: resultRecord ?? (entity as Record<string, unknown>),
       };
     }
     if (customKind === 'hypercard.card_proposal.v1') {
@@ -237,6 +244,7 @@ export function formatTimelineUpsert(data: Record<string, unknown>): TimelineIte
         kind: 'card',
         template: resultTemplate,
         artifactId: resultArtifactId,
+        rawData: resultRecord ?? (entity as Record<string, unknown>),
       };
     }
     const resultText = stringField(toolResult, 'resultRaw') ?? compactJSON(toolResult.result);
@@ -246,6 +254,7 @@ export function formatTimelineUpsert(data: Record<string, unknown>): TimelineIte
       status: 'success',
       detail: shortText(resultText),
       kind: 'tool',
+      rawData: toolResult as Record<string, unknown>,
     };
   }
   return undefined;

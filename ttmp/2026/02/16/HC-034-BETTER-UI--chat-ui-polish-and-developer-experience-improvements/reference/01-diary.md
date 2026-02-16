@@ -182,11 +182,52 @@ and store it in the HC-034 ticket.
 
 ---
 
-## Session 2 — F3 Implementation (2026-02-16 ~15:00–17:10)
+## Session 2 — Feature Implementation (2026-02-16 ~15:00 onward)
 
-### F3: Multiple chat windows — keyed Redux store
+### F5: Text Selection (first thing, ~1 min)
 
-Implemented the full keyed-conversation refactor in a single pass:
+Added `user-select: text` override on `[data-part="chat-timeline"]` in `packages/engine/src/theme/base.css` (around line 688). Kept `user-select: none` on chrome elements (header, composer, suggestions, footer) so only the actual chat content is selectable. Verified in existing storybook stories. Committed.
+
+### F2: Collapsible Tool Calls with YAML (~15:05–15:25)
+
+**yamlFormat.ts** — Wrote a dependency-free JSON-to-YAML formatter. Handles nested objects, arrays of objects, scalar quoting for ambiguous strings (`"true"`, `"null"`, strings with colons), and configurable indent depth. 8 tests covering scalars, nested objects, arrays, empty containers, indent levels.
+
+**rawData field** — Added `rawData?: Record<string, unknown>` to `TimelineWidgetItem`. Updated `onSemEnvelope` to store structured data: `tool.start` stores `{ name, input }`, `tool.result` stores `{ result }`, `tool.delta` stores `{ patch }`.
+
+**Timeline widget UI** — Added expand/collapse toggle (▶/▼) in `InventoryTimelineWidget`. When collapsed shows the one-line `detail` string; when expanded renders `rawData` as YAML in a `<pre>` block. Only tool items with rawData get the toggle arrow.
+
+6 storybook stories: Default (mixed items), Empty, AllCollapsed, MixedItems, LargePayload (deep nested report), DebugMode. Committed.
+
+### F4: Model Info + Token Counts + TPS (~15:25–15:40)
+
+**State additions** — `modelName: string | null`, `currentTurnStats: TurnStats | null`, `streamStartTime: number | null`, `streamOutputTokens: number` added to `ChatState`.
+
+**Metadata parsing** — In `onSemEnvelope`, added `extractMetadata(envelope)` that reads `envelope.event?.metadata`. On `llm.start`: extract model name, mark stream start time. On `llm.delta`: extract `usage.outputTokens` for live TPS. On `llm.final`: extract full usage stats + durationMs, compute TPS.
+
+**StatsFooter component** — Shows model name, input/output/cached tokens, duration, and TPS in a compact single-line footer. During streaming shows live TPS from elapsed time and output tokens. Renders in the ChatWindow `footer` prop.
+
+5 storybook stories: Idle, Streaming, Complete, HighTokens, NoModel. Committed.
+
+### F1: Per-Round Timeline Widgets (~15:40–15:55)
+
+Added `currentRoundId: number` to `ChatState`. Incremented on `queueUserPrompt`. Widget message IDs parameterized by round: `timeline-widget-message-r0`, `timeline-widget-message-r1`, etc. Round 0 is for hydrated items (labeled "Previous Session"), rounds 1+ for live turns.
+
+3 new tests: separate-round widgets, round-0 hydration, no-empty-round-widget. Updated all 11 existing tests for the new `r0`/`r1` ID pattern. 4 storybook stories: SingleRound, TwoRounds, HydrationRound0, EmptyRound. Committed.
+
+### F6: Debug Mode Toggle (~15:55–16:05)
+
+**Engine change** — Added `headerActions?: ReactNode` prop to `ChatWindow` in `packages/engine/src/components/widgets/ChatWindow.tsx`. Renders in the chat header bar after the subtitle.
+
+**Debug toggle** — `useState(false)` in `InventoryChatWindow`. Button in `headerActions` toggles debug on/off. When on:
+- Message badges: `[msg-id | status | role]` prepended as text content
+- Timeline widget: shows metadata `<pre>` block (id, kind, template, artifactId, updatedAt)
+- Artifact panels: same metadata `<pre>` block
+
+2 storybook stories: DebugMode for timeline, DebugMode for artifact panels. Committed.
+
+### F3: Multiple Chat Windows — Keyed Redux Store (~16:05–17:10)
+
+Implemented the full keyed-conversation refactor in a single pass.
 
 #### chatSlice.ts
 - Renamed old `ChatState` → `ConversationState` (per-conversation state)
@@ -236,8 +277,6 @@ Implemented the full keyed-conversation refactor in a single pass:
 - TypeScript project references required rebuilding engine declarations (`tsc -b packages/engine`) before inventory would see the new `onCommand` prop
 - 31 dispatch calls in InventoryChatWindow needed `conversationId` injection — systematic search-and-replace was the only way
 
----
-
 ### F7: Streaming Event Viewer (~17:00–17:12)
 
 Implemented the complete event viewer as a standalone window component.
@@ -247,7 +286,7 @@ Implemented the complete event viewer as a standalone window component.
 - Uses `Map<string, Set<Listener>>` internally, auto-cleans on last unsubscribe
 - Classifies events into families (llm/tool/hypercard/timeline/ws/other)
 - Generates one-line summaries per event type
-- Re-uses `SemEventEnvelope` type from webchatClient (avoided duplicate type definition causing TS index signature mismatch)
+- Re-uses `SemEventEnvelope` type from webchatClient (avoided duplicate type definition causing TS index signature mismatch — initially defined our own `SemEventEnvelope` with `[key: string]: unknown` index sig, but TS refused to assign `webchatClient.SemEventEnvelope` to it)
 
 #### EventViewerWindow.tsx
 - Filter toggle bar with color-coded family buttons (6 families)
@@ -271,15 +310,73 @@ Implemented the complete event viewer as a standalone window component.
 
 ---
 
-## Summary of all features completed
+## Live-testing Bugfixes (2026-02-16 ~17:15–17:30)
 
-| Feature | Status | Tests | Stories |
-|---------|--------|-------|---------|
-| F5: Text selection | ✅ | — | Verified in existing |
-| F2: Collapsible tool calls + YAML | ✅ | 8 (yamlFormat) | 6 |
-| F4: Model info + token counts + TPS | ✅ | — | 5 |
-| F1: Per-round timeline widgets | ✅ | 3 new + 11 updated | 4 |
-| F6: Debug mode toggle | ✅ | — | 2 |
-| F3: Multi-window keyed Redux store | ✅ | 15 updated + 1 new | — |
-| F7: Streaming event viewer | ✅ | 4 (eventBus) | 4 |
-| **Total** | **7/7 ✅** | **140** | **21** |
+### Duplicate user messages
+
+**Bug:** Every user message appeared twice in the chat — once from local `queueUserPrompt` (id `user-3`) and once from backend timeline echo (id `user-376f8b7b-...`). Visible clearly with debug mode badges showing both IDs.
+
+**Root cause:** Backend echoes user messages back via `timeline.upsert` with a server-assigned UUID. `upsertHydratedMessage` couldn't match them to existing local messages because the IDs differ.
+
+**Fix:** In `upsertHydratedMessage`, after checking for exact ID match, added a second check: if a message with the same `role` and `text` already exists (different ID), adopt the server ID on the existing message instead of creating a duplicate. This handles the backend-echo pattern cleanly.
+
+**Test added:** `deduplicates backend-echoed user messages by adopting server ID` — dispatches `queueUserPrompt` then `upsertHydratedMessage` with same text/different ID, verifies only one message exists with the server UUID. 141 tests pass.
+
+### Scroll bump on window focus
+
+**Bug (first report):** Focusing a chat window caused a visible smooth scroll animation bump. Both chat and event viewer windows affected — switching between them made both scroll.
+
+**Root cause:** `ChatWindow` had `useEffect(() => endRef.scrollIntoView({ behavior: 'smooth' }), [messages])`. When focusing a window, Redux `useSelector` re-evaluates, the `messages` array reference can change (even if content is identical), triggering the effect.
+
+**First fix attempt:** Changed `behavior: 'smooth'` → `'instant'` and added a `scrollKey` fingerprint (`useMemo` from message count + last message id/length/status) to avoid firing on reference-only changes. Also fixed EventViewerWindow: changed to `useLayoutEffect` with `behavior: 'instant'` and `entryCount` as dep.
+
+**Status:** User reported scroll bump still present after first fix — continuing to investigate.
+
+---
+
+## UI Polish Pass (2026-02-16 ~17:25–ongoing)
+
+### Nicer artifact/timeline widget templates
+
+**Problem:** Timeline and artifact panel widgets used plain text `ERR`/`OK`/`...` status indicators, wide 40px status columns, and debug metadata was a cramped `<pre>` block with hardcoded text like `id: ...\nkind: ...\ntemplate: —\nartifactId: —`.
+
+**Fix — Status glyphs:** Replaced text with Unicode glyphs: `✗` (error), `✓` (success), `⏳` (running), `ℹ` (info). Narrowed status column from 40px to 24px.
+
+**Fix — Metadata table:** Replaced the `<pre>` debug block with a proper `<table>` using `<th>`/`<td>` pairs for id, kind, status, template, artifactId, updatedAt. Clean alignment, muted colors. When rawData exists, renders it below the table as YAML in a `<pre>` block.
+
+**Fix — Auto-show on errors:** Metadata table + rawData YAML now shown automatically when `item.status === 'error'`, even without debug mode. Debug mode shows it on all items.
+
+**Fix — Consistent styling:** Both `InventoryTimelineWidget` and `InventoryArtifactPanelWidgets` now share identical layout metrics (24px grid, 2px gap, 6px padding, same chip/table styles). Extracted identical `MetadataTable` component in both files.
+
+### rawData for widget/card lifecycle events
+
+**Problem:** `formatHypercardLifecycle` and `formatTimelineUpsert` never passed `rawData` through, so widget/card items had no expandable data to show in debug mode or on errors. The user saw the metadata table but no actual payload.
+
+**Fix:** Added `rawData: data` to all return paths in `formatHypercardLifecycle` (widget.start, widget.update, widget.v1, widget.error, card.start, card.update, card_proposal.v1). Added `rawData` field to `TimelineItemUpdate` interface in `timelineProjection.ts` and populated it in all `formatTimelineUpsert` return paths:
+- `tool_call`: `{ name, input, output }`
+- `status`: full entity record
+- `tool_result` (widget/card): the parsed `resultRecord` or entity fallback
+- `tool_result` (generic): the `toolResult` record
+
+**New story:** `ErrorAutoShowsMeta` — shows widget panel with error item (including rawData with error details) without debug mode enabled. The metadata table + YAML appear automatically.
+
+### Scroll bump (continued)
+
+**Second fix attempt:** EventViewerWindow changed from `useEffect` to `useLayoutEffect` to avoid paint-then-scroll flicker. Changed dep from `entries` array to `entryCount` (primitive number) so window focus re-renders can't trigger it. Both ChatWindow and EventViewerWindow now use `behavior: 'instant'` — the smooth animation was the visible "bump".
+
+---
+
+## Feature completion summary
+
+| Feature | Status | Tests | Stories | Commits |
+|---------|--------|-------|---------|---------|
+| F5: Text selection | ✅ | — | Verified | 1 |
+| F2: Collapsible tool calls + YAML | ✅ | 8 | 6 | 1 |
+| F4: Model info + token counts + TPS | ✅ | — | 5 | 1 |
+| F1: Per-round timeline widgets | ✅ | 3+11 | 4 | 1 |
+| F6: Debug mode toggle | ✅ | — | 2 | 1 |
+| F3: Multi-window keyed Redux store | ✅ | 15+1 | — | 1 |
+| F7: Streaming event viewer | ✅ | 4 | 4 | 1 |
+| Bugfix: duplicate user messages | ✅ | 1 | — | 1 |
+| Polish: nicer widgets + rawData + scroll | ✅ | — | 1 | 1+ |
+| **Total** | | **141+** | **22+** | |

@@ -3,48 +3,58 @@ import { formatTimelineUpsert } from './timelineProjection';
 
 describe('formatTimelineUpsert', () => {
   it('maps projected card status rows to running card timeline items', () => {
-    const projected = formatTimelineUpsert({
-      entity: {
-        id: 'tool-1:status',
-        kind: 'status',
-        status: {
-          text: 'Updating card proposal: Detailed Inventory Summary',
-          type: 'info',
-        },
+    const entity = {
+      id: 'tool-1:status',
+      kind: 'status',
+      status: {
+        text: 'Updating card proposal: Detailed Inventory Summary',
+        type: 'info',
       },
-    });
+    };
+    const projected = formatTimelineUpsert({ entity });
 
-    expect(projected).toEqual({
+    expect(projected).toMatchObject({
       id: 'card:tool-1',
       title: 'Detailed Inventory Summary',
       status: 'running',
       detail: 'updating',
       kind: 'card',
     });
+    // rawData should be the full entity
+    expect(projected?.rawData).toEqual(entity);
   });
 
   it('maps generic timeline status rows to timeline items with error status', () => {
-    const projected = formatTimelineUpsert({
-      entity: {
-        id: 'svc-1:status',
-        kind: 'status',
-        status: {
-          text: 'timeline unavailable',
-          type: 'error',
-        },
+    const entity = {
+      id: 'svc-1:status',
+      kind: 'status',
+      status: {
+        text: 'timeline unavailable',
+        type: 'error',
       },
-    });
+    };
+    const projected = formatTimelineUpsert({ entity });
 
-    expect(projected).toEqual({
+    expect(projected).toMatchObject({
       id: 'timeline:svc-1',
       title: 'timeline unavailable',
       status: 'error',
       detail: 'timeline status=error',
       kind: 'timeline',
     });
+    expect(projected?.rawData).toEqual(entity);
   });
 
   it('maps hypercard card tool_result rows to ready card items', () => {
+    const resultRecord = {
+      title: 'Low Stock Items',
+      template: 'reportViewer',
+      data: {
+        artifact: {
+          id: 'low-stock-items',
+        },
+      },
+    };
     const projected = formatTimelineUpsert({
       entity: {
         id: 'tool-2:result',
@@ -52,20 +62,12 @@ describe('formatTimelineUpsert', () => {
         toolResult: {
           toolCallId: 'tool-2',
           customKind: 'hypercard.card_proposal.v1',
-          result: {
-            title: 'Low Stock Items',
-            template: 'reportViewer',
-            data: {
-              artifact: {
-                id: 'low-stock-items',
-              },
-            },
-          },
+          result: resultRecord,
         },
       },
     });
 
-    expect(projected).toEqual({
+    expect(projected).toMatchObject({
       id: 'card:tool-2',
       title: 'Low Stock Items',
       status: 'success',
@@ -74,6 +76,8 @@ describe('formatTimelineUpsert', () => {
       template: 'reportViewer',
       artifactId: 'low-stock-items',
     });
+    // rawData should be the parsed result record
+    expect(projected?.rawData).toEqual(resultRecord);
   });
 
   it('maps tool_call rows from start to done with proper status', () => {
@@ -100,6 +104,7 @@ describe('formatTimelineUpsert', () => {
     });
     expect(running?.detail).toContain('args=');
     expect(running?.detail).toContain('period');
+    expect(running?.rawData).toEqual({ name: 'inventory_report', input: { period: 'today' } });
 
     const failed = formatTimelineUpsert({
       entity: {
@@ -113,12 +118,13 @@ describe('formatTimelineUpsert', () => {
       },
     });
 
-    expect(failed).toEqual({
+    expect(failed).toMatchObject({
       id: 'tool:tool-3',
       title: 'Tool inventory_report',
       status: 'error',
       detail: 'error',
       kind: 'tool',
     });
+    expect(failed?.rawData).toEqual({ name: 'inventory_report' });
   });
 });

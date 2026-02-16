@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useLayoutEffect } from 'react';
 import type { EventLogEntry } from './eventBus';
 import { subscribeConversationEvents } from './eventBus';
 import { toYaml } from './utils/yamlFormat';
@@ -58,12 +58,13 @@ export function EventViewerWindow({ conversationId, initialEntries }: EventViewe
     return unsubscribe;
   }, [conversationId]);
 
-  // Auto-scroll
-  useEffect(() => {
+  // Auto-scroll — use entry count as stable dep so window-focus re-renders don't trigger scroll
+  const entryCount = entries.length;
+  useLayoutEffect(() => {
     if (autoScroll && endRef.current) {
-      endRef.current.scrollIntoView({ behavior: 'smooth' });
+      endRef.current.scrollIntoView({ behavior: 'instant' });
     }
-  }, [entries, autoScroll]);
+  }, [entryCount, autoScroll]);
 
   const visible = useMemo(
     () => entries.filter((e) => filters[e.family] !== false),
