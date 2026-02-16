@@ -29,13 +29,28 @@ export const WINDOWING_MENU_SECTIONS: DesktopMenuSection[] = [
 ];
 
 export const WINDOWING_ICONS: DesktopIconDef[] = [
+  { id: 'inventory', label: 'Inventory', icon: '📦' },
+  { id: 'sales', label: 'Sales', icon: '📈' },
+  { id: 'contacts', label: 'Contacts', icon: '👥' },
+  { id: 'ai-assistant', label: 'AI Assistant', icon: '🤖' },
+];
+
+/** Icons with explicit absolute positions (legacy / manual layout). */
+export const WINDOWING_ICONS_ABSOLUTE: DesktopIconDef[] = [
   { id: 'inventory', label: 'Inventory', icon: '📦', x: 20, y: 44 },
   { id: 'sales', label: 'Sales', icon: '📈', x: 20, y: 132 },
   { id: 'contacts', label: 'Contacts', icon: '👥', x: 20, y: 220 },
   { id: 'ai-assistant', label: 'AI Assistant', icon: '🤖', x: 20, y: 308 },
 ];
 
-export const WINDOWING_DENSE_ICONS: DesktopIconDef[] = Array.from({ length: 12 }, (_, index) => {
+export const WINDOWING_DENSE_ICONS: DesktopIconDef[] = Array.from({ length: 12 }, (_, index) => ({
+  id: `icon-${index + 1}`,
+  label: `App ${index + 1}`,
+  icon: ['📄', '📊', '📬', '🧩'][index % 4],
+}));
+
+/** Dense icons with explicit absolute positions. */
+export const WINDOWING_DENSE_ICONS_ABSOLUTE: DesktopIconDef[] = Array.from({ length: 12 }, (_, index) => {
   const col = index % 4;
   const row = Math.floor(index / 4);
   return {

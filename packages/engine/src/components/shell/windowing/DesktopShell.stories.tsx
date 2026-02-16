@@ -48,11 +48,11 @@ const DEMO_STACK: CardStackDefinition = {
 };
 
 const CUSTOM_ICONS: DesktopIconDef[] = [
-  { id: 'home', label: 'Home', icon: '🏠', x: 20, y: 16 },
-  { id: 'browse', label: 'Browse', icon: '📋', x: 20, y: 104 },
-  { id: 'report', label: 'Reports', icon: '📊', x: 20, y: 192 },
-  { id: 'chat', label: 'Assistant', icon: '💬', x: 20, y: 280 },
-  { id: 'settings', label: 'Settings', icon: '⚙️', x: 20, y: 368 },
+  { id: 'home', label: 'Home', icon: '🏠' },
+  { id: 'browse', label: 'Browse', icon: '📋' },
+  { id: 'report', label: 'Reports', icon: '📊' },
+  { id: 'chat', label: 'Assistant', icon: '💬' },
+  { id: 'settings', label: 'Settings', icon: '⚙️' },
 ];
 
 const { createStore } = createAppStore({});

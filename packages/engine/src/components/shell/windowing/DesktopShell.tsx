@@ -88,12 +88,10 @@ export function DesktopShell({
   const icons = useMemo(() => {
     if (iconsProp) return iconsProp;
     const cardIds = Object.keys(stack.cards);
-    return cardIds.map((cardId, i) => ({
+    return cardIds.map((cardId) => ({
       id: cardId,
       label: stack.cards[cardId].title ?? cardId,
       icon: stack.cards[cardId].icon ?? '📄',
-      x: 20,
-      y: 16 + i * 88,
     }));
   }, [iconsProp, stack.cards]);
 

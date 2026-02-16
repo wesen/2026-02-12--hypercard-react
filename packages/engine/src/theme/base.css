@@ -244,9 +244,21 @@
   padding: 0;
   list-style: none;
 }
+/* Grid-flow layout (default when icons have no explicit x/y) */
+[data-part="windowing-icon-layer"][data-layout="grid"] {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 88px);
+  grid-auto-rows: 88px;
+  align-content: start;
+  padding: 12px;
+  gap: 4px;
+}
+/* Absolute layout (when icons have explicit positions) */
+[data-part="windowing-icon-layer"][data-layout="absolute"] {
+  /* keep default positioning context */
+}
 [data-part="windowing-icon-layer"] li { list-style: none; }
 [data-part="windowing-icon"] {
-  position: absolute;
   width: 84px;
   display: flex;
   flex-direction: column;

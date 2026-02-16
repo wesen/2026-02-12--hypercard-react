@@ -22,8 +22,10 @@ export interface DesktopIconDef {
   id: string;
   label: string;
   icon: string;
-  x: number;
-  y: number;
+  /** Explicit horizontal position. When omitted, icons auto-flow in a grid. */
+  x?: number;
+  /** Explicit vertical position. When omitted, icons auto-flow in a grid. */
+  y?: number;
 }
 
 export interface DesktopWindowDef {

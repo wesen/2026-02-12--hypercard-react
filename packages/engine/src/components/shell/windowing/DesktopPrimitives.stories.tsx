@@ -29,24 +29,24 @@ import { WindowLayer } from './WindowLayer';
 // ── Fixtures ──
 
 const DESKTOP_ICONS: DesktopIconDef[] = [
-  { id: 'inventory', label: 'Inventory', icon: '📦', x: 18, y: 16 },
-  { id: 'sales', label: 'Sales', icon: '📈', x: 18, y: 104 },
-  { id: 'contacts', label: 'Contacts', icon: '👥', x: 18, y: 192 },
-  { id: 'ai-assistant', label: 'AI', icon: '🤖', x: 18, y: 280 },
+  { id: 'inventory', label: 'Inventory', icon: '📦' },
+  { id: 'sales', label: 'Sales', icon: '📈' },
+  { id: 'contacts', label: 'Contacts', icon: '👥' },
+  { id: 'ai-assistant', label: 'AI', icon: '🤖' },
 ];
 
 const BIG_DESKTOP_ICONS: DesktopIconDef[] = [
-  { id: 'inventory', label: 'Inventory', icon: '📦', x: 20, y: 16 },
-  { id: 'sales', label: 'Sales', icon: '📈', x: 20, y: 104 },
-  { id: 'contacts', label: 'Contacts', icon: '👥', x: 20, y: 192 },
-  { id: 'ai-assistant', label: 'AI Assistant', icon: '🤖', x: 20, y: 280 },
-  { id: 'reports', label: 'Reports', icon: '📊', x: 20, y: 368 },
-  { id: 'settings', label: 'Settings', icon: '⚙️', x: 20, y: 456 },
-  { id: 'calendar', label: 'Calendar', icon: '📅', x: 20, y: 544 },
-  { id: 'notes', label: 'Notes', icon: '📝', x: 20, y: 632 },
-  { id: 'mail', label: 'Mail', icon: '✉️', x: 112, y: 16 },
-  { id: 'calculator', label: 'Calculator', icon: '🧮', x: 112, y: 104 },
-  { id: 'trash', label: 'Trash', icon: '🗑️', x: 112, y: 192 },
+  { id: 'inventory', label: 'Inventory', icon: '📦' },
+  { id: 'sales', label: 'Sales', icon: '📈' },
+  { id: 'contacts', label: 'Contacts', icon: '👥' },
+  { id: 'ai-assistant', label: 'AI Assistant', icon: '🤖' },
+  { id: 'reports', label: 'Reports', icon: '📊' },
+  { id: 'settings', label: 'Settings', icon: '⚙️' },
+  { id: 'calendar', label: 'Calendar', icon: '📅' },
+  { id: 'notes', label: 'Notes', icon: '📝' },
+  { id: 'mail', label: 'Mail', icon: '✉️' },
+  { id: 'calculator', label: 'Calculator', icon: '🧮' },
+  { id: 'trash', label: 'Trash', icon: '🗑️' },
 ];
 
 const MENU_SECTIONS: DesktopMenuSection[] = [
