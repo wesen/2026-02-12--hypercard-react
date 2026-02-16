@@ -49,7 +49,7 @@ RelatedFiles:
 ExternalSources:
     - local:webchat-hyper-integration.md
 Summary: Detailed planning diary for the webchat integration ticket before implementation starts.
-LastUpdated: 2026-02-16T15:47:00-05:00
+LastUpdated: 2026-02-16T16:08:00-05:00
 WhatFor: Preserve detailed planning trace and decision rationale before coding.
 WhenToUse: Use when reviewing why the implementation plan was shaped this way.
 ---
@@ -1738,3 +1738,80 @@ I reconciled the remaining open non-deferred checklist entries against the imple
 ### What warrants a second pair of eyes
 
 - If desired, we can split deferred `A12.*` items into a follow-up ticket and link it from this index/changelog.
+
+## Step 23: Consolidated HC-032 + HC-033 Postmortem Authoring and reMarkable Upload
+
+Before starting `A12.1`, I created a full retrospective/continuation document that consolidates execution across HC-032 and HC-033. The objective was to preserve architectural intent, implementation chronology, failure analysis, and continuation guidance in one place for new engineers.
+
+The output is a textbook-style technical document stored in HC-033 and uploaded as a PDF to reMarkable, with explicit cross-links to both tickets' diaries/changelogs and to current code entry points.
+
+### Prompt Context
+
+**User prompt (verbatim):** "do A12.1, but for now, blind injection, as MVP. 
+
+But first, write a detailed postmortem on all the work we did since HC-032 and HC-033 (read the diaries, etc...) 
+
+This should be a very detailed technical step by step recap of what we did and what worked and didn't, consolidated into a comprehensive and clear document, 10+ pages. Write prose paragraphs, bullet points, pseudocode, code snippets, API signatures, diagrams. It should be a very detailed textbook style so that a new develoepr can come in and understand how and why things were built and how to continue building on top of it, including things that were problematic etc... 
+
+Store in HC-033 and then uploda to remarkable."
+
+**Assistant interpretation:** Pause A12.1 implementation, produce a comprehensive and didactic cross-ticket postmortem from HC-032 and HC-033 source artifacts, store it inside HC-033 docs, and upload the resulting document to reMarkable.
+
+**Inferred user intent:** Establish a high-fidelity technical knowledge base and handoff artifact before entering the riskier dynamic-injection phase.
+
+### What I did
+
+- Loaded and followed relevant skills:
+  - `docmgr`
+  - `diary`
+  - `remarkable-upload`
+- Gathered source material:
+  - HC-032 diary/changelog and ticket files
+  - HC-033 diary/changelog/tasks/design docs
+  - current backend/frontend code entry points used in delivery
+- Authored new postmortem document:
+  - `ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/design-doc/03-hc032-hc033-consolidated-technical-postmortem-and-continuation-guide.md`
+- Updated ticket index to include the new postmortem link.
+- Validated frontmatter for new and updated docs with `docmgr validate frontmatter`.
+- Uploaded to reMarkable:
+  - Dry-run:
+    - `remarquee upload bundle --dry-run <doc> --name "HC-032-HC-033 Consolidated Technical Postmortem" --remote-dir "/ai/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION" --toc-depth 3`
+  - Actual upload:
+    - `remarquee upload bundle <doc> --name "HC-032-HC-033 Consolidated Technical Postmortem" --remote-dir "/ai/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION" --toc-depth 3`
+  - Verified remote listing:
+    - `remarquee cloud ls /ai/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION --long --non-interactive`
+
+### Why
+
+- A12.1 (dynamic code injection) increases risk substantially; entering that phase without consolidated context would increase design drift and repeat failures.
+- A single long-form postmortem consolidates the currently fragmented but high-value details spread across diaries/changelogs.
+
+### What worked
+
+- Source discovery from both tickets was sufficient to reconstruct a comprehensive timeline.
+- Frontmatter validation passed for the new postmortem doc.
+- reMarkable upload succeeded on first non-dry-run attempt.
+
+### What didn't work
+
+- The older `2026-02-15` HC-033 folder variant was effectively scaffold-only (no substantive files), so it was excluded from primary evidence.
+
+### What I learned
+
+- The richest execution fidelity remains in the diaries; changelogs are useful for commit/file anchors but not enough on their own for continuation guidance.
+- Maintaining a single cross-ticket postmortem dramatically lowers onboarding cost for new contributors.
+
+### What warrants a second pair of eyes
+
+- The postmortem’s A12 risk/guardrail section should be reviewed before starting blind-injection implementation to ensure scope/safety expectations are aligned.
+
+### What should be done in the future
+
+- Proceed to `A12.1` implementation as the next step, using the new postmortem as the continuation baseline.
+
+### Technical details
+
+- New reMarkable artifact:
+  - `HC-032-HC-033 Consolidated Technical Postmortem` at `/ai/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION`
+- New ticket doc path:
+  - `ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/design-doc/03-hc032-hc033-consolidated-technical-postmortem-and-continuation-guide.md`

@@ -16,6 +16,8 @@ RelatedFiles:
       Note: Validated implementation plan and architecture source of truth
     - Path: ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/design-doc/02-widget-timeline-event-integration-playbook.md
       Note: Textbook-style onboarding and implementation playbook for widget/timeline/event work
+    - Path: ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/design-doc/03-hc032-hc033-consolidated-technical-postmortem-and-continuation-guide.md
+      Note: Consolidated HC-032 and HC-033 technical postmortem and continuation guide
     - Path: ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/reference/01-diary.md
       Note: Detailed planning diary and command/error trace
     - Path: ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/tasks.md
@@ -23,7 +25,7 @@ RelatedFiles:
 ExternalSources:
     - local:webchat-hyper-integration.md
 Summary: Execution ticket for hard-cutover inventory webchat integration using Glazed command composition, Pinocchio webchat reuse, Geppetto middleware artifact/card generation, and HyperCard app-window frontend integration.
-LastUpdated: 2026-02-16T15:47:00-05:00
+LastUpdated: 2026-02-16T16:05:00-05:00
 WhatFor: Coordinate analysis, planning, task execution, and implementation diary for inventory chat integration.
 WhenToUse: Start here for ticket context and links to the validated implementation plan.
 ---
@@ -48,6 +50,7 @@ Execution focus complete for non-deferred phases. Remaining backlog is deferred 
 - Imported source document: `sources/local/webchat-hyper-integration.md`
 - Validated plan: `design-doc/01-validated-analysis-and-hard-cutover-implementation-plan.md`
 - Widget/timeline/events playbook: `design-doc/02-widget-timeline-event-integration-playbook.md`
+- Consolidated postmortem (HC-032 + HC-033): `design-doc/03-hc032-hc033-consolidated-technical-postmortem-and-continuation-guide.md`
 - Detailed diary: `reference/01-diary.md`
 - Task breakdown: `tasks.md`
 
