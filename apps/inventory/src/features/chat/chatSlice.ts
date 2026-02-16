@@ -33,6 +33,16 @@ export const DEFAULT_CHAT_SUGGESTIONS = [
   'Summarize today sales',
 ];
 
+export interface TurnStats {
+  inputTokens?: number;
+  outputTokens?: number;
+  cachedTokens?: number;
+  cacheCreationInputTokens?: number;
+  cacheReadInputTokens?: number;
+  durationMs?: number;
+  tps?: number;
+}
+
 interface ChatState {
   conversationId: string | null;
   connectionStatus: ChatConnectionStatus;
@@ -40,6 +50,10 @@ interface ChatState {
   messages: ChatWindowMessage[];
   suggestions: string[];
   lastError: string | null;
+  modelName: string | null;
+  currentTurnStats: TurnStats | null;
+  streamStartTime: number | null;
+  streamOutputTokens: number;
 }
 
 const initialState: ChatState = {
@@ -49,6 +63,10 @@ const initialState: ChatState = {
   messages: [],
   suggestions: [...DEFAULT_CHAT_SUGGESTIONS],
   lastError: null,
+  modelName: null,
+  currentTurnStats: null,
+  streamStartTime: null,
+  streamOutputTokens: 0,
 };
 
 let messageCounter = 0;
@@ -507,6 +525,26 @@ const chatSlice = createSlice({
     mergeSuggestions(state, action: PayloadAction<{ suggestions: string[] }>) {
       state.suggestions = normalizeSuggestionList([...state.suggestions, ...action.payload.suggestions]);
     },
+    setModelName(state, action: PayloadAction<string>) {
+      state.modelName = action.payload;
+    },
+    markStreamStart(state, action: PayloadAction<{ time: number }>) {
+      state.streamStartTime = action.payload.time;
+      state.streamOutputTokens = 0;
+      state.currentTurnStats = null;
+    },
+    updateStreamTokens(state, action: PayloadAction<{ outputTokens: number }>) {
+      state.streamOutputTokens = action.payload.outputTokens;
+    },
+    setTurnStats(state, action: PayloadAction<TurnStats>) {
+      const stats = { ...action.payload };
+      if (stats.outputTokens && stats.durationMs && stats.durationMs > 0) {
+        stats.tps = Math.round((stats.outputTokens / (stats.durationMs / 1000)) * 10) / 10;
+      }
+      state.currentTurnStats = stats;
+      state.streamStartTime = null;
+      state.streamOutputTokens = 0;
+    },
   },
 });
 
@@ -526,5 +564,9 @@ export const {
   resetConversation,
   replaceSuggestions,
   mergeSuggestions,
+  setModelName,
+  markStreamStart,
+  updateStreamTokens,
+  setTurnStats,
 } = chatSlice.actions;
 export const chatReducer = chatSlice.reducer;

@@ -7,13 +7,18 @@ import {
   applyLLMDelta,
   applyLLMFinal,
   applyLLMStart,
+  markStreamStart,
   mergeSuggestions,
   queueUserPrompt,
   replaceSuggestions,
   setConnectionStatus,
   setConversationId,
+  setModelName,
   setStreamError,
+  setTurnStats,
   type TimelineWidgetItem,
+  type TurnStats,
+  updateStreamTokens,
   upsertHydratedMessage,
   upsertCardPanelItem,
   upsertTimelineItem,
@@ -22,8 +27,12 @@ import {
 import {
   selectConnectionStatus,
   selectConversationId,
+  selectCurrentTurnStats,
   selectIsStreaming,
   selectMessages,
+  selectModelName,
+  selectStreamOutputTokens,
+  selectStreamStartTime,
   selectSuggestions,
 } from './selectors';
 import {
@@ -97,6 +106,29 @@ function booleanField(record: Record<string, unknown>, key: string): boolean | u
 
 function stripTrailingWhitespace(value: string): string {
   return value.replace(/[ \t]+$/gm, '').trimEnd();
+}
+
+function numberField(record: Record<string, unknown>, key: string): number | undefined {
+  const value = record[key];
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  return undefined;
+}
+
+function extractMetadata(envelope: SemEventEnvelope): Record<string, unknown> | undefined {
+  const meta = (envelope as Record<string, unknown>).event;
+  if (!meta || typeof meta !== 'object') return undefined;
+  const eventObj = meta as Record<string, unknown>;
+  const metadata = eventObj.metadata;
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return undefined;
+  return metadata as Record<string, unknown>;
+}
+
+function extractUsage(metadata: Record<string, unknown>): Record<string, unknown> | undefined {
+  const usage = metadata.usage;
+  if (!usage || typeof usage !== 'object' || Array.isArray(usage)) return undefined;
+  return usage as Record<string, unknown>;
 }
 
 function shortText(value: string | undefined, max = 180): string | undefined {
@@ -297,11 +329,29 @@ function onSemEnvelope(envelope: SemEventEnvelope, dispatch: ReturnType<typeof u
   }
 
   if (type === 'llm.start') {
+    const metadata = extractMetadata(envelope);
+    if (metadata) {
+      const model = stringField(metadata, 'model');
+      if (model) {
+        dispatch(setModelName(model));
+      }
+    }
+    dispatch(markStreamStart({ time: Date.now() }));
     dispatch(applyLLMStart({ messageId }));
     return;
   }
 
   if (type === 'llm.delta') {
+    const metadata = extractMetadata(envelope);
+    if (metadata) {
+      const usage = extractUsage(metadata);
+      if (usage) {
+        const outputTokens = numberField(usage, 'outputTokens');
+        if (outputTokens !== undefined) {
+          dispatch(updateStreamTokens({ outputTokens }));
+        }
+      }
+    }
     dispatch(
       applyLLMDelta({
         messageId,
@@ -313,6 +363,26 @@ function onSemEnvelope(envelope: SemEventEnvelope, dispatch: ReturnType<typeof u
   }
 
   if (type === 'llm.final') {
+    const metadata = extractMetadata(envelope);
+    if (metadata) {
+      const model = stringField(metadata, 'model');
+      if (model) {
+        dispatch(setModelName(model));
+      }
+      const usage = extractUsage(metadata);
+      const stats: TurnStats = {};
+      if (usage) {
+        stats.inputTokens = numberField(usage, 'inputTokens');
+        stats.outputTokens = numberField(usage, 'outputTokens');
+        stats.cachedTokens = numberField(usage, 'cachedTokens');
+        stats.cacheCreationInputTokens = numberField(usage, 'cacheCreationInputTokens');
+        stats.cacheReadInputTokens = numberField(usage, 'cacheReadInputTokens');
+      }
+      stats.durationMs = numberField(metadata, 'durationMs');
+      if (stats.inputTokens !== undefined || stats.outputTokens !== undefined || stats.durationMs !== undefined) {
+        dispatch(setTurnStats(stats));
+      }
+    }
     dispatch(
       applyLLMFinal({
         messageId,
@@ -428,6 +498,72 @@ function onSemEnvelope(envelope: SemEventEnvelope, dispatch: ReturnType<typeof u
   }
 }
 
+function formatNumber(n: number): string {
+  if (n >= 1000) {
+    return n.toLocaleString('en-US');
+  }
+  return String(n);
+}
+
+function StatsFooter({
+  modelName,
+  turnStats,
+  isStreaming,
+  streamStartTime,
+  streamOutputTokens,
+}: {
+  modelName: string | null;
+  turnStats: TurnStats | null;
+  isStreaming: boolean;
+  streamStartTime: number | null;
+  streamOutputTokens: number;
+}) {
+  const parts: string[] = [];
+
+  if (modelName) {
+    parts.push(modelName);
+  }
+
+  if (isStreaming && streamStartTime) {
+    const elapsed = (Date.now() - streamStartTime) / 1000;
+    if (streamOutputTokens > 0 && elapsed > 0) {
+      const liveTps = Math.round((streamOutputTokens / elapsed) * 10) / 10;
+      parts.push(`streaming: ${formatNumber(streamOutputTokens)} tok · ${liveTps} tok/s`);
+    } else {
+      parts.push('streaming...');
+    }
+  } else if (turnStats) {
+    const tokenParts: string[] = [];
+    if (turnStats.inputTokens !== undefined) {
+      tokenParts.push(`In:${formatNumber(turnStats.inputTokens)}`);
+    }
+    if (turnStats.outputTokens !== undefined) {
+      tokenParts.push(`Out:${formatNumber(turnStats.outputTokens)}`);
+    }
+    if (turnStats.cachedTokens !== undefined && turnStats.cachedTokens > 0) {
+      tokenParts.push(`Cache:${formatNumber(turnStats.cachedTokens)}`);
+    }
+    if (turnStats.cacheCreationInputTokens !== undefined && turnStats.cacheCreationInputTokens > 0) {
+      tokenParts.push(`CacheWrite:${formatNumber(turnStats.cacheCreationInputTokens)}`);
+    }
+    if (tokenParts.length > 0) {
+      parts.push(tokenParts.join(' '));
+    }
+    if (turnStats.durationMs !== undefined) {
+      parts.push(`${(turnStats.durationMs / 1000).toFixed(1)}s`);
+    }
+    if (turnStats.tps !== undefined) {
+      parts.push(`${turnStats.tps} tok/s`);
+    }
+  }
+
+  if (parts.length === 0) {
+    return <span>Streaming via /chat + /ws</span>;
+  }
+
+  return <span>{parts.join(' · ')}</span>;
+}
+
 export function InventoryChatWindow() {
   const dispatch = useDispatch();
   const conversationId = useSelector(selectConversationId);
@@ -435,6 +571,10 @@ export function InventoryChatWindow() {
   const messages = useSelector(selectMessages);
   const suggestions = useSelector(selectSuggestions);
   const isStreaming = useSelector(selectIsStreaming);
+  const modelName = useSelector(selectModelName);
+  const currentTurnStats = useSelector(selectCurrentTurnStats);
+  const streamStartTime = useSelector(selectStreamStartTime);
+  const streamOutputTokens = useSelector(selectStreamOutputTokens);
 
   const clientRef = useRef<InventoryWebChatClient | null>(null);
 
@@ -588,7 +728,15 @@ export function InventoryChatWindow() {
       placeholder="Ask about inventory..."
       suggestions={suggestions}
       showSuggestionsAlways
-      footer={<span>Streaming via /chat + /ws</span>}
+      footer={
+        <StatsFooter
+          modelName={modelName}
+          turnStats={currentTurnStats}
+          isStreaming={isStreaming}
+          streamStartTime={streamStartTime}
+          streamOutputTokens={streamOutputTokens}
+        />
+      }
     />
   );
 }
