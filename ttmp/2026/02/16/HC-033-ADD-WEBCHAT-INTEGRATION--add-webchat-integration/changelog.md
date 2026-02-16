@@ -197,3 +197,19 @@ Locked remaining Phase 0 decisions (runtime override policy, single assistant su
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/tasks.md — Marked `D0.1..D0.5` and `F9.1..F9.5` complete
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/index.md — Updated locked decision list and execution focus
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/design-doc/01-validated-analysis-and-hard-cutover-implementation-plan.md — Converted open decisions to resolved decisions
+
+## 2026-02-16
+
+Completed Phase 10 timeline hydration + persistence validation: frontend now bootstraps from `/api/timeline` before websocket attach, hydration merges cleanly with live frames by message/tool ids, timeline projection mapping has dedicated unit coverage for `status`/`tool_result`, reload-hydration smoke script passes, and backend integration now asserts durable turn snapshot persistence via SQLite turn store (commit pending).
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/InventoryChatWindow.tsx — Added timeline bootstrap/hydration flow and merged projection wiring via shared mapper
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/webchatClient.ts — Added `/api/timeline` snapshot client
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/chatSlice.ts — Added `upsertHydratedMessage` merge behavior for hydrate/live convergence
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/chatSlice.test.ts — Added hydrate/live merge policy tests
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/timelineProjection.ts — New pure timeline projection mapper for `timeline.upsert` entities
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/InventoryChatWindow.timeline.test.ts — New status/tool_result projection tests
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/cmd/hypercard-inventory-server/main_integration_test.go — Added turn store persistence integration test
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/scripts/smoke-reload-hydration-playwright.mjs — Added reload/hydration Playwright smoke script
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/tasks.md — Marked `F10.1..F10.6` complete

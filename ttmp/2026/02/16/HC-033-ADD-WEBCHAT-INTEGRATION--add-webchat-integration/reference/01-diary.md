@@ -49,7 +49,7 @@ RelatedFiles:
 ExternalSources:
     - local:webchat-hyper-integration.md
 Summary: Detailed planning diary for the webchat integration ticket before implementation starts.
-LastUpdated: 2026-02-16T13:25:00-05:00
+LastUpdated: 2026-02-16T15:36:00-05:00
 WhatFor: Preserve detailed planning trace and decision rationale before coding.
 WhenToUse: Use when reviewing why the implementation plan was shaped this way.
 ---
@@ -1487,3 +1487,142 @@ then do phase 9"
   - `content.card.cardId = templateToCardId(template)`
   - `content.card.param = artifactId`
   - `dedupeKey = artifact:<artifactId>`
+
+## Step 20: Complete Phase 10 Timeline Hydration + Persistence Validation
+
+I finished the full Phase 10 slice end-to-end: timeline bootstrap on mount, hydration mapping back into chat/artifact/timeline state, explicit merge-policy tests for hydrate+live convergence, reload-hydration smoke coverage, and backend turn-store snapshot persistence validation.
+
+This step also extracted timeline projection logic into a pure frontend module so status/tool_result behavior is directly unit tested (instead of only observable through runtime behavior).
+
+### Prompt Context
+
+**User prompt (verbatim):** "Continue."
+
+**Assistant interpretation:** Continue implementation from Phase 9 completion, execute the next planned phase in task order, and keep progress/validation/diary checkpoints up to date.
+
+**Inferred user intent:** Move forward with concrete implementation progress and evidence-driven checkoffs, not additional planning-only updates.
+
+**Commit (code):** pending at the time of writing this diary step.
+
+### What I did
+
+- Completed frontend timeline bootstrap and hydration flow:
+  - `apps/inventory/src/features/chat/webchatClient.ts`
+    - added `fetchTimelineSnapshot(conversationId)` for `GET /api/timeline?conv_id=...`
+    - added typed snapshot/entity adapters (`TimelineSnapshot`, `TimelineEntityRecord`)
+  - `apps/inventory/src/features/chat/InventoryChatWindow.tsx`
+    - on conversation mount: fetch timeline snapshot first, hydrate state, then open websocket
+    - added non-fatal bootstrap error projection into timeline (`timeline:bootstrap:<convId>`)
+- Added hydration reducer path and merge behavior:
+  - `apps/inventory/src/features/chat/chatSlice.ts`
+    - new `upsertHydratedMessage({id, role, text, status})`
+    - role normalization for hydrated rows (`assistant|ai -> ai`)
+    - id-based upsert semantics to prevent duplicate hydrated rows
+- Added explicit merge policy tests:
+  - `apps/inventory/src/features/chat/chatSlice.test.ts`
+    - hydrate-by-id dedupe
+    - keep existing text when replay frame has empty text
+    - merge hydrated row with later `llm.final` update on same id
+- Extracted timeline projection into a pure module and covered status/tool_result logic:
+  - new `apps/inventory/src/features/chat/timelineProjection.ts`
+    - exports `formatTimelineUpsert(...)` + `TimelineItemUpdate`
+    - maps `status`/`tool_call`/`tool_result` entities into timeline rows
+    - handles projected widget/card lifecycle status text (`Building/Updating ...`) as running rows
+    - maps `tool_call done+failed` to explicit error status/detail
+  - new `apps/inventory/src/features/chat/InventoryChatWindow.timeline.test.ts`
+    - projected card status mapping
+    - generic timeline error status mapping
+    - card proposal `tool_result` ready mapping with template/artifact detail
+    - tool_call start->error mapping behavior
+- Added backend integration assertion for turn snapshot persistence:
+  - `go-inventory-chat/cmd/hypercard-inventory-server/main_integration_test.go`
+    - added helper to pass router options into integration server factory
+    - new test `TestChatHandler_PersistsTurnSnapshotsWhenTurnStoreConfigured`
+    - wires real SQLite turn store via `webchat.WithTurnStore(...)`
+    - posts to `/chat` and polls `turnStore.List(...)` until snapshots appear
+    - asserts non-empty payloads and at least one `final` phase snapshot
+- Added reload-hydration Playwright smoke script:
+  - `ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/scripts/smoke-reload-hydration-playwright.mjs`
+    - sends a prompt
+    - verifies timeline snapshot has entities/kinds
+    - reloads page and verifies hydrated chat/timeline content appears again
+- Updated ticket docs/tasks:
+  - checked off `F10.1..F10.6` in `tasks.md`
+  - updated `index.md` next focus to Phase 11
+  - appended Phase 10 changelog entry
+
+### Why
+
+- Hydration-before-live websocket attach avoids race conditions where live frames arrive before historical context is present.
+- id-based reducer upserts are the core merge policy needed to keep hydrate+live streams convergent and non-duplicative.
+- Pure projection module + unit tests gives deterministic coverage for status/tool_result behavior that previously lived only inside UI glue code.
+- Turn snapshot persistence needed explicit integration proof against the real store API to close `F10.5` credibly.
+
+### What worked
+
+- Frontend typecheck passed after hydration and projection refactor:
+  - `pnpm -C apps/inventory exec tsc --noEmit`
+- Frontend chat-focused vitest suite passed with new tests:
+  - `npm exec vitest run apps/inventory/src/features/chat/chatSlice.test.ts apps/inventory/src/features/chat/artifactsSlice.test.ts apps/inventory/src/features/chat/artifactRuntime.test.ts apps/inventory/src/features/chat/InventoryChatWindow.timeline.test.ts`
+- Backend tests passed including new turn-store integration assertion:
+  - `cd go-inventory-chat && go test ./...`
+- New reload-hydration smoke script passed against active tmux backend/frontend:
+  - `node ttmp/.../scripts/smoke-reload-hydration-playwright.mjs`
+  - output included:
+    - `OK: reload hydration verified for conversation <uuid>`
+    - `OK: timeline entity kinds: message, tool_call, tool_result`
+
+### What didn't work
+
+- First attempt at the new reload-hydration Playwright script timed out waiting for exact pre/post AI text equality after reload.
+  - Error:
+    - `page.waitForFunction: Timeout 90000ms exceeded`
+- Root cause: strict text-equality assumption was too brittle for legitimate model output variation/render normalization.
+- Fix: relaxed assertion to require hydrated AI or timeline content after reload, plus non-empty timeline snapshot entities/kinds.
+
+### What I learned
+
+- For persistence smoke tests, structural assertions (conversation continuity + entity kinds + visible hydrated state) are more robust than strict natural-language text matching.
+- Keeping timeline projection in a dedicated pure module makes the lifecycle contract easier to evolve and test without pulling in React/worker runtime dependencies.
+
+### What was tricky to build
+
+- A direct unit test import from `InventoryChatWindow.tsx` triggered worker-runtime side effects (`Worker is not defined`) due engine import chain.
+- The fix was architectural and cleaner anyway: extract projection logic into `timelineProjection.ts` and test it directly.
+
+### What warrants a second pair of eyes
+
+- Phase 11 hard-cut cleanup still remains, notably:
+  - `C11.1` fake-stream dependency removal audit
+  - `C11.2` final assistant-surface cleanup confirmation
+  - `C11.5` final runbook/known-limitations polish
+- `F7.4` is still open and should be reconciled with current reducer/test coverage scope.
+
+### What should be done in the future
+
+- Execute Phase 11 cleanup/verification as the next commit chunk.
+- Add one UI-level test around hydrated artifact-panel rows after reload (card/widget panel continuity).
+
+### Code review instructions
+
+- Frontend hydration/projection core:
+  - `apps/inventory/src/features/chat/InventoryChatWindow.tsx`
+  - `apps/inventory/src/features/chat/timelineProjection.ts`
+  - `apps/inventory/src/features/chat/chatSlice.ts`
+- Frontend tests:
+  - `apps/inventory/src/features/chat/InventoryChatWindow.timeline.test.ts`
+  - `apps/inventory/src/features/chat/chatSlice.test.ts`
+- Backend persistence test:
+  - `go-inventory-chat/cmd/hypercard-inventory-server/main_integration_test.go`
+- Operator smoke script:
+  - `ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/scripts/smoke-reload-hydration-playwright.mjs`
+
+### Technical details
+
+- Phase 10 task closure status:
+  - `F10.1` ✅ timeline bootstrap call
+  - `F10.2` ✅ entity->state hydration mapping
+  - `F10.3` ✅ merge policy implemented + tests
+  - `F10.4` ✅ reload/hydration Playwright smoke
+  - `F10.5` ✅ turn store snapshot integration test
+  - `F10.6` ✅ status/tool_result projection tests

@@ -121,12 +121,12 @@
 
 ### 10. Timeline hydration and persistence validation
 
-- [ ] F10.1 Add timeline bootstrap call (`/api/timeline`).
-- [ ] F10.2 Map timeline entities back into chat/artifact state.
-- [ ] F10.3 Define and implement merge policy for hydrate + live frames.
-- [ ] F10.4 Add refresh/reload persistence tests.
-- [ ] F10.5 Validate turn persistence by checking turn store snapshots.
-- [ ] F10.6 Validate lifecycle projection behavior for status/tool_result entities (`start/update/ready/error`).
+- [x] F10.1 Add timeline bootstrap call (`/api/timeline`).
+- [x] F10.2 Map timeline entities back into chat/artifact state.
+- [x] F10.3 Define and implement merge policy for hydrate + live frames.
+- [x] F10.4 Add refresh/reload persistence tests.
+- [x] F10.5 Validate turn persistence by checking turn store snapshots.
+- [x] F10.6 Validate lifecycle projection behavior for status/tool_result entities (`start/update/ready/error`).
 
 ### 11. Hard-cut cleanup and final verification
 

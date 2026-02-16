@@ -27,7 +27,9 @@ RelatedFiles:
     - Path: go-inventory-chat/internal/pinoweb/hypercard_events.go
       Note: Custom event types, SEM mappings, and timeline projection handlers
     - Path: apps/inventory/src/features/chat/InventoryChatWindow.tsx
-      Note: Frontend SEM handling and timeline projection to chat widget
+      Note: Frontend SEM handling, timeline hydration bootstrap, and widget rendering integration
+    - Path: apps/inventory/src/features/chat/timelineProjection.ts
+      Note: Pure mapper for timeline.upsert entities (status/tool_call/tool_result -> timeline rows)
     - Path: apps/inventory/src/features/chat/chatSlice.ts
       Note: Chat reducer, timeline widget message model, and upsert action
     - Path: apps/inventory/src/features/chat/artifactsSlice.ts
@@ -37,11 +39,11 @@ RelatedFiles:
     - Path: apps/inventory/src/features/chat/InventoryTimelineWidget.tsx
       Note: Timeline widget presentation component
     - Path: apps/inventory/src/features/chat/webchatClient.ts
-      Note: /chat + /ws transport client and envelope normalization
+      Note: /chat + /ws transport client, envelope normalization, and /api/timeline snapshot bootstrap
     - Path: apps/inventory/src/stories/InventoryTimelineWidget.stories.tsx
       Note: Storybook examples for timeline renderer behavior
 Summary: Textbook-style onboarding playbook for understanding and extending the inventory webchat widget/timeline/event stack end-to-end.
-LastUpdated: 2026-02-16T15:25:00-05:00
+LastUpdated: 2026-02-16T15:36:00-05:00
 WhatFor: Give new developers enough context to confidently add or modify widgets, timeline projections, and event handling without prior project knowledge.
 WhenToUse: Read this before implementing any new structured widget/card format, timeline projection rule, or chat UI event mapping.
 ---
@@ -100,6 +102,7 @@ Ticket docs and scripts:
 - `ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/tasks.md`
 - `ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/reference/01-diary.md`
 - `ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/scripts/smoke-roundtrip-playwright.mjs`
+- `ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/scripts/smoke-reload-hydration-playwright.mjs`
 
 ### End-to-end architecture at a glance
 
@@ -615,7 +618,7 @@ File:
 Update:
 
 - `formatHypercardLifecycle(...)`
-- `formatTimelineUpsert(...)`
+- `formatTimelineUpsert(...)` in `timelineProjection.ts`
 
 Populate:
 
@@ -642,6 +645,7 @@ Backend tests:
 Frontend tests:
 
 - `apps/inventory/src/features/chat/chatSlice.test.ts`
+- `apps/inventory/src/features/chat/InventoryChatWindow.timeline.test.ts`
 
 Frontend stories:
 
@@ -670,6 +674,12 @@ Chat smoke:
 
 ```bash
 node ./ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/scripts/smoke-roundtrip-playwright.mjs
+```
+
+Reload + hydration persistence smoke:
+
+```bash
+node ./ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/scripts/smoke-reload-hydration-playwright.mjs
 ```
 
 ### tmux workflow used by this ticket
@@ -723,7 +733,7 @@ Only errors, no `*.v1` or `*.card_proposal.v1`:
 `projected`-style generic rows or missing metadata:
 
 - `tool_result` payload not parsed from `result`/`resultRaw`
-- missing mapping in `formatTimelineUpsert`
+- missing mapping in `timelineProjection.ts` (`formatTimelineUpsert`)
 
 Long noisy message list instead of one timeline widget:
 
