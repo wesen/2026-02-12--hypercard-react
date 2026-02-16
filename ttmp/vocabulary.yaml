@@ -15,6 +15,10 @@ topics:
       description: Domain-specific language related work
     - slug: frontend
       description: Frontend runtime, UI, and browser integration work
+    - slug: inventory
+      description: Inventory domain and operations
+    - slug: sqlite
+      description: SQLite schema, persistence, and query work
 docTypes:
     - slug: design-doc
       description: Structured rationale and architecture notes
