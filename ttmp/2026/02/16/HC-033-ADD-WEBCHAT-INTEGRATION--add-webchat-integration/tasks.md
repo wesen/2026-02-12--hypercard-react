@@ -141,3 +141,4 @@
 - [ ] A12.1 Dynamic plugin code injection from card proposals.
 - [ ] A12.2 Review/approve UX for generated plugin card definitions.
 - [ ] A12.3 Extended runtime override policies for multi-runtime environments.
+- [x] B3.8 Fix pinocchio SQLite turn-store migration compatibility for legacy turns tables missing updated_at_ms

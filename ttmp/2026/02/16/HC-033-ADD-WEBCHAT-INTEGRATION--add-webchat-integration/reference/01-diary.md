@@ -12,6 +12,10 @@ DocType: reference
 Intent: long-term
 Owners: []
 RelatedFiles:
+    - Path: ../../../../../../../pinocchio/pkg/persistence/chatstore/turn_store_sqlite.go
+      Note: Legacy turns schema migration/backfill fix for updated_at_ms startup crash
+    - Path: ../../../../../../../pinocchio/pkg/persistence/chatstore/turn_store_sqlite_test.go
+      Note: Regression coverage for legacy payload-schema and missing updated_at_ms cases
     - Path: 2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/design-doc/01-validated-analysis-and-hard-cutover-implementation-plan.md
       Note: Primary planning output documented in diary
     - Path: 2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/sources/local/webchat-hyper-integration.md
@@ -38,6 +42,8 @@ RelatedFiles:
       Note: Tool definitions and registration factories
     - Path: go-inventory-chat/cmd/hypercard-inventory-server/tools_inventory_test.go
       Note: Tool output-shape and validation tests
+    - Path: go-inventory-chat/go.mod
+      Note: Pinned go-inventory-chat to local patched pinocchio worktree
     - Path: go-inventory-chat/internal/inventorydb/store.go
       Note: Inventory DB implementation and repository methods
     - Path: go-inventory-chat/internal/inventorydb/store_test.go
@@ -53,6 +59,7 @@ LastUpdated: 2026-02-16T16:08:00-05:00
 WhatFor: Preserve detailed planning trace and decision rationale before coding.
 WhenToUse: Use when reviewing why the implementation plan was shaped this way.
 ---
+
 
 
 
@@ -1815,3 +1822,124 @@ Store in HC-033 and then uploda to remarkable."
   - `HC-032-HC-033 Consolidated Technical Postmortem` at `/ai/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION`
 - New ticket doc path:
   - `ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/design-doc/03-hc032-hc033-consolidated-technical-postmortem-and-continuation-guide.md`
+
+## Step 24: Fix Legacy `turns` SQLite Migration Crash (`updated_at_ms`) via Pinocchio Patch
+
+I paused `A12.*` scope work and treated this as an operational regression against the now-default webchat startup flow. The reported failure happened before request handling (`webchat.NewServer` initialization), so the fastest safe path was to patch turn-store schema migration in `pinocchio` and prove startup against the exact failing command and DB path.
+
+I also kept ticket bookkeeping synchronized while coding: added and completed a dedicated HC-033 task, then recorded this step with concrete command/error evidence so the fix path is auditable and reproducible.
+
+### Prompt Context
+
+**User prompt (verbatim):** "Working on docmgr ticket HC-033-ADD-WEBCHAT-INTEGRATION, add a task to fix: 2026-02-12--hypercard-react/go-inventory-chat on  task/hypercard-add-webchat via 🐹 v1.25.7 
+❯ go run ./cmd/hypercard-inventory-server  hypercard-inventory-server --timeline-db /tmp/timeline3.db --turns-db /tmp/turns.db
+Error: new webchat server: open turn store (file): sqlite turn store: migrate: no such column: updated_at_ms
+exit status 1 
+
+
+THis might involve fixing pinocchio/ . 
+
+Keep a frequent diary and commit when done"
+
+**Assistant interpretation:** Add a ticket task, reproduce/fix the startup migration failure for legacy turns DBs, keep diary details current, and commit the fix.
+
+**Inferred user intent:** Restore reliable inventory server startup on existing local SQLite turn databases without manual DB deletion/reset.
+
+**Commit (code):** `661ba35` — "fix(chatstore): migrate legacy sqlite turns schema safely" (in local `pinocchio` worktree)
+
+### What I did
+
+- Added ticket task:
+  - `B3.8 Fix pinocchio SQLite turn-store migration compatibility for legacy turns tables missing updated_at_ms`
+- Reproduced failure in `go-inventory-chat` with inventory DB override:
+  - `go run ./cmd/hypercard-inventory-server hypercard-inventory-server --inventory-db /tmp/inventory.db --timeline-db /tmp/timeline3.db --turns-db /tmp/turns.db`
+- Confirmed legacy schema shape in `/tmp/turns.db`:
+  - `turns(conv_id, session_id, turn_id, phase, created_at_ms, payload)` plus legacy indexes.
+- Patched `pinocchio/pkg/persistence/chatstore/turn_store_sqlite.go`:
+  - detect/rename legacy payload-style `turns` table,
+  - create/repair normalized tables,
+  - ensure missing normalized columns (including `updated_at_ms`) are added/backfilled,
+  - backfill legacy payload snapshots into normalized storage,
+  - drop legacy snapshot table after successful backfill,
+  - detect partial-migration FK mismatch (`turn_block_membership` referencing legacy table) and rebuild membership table.
+- Added regression tests in `pinocchio/pkg/persistence/chatstore/turn_store_sqlite_test.go` for:
+  - legacy payload-table migration,
+  - missing `updated_at_ms` column repair.
+- Ran validation:
+  - `go test ./pkg/persistence/chatstore` in `pinocchio`
+  - `go test ./...` in `go-inventory-chat`
+  - startup recheck with timeout:
+    - `timeout 12s go run ./cmd/hypercard-inventory-server hypercard-inventory-server --inventory-db /tmp/inventory.db --timeline-db /tmp/timeline3.db --turns-db /tmp/turns.db`
+  - server now starts and shuts down cleanly on timeout.
+- Updated `go-inventory-chat/go.mod` to use local patched pinocchio:
+  - `replace github.com/go-go-golems/pinocchio => ../../pinocchio`
+
+### Why
+
+- The failure was caused by a real schema migration compatibility gap (not runtime config misuse), so deleting DB files would have been a brittle workaround.
+- Fixing at `pinocchio` persistence layer resolves the issue for all app consumers in this workspace that rely on the same turn-store migration path.
+
+### What worked
+
+- Regression root cause was precise and reproducible.
+- New migration path correctly handled the exact legacy DB and launched server successfully.
+- Added tests passed and prevented silent reintroduction of the `updated_at_ms` breakage class.
+
+### What didn't work
+
+- Initial server run in sandboxed mode without explicit inventory DB override failed earlier with:
+  - `Error: open inventory sqlite db: ping inventory sqlite db: attempt to write a readonly database`
+  - command: `go run ./cmd/hypercard-inventory-server ... --timeline-db /tmp/timeline3.db --turns-db /tmp/turns.db`
+- First migration patch attempt hit a partial-state edge case:
+  - `sqlite turn store: backfill legacy snapshots: sqlite turn store: clear existing membership rowset: foreign key mismatch - "turn_block_membership" referencing "turn_snapshots_legacy"`
+  - fixed by detecting legacy FK target and dropping/recreating `turn_block_membership` before backfill.
+
+### What I learned
+
+- Legacy snapshot schema and normalized schema can coexist in a partially migrated DB, and SQLite rename semantics can retarget FK references in ways that break later writes.
+- Startup migration must be robust not just for pristine old schemas, but also for interrupted migration states.
+
+### What was tricky to build
+
+- The tricky part was not simply adding a missing column; the live DB had an older payload schema where `turns` was semantically a snapshot table, and earlier failed startup attempts left additional normalized artifacts.
+- Symptom chain:
+  - original `updated_at_ms` missing-column failure,
+  - then FK mismatch after first patch due `turn_block_membership` still tied to renamed legacy table.
+- Solution approach:
+  - classify schema shape first,
+  - branch migration steps accordingly,
+  - explicitly repair table dependency ordering before attempting row backfill.
+
+### What warrants a second pair of eyes
+
+- Review whether dropping the temporary legacy snapshot table post-backfill (`DROP TABLE IF EXISTS`) is the intended long-term policy versus retaining a forensic copy.
+- Review whether local `replace` in `go-inventory-chat/go.mod` should be kept only for worktree development or replaced with a tagged pinocchio release once available.
+
+### What should be done in the future
+
+- Publish this pinocchio fix as a versioned dependency and remove local `replace` in `go-inventory-chat` after update.
+- Add one more integration test in app repos that starts server against a seeded legacy turns DB fixture.
+
+### Code review instructions
+
+- Start in pinocchio migration code:
+  - `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/pinocchio/pkg/persistence/chatstore/turn_store_sqlite.go`
+- Verify regression coverage:
+  - `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/pinocchio/pkg/persistence/chatstore/turn_store_sqlite_test.go`
+- Confirm app dependency pin:
+  - `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/go.mod`
+- Validate runtime fix with:
+  - `go test ./...` in `go-inventory-chat`
+  - `timeout 12s go run ./cmd/hypercard-inventory-server hypercard-inventory-server --inventory-db /tmp/inventory.db --timeline-db /tmp/timeline3.db --turns-db /tmp/turns.db`
+
+### Technical details
+
+- Legacy table observed in failing DB:
+  - `turns(conv_id, session_id, turn_id, phase, created_at_ms, payload)`
+- New task id:
+  - `[99] B3.8`
+- Compatibility behaviors added:
+  - legacy table detection + rename,
+  - normalized-column ensure/backfill (`updated_at_ms` included),
+  - legacy snapshot replay via YAML parse -> normalized inserts,
+  - partial migration FK mismatch cleanup.

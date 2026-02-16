@@ -244,3 +244,14 @@ Authored and stored a comprehensive HC-032 + HC-033 consolidated technical postm
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/design-doc/03-hc032-hc033-consolidated-technical-postmortem-and-continuation-guide.md — New consolidated postmortem and continuation document
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/index.md — Added postmortem link in ticket index
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/reference/01-diary.md — Added execution diary step for postmortem authoring and upload
+
+## 2026-02-16
+
+Fix B3.8: patched pinocchio turn-store migration to handle legacy turns payload schemas and partial migration states; validated inventory server startup against existing /tmp/turns.db (pinocchio commit 661ba35). Added local go.mod replace to consume patched pinocchio in this worktree.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/go.mod — Local dependency pin to patched pinocchio
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/pinocchio/pkg/persistence/chatstore/turn_store_sqlite.go — Core migration fix
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/pinocchio/pkg/persistence/chatstore/turn_store_sqlite_test.go — Regression tests
+
