@@ -235,7 +235,7 @@ export function formatTimelineUpsert(data: Record<string, unknown>): TimelineIte
         rawData: resultRecord ?? (entity as Record<string, unknown>),
       };
     }
-    if (customKind === 'hypercard.card_proposal.v1' || customKind === 'hypercard.card.v2') {
+    if (customKind === 'hypercard.card.v2') {
       return {
         id: `card:${toolCallId}`,
         title: resultTitle ?? 'Card',

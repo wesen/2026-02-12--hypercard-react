@@ -117,7 +117,7 @@ export function extractArtifactUpsertFromSem(
       stringField(resultRecord, 'template');
     return artifactFromStructured(resultRecord, 'widget', template);
   }
-  if (customKind === 'hypercard.card_proposal.v1' || customKind === 'hypercard.card.v2') {
+  if (customKind === 'hypercard.card.v2') {
     const upsert = artifactFromStructured(resultRecord, 'card', stringField(resultRecord, 'template'));
     if (upsert && customKind === 'hypercard.card.v2') {
       const cardData = recordField(resultRecord, 'card') ?? (resultRecord.data ? recordField(resultRecord.data as Record<string, unknown>, 'card') : undefined);

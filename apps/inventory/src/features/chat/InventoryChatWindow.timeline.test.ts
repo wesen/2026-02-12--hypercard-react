@@ -61,7 +61,7 @@ describe('formatTimelineUpsert', () => {
         kind: 'tool_result',
         toolResult: {
           toolCallId: 'tool-2',
-          customKind: 'hypercard.card_proposal.v1',
+          customKind: 'hypercard.card.v2',
           result: resultRecord,
         },
       },
