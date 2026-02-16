@@ -1079,3 +1079,47 @@ This step produced a long-form onboarding and implementation playbook intended f
   - no-fallback structured output policy
   - title-gated `*.start` lifecycle semantics
   - richer timeline row metadata (`kind/template/artifactId`)
+
+## Step 15: Add Separate Generated Cards and Generated Widgets Panels
+
+This step implemented dedicated chat widgets for artifact outcomes so card proposals and widget artifacts are visible in their own panels instead of being mixed only into the run timeline list.
+
+### Prompt Context
+
+**User prompt (verbatim):** \"why do I get \\\"missing structured widget block\\\" ... but later on the proper card ... Also, make a separate widget for both cards and for widget.\"
+
+### Analysis outcome (root cause explanation)
+
+- The `missing structured ... block` events come from middleware that enforces structured tag presence on assistant turns (`inventory_artifact_generator`).
+- In multi-step tool loops, intermediate assistant/tool turns can fail that check and emit explicit error lifecycle events.
+- A later turn in the same conversation can still produce valid structured card/widget blocks, which then emits successful ready/projection events.
+- Result: error rows from earlier turns and success rows from later turns can both be correct and coexist in timeline history.
+
+### What I changed
+
+- Added dedicated reducer actions and system widget messages:
+  - `upsertCardPanelItem`
+  - `upsertWidgetPanelItem`
+  - backed by new widget message ids:
+    - `card-panel-widget-message`
+    - `widget-panel-widget-message`
+- Added new panel components:
+  - `InventoryCardPanelWidget`
+  - `InventoryGeneratedWidgetPanel`
+  - file: `apps/inventory/src/features/chat/InventoryArtifactPanelWidgets.tsx`
+- Updated SEM mapping fan-out in `InventoryChatWindow.tsx`:
+  - lifecycle/timeline updates continue to feed `Run Timeline`
+  - card updates also feed `Generated Cards`
+  - widget updates also feed `Generated Widgets`
+- Extended widget lifecycle mapping to include widget type metadata (`widgetType`) in panel/timeline row rendering.
+- Added story coverage for new panel widgets:
+  - `apps/inventory/src/stories/InventoryArtifactPanelWidgets.stories.tsx`
+- Added reducer test validating dedicated card/widget panel message creation and storage.
+
+### Validation
+
+- `pnpm -C apps/inventory exec tsc --noEmit` passed.
+- `npm exec vitest run apps/inventory/src/features/chat/chatSlice.test.ts` passed (`7` tests).
+- Live Playwright run confirmed new system widgets render in chat:
+  - `Generated Cards`
+  - `Generated Widgets`

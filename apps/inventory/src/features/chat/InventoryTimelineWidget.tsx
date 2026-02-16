@@ -20,7 +20,7 @@ export function timelineItemsFromInlineWidget(widget: InlineWidget): TimelineWid
   });
 }
 
-function statusGlyph(status: TimelineItemStatus): string {
+export function statusGlyph(status: TimelineItemStatus): string {
   if (status === 'running') {
     return '...';
   }
@@ -49,7 +49,7 @@ function kindLabel(kind: TimelineWidgetItem['kind']): string | null {
   return 'TIMELINE';
 }
 
-function statusColor(status: TimelineItemStatus): string {
+export function statusColor(status: TimelineItemStatus): string {
   if (status === 'error') {
     return '#c0352b';
   }

@@ -6,7 +6,9 @@ import {
   chatReducer,
   queueUserPrompt,
   setStreamError,
+  upsertCardPanelItem,
   upsertTimelineItem,
+  upsertWidgetPanelItem,
 } from './chatSlice';
 
 function reduce(actions: Parameters<typeof chatReducer>[1][]) {
@@ -133,5 +135,42 @@ describe('chatSlice', () => {
     expect(items[0]?.kind).toBe('card');
     expect(items[0]?.template).toBe('reportViewer');
     expect(items[0]?.artifactId).toBe('detailed_inventory_summary');
+  });
+
+  it('maintains separate card and widget panel messages', () => {
+    const state = reduce([
+      upsertCardPanelItem({
+        id: 'card:r1',
+        title: 'Detailed Inventory Summary',
+        status: 'success',
+        template: 'reportViewer',
+        artifactId: 'detailed_inventory_summary',
+        updatedAt: 50,
+      }),
+      upsertWidgetPanelItem({
+        id: 'widget:r1',
+        title: 'Inventory Summary Report',
+        status: 'success',
+        template: 'report',
+        artifactId: 'inventory_summary',
+        updatedAt: 60,
+      }),
+    ]);
+
+    const cardMessage = state.messages.find((message) => message.id === 'card-panel-widget-message');
+    const widgetMessage = state.messages.find((message) => message.id === 'widget-panel-widget-message');
+    expect(cardMessage).toBeTruthy();
+    expect(widgetMessage).toBeTruthy();
+
+    const cardItems = (cardMessage?.content?.[0]?.kind === 'widget'
+      ? ((cardMessage.content[0].widget.props as Record<string, unknown>).items as Array<Record<string, unknown>>)
+      : []) ?? [];
+    const widgetItems = (widgetMessage?.content?.[0]?.kind === 'widget'
+      ? ((widgetMessage.content[0].widget.props as Record<string, unknown>).items as Array<Record<string, unknown>>)
+      : []) ?? [];
+    expect(cardItems[0]?.title).toBe('Detailed Inventory Summary');
+    expect(cardItems[0]?.template).toBe('reportViewer');
+    expect(widgetItems[0]?.title).toBe('Inventory Summary Report');
+    expect(widgetItems[0]?.template).toBe('report');
   });
 });

@@ -143,3 +143,15 @@ Authored a textbook-style onboarding playbook for widget/timeline/event integrat
 
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/design-doc/02-widget-timeline-event-integration-playbook.md — New comprehensive integration playbook
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/index.md — Added playbook to index links and related files
+
+## 2026-02-16
+
+Added separate in-chat artifact panels for generated cards and generated widgets (in addition to the run timeline), wired panel updates from lifecycle/timeline event mapping, and added Storybook coverage for the new panel widgets.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/chatSlice.ts — Added `upsertCardPanelItem` and `upsertWidgetPanelItem` reducers plus dedicated widget message IDs
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/InventoryChatWindow.tsx — Fan-out mapping from card/widget lifecycle events into dedicated panel upserts and widget render switch
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/InventoryArtifactPanelWidgets.tsx — New card/widget panel renderer components
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/stories/InventoryArtifactPanelWidgets.stories.tsx — Storybook stories for card/widget panel widgets
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/chatSlice.test.ts — Added reducer test validating dedicated card/widget panel messages

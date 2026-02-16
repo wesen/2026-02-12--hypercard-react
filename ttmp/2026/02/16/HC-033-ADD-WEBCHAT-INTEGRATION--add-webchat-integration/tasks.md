@@ -95,6 +95,7 @@
 - [ ] F7.4 Add reducer tests for streaming order, title-gated starts, and event attachment.
 - [x] F7.5 Validate regression-free behavior for minimal round-trip flow introduced in Phase 2.5.
 - [x] F7.6 Add Storybook stories for the timeline widget renderer.
+- [x] F7.7 Add separate in-chat widget panels for generated cards and generated widgets.
 
 ### 8. Chat window integration
 

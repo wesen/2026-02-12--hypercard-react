@@ -17,7 +17,12 @@ export interface TimelineWidgetItem {
 
 const TIMELINE_WIDGET_MESSAGE_ID = 'timeline-widget-message';
 const TIMELINE_WIDGET_ID = 'inventory-timeline-widget';
+const CARD_PANEL_MESSAGE_ID = 'card-panel-widget-message';
+const CARD_PANEL_WIDGET_ID = 'inventory-card-panel-widget';
+const WIDGET_PANEL_MESSAGE_ID = 'widget-panel-widget-message';
+const WIDGET_PANEL_WIDGET_ID = 'inventory-widget-panel-widget';
 const MAX_TIMELINE_ITEMS = 24;
+const MAX_PANEL_ITEMS = 16;
 
 interface ChatState {
   conversationId: string | null;
@@ -64,7 +69,7 @@ function stripTrailingWhitespace(value: string): string {
   return value.replace(/[ \t]+$/gm, '').trimEnd();
 }
 
-function timelineItemsFromMessage(message: ChatWindowMessage): TimelineWidgetItem[] {
+function widgetItemsFromMessage(message: ChatWindowMessage): TimelineWidgetItem[] {
   const block = message.content?.find((entry) => entry.kind === 'widget');
   if (!block || !isWidget(block.widget) || !block.widget.props) {
     return [];
@@ -90,7 +95,7 @@ function timelineItemsFromMessage(message: ChatWindowMessage): TimelineWidgetIte
   });
 }
 
-function setTimelineItems(message: ChatWindowMessage, items: TimelineWidgetItem[]) {
+function setWidgetItems(message: ChatWindowMessage, items: TimelineWidgetItem[]) {
   const widgetBlock = message.content?.find((entry) => entry.kind === 'widget');
   if (!widgetBlock || !isWidget(widgetBlock.widget)) {
     return;
@@ -101,14 +106,20 @@ function setTimelineItems(message: ChatWindowMessage, items: TimelineWidgetItem[
   };
 }
 
-function ensureTimelineWidgetMessage(state: ChatState): ChatWindowMessage {
-  let message = findMessage(state, TIMELINE_WIDGET_MESSAGE_ID);
+function ensureWidgetMessage(
+  state: ChatState,
+  messageID: string,
+  widgetID: string,
+  widgetType: string,
+  label: string,
+): ChatWindowMessage {
+  let message = findMessage(state, messageID);
   if (message) {
     return message;
   }
 
   message = {
-    id: TIMELINE_WIDGET_MESSAGE_ID,
+    id: messageID,
     role: 'system',
     text: '',
     status: 'complete',
@@ -116,9 +127,9 @@ function ensureTimelineWidgetMessage(state: ChatState): ChatWindowMessage {
       {
         kind: 'widget',
         widget: {
-          id: TIMELINE_WIDGET_ID,
-          type: 'inventory.timeline',
-          label: 'Run Timeline',
+          id: widgetID,
+          type: widgetType,
+          label,
           props: {
             items: [],
           },
@@ -128,6 +139,85 @@ function ensureTimelineWidgetMessage(state: ChatState): ChatWindowMessage {
   };
   state.messages.push(message);
   return message;
+}
+
+function ensureTimelineWidgetMessage(state: ChatState): ChatWindowMessage {
+  return ensureWidgetMessage(
+    state,
+    TIMELINE_WIDGET_MESSAGE_ID,
+    TIMELINE_WIDGET_ID,
+    'inventory.timeline',
+    'Run Timeline',
+  );
+}
+
+function ensureCardPanelMessage(state: ChatState): ChatWindowMessage {
+  return ensureWidgetMessage(
+    state,
+    CARD_PANEL_MESSAGE_ID,
+    CARD_PANEL_WIDGET_ID,
+    'inventory.cards',
+    'Generated Cards',
+  );
+}
+
+function ensureWidgetPanelMessage(state: ChatState): ChatWindowMessage {
+  return ensureWidgetMessage(
+    state,
+    WIDGET_PANEL_MESSAGE_ID,
+    WIDGET_PANEL_WIDGET_ID,
+    'inventory.widgets',
+    'Generated Widgets',
+  );
+}
+
+function applyTimelineItemUpsert(
+  message: ChatWindowMessage,
+  payload: {
+    id: string;
+    title: string;
+    status: TimelineItemStatus;
+    detail?: string;
+    kind?: 'tool' | 'widget' | 'card' | 'timeline';
+    template?: string;
+    artifactId?: string;
+    updatedAt?: number;
+  },
+  maxItems: number,
+  defaultKind?: 'tool' | 'widget' | 'card' | 'timeline',
+) {
+  const items = widgetItemsFromMessage(message);
+  const updatedAt = payload.updatedAt ?? Date.now();
+  const existingIndex = items.findIndex((item) => item.id === payload.id);
+  const nextItem: TimelineWidgetItem = {
+    id: payload.id,
+    title: payload.title,
+    status: payload.status,
+    detail: payload.detail ? stripTrailingWhitespace(payload.detail).trim() : undefined,
+    updatedAt,
+  };
+  const nextKind = payload.kind ?? defaultKind;
+  if (nextKind) {
+    nextItem.kind = nextKind;
+  }
+  if (payload.template) {
+    nextItem.template = payload.template.trim();
+  }
+  if (payload.artifactId) {
+    nextItem.artifactId = payload.artifactId.trim();
+  }
+
+  if (existingIndex >= 0) {
+    items[existingIndex] = {
+      ...items[existingIndex],
+      ...nextItem,
+    };
+  } else {
+    items.push(nextItem);
+  }
+
+  items.sort((a, b) => b.updatedAt - a.updatedAt);
+  setWidgetItems(message, items.slice(0, maxItems));
 }
 
 const chatSlice = createSlice({
@@ -254,37 +344,75 @@ const chatSlice = createSlice({
       }
 
       const message = ensureTimelineWidgetMessage(state);
-      const items = timelineItemsFromMessage(message);
-      const updatedAt = action.payload.updatedAt ?? Date.now();
-      const existingIndex = items.findIndex((item) => item.id === id);
-      const nextItem: TimelineWidgetItem = {
-        id,
-        title,
-        status: action.payload.status,
-        detail: action.payload.detail ? stripTrailingWhitespace(action.payload.detail).trim() : undefined,
-        updatedAt,
-      };
-      if (action.payload.kind) {
-        nextItem.kind = action.payload.kind;
+      applyTimelineItemUpsert(
+        message,
+        {
+          ...action.payload,
+          id,
+          title,
+        },
+        MAX_TIMELINE_ITEMS,
+      );
+    },
+    upsertCardPanelItem(
+      state,
+      action: PayloadAction<{
+        id: string;
+        title: string;
+        status: TimelineItemStatus;
+        detail?: string;
+        kind?: 'tool' | 'widget' | 'card' | 'timeline';
+        template?: string;
+        artifactId?: string;
+        updatedAt?: number;
+      }>,
+    ) {
+      const id = action.payload.id.trim();
+      const title = action.payload.title.trim();
+      if (id.length === 0 || title.length === 0) {
+        return;
       }
-      if (action.payload.template) {
-        nextItem.template = action.payload.template.trim();
+      const message = ensureCardPanelMessage(state);
+      applyTimelineItemUpsert(
+        message,
+        {
+          ...action.payload,
+          id,
+          title,
+        },
+        MAX_PANEL_ITEMS,
+        'card',
+      );
+    },
+    upsertWidgetPanelItem(
+      state,
+      action: PayloadAction<{
+        id: string;
+        title: string;
+        status: TimelineItemStatus;
+        detail?: string;
+        kind?: 'tool' | 'widget' | 'card' | 'timeline';
+        template?: string;
+        artifactId?: string;
+        updatedAt?: number;
+      }>,
+    ) {
+      const id = action.payload.id.trim();
+      const title = action.payload.title.trim();
+      if (id.length === 0 || title.length === 0) {
+        return;
       }
-      if (action.payload.artifactId) {
-        nextItem.artifactId = action.payload.artifactId.trim();
-      }
-
-      if (existingIndex >= 0) {
-        items[existingIndex] = {
-          ...items[existingIndex],
-          ...nextItem,
-        };
-      } else {
-        items.push(nextItem);
-      }
-
-      items.sort((a, b) => b.updatedAt - a.updatedAt);
-      setTimelineItems(message, items.slice(0, MAX_TIMELINE_ITEMS));
+      const message = ensureWidgetPanelMessage(state);
+      applyTimelineItemUpsert(
+        message,
+        {
+          ...action.payload,
+          id,
+          title,
+        },
+        MAX_PANEL_ITEMS,
+        'widget',
+      );
     },
     setStreamError(state, action: PayloadAction<{ message: string }>) {
       const message = action.payload.message.trim() || 'Request failed';
@@ -323,6 +451,8 @@ export const {
   applyLLMFinal,
   appendToolEvent,
   upsertTimelineItem,
+  upsertCardPanelItem,
+  upsertWidgetPanelItem,
   setStreamError,
   resetConversation,
 } = chatSlice.actions;

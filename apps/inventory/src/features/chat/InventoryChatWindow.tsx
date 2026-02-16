@@ -10,7 +10,9 @@ import {
   setConversationId,
   setStreamError,
   type TimelineItemStatus,
+  upsertCardPanelItem,
   upsertTimelineItem,
+  upsertWidgetPanelItem,
 } from './chatSlice';
 import { selectConnectionStatus, selectConversationId, selectIsStreaming, selectMessages } from './selectors';
 import {
@@ -21,6 +23,7 @@ import {
   submitPrompt,
 } from './webchatClient';
 import { InventoryTimelineWidget, timelineItemsFromInlineWidget } from './InventoryTimelineWidget';
+import { InventoryCardPanelWidget, InventoryGeneratedWidgetPanel } from './InventoryArtifactPanelWidgets';
 
 function eventIdFromEnvelope(envelope: SemEventEnvelope): string {
   const eventId = envelope.event?.id;
@@ -121,6 +124,15 @@ interface TimelineItemUpdate {
   artifactId?: string;
 }
 
+function fanOutArtifactPanelUpdate(update: TimelineItemUpdate, dispatch: ReturnType<typeof useDispatch>) {
+  if (update.kind === 'card') {
+    dispatch(upsertCardPanelItem(update));
+  }
+  if (update.kind === 'widget') {
+    dispatch(upsertWidgetPanelItem(update));
+  }
+}
+
 function statusFromTimelineType(value: string | undefined): TimelineItemStatus {
   if (value === 'error') {
     return 'error';
@@ -140,14 +152,28 @@ function formatHypercardLifecycle(
 
   if (type === 'hypercard.widget.start') {
     const id = itemId ?? 'unknown';
-    return { id: `widget:${id}`, title: title ?? 'Widget', status: 'running', detail: 'started', kind: 'widget' };
+    return {
+      id: `widget:${id}`,
+      title: title ?? 'Widget',
+      status: 'running',
+      detail: 'started',
+      kind: 'widget',
+      template: stringField(data, 'widgetType'),
+    };
   }
   if (type === 'hypercard.widget.update') {
     const id = itemId ?? 'unknown';
-    return { id: `widget:${id}`, title: title ?? 'Widget', status: 'running', detail: 'updating', kind: 'widget' };
+    return {
+      id: `widget:${id}`,
+      title: title ?? 'Widget',
+      status: 'running',
+      detail: 'updating',
+      kind: 'widget',
+      template: stringField(data, 'widgetType'),
+    };
   }
   if (type === 'hypercard.widget.v1') {
-    const template = stringField(data, 'template');
+    const widgetType = stringField(data, 'widgetType') ?? stringField(data, 'template');
     const payload = recordField(data, 'data');
     const artifact = payload ? recordField(payload, 'artifact') : undefined;
     const artifactId = artifact ? stringField(artifact, 'id') : undefined;
@@ -156,9 +182,9 @@ function formatHypercardLifecycle(
       id: `widget:${id}`,
       title: title ?? 'Widget',
       status: 'success',
-      detail: shortText(readyDetail(template, artifactId)),
+      detail: shortText(readyDetail(widgetType, artifactId)),
       kind: 'widget',
-      template,
+      template: widgetType,
       artifactId,
     };
   }
@@ -170,6 +196,7 @@ function formatHypercardLifecycle(
       status: 'error',
       detail: shortText(stringField(data, 'error') ?? 'unknown error'),
       kind: 'widget',
+      template: stringField(data, 'widgetType'),
     };
   }
 
@@ -250,15 +277,16 @@ function formatTimelineUpsert(
       structuredRecordFromUnknown(toolResult.result) ?? structuredRecordFromUnknown(toolResult.resultRaw);
     const resultTitle = resultRecord ? stringField(resultRecord, 'title') : undefined;
     const resultTemplate = resultRecord ? stringField(resultRecord, 'template') : undefined;
+    const resultWidgetType = resultRecord ? stringField(resultRecord, 'type') : undefined;
     const resultArtifactId = artifactIdFromStructuredResult(resultRecord);
     if (customKind === 'hypercard.widget.v1') {
       return {
         id: `widget:${toolCallId}`,
         title: resultTitle ?? 'Widget',
         status: 'success',
-        detail: shortText(readyDetail(resultTemplate, resultArtifactId)),
+        detail: shortText(readyDetail(resultWidgetType, resultArtifactId)),
         kind: 'widget',
-        template: resultTemplate,
+        template: resultWidgetType,
         artifactId: resultArtifactId,
       };
     }
@@ -381,6 +409,7 @@ function onSemEnvelope(envelope: SemEventEnvelope, dispatch: ReturnType<typeof u
   const lifecycleText = type ? formatHypercardLifecycle(type, data) : undefined;
   if (lifecycleText) {
     dispatch(upsertTimelineItem(lifecycleText));
+    fanOutArtifactPanelUpdate(lifecycleText, dispatch);
     return;
   }
 
@@ -388,6 +417,7 @@ function onSemEnvelope(envelope: SemEventEnvelope, dispatch: ReturnType<typeof u
     const timelineUpdate = formatTimelineUpsert(data);
     if (timelineUpdate) {
       dispatch(upsertTimelineItem(timelineUpdate));
+      fanOutArtifactPanelUpdate(timelineUpdate, dispatch);
     }
     return;
   }
@@ -460,10 +490,17 @@ export function InventoryChatWindow() {
   );
 
   const renderWidget = useCallback((widget: InlineWidget) => {
+    const items = timelineItemsFromInlineWidget(widget);
     if (widget.type !== 'inventory.timeline') {
+      if (widget.type === 'inventory.cards') {
+        return <InventoryCardPanelWidget items={items} />;
+      }
+      if (widget.type === 'inventory.widgets') {
+        return <InventoryGeneratedWidgetPanel items={items} />;
+      }
       return null;
     }
-    return <InventoryTimelineWidget items={timelineItemsFromInlineWidget(widget)} />;
+    return <InventoryTimelineWidget items={items} />;
   }, []);
 
   const handleSend = useCallback(
