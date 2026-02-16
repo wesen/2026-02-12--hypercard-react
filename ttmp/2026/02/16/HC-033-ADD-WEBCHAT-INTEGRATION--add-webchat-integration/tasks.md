@@ -69,9 +69,10 @@
 - [x] B5.2 Ensure policy middleware injects stable structured output instructions.
 - [x] B5.3 Add `inventory_artifact_generator` middleware package.
 - [x] B5.4 Ensure middleware does not synthesize fallback success payloads (strict no-fallback behavior).
-- [x] B5.5 Ensure malformed/missing structured outputs are surfaced as explicit error lifecycle events.
+- [x] B5.5 Ensure malformed structured outputs are surfaced as explicit error lifecycle events.
 - [x] B5.6 Add middleware factories and runtime middleware config wiring.
 - [x] B5.7 Add middleware unit tests for deterministic generation and idempotence.
+- [x] B5.8 Add optional `inventory_suggestions_policy` middleware for model-authored follow-up chips.
 
 ### 6. Structured extraction and SEM mapping
 
@@ -87,6 +88,8 @@
 - [x] B6.10 Register timeline handlers for lifecycle projection (`status` + `tool_result` upserts).
 - [x] B6.11 Add extractor tests for fragmented tags, malformed blocks, title-gated start, and success paths.
 - [x] B6.12 Add websocket integration tests for progressive lifecycle events.
+- [x] B6.13 Implement `hypercard:suggestions:v1` extractor with progressive `start/update/v1/error` events.
+- [x] B6.14 Register SEM mappings for `hypercard.suggestions.*` events.
 
 ### 7. Frontend artifact-aware expansion (post-round-trip cutover)
 
@@ -97,6 +100,8 @@
 - [x] F7.5 Validate regression-free behavior for minimal round-trip flow introduced in Phase 2.5.
 - [x] F7.6 Add Storybook stories for the timeline widget renderer.
 - [x] F7.7 Add separate in-chat widget panels for generated cards and generated widgets.
+- [x] F7.8 Map `hypercard.suggestions.*` events into existing chat suggestions widget with incremental fill.
+- [x] F7.9 Add reducer tests for suggestion merge/replace normalization.
 
 ### 8. Chat window integration
 

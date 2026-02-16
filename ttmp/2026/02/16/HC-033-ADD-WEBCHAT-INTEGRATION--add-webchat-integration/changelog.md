@@ -164,3 +164,18 @@ Removed runtime enforcement that emitted \"missing structured widget/card block\
 
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/internal/pinoweb/runtime_composer.go — Removed `inventory_artifact_generator` middleware from active runtime chain
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/tasks.md — Recorded decision lock for no mandatory structured-block enforcement
+
+## 2026-02-16
+
+Added optional model-authored suggestion chips end-to-end: runtime suggestions policy middleware, progressive `hypercard.suggestions.*` structured events, and frontend incremental chip updates wired into the existing `chat-suggestions` widget. Also updated the integration playbook/tasks to reflect the no-mandatory-structured-block policy and the new suggestions event flow.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/internal/pinoweb/hypercard_middleware.go — Added `inventory_suggestions_policy` middleware and shared system-block upsert helper
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/internal/pinoweb/hypercard_extractors.go — Added `hypercard:suggestions:v1` extractor with progressive parse sessions
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/internal/pinoweb/hypercard_events.go — Added suggestions event types + SEM mappings
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/InventoryChatWindow.tsx — Mapped `hypercard.suggestions.*` events to suggestion-chip reducer actions
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/chatSlice.ts — Added suggestions state and merge/replace normalization
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/widgets/ChatWindow.tsx — Added `showSuggestionsAlways` support for streaming-time suggestion updates
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/design-doc/02-widget-timeline-event-integration-playbook.md — Updated playbook for suggestions + no mandatory structured blocks
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/tasks.md — Checked off suggestions-related backend/frontend tasks

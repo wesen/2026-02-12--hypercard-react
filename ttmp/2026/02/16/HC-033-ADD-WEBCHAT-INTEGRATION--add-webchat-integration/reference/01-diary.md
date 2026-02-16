@@ -1153,3 +1153,143 @@ File changed:
 - Restarted backend tmux session and verified with Playwright:
   - normal conversational prompt produced no missing-block errors,
   - structured widget output still rendered in timeline/panels when present.
+
+## Step 17: Add Optional Suggestions Middleware and Streaming Suggestion-Chip Projection
+
+This step added an optional suggestions channel on top of the existing chat round-trip without reintroducing strict structured-block enforcement. The backend now allows the model to emit `<hypercard:suggestions:v1>` blocks when useful, and the frontend incrementally projects those events into the existing suggestion chip row.
+
+I also updated the integration playbook/tasks/changelog so new developers do not inherit the outdated assumption that missing structured widget/card blocks should emit errors by default.
+
+### Prompt Context
+
+**User prompt (verbatim):** "ok, update your playbook as necessary. Also add a new middleware to allow the model to show suggestions (if it decides to, it doesn't need to be) : 
+
+<div data-part=\"chat-suggestions\"><button data-part=\"chip\">Show current inventory status</button><button data-part=\"chip\">What items are low stock?</button><button data-part=\"chip\">Summarize today sales</button></div>
+
+Map the structured events from that middleware to the existing suggestion widget, incrementally filling it as you get them streaming in."
+
+**Assistant interpretation:** Add optional suggestions middleware + extractor + SEM events, map those events into the existing frontend suggestion chips with progressive updates, and revise ticket playbook/docs to match current policy.
+
+**Inferred user intent:** Keep the UX lightweight and model-driven: suggestions should appear naturally when the model emits them, stream in progressively, and avoid extra compatibility or fallback layers.
+
+**Commit (code):** `2a215d1` — "Add optional suggestions middleware and streaming chip projection"
+
+### What I did
+
+- Backend runtime/middleware:
+  - Added `InventorySuggestionsPolicyConfig` and `NewInventorySuggestionsPolicyMiddleware` in `go-inventory-chat/internal/pinoweb/hypercard_middleware.go`.
+  - Added `defaultSuggestionsPolicyInstructions()` with optional `<hypercard:suggestions:v1>` YAML guidance and canonical chip examples.
+  - Refactored system-instruction insertion to `upsertSystemBlockByMiddleware(...)` so artifact and suggestions policies can coexist cleanly.
+  - Wired suggestions middleware into runtime composition in `go-inventory-chat/internal/pinoweb/runtime_composer.go`.
+- Backend structured extraction and events:
+  - Added `inventorySuggestionsExtractor` + `inventorySuggestionsSession` to parse `hypercard:suggestions:v1` progressively.
+  - Added normalized/deduped capped suggestions parsing (`normalizeSuggestions`, max 8).
+  - Added custom events in `go-inventory-chat/internal/pinoweb/hypercard_events.go`:
+    - `hypercard.suggestions.start`
+    - `hypercard.suggestions.update`
+    - `hypercard.suggestions.v1`
+    - `hypercard.suggestions.error`
+  - Registered event factories and SEM mappings for all suggestions events.
+  - Added extractor regression test `TestSuggestionsExtractor_ProgressiveStartUpdateReady`.
+- Frontend reducer + mapping:
+  - Added `suggestions` state, defaults, normalization, and actions in `apps/inventory/src/features/chat/chatSlice.ts`:
+    - `replaceSuggestions`
+    - `mergeSuggestions`
+  - Cleared suggestions on new `queueUserPrompt` to support turn-local refill while streaming.
+  - Added `selectSuggestions` in `apps/inventory/src/features/chat/selectors.ts`.
+  - Mapped SEM suggestion events in `apps/inventory/src/features/chat/InventoryChatWindow.tsx`:
+    - `start/update` => `mergeSuggestions`
+    - `v1` => `replaceSuggestions`
+  - Switched `ChatWindow` suggestions prop from static defaults to reducer state.
+  - Added `showSuggestionsAlways` prop to `packages/engine/src/components/widgets/ChatWindow.tsx` so chips can be visible during streaming when present.
+- Tests and checks:
+  - `go test ./...` in `go-inventory-chat`.
+  - `pnpm -C apps/inventory exec tsc --noEmit`.
+  - `npm exec vitest run apps/inventory/src/features/chat/chatSlice.test.ts`.
+- Ticket docs updated in this step:
+  - Updated playbook page to document optional suggestions lifecycle and no mandatory structured-block enforcement.
+  - Checked off new suggestions tasks in `tasks.md`.
+  - Added changelog entry for suggestions middleware/event flow.
+
+### Why
+
+- Suggestions are intentionally optional; the model should emit them only when they improve follow-up UX.
+- Progressive parse + SEM streaming keeps the frontend responsive without waiting for final completion.
+- Reusing the existing `chat-suggestions` widget avoids additional frontend surface area and keeps hard-cut complexity low.
+
+### What worked
+
+- Progressive extractor snapshots emitted usable `start/update` events from partial YAML.
+- Final `hypercard.suggestions.v1` replaced chip list deterministically.
+- Reducer dedupe/normalization prevented repeated chips and stabilized casing/whitespace behavior.
+- Backend and frontend checks passed after updating engine declarations.
+
+### What didn't work
+
+- Initial command attempts failed because I started in the parent workspace path rather than the git worktree root:
+  - `git status --short` -> `fatal: not a git repository (or any of the parent directories): .git`
+  - `rg ... go-inventory-chat ...` -> path-not-found errors.
+- First frontend typecheck run failed after adding `showSuggestionsAlways`:
+  - `src/features/chat/InventoryChatWindow.tsx(576,7): error TS2322 ... Property 'showSuggestionsAlways' does not exist on type '...ChatWindowProps'.`
+  - Cause: stale project-reference declarations for `@hypercard/engine`.
+  - Fix: rebuilt engine declarations with `pnpm -C packages/engine exec tsc -b`, then reran `pnpm -C apps/inventory exec tsc --noEmit` successfully.
+
+### What I learned
+
+- Even when source-level path mapping targets `packages/engine/src`, project-reference builds can still require an explicit rebuild of the referenced package to refresh declaration shape for downstream typecheck runs.
+- For optional structured features, modeling `start/update/final` as merge/merge/replace in reducer gives stable behavior with minimal frontend complexity.
+
+### What was tricky to build
+
+- Keeping suggestions truly optional while still preserving no-fallback behavior required a clear contract split:
+  - middleware provides optional format guidance,
+  - extractor only emits events when tag exists and parses,
+  - runtime emits no missing-tag errors.
+- The reducer needed to preserve UX continuity across turns:
+  - clear stale chips at prompt queue time,
+  - repopulate as suggestion events stream in.
+
+### What warrants a second pair of eyes
+
+- Suggestion lifecycle semantics under noisy model output (frequent partial list reorderings) should be reviewed for potential flicker or excessive merges.
+- The chosen cap (`MAX_SUGGESTIONS = 8`) and middleware guidance (`1..5`) are intentionally conservative; verify if product UX wants stricter alignment.
+
+### What should be done in the future
+
+- Add an end-to-end websocket integration test that asserts `hypercard.suggestions.*` reaches the frontend mapping path (currently covered by unit-level extractor + reducer tests, but not full UI smoke for suggestions).
+
+### Code review instructions
+
+- Start backend review here:
+  - `go-inventory-chat/internal/pinoweb/hypercard_middleware.go`
+  - `go-inventory-chat/internal/pinoweb/runtime_composer.go`
+  - `go-inventory-chat/internal/pinoweb/hypercard_extractors.go`
+  - `go-inventory-chat/internal/pinoweb/hypercard_events.go`
+- Then frontend wiring:
+  - `apps/inventory/src/features/chat/InventoryChatWindow.tsx`
+  - `apps/inventory/src/features/chat/chatSlice.ts`
+  - `packages/engine/src/components/widgets/ChatWindow.tsx`
+- Validate with:
+  - `cd go-inventory-chat && go test ./...`
+  - `pnpm -C packages/engine exec tsc -b`
+  - `pnpm -C apps/inventory exec tsc --noEmit`
+  - `npm exec vitest run apps/inventory/src/features/chat/chatSlice.test.ts`
+
+### Technical details
+
+- New SEM event types introduced:
+  - `hypercard.suggestions.start`
+  - `hypercard.suggestions.update`
+  - `hypercard.suggestions.v1`
+  - `hypercard.suggestions.error`
+- Frontend projection contract:
+  - `start/update` -> incremental merge
+  - `v1` -> final replace
+- Middleware contract block:
+  - `<hypercard:suggestions:v1>`
+  - YAML body:
+    - `suggestions:`
+    - `  - Show current inventory status`
+    - `  - What items are low stock?`
+    - `  - Summarize today sales`
+  - `</hypercard:suggestions:v1>`

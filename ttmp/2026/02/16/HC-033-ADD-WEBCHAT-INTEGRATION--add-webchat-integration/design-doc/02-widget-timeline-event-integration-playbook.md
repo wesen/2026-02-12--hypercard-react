@@ -21,7 +21,7 @@ RelatedFiles:
     - Path: go-inventory-chat/internal/pinoweb/request_resolver.go
       Note: Strict request policy for conv_id/runtime/override handling
     - Path: go-inventory-chat/internal/pinoweb/hypercard_middleware.go
-      Note: Structured output policy and no-fallback error behavior
+      Note: Structured output policy middlewares (artifact + optional suggestions) and no-fallback behavior
     - Path: go-inventory-chat/internal/pinoweb/hypercard_extractors.go
       Note: Progressive YAML parsing and lifecycle event emission
     - Path: go-inventory-chat/internal/pinoweb/hypercard_events.go
@@ -37,7 +37,7 @@ RelatedFiles:
     - Path: apps/inventory/src/stories/InventoryTimelineWidget.stories.tsx
       Note: Storybook examples for timeline renderer behavior
 Summary: Textbook-style onboarding playbook for understanding and extending the inventory webchat widget/timeline/event stack end-to-end.
-LastUpdated: 2026-02-16T14:02:00-05:00
+LastUpdated: 2026-02-16T14:45:00-05:00
 WhatFor: Give new developers enough context to confidently add or modify widgets, timeline projections, and event handling without prior project knowledge.
 WhenToUse: Read this before implementing any new structured widget/card format, timeline projection rule, or chat UI event mapping.
 ---
@@ -74,7 +74,7 @@ The objective is deterministic, inspectable behavior with minimal fallback logic
 - tools query real inventory data
 - structured widget/card outputs are parsed progressively from model text
 - lifecycle events are emitted, translated to SEM frames, projected to timeline entities, and rendered in chat
-- missing or malformed structured output surfaces as explicit error events rather than synthetic success payloads
+- malformed structured output surfaces as explicit error events; missing structured blocks are allowed by default
 
 ### Repository map (starting points)
 
@@ -105,7 +105,7 @@ flowchart LR
     FE -->|POST /chat| BE[Pinocchio Webchat Server]
     FE -->|WS /ws?conv_id=...| BE
     BE --> RT[RuntimeComposer + Geppetto Engine]
-    RT --> MW[Artifact Policy + Generator Middleware]
+    RT --> MW[Artifact Policy + Suggestions Policy Middleware]
     MW --> LLM[Model Output]
     LLM --> EX[Structured Sink Extractors]
     EX --> EV[Custom Hypercard Events]
@@ -262,16 +262,29 @@ Card proposal block:
 </hypercard:cardproposal:v1>
 ```
 
+Suggestions block (optional):
+
+```text
+<hypercard:suggestions:v1>
+```yaml
+suggestions:
+  - Show current inventory status
+  - What items are low stock?
+```
+</hypercard:suggestions:v1>
+```
+
 ### Middleware and no-fallback policy
 
-Two middleware layers are installed by the runtime composer:
+Two policy middleware layers are installed by the runtime composer:
 
-- policy middleware: injects strict format instructions
-- generator guard middleware: validates that structured tags exist when required
+- `inventory_artifact_policy`: injects widget/card structured-output instructions
+- `inventory_suggestions_policy`: injects optional suggestion-chip instructions
 
-Behavioral rule:
+Behavioral rules:
 
-- if required tags are missing, publish `hypercard.widget.error` and/or `hypercard.card.error`
+- structured tags are optional per assistant turn (no mandatory-block enforcement)
+- if a structured block is present but malformed, extractor sessions emit explicit `*.error` events
 - do not synthesize fake `ready` payloads from tool output
 
 ### Progressive parse and title-gated start
@@ -299,6 +312,13 @@ Card lifecycle:
 - `hypercard.card.update`
 - `hypercard.card_proposal.v1`
 - `hypercard.card.error`
+
+Suggestions lifecycle:
+
+- `hypercard.suggestions.start`
+- `hypercard.suggestions.update`
+- `hypercard.suggestions.v1`
+- `hypercard.suggestions.error`
 
 ### SEM mapping
 
@@ -339,6 +359,7 @@ sequenceDiagram
     ENG->>EX: streamed text chunks
     EX-->>SEM: hypercard.widget.start/update/v1/error
     EX-->>SEM: hypercard.card.start/update/proposal/error
+    EX-->>SEM: hypercard.suggestions.start/update/v1/error
     SEM-->>WS: sem:true event frames
     SEM->>TL: timeline handlers upsert status/tool_result entities
     TL-->>WS: timeline.upsert frames
@@ -354,6 +375,8 @@ For custom hypercard events, projection writes two classes of entities:
 
 - `status` entities for start/update/error lifecycle messages
 - `tool_result` entities for ready payloads (`hypercard.widget.v1`, `hypercard.card_proposal.v1`)
+
+Suggestion lifecycle events are currently consumed directly by the frontend chat reducer and are not projected into durable timeline entities.
 
 From `hypercard_events.go`:
 
@@ -425,7 +448,7 @@ stateDiagram-v2
     Running --> Running: *.update
     Running --> Success: *.v1 or *.card_proposal.v1
     Running --> Error: *.error
-    Waiting --> Error: malformed/missing structured block
+    Waiting --> Error: malformed structured block
     Success --> Success: timeline.upsert reconciliation
     Error --> Error: timeline.upsert reconciliation
 ```
@@ -436,7 +459,7 @@ stateDiagram-v2
 - in-place row updates keyed by stable `id`
 - start events only after title parse
 - no fallback success generation
-- explicit errors on missing/malformed structured blocks
+- no required structured blocks per assistant turn
 
 ## Page 5: Frontend chat and timeline widget architecture
 
@@ -468,9 +491,16 @@ Client responsibilities:
 - llm streaming lifecycle (`llm.start/delta/final`)
 - stream error handling
 - timeline widget message creation and row upserts
+- suggestion chip state (`merge` on progressive events, `replace` on final ready event)
 - whitespace hygiene for finalized AI/system text
 
 Notably, timeline content is not stored in separate Redux slices yet. It is currently embedded in `ChatWindowMessage.content` for direct rendering.
+
+Suggestion chips are kept in chat state and passed through to `ChatWindow`:
+
+- clear suggestions when a new user prompt is queued
+- fill incrementally from `hypercard.suggestions.start/update`
+- finalize/replace from `hypercard.suggestions.v1`
 
 ### Timeline widget presentation component
 
@@ -656,12 +686,24 @@ If timeline rows are missing or stale, verify these in order:
 - `timeline.upsert` appears (projector path healthy)
 - frontend `onSemEnvelope` maps those types into `upsertTimelineItem`
 
+If suggestion chips are missing or stale, verify these in order:
+
+- `hypercard.suggestions.*` events are present on websocket
+- frontend mapping dispatches `mergeSuggestions`/`replaceSuggestions`
+- reducer normalization is not dropping empty/duplicate values
+
 ### Common failure patterns and causes
 
 No `*.start` events:
 
 - likely missing `title` during progressive parse
 - expected behavior due to title-gating rule
+
+No suggestion chips during/after a turn:
+
+- model did not emit `<hypercard:suggestions:v1>` (optional behavior)
+- YAML block exists but `suggestions` is empty/invalid
+- frontend mapping not handling `hypercard.suggestions.*`
 
 Only errors, no `*.v1` or `*.card_proposal.v1`:
 
@@ -700,7 +742,7 @@ This issue is not specific to timeline widget work but will affect `vite build` 
 
 Do:
 
-- emit explicit error events for malformed/missing structured output
+- emit explicit error events for malformed structured output
 - keep `*.start` title-gated
 - map both custom lifecycle and `timeline.upsert` into the same timeline row model
 - preserve metadata (`kind/template/artifactId`) across updates
@@ -771,7 +813,7 @@ Lifecycle event:
 
 No-fallback policy:
 
-- explicit rule to never fabricate success payloads when structured model output is absent or invalid
+- explicit rule to never fabricate success payloads from non-structured output; absent optional blocks simply produce no structured lifecycle events
 
 ## Appendix: core signatures and snippets
 
