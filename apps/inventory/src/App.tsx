@@ -3,6 +3,7 @@ import type { DesktopIconDef, DesktopMenuSection } from '@hypercard/engine';
 import { type ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 import { STACK } from './domain/stack';
+import { EventViewerWindow } from './features/chat/EventViewerWindow';
 import { InventoryChatWindow } from './features/chat/InventoryChatWindow';
 
 const CHAT_APP_KEY = 'inventory-chat';
@@ -58,6 +59,10 @@ export function App() {
     if (appKey.startsWith(`${CHAT_APP_KEY}:`)) {
       const convId = appKey.slice(CHAT_APP_KEY.length + 1);
       return <InventoryChatWindow conversationId={convId} />;
+    }
+    if (appKey.startsWith('event-viewer:')) {
+      const convId = appKey.slice('event-viewer:'.length);
+      return <EventViewerWindow conversationId={convId} />;
     }
     return null;
   }, []);

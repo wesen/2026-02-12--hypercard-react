@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { buildArtifactOpenWindowPayload, extractArtifactUpsertFromSem } from './artifactRuntime';
 import { upsertArtifact } from './artifactsSlice';
+import { emitConversationEvent } from './eventBus';
 import {
   applyLLMDelta,
   applyLLMFinal,
@@ -589,7 +590,10 @@ export function InventoryChatWindow({ conversationId }: InventoryChatWindowProps
 
   useEffect(() => {
     const handlers: InventoryWebChatClientHandlers = {
-      onEnvelope: (envelope) => onSemEnvelope(envelope, dispatch, conversationId),
+      onEnvelope: (envelope) => {
+        emitConversationEvent(conversationId, envelope);
+        onSemEnvelope(envelope, dispatch, conversationId);
+      },
       onStatus: (status) => dispatch(setConnectionStatus({ conversationId, status })),
       onError: (error) => dispatch(setStreamError({ conversationId, message: error })),
     };
@@ -718,6 +722,19 @@ export function InventoryChatWindow({ conversationId }: InventoryChatWindowProps
     [conversationId, dispatch, isStreaming],
   );
 
+  const openEventViewer = useCallback(() => {
+    dispatch(
+      openWindow({
+        id: `window:event-viewer:${conversationId}`,
+        title: `📡 Events — ${conversationId.slice(0, 8)}…`,
+        icon: '📡',
+        bounds: { x: 600 + Math.round(Math.random() * 40), y: 60 + Math.round(Math.random() * 30), w: 580, h: 400 },
+        content: { kind: 'app', appKey: `event-viewer:${conversationId}` },
+        dedupeKey: `event-viewer:${conversationId}`,
+      }),
+    );
+  }, [dispatch, conversationId]);
+
   return (
     <ChatWindow
       messages={displayMessages}
@@ -730,15 +747,25 @@ export function InventoryChatWindow({ conversationId }: InventoryChatWindowProps
       suggestions={suggestions}
       showSuggestionsAlways
       headerActions={
-        <button
-          type="button"
-          data-part="btn"
-          data-state={debugMode ? 'active' : undefined}
-          onClick={() => setDebugMode((d) => !d)}
-          style={{ fontSize: 10, padding: '1px 6px' }}
-        >
-          {debugMode ? '🔍 Debug ON' : '🔍 Debug'}
-        </button>
+        <>
+          <button
+            type="button"
+            data-part="btn"
+            onClick={openEventViewer}
+            style={{ fontSize: 10, padding: '1px 6px' }}
+          >
+            📡 Events
+          </button>
+          <button
+            type="button"
+            data-part="btn"
+            data-state={debugMode ? 'active' : undefined}
+            onClick={() => setDebugMode((d) => !d)}
+            style={{ fontSize: 10, padding: '1px 6px' }}
+          >
+            {debugMode ? '🔍 Debug ON' : '🔍 Debug'}
+          </button>
+        </>
       }
       footer={
         <StatsFooter
