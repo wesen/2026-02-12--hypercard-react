@@ -13,8 +13,8 @@ import {
   setConnectionStatus,
   setConversationId,
   setStreamError,
-  type TimelineItemStatus,
   type TimelineWidgetItem,
+  upsertHydratedMessage,
   upsertCardPanelItem,
   upsertTimelineItem,
   upsertWidgetPanelItem,
@@ -27,14 +27,18 @@ import {
   selectSuggestions,
 } from './selectors';
 import {
+  fetchTimelineSnapshot,
   getOrCreateConversationId,
   InventoryWebChatClient,
   type InventoryWebChatClientHandlers,
   type SemEventEnvelope,
+  type TimelineEntityRecord,
+  type TimelineSnapshot,
   submitPrompt,
 } from './webchatClient';
 import { InventoryTimelineWidget, timelineItemsFromInlineWidget } from './InventoryTimelineWidget';
 import { InventoryCardPanelWidget, InventoryGeneratedWidgetPanel } from './InventoryArtifactPanelWidgets';
+import { formatTimelineUpsert, type TimelineItemUpdate } from './timelineProjection';
 
 function eventIdFromEnvelope(envelope: SemEventEnvelope): string {
   const eventId = envelope.event?.id;
@@ -83,6 +87,14 @@ function stringArray(value: unknown): string[] {
   return value.filter((entry): entry is string => typeof entry === 'string');
 }
 
+function booleanField(record: Record<string, unknown>, key: string): boolean | undefined {
+  const value = record[key];
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  return undefined;
+}
+
 function stripTrailingWhitespace(value: string): string {
   return value.replace(/[ \t]+$/gm, '').trimEnd();
 }
@@ -97,83 +109,6 @@ function shortText(value: string | undefined, max = 180): string | undefined {
   return `${value.slice(0, max)}...`;
 }
 
-type ProjectedLifecycleKind = 'widget' | 'card';
-
-interface ProjectedLifecycleStatus {
-  kind: ProjectedLifecycleKind;
-  title?: string;
-  detail: string;
-}
-
-function parseProjectedLifecycleStatus(text: string | undefined): ProjectedLifecycleStatus | undefined {
-  if (!text) {
-    return undefined;
-  }
-  const trimmed = text.trim();
-  if (trimmed.length === 0) {
-    return undefined;
-  }
-
-  const parseWithPrefix = (
-    prefix: string,
-    kind: ProjectedLifecycleKind,
-    detail: string,
-  ): ProjectedLifecycleStatus | undefined => {
-    if (!trimmed.toLowerCase().startsWith(prefix.toLowerCase())) {
-      return undefined;
-    }
-    const rawTitle = trimmed.slice(prefix.length).trim();
-    return {
-      kind,
-      title: rawTitle.length > 0 ? rawTitle : undefined,
-      detail,
-    };
-  };
-
-  return (
-    parseWithPrefix('Building widget: ', 'widget', 'started') ??
-    parseWithPrefix('Updating widget: ', 'widget', 'updating') ??
-    parseWithPrefix('Building card proposal: ', 'card', 'started') ??
-    parseWithPrefix('Updating card proposal: ', 'card', 'updating') ??
-    (trimmed.toLowerCase() === 'building widget...'
-      ? { kind: 'widget', detail: 'started' }
-      : undefined) ??
-    (trimmed.toLowerCase() === 'updating widget...'
-      ? { kind: 'widget', detail: 'updating' }
-      : undefined) ??
-    (trimmed.toLowerCase() === 'building card proposal...'
-      ? { kind: 'card', detail: 'started' }
-      : undefined) ??
-    (trimmed.toLowerCase() === 'updating card proposal...'
-      ? { kind: 'card', detail: 'updating' }
-      : undefined)
-  );
-}
-
-function structuredRecordFromUnknown(value: unknown): Record<string, unknown> | undefined {
-  if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-    return value as Record<string, unknown>;
-  }
-  if (typeof value !== 'string') {
-    return undefined;
-  }
-  try {
-    const parsed = JSON.parse(value);
-    if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-      return parsed as Record<string, unknown>;
-    }
-  } catch {
-    return undefined;
-  }
-  return undefined;
-}
-
-function artifactIdFromStructuredResult(result: Record<string, unknown> | undefined): string | undefined {
-  const data = result ? recordField(result, 'data') : undefined;
-  const artifact = data ? recordField(data, 'artifact') : undefined;
-  return artifact ? stringField(artifact, 'id') : undefined;
-}
-
 function readyDetail(template: string | undefined, artifactId: string | undefined): string {
   const parts: string[] = [];
   if (template) {
@@ -185,16 +120,6 @@ function readyDetail(template: string | undefined, artifactId: string | undefine
   return parts.length > 0 ? parts.join(' · ') : 'ready';
 }
 
-interface TimelineItemUpdate {
-  id: string;
-  title: string;
-  status: TimelineItemStatus;
-  detail?: string;
-  kind?: 'tool' | 'widget' | 'card' | 'timeline';
-  template?: string;
-  artifactId?: string;
-}
-
 function fanOutArtifactPanelUpdate(update: TimelineItemUpdate, dispatch: ReturnType<typeof useDispatch>) {
   if (update.kind === 'card') {
     dispatch(upsertCardPanelItem(update));
@@ -202,16 +127,6 @@ function fanOutArtifactPanelUpdate(update: TimelineItemUpdate, dispatch: ReturnT
   if (update.kind === 'widget') {
     dispatch(upsertWidgetPanelItem(update));
   }
-}
-
-function statusFromTimelineType(value: string | undefined): TimelineItemStatus {
-  if (value === 'error') {
-    return 'error';
-  }
-  if (value === 'success') {
-    return 'success';
-  }
-  return 'info';
 }
 
 function formatHypercardLifecycle(
@@ -308,82 +223,67 @@ function formatHypercardLifecycle(
 
   return undefined;
 }
+function parseTimelineMs(value: string | undefined): number {
+  if (!value) {
+    return 0;
+  }
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return 0;
+  }
+  return parsed;
+}
 
-function formatTimelineUpsert(
-  data: Record<string, unknown>,
-): TimelineItemUpdate | undefined {
-  const entity = recordField(data, 'entity');
-  if (!entity) {
-    return undefined;
-  }
-  const kind = stringField(entity, 'kind') ?? '';
-  const id = stringField(entity, 'id') ?? 'unknown';
-  const status = recordField(entity, 'status');
-  if (status && kind === 'status') {
-    const text = stringField(status, 'text');
-    const statusType = stringField(status, 'type');
-    const baseId = id.endsWith(':status') ? id.slice(0, -7) : id;
-    const projected = parseProjectedLifecycleStatus(text);
-    const lowered = (text ?? '').toLowerCase();
-    let prefix = 'timeline';
-    if (projected?.kind === 'widget' || lowered.includes('widget')) {
-      prefix = 'widget';
-    } else if (projected?.kind === 'card' || lowered.includes('card')) {
-      prefix = 'card';
+function hydrateEntity(entity: TimelineEntityRecord, dispatch: ReturnType<typeof useDispatch>): void {
+  const kind = typeof entity.kind === 'string' ? entity.kind : '';
+  const id = typeof entity.id === 'string' ? entity.id : '';
+
+  if (kind === 'message') {
+    const message = recordField(entity, 'message');
+    if (!message) {
+      return;
     }
-    const timelineKind = prefix === 'widget' ? 'widget' : prefix === 'card' ? 'card' : 'timeline';
-    const timelineStatus = projected ? 'running' : statusFromTimelineType(statusType);
-    return {
-      id: `${prefix}:${baseId}`,
-      title: projected?.title ?? text ?? id,
-      status: timelineStatus,
-      detail: shortText(projected?.detail ?? (statusType ? `timeline status=${statusType}` : undefined)),
-      kind: timelineKind,
-    };
+    const role = stringField(message, 'role');
+    if (!role) {
+      return;
+    }
+    const content = stringField(message, 'content');
+    const streaming = booleanField(message, 'streaming') ?? false;
+    dispatch(
+      upsertHydratedMessage({
+        id,
+        role,
+        text: content,
+        status: streaming ? 'streaming' : 'complete',
+      }),
+    );
+    return;
   }
 
-  const toolResult = recordField(entity, 'toolResult');
-  if (toolResult && kind === 'tool_result') {
-    const customKind = stringField(toolResult, 'customKind');
-    const toolCallId = stringField(toolResult, 'toolCallId') ?? id;
-    const resultRecord =
-      structuredRecordFromUnknown(toolResult.result) ?? structuredRecordFromUnknown(toolResult.resultRaw);
-    const resultTitle = resultRecord ? stringField(resultRecord, 'title') : undefined;
-    const resultTemplate = resultRecord ? stringField(resultRecord, 'template') : undefined;
-    const resultWidgetType = resultRecord ? stringField(resultRecord, 'type') : undefined;
-    const resultArtifactId = artifactIdFromStructuredResult(resultRecord);
-    if (customKind === 'hypercard.widget.v1') {
-      return {
-        id: `widget:${toolCallId}`,
-        title: resultTitle ?? 'Widget',
-        status: 'success',
-        detail: shortText(readyDetail(resultWidgetType, resultArtifactId)),
-        kind: 'widget',
-        template: resultWidgetType,
-        artifactId: resultArtifactId,
-      };
-    }
-    if (customKind === 'hypercard.card_proposal.v1') {
-      return {
-        id: `card:${toolCallId}`,
-        title: resultTitle ?? 'Card',
-        status: 'success',
-        detail: shortText(readyDetail(resultTemplate, resultArtifactId)),
-        kind: 'card',
-        template: resultTemplate,
-        artifactId: resultArtifactId,
-      };
-    }
-    const resultText = stringField(toolResult, 'resultRaw') ?? compactJSON(toolResult.result);
-    return {
-      id: `timeline:${id}`,
-      title: customKind ?? 'Tool result',
-      status: 'info',
-      detail: shortText(resultText),
-      kind: 'timeline',
-    };
+  const eventData: Record<string, unknown> = { entity };
+  const artifactUpdate = extractArtifactUpsertFromSem('timeline.upsert', eventData);
+  if (artifactUpdate) {
+    dispatch(upsertArtifact(artifactUpdate));
   }
-  return undefined;
+  const timelineUpdate = formatTimelineUpsert(eventData);
+  if (timelineUpdate) {
+    dispatch(upsertTimelineItem(timelineUpdate));
+    fanOutArtifactPanelUpdate(timelineUpdate, dispatch);
+  }
+}
+
+function hydrateFromTimelineSnapshot(snapshot: TimelineSnapshot, dispatch: ReturnType<typeof useDispatch>): void {
+  const sorted = [...snapshot.entities].sort((a, b) => {
+    const aCreated = parseTimelineMs(a.createdAtMs);
+    const bCreated = parseTimelineMs(b.createdAtMs);
+    if (aCreated !== bCreated) {
+      return aCreated - bCreated;
+    }
+    return parseTimelineMs(a.updatedAtMs) - parseTimelineMs(b.updatedAtMs);
+  });
+  for (const entity of sorted) {
+    hydrateEntity(entity, dispatch);
+  }
 }
 
 function onSemEnvelope(envelope: SemEventEnvelope, dispatch: ReturnType<typeof useDispatch>): void {
@@ -550,13 +450,42 @@ export function InventoryChatWindow() {
       onError: (error) => dispatch(setStreamError({ message: error })),
     };
 
-    const client = new InventoryWebChatClient(conversationId, handlers);
-    clientRef.current = client;
-    client.connect();
+    let cancelled = false;
+    let client: InventoryWebChatClient | null = null;
+
+    const bootstrap = async () => {
+      try {
+        const snapshot = await fetchTimelineSnapshot(conversationId);
+        if (!cancelled) {
+          hydrateFromTimelineSnapshot(snapshot, dispatch);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          dispatch(
+            upsertTimelineItem({
+              id: `timeline:bootstrap:${conversationId}`,
+              title: 'Timeline bootstrap',
+              status: 'error',
+              detail: shortText(error instanceof Error ? error.message : 'timeline bootstrap failed'),
+              kind: 'timeline',
+            }),
+          );
+        }
+      }
+      if (cancelled) {
+        return;
+      }
+      client = new InventoryWebChatClient(conversationId, handlers);
+      clientRef.current = client;
+      client.connect();
+    };
+
+    void bootstrap();
 
     return () => {
-      client.close();
-      if (clientRef.current === client) {
+      cancelled = true;
+      client?.close();
+      if (client && clientRef.current === client) {
         clientRef.current = null;
       }
     };

@@ -8,6 +8,7 @@ import {
   queueUserPrompt,
   replaceSuggestions,
   setStreamError,
+  upsertHydratedMessage,
   upsertCardPanelItem,
   upsertTimelineItem,
   upsertWidgetPanelItem,
@@ -185,5 +186,69 @@ describe('chatSlice', () => {
     ]);
 
     expect(state.suggestions).toEqual(['Summarize today sales', 'Show current inventory status']);
+  });
+
+  it('upserts hydrated messages by id without duplicating rows', () => {
+    const state = reduce([
+      upsertHydratedMessage({
+        id: 'assistant-1',
+        role: 'assistant',
+        text: '',
+        status: 'streaming',
+      }),
+      upsertHydratedMessage({
+        id: 'assistant-1',
+        role: 'assistant',
+        text: 'Hydrated final text',
+        status: 'complete',
+      }),
+    ]);
+
+    const hydrated = state.messages.filter((message) => message.id === 'assistant-1');
+    expect(hydrated).toHaveLength(1);
+    expect(hydrated[0]?.role).toBe('ai');
+    expect(hydrated[0]?.text).toBe('Hydrated final text');
+    expect(hydrated[0]?.status).toBe('complete');
+  });
+
+  it('keeps existing hydrated text when a later hydration frame has empty text', () => {
+    const state = reduce([
+      upsertHydratedMessage({
+        id: 'assistant-2',
+        role: 'assistant',
+        text: 'Existing hydrated text',
+        status: 'complete',
+      }),
+      upsertHydratedMessage({
+        id: 'assistant-2',
+        role: 'assistant',
+        text: '',
+        status: 'complete',
+      }),
+    ]);
+
+    const hydrated = state.messages.filter((message) => message.id === 'assistant-2');
+    expect(hydrated).toHaveLength(1);
+    expect(hydrated[0]?.text).toBe('Existing hydrated text');
+  });
+
+  it('merges hydrated rows with live llm.final frames by message id', () => {
+    const state = reduce([
+      upsertHydratedMessage({
+        id: 'assistant-3',
+        role: 'assistant',
+        text: 'Hydrated text',
+        status: 'complete',
+      }),
+      applyLLMFinal({
+        messageId: 'assistant-3',
+        text: 'Live final text',
+      }),
+    ]);
+
+    const hydrated = state.messages.filter((message) => message.id === 'assistant-3');
+    expect(hydrated).toHaveLength(1);
+    expect(hydrated[0]?.text).toBe('Live final text');
+    expect(hydrated[0]?.status).toBe('complete');
   });
 });

@@ -7,6 +7,21 @@ export interface SemEventEnvelope {
   };
 }
 
+export interface TimelineEntityRecord {
+  id?: string;
+  kind?: string;
+  createdAtMs?: string;
+  updatedAtMs?: string;
+  [key: string]: unknown;
+}
+
+export interface TimelineSnapshot {
+  convId?: string;
+  version?: string;
+  serverTimeMs?: string;
+  entities: TimelineEntityRecord[];
+}
+
 export interface InventoryWebChatClientHandlers {
   onEnvelope: (envelope: SemEventEnvelope) => void;
   onStatus?: (status: 'connecting' | 'connected' | 'closed' | 'error') => void;
@@ -20,6 +35,20 @@ function normalizeRecord(value: unknown): Record<string, unknown> {
     return value as Record<string, unknown>;
   }
   return {};
+}
+
+function normalizeArray<T>(value: unknown, mapItem: (item: unknown) => T | undefined): T[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  const out: T[] = [];
+  for (const item of value) {
+    const mapped = mapItem(item);
+    if (mapped !== undefined) {
+      out.push(mapped);
+    }
+  }
+  return out;
 }
 
 export function getOrCreateConversationId(): string {
@@ -140,4 +169,30 @@ export async function submitPrompt(prompt: string, conversationId: string): Prom
     const body = await response.text();
     throw new Error(body || `chat request failed (${response.status})`);
   }
+}
+
+export async function fetchTimelineSnapshot(conversationId: string): Promise<TimelineSnapshot> {
+  const encoded = encodeURIComponent(conversationId);
+  const response = await fetch(`/api/timeline?conv_id=${encoded}`);
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(body || `timeline request failed (${response.status})`);
+  }
+
+  const raw = normalizeRecord(await response.json());
+  return {
+    convId: typeof raw.convId === 'string' ? raw.convId : undefined,
+    version: typeof raw.version === 'string' ? raw.version : undefined,
+    serverTimeMs: typeof raw.serverTimeMs === 'string' ? raw.serverTimeMs : undefined,
+    entities: normalizeArray(raw.entities, (item) => {
+      const record = normalizeRecord(item);
+      return {
+        ...record,
+        id: typeof record.id === 'string' ? record.id : undefined,
+        kind: typeof record.kind === 'string' ? record.kind : undefined,
+        createdAtMs: typeof record.createdAtMs === 'string' ? record.createdAtMs : undefined,
+        updatedAtMs: typeof record.updatedAtMs === 'string' ? record.updatedAtMs : undefined,
+      } as TimelineEntityRecord;
+    }),
+  };
 }

@@ -78,6 +78,20 @@ function stripTrailingWhitespace(value: string): string {
   return value.replace(/[ \t]+$/gm, '').trimEnd();
 }
 
+function normalizeHydratedRole(value: string): ChatWindowMessage['role'] | undefined {
+  const role = value.trim().toLowerCase();
+  if (role === 'assistant' || role === 'ai') {
+    return 'ai';
+  }
+  if (role === 'user') {
+    return 'user';
+  }
+  if (role === 'system') {
+    return 'system';
+  }
+  return undefined;
+}
+
 function normalizeSuggestionList(values: string[]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
@@ -259,6 +273,41 @@ const chatSlice = createSlice({
     },
     setConnectionStatus(state, action: PayloadAction<ChatConnectionStatus>) {
       state.connectionStatus = action.payload;
+    },
+    upsertHydratedMessage(
+      state,
+      action: PayloadAction<{
+        id: string;
+        role: string;
+        text?: string;
+        status?: 'complete' | 'streaming' | 'error';
+      }>,
+    ) {
+      const id = action.payload.id.trim();
+      if (id.length === 0) {
+        return;
+      }
+      const role = normalizeHydratedRole(action.payload.role);
+      if (!role) {
+        return;
+      }
+      const status = action.payload.status ?? 'complete';
+      const nextText = typeof action.payload.text === 'string' ? stripTrailingWhitespace(action.payload.text) : '';
+      const existing = findMessage(state, id);
+      if (existing) {
+        existing.role = role;
+        existing.status = status;
+        if (nextText.length > 0 || existing.text.length === 0) {
+          existing.text = nextText;
+        }
+        return;
+      }
+      state.messages.push({
+        id,
+        role,
+        text: nextText,
+        status,
+      });
     },
     queueUserPrompt(state, action: PayloadAction<{ text: string }>) {
       const text = action.payload.text.trim();
@@ -483,6 +532,7 @@ const chatSlice = createSlice({
 export const {
   setConversationId,
   setConnectionStatus,
+  upsertHydratedMessage,
   queueUserPrompt,
   applyLLMStart,
   applyLLMDelta,
