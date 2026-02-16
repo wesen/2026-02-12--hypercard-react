@@ -22,6 +22,25 @@ function reduce(actions: Parameters<typeof chatReducer>[1][]) {
   return state;
 }
 
+function findWidgetItems(
+  state: ReturnType<typeof chatReducer>,
+  messageIdPrefix: string,
+): Array<Record<string, unknown>> {
+  const msg = state.messages.find((m) => (m.id ?? '').startsWith(messageIdPrefix));
+  if (!msg) return [];
+  const widgetBlock = msg.content?.find((entry) => entry.kind === 'widget');
+  if (!widgetBlock || widgetBlock.kind !== 'widget') return [];
+  const items = (widgetBlock.widget.props as Record<string, unknown>).items;
+  return Array.isArray(items) ? (items as Array<Record<string, unknown>>) : [];
+}
+
+function countMessagesWithIdPrefix(
+  state: ReturnType<typeof chatReducer>,
+  prefix: string,
+): number {
+  return state.messages.filter((m) => (m.id ?? '').startsWith(prefix)).length;
+}
+
 describe('chatSlice', () => {
   it('streams llm.start -> llm.delta -> llm.final into a single ai message', () => {
     const state = reduce([
@@ -77,7 +96,8 @@ describe('chatSlice', () => {
     expect(ai?.text).toBe('Line one\nLine two');
   });
 
-  it('creates a single timeline widget message and upserts items in place', () => {
+  it('creates a single timeline widget message per round and upserts items in place', () => {
+    // Round 0 (before any user prompt) — used for hydration
     const state = reduce([
       upsertTimelineItem({
         id: 'tool:abc',
@@ -95,18 +115,53 @@ describe('chatSlice', () => {
       }),
     ]);
 
-    const timelineMessages = state.messages.filter((m) => m.id === 'timeline-widget-message');
+    const timelineMessages = state.messages.filter((m) => (m.id ?? '').startsWith('timeline-widget-message-r'));
     expect(timelineMessages).toHaveLength(1);
-    const widgetBlock = timelineMessages[0]?.content?.find((entry) => entry.kind === 'widget');
-    expect(widgetBlock?.kind).toBe('widget');
-    const items = (widgetBlock?.kind === 'widget'
-      ? ((widgetBlock.widget.props as Record<string, unknown>).items as Array<Record<string, unknown>> | undefined)
-      : undefined) ?? [];
+    const items = findWidgetItems(state, 'timeline-widget-message-r');
     expect(items).toHaveLength(1);
     expect(items[0]?.id).toBe('tool:abc');
     expect(items[0]?.status).toBe('success');
     expect(items[0]?.detail).toBe('done');
     expect(items[0]?.updatedAt).toBe(20);
+  });
+
+  it('creates separate timeline widgets for different rounds', () => {
+    const state = reduce([
+      // Round 1
+      queueUserPrompt({ text: 'first question' }),
+      upsertTimelineItem({
+        id: 'tool:r1-1',
+        title: 'Tool search',
+        status: 'success',
+        detail: 'done',
+        updatedAt: 10,
+      }),
+      applyLLMStart({ messageId: 'ai-1' }),
+      applyLLMFinal({ messageId: 'ai-1', text: 'Answer 1' }),
+      // Round 2
+      queueUserPrompt({ text: 'second question' }),
+      upsertTimelineItem({
+        id: 'tool:r2-1',
+        title: 'Tool report',
+        status: 'success',
+        detail: 'done',
+        updatedAt: 20,
+      }),
+    ]);
+
+    // Should have two distinct timeline widget messages
+    const timelineMessages = state.messages.filter((m) => (m.id ?? '').startsWith('timeline-widget-message-r'));
+    expect(timelineMessages).toHaveLength(2);
+
+    // Round 1 widget should have r1 items
+    const r1Items = findWidgetItems(state, 'timeline-widget-message-r1');
+    expect(r1Items).toHaveLength(1);
+    expect(r1Items[0]?.id).toBe('tool:r1-1');
+
+    // Round 2 widget should have r2 items
+    const r2Items = findWidgetItems(state, 'timeline-widget-message-r2');
+    expect(r2Items).toHaveLength(1);
+    expect(r2Items[0]?.id).toBe('tool:r2-1');
   });
 
   it('preserves timeline metadata when later updates do not re-send it', () => {
@@ -129,19 +184,16 @@ describe('chatSlice', () => {
       }),
     ]);
 
-    const timeline = state.messages.find((message) => message.id === 'timeline-widget-message');
-    const widgetBlock = timeline?.content?.find((entry) => entry.kind === 'widget');
-    const items = (widgetBlock?.kind === 'widget'
-      ? ((widgetBlock.widget.props as Record<string, unknown>).items as Array<Record<string, unknown>> | undefined)
-      : undefined) ?? [];
+    const items = findWidgetItems(state, 'timeline-widget-message-r');
     expect(items).toHaveLength(1);
     expect(items[0]?.kind).toBe('card');
     expect(items[0]?.template).toBe('reportViewer');
     expect(items[0]?.artifactId).toBe('detailed_inventory_summary');
   });
 
-  it('maintains separate card and widget panel messages', () => {
+  it('maintains separate card and widget panel messages per round', () => {
     const state = reduce([
+      queueUserPrompt({ text: 'generate report' }),
       upsertCardPanelItem({
         id: 'card:r1',
         title: 'Detailed Inventory Summary',
@@ -160,17 +212,8 @@ describe('chatSlice', () => {
       }),
     ]);
 
-    const cardMessage = state.messages.find((message) => message.id === 'card-panel-widget-message');
-    const widgetMessage = state.messages.find((message) => message.id === 'widget-panel-widget-message');
-    expect(cardMessage).toBeTruthy();
-    expect(widgetMessage).toBeTruthy();
-
-    const cardItems = (cardMessage?.content?.[0]?.kind === 'widget'
-      ? ((cardMessage.content[0].widget.props as Record<string, unknown>).items as Array<Record<string, unknown>>)
-      : []) ?? [];
-    const widgetItems = (widgetMessage?.content?.[0]?.kind === 'widget'
-      ? ((widgetMessage.content[0].widget.props as Record<string, unknown>).items as Array<Record<string, unknown>>)
-      : []) ?? [];
+    const cardItems = findWidgetItems(state, 'card-panel-widget-message-r');
+    const widgetItems = findWidgetItems(state, 'widget-panel-widget-message-r');
     expect(cardItems[0]?.title).toBe('Detailed Inventory Summary');
     expect(cardItems[0]?.template).toBe('reportViewer');
     expect(widgetItems[0]?.title).toBe('Inventory Summary Report');
@@ -250,5 +293,36 @@ describe('chatSlice', () => {
     expect(hydrated).toHaveLength(1);
     expect(hydrated[0]?.text).toBe('Live final text');
     expect(hydrated[0]?.status).toBe('complete');
+  });
+
+  it('uses round 0 for hydrated timeline items and round 1+ for live items', () => {
+    const state = reduce([
+      // Hydration (round 0)
+      upsertTimelineItem({ id: 'tool:h1', title: 'Hydrated tool', status: 'success', updatedAt: 5 }),
+      // Round 1 (after first user prompt)
+      queueUserPrompt({ text: 'q1' }),
+      upsertTimelineItem({ id: 'tool:r1-1', title: 'Live tool', status: 'running', updatedAt: 10 }),
+    ]);
+
+    // Hydrated items in round 0 widget
+    const r0Items = findWidgetItems(state, 'timeline-widget-message-r0');
+    expect(r0Items).toHaveLength(1);
+    expect(r0Items[0]?.id).toBe('tool:h1');
+
+    // Live items in round 1 widget
+    const r1Items = findWidgetItems(state, 'timeline-widget-message-r1');
+    expect(r1Items).toHaveLength(1);
+    expect(r1Items[0]?.id).toBe('tool:r1-1');
+  });
+
+  it('does not create empty round widgets when no timeline events occur', () => {
+    const state = reduce([
+      queueUserPrompt({ text: 'hello' }),
+      applyLLMStart({ messageId: 'ai-1' }),
+      applyLLMFinal({ messageId: 'ai-1', text: 'Hi!' }),
+    ]);
+
+    const timelineMessages = state.messages.filter((m) => (m.id ?? '').startsWith('timeline-widget-message-r'));
+    expect(timelineMessages).toHaveLength(0);
   });
 });

@@ -17,12 +17,27 @@ export interface TimelineWidgetItem {
   rawData?: Record<string, unknown>;
 }
 
-const TIMELINE_WIDGET_MESSAGE_ID = 'timeline-widget-message';
-const TIMELINE_WIDGET_ID = 'inventory-timeline-widget';
-const CARD_PANEL_MESSAGE_ID = 'card-panel-widget-message';
-const CARD_PANEL_WIDGET_ID = 'inventory-card-panel-widget';
-const WIDGET_PANEL_MESSAGE_ID = 'widget-panel-widget-message';
-const WIDGET_PANEL_WIDGET_ID = 'inventory-widget-panel-widget';
+function timelineWidgetMessageId(roundId: number): string {
+  return roundId === 0 ? 'timeline-widget-message-r0' : `timeline-widget-message-r${roundId}`;
+}
+function timelineWidgetId(roundId: number): string {
+  return roundId === 0 ? 'inventory-timeline-widget-r0' : `inventory-timeline-widget-r${roundId}`;
+}
+function cardPanelMessageId(roundId: number): string {
+  return roundId === 0 ? 'card-panel-widget-message-r0' : `card-panel-widget-message-r${roundId}`;
+}
+function cardPanelWidgetId(roundId: number): string {
+  return roundId === 0 ? 'inventory-card-panel-widget-r0' : `inventory-card-panel-widget-r${roundId}`;
+}
+function widgetPanelMessageId(roundId: number): string {
+  return roundId === 0 ? 'widget-panel-widget-message-r0' : `widget-panel-widget-message-r${roundId}`;
+}
+function widgetPanelWidgetId(roundId: number): string {
+  return roundId === 0 ? 'inventory-widget-panel-widget-r0' : `inventory-widget-panel-widget-r${roundId}`;
+}
+function roundLabel(roundId: number): string {
+  return roundId === 0 ? 'Previous Session' : `round ${roundId}`;
+}
 const MAX_TIMELINE_ITEMS = 24;
 const MAX_PANEL_ITEMS = 16;
 const MAX_SUGGESTIONS = 8;
@@ -54,6 +69,8 @@ interface ChatState {
   currentTurnStats: TurnStats | null;
   streamStartTime: number | null;
   streamOutputTokens: number;
+  /** Round counter — incremented on each user prompt. Round 0 is used for hydrated items. */
+  currentRoundId: number;
 }
 
 const initialState: ChatState = {
@@ -67,6 +84,7 @@ const initialState: ChatState = {
   currentTurnStats: null,
   streamStartTime: null,
   streamOutputTokens: 0,
+  currentRoundId: 0,
 };
 
 let messageCounter = 0;
@@ -206,32 +224,35 @@ function ensureWidgetMessage(
 }
 
 function ensureTimelineWidgetMessage(state: ChatState): ChatWindowMessage {
+  const r = state.currentRoundId;
   return ensureWidgetMessage(
     state,
-    TIMELINE_WIDGET_MESSAGE_ID,
-    TIMELINE_WIDGET_ID,
+    timelineWidgetMessageId(r),
+    timelineWidgetId(r),
     'inventory.timeline',
-    'Run Timeline',
+    `Run Timeline (${roundLabel(r)})`,
   );
 }
 
 function ensureCardPanelMessage(state: ChatState): ChatWindowMessage {
+  const r = state.currentRoundId;
   return ensureWidgetMessage(
     state,
-    CARD_PANEL_MESSAGE_ID,
-    CARD_PANEL_WIDGET_ID,
+    cardPanelMessageId(r),
+    cardPanelWidgetId(r),
     'inventory.cards',
-    'Generated Cards',
+    `Generated Cards (${roundLabel(r)})`,
   );
 }
 
 function ensureWidgetPanelMessage(state: ChatState): ChatWindowMessage {
+  const r = state.currentRoundId;
   return ensureWidgetMessage(
     state,
-    WIDGET_PANEL_MESSAGE_ID,
-    WIDGET_PANEL_WIDGET_ID,
+    widgetPanelMessageId(r),
+    widgetPanelWidgetId(r),
     'inventory.widgets',
-    'Generated Widgets',
+    `Generated Widgets (${roundLabel(r)})`,
   );
 }
 
@@ -341,6 +362,7 @@ const chatSlice = createSlice({
         return;
       }
 
+      state.currentRoundId += 1;
       state.lastError = null;
       state.messages.push({
         id: nextMessageId('user'),
