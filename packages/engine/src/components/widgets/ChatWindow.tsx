@@ -147,7 +147,7 @@ export function ChatWindow({
   function renderBlock(block: ChatContentBlock, idx: number) {
     if (block.kind === 'text') {
       return (
-        <div key={idx} data-part="chat-window-text">
+        <div key={idx} style={{ fontSize: 11, whiteSpace: 'pre-wrap' }}>
           {block.text}
         </div>
       );
@@ -170,19 +170,28 @@ export function ChatWindow({
     // If structured content blocks exist, use those
     if (m.content && m.content.length > 0) {
       return (
-        <div data-part="chat-window-body">
+        <>
           {m.content.map((block, idx) => renderBlock(block, idx))}
           {m.status === 'streaming' && m.text !== '' && <StreamingCursor />}
-        </div>
+        </>
       );
     }
-    // Fallback: plain text rendering
+    // Fallback: plain text rendering (matches ChatView)
     return (
-      <div data-part="chat-window-body">
-        <div data-part="chat-window-text">{m.text}</div>
-        {m.status === 'streaming' && m.text !== '' && <StreamingCursor />}
-      </div>
+      <>
+        <div style={{ fontSize: 11, whiteSpace: 'pre-wrap' }}>
+          {m.text}
+          {m.status === 'streaming' && m.text !== '' && <StreamingCursor />}
+        </div>
+      </>
     );
+  }
+
+  /* ── Role label (matches ChatView) ── */
+  function roleLabel(role: string) {
+    if (role === 'user') return 'You:';
+    if (role === 'system') return 'System:';
+    return 'AI:';
   }
 
   /* ── Render a message ── */
@@ -190,48 +199,29 @@ export function ChatWindow({
     // Show thinking indicator for empty streaming message
     if (m.status === 'streaming' && m.text === '' && !m.content && showThinking) {
       return (
-        <div key={m.id ?? i} data-part="chat-window-message" data-role="ai">
-          <div data-part="chat-window-avatar">🤖</div>
-          <div data-part="chat-window-message-content">
-            <ThinkingDots />
-          </div>
+        <div key={m.id ?? i} data-part="chat-message" data-role="ai">
+          <div data-part="chat-role">AI:</div>
+          <ThinkingDots />
         </div>
       );
     }
 
     return (
-      <div key={m.id ?? i} data-part="chat-window-message" data-role={m.role}>
-        <div data-part="chat-window-avatar">
-          {m.role === 'user' ? '👤' : m.role === 'system' ? '⚙️' : '🤖'}
-        </div>
-        <div data-part="chat-window-message-content">
-          <div data-part="chat-window-meta">
-            <span data-part="chat-window-role-label">
-              {m.role === 'user' ? 'You' : m.role === 'system' ? 'System' : 'AI'}
-            </span>
-            {m.meta?.timestamp != null && (
-              <span data-part="chat-window-timestamp">
-                {String(m.meta.timestamp)}
-              </span>
-            )}
+      <div key={m.id ?? i} data-part="chat-message" data-role={m.role}>
+        <div data-part="chat-role">{roleLabel(m.role)}</div>
+        {renderBody(m)}
+        {m.status === 'error' && (
+          <div data-part="chat-window-error">⚠️ An error occurred</div>
+        )}
+        {m.actions && m.status !== 'streaming' && (
+          <div style={{ marginTop: 3, display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+            {m.actions.map((a, j) => (
+              <Chip key={j} onClick={() => onAction?.(a.action)}>
+                {a.label}
+              </Chip>
+            ))}
           </div>
-
-          {renderBody(m)}
-
-          {m.status === 'error' && (
-            <div data-part="chat-window-error">⚠️ An error occurred</div>
-          )}
-
-          {m.actions && m.status !== 'streaming' && (
-            <div data-part="chat-window-actions">
-              {m.actions.map((a, j) => (
-                <Chip key={j} onClick={() => onAction?.(a.action)}>
-                  {a.label}
-                </Chip>
-              ))}
-            </div>
-          )}
-        </div>
+        )}
       </div>
     );
   }
@@ -256,8 +246,8 @@ export function ChatWindow({
         </div>
       </div>
 
-      {/* ── Timeline ── */}
-      <div data-part="chat-window-timeline" ref={timelineRef}>
+      {/* ── Timeline (reuses chat-timeline styling) ── */}
+      <div data-part="chat-timeline" ref={timelineRef}>
         {isEmpty && <WelcomeScreen>{welcomeContent}</WelcomeScreen>}
         {messages.map((m, i) => renderMessage(m, i))}
         <div ref={endRef} />
@@ -265,7 +255,7 @@ export function ChatWindow({
 
       {/* ── Suggestions ── */}
       {(isEmpty || messages.length <= 1) && suggestions && !isStreaming && (
-        <div data-part="chat-window-suggestions">
+        <div data-part="chat-suggestions">
           {suggestions.map((s) => (
             <Chip key={s} onClick={() => send(s)}>
               {s}
@@ -275,9 +265,10 @@ export function ChatWindow({
       )}
 
       {/* ── Composer ── */}
-      <div data-part="chat-window-composer">
+      <div data-part="chat-composer">
         <input
           data-part="field-input"
+          style={{ flex: 1 }}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && send(input)}
@@ -293,9 +284,7 @@ export function ChatWindow({
             <Btn onClick={onCancel}>⏹ Stop</Btn>
           ) : null
         ) : (
-          <Btn variant="primary" onClick={() => send(input)}>
-            Send
-          </Btn>
+          <Btn onClick={() => send(input)}>Send</Btn>
         )}
       </div>
 
