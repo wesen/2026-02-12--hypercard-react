@@ -1293,3 +1293,88 @@ Map the structured events from that middleware to the existing suggestion widget
     - `  - What items are low stock?`
     - `  - Summarize today sales`
   - `</hypercard:suggestions:v1>`
+
+## Step 18: Restart Backend and Stabilize Timeline "Updating" Flicker
+
+This step covered two immediate runtime quality checks: first confirming the backend process state after recent commits, then diagnosing and fixing the timeline row flicker where a richer label briefly regressed to a generic "Updating ..." label. The fix keeps timeline item identity and title stable when projected status upserts arrive.
+
+The behavior was caused by dual sources updating the same row (`hypercard.*` lifecycle and `timeline.upsert` projection). The projected status text path was rewriting titles with generic strings, producing visible oscillation.
+
+### Prompt Context
+
+**User prompt (verbatim):** "there's like a flicker for \"Updating...\" Where it switches to ... it seems?"
+
+**Assistant interpretation:** Diagnose why timeline rows visually regress during updates and patch the frontend mapping so labels stay stable while status still progresses.
+
+**Inferred user intent:** Ensure the chat timeline feels deterministic and polished, without noisy title changes during streaming/projection updates.
+
+**Commit (code):** `a0afb85` — "Stabilize timeline labels for projected updating events"
+
+### What I did
+
+- Verified and restarted backend runtime in tmux:
+  - checked sessions with `tmux ls`
+  - restarted `hc033-backend`
+  - confirmed listener on `:8091` with `lsof`
+  - confirmed startup logs via `tmux capture-pane`
+- Traced frontend mapping path:
+  - inspected `InventoryChatWindow.tsx` for `formatHypercardLifecycle(...)` and `formatTimelineUpsert(...)`
+  - confirmed `timeline.upsert` status entities were mapped with `title: text ?? id`, so generic projected strings could overwrite richer labels
+- Implemented targeted fix in `apps/inventory/src/features/chat/InventoryChatWindow.tsx`:
+  - added `parseProjectedLifecycleStatus(...)` helper
+  - detected projected widget/card lifecycle phrases and extracted semantic detail (`started` / `updating`) + optional title
+  - preserved stable title when projected text is generic (`Building/Updating ...`)
+  - mapped projected lifecycle status rows to `running` for these events instead of bouncing through generic `timeline status=...` detail
+- Validated after patch:
+  - `pnpm -C apps/inventory exec tsc --noEmit`
+  - `npm exec vitest run apps/inventory/src/features/chat/chatSlice.test.ts`
+
+### Why
+
+- Lifecycle and projected timeline events are both expected and valuable, but they must converge cleanly on one row model.
+- Preserving titles while updating detail prevents perceptual jitter and makes the timeline easier to scan.
+
+### What worked
+
+- Row identity remained stable (`widget:<id>` / `card:<id>`).
+- Projected `timeline.upsert` no longer clobbers titles with generic `Updating ...` text.
+- Typecheck and reducer tests passed after the mapping change.
+
+### What didn't work
+
+- N/A in this step; issue was reproducible and resolved in one patch.
+
+### What I learned
+
+- Projection text should be treated as lifecycle metadata, not authoritative title content, unless it carries explicit artifact naming.
+- A small parser in the reducer mapping layer is enough to de-jitter cross-stream updates without adding backend complexity.
+
+### What was tricky to build
+
+- The same logical row is updated by different event families with slightly different semantics and payload richness.
+- The fix had to preserve compatibility for both rich-title and generic-title projection messages while avoiding accidental regressions for non-widget/card timeline entities.
+
+### What warrants a second pair of eyes
+
+- Add focused frontend tests around `formatTimelineUpsert(...)` for projected status text variants (generic and titled forms).
+- Validate with live websocket traffic that card and widget rows remain stable across longer tool loops.
+
+### What should be done in the future
+
+- Add explicit unit coverage for projected status parsing and title-preservation behavior.
+
+### Code review instructions
+
+- Review `apps/inventory/src/features/chat/InventoryChatWindow.tsx` around:
+  - `parseProjectedLifecycleStatus(...)`
+  - `formatTimelineUpsert(...)`
+- Reproduce and validate in dev UI while triggering widget/card lifecycle updates.
+
+### Technical details
+
+- New helper types/functions added:
+  - `ProjectedLifecycleKind`
+  - `ProjectedLifecycleStatus`
+  - `parseProjectedLifecycleStatus(text)`
+- Mapping change:
+  - projected widget/card status text now updates `detail` and `status` while preserving stable titles when projection text is generic.
