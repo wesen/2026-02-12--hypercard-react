@@ -22,17 +22,17 @@ Ticket: HC-034-BETTER-UI
 - [x] F2.6 Add storybook stories (5 stories)
 
 ## F3: Multiple chat windows (keyed Redux store)
-- [ ] F3.1 Restructure chatSlice to `conversations: Record<string, ConversationState>`
-- [ ] F3.2 Add `conversationId` to all action payloads
-- [ ] F3.3 Update all selectors to take `(state, convId)`
-- [ ] F3.4 Convert InventoryChatWindow to accept `conversationId` prop
-- [ ] F3.5 Wire convId-parameterized selectors and dispatches in InventoryChatWindow
-- [ ] F3.6 Add "New Chat" icon and menu entries in App.tsx
-- [ ] F3.7 Wire openNewChatWindow with per-conversation dedupeKey
+- [x] F3.1 Restructure chatSlice to `conversations: Record<string, ConversationState>`
+- [x] F3.2 Add `conversationId` to all action payloads
+- [x] F3.3 Update all selectors to take `(state, convId)`
+- [x] F3.4 Convert InventoryChatWindow to accept `conversationId` prop
+- [x] F3.5 Wire convId-parameterized selectors and dispatches in InventoryChatWindow
+- [x] F3.6 Add "New Chat" icon and menu entries in App.tsx
+- [x] F3.7 Wire openNewChatWindow with per-conversation dedupeKey
 - [x] F3.8 Remove global localStorage conversation persistence
 - [x] F3.9 Add optional removeConversation cleanup on window close
 - [x] F3.10 Update existing reducer tests for keyed state shape
-- [x] F3.11 Add storybook stories (4 stories)
+- [x] F3.11 Add conversation isolation test
 
 ## F4: Model info + token counts + TPS
 - [x] F4.1 Add `modelName` and `turnStats` to chat state

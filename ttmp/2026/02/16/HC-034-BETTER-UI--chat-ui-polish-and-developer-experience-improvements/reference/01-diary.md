@@ -179,3 +179,59 @@ and store it in the HC-034 ticket.
 ### Decision locked
 
 - F3 architecture: **keyed Redux store** (`conversations: Record<string, ConversationState>`).
+
+---
+
+## Session 2 — F3 Implementation (2026-02-16 ~15:00–17:10)
+
+### F3: Multiple chat windows — keyed Redux store
+
+Implemented the full keyed-conversation refactor in a single pass:
+
+#### chatSlice.ts
+- Renamed old `ChatState` → `ConversationState` (per-conversation state)
+- New top-level `ChatState` is `{ conversations: Record<string, ConversationState> }`
+- Added `getConv(state, convId)` helper that auto-creates conversation entries on first access
+- Every action payload now uses `WithConv<T>` pattern to include `conversationId`
+- Added `removeConversation` action for cleanup
+- Exported `ConversationState` type for consumers
+
+#### selectors.ts
+- All selectors now take `(state, convId)` instead of `(state)`
+- Return sensible defaults (empty arrays, null, false) when conversation doesn't exist
+- Added `selectConversationIds` for future conversation list UI
+
+#### InventoryChatWindow.tsx
+- Accepts `conversationId: string` prop (no more `useSelector(selectConversationId)`)
+- All `useSelector` calls pass `conversationId` via inline selector closures
+- All dispatch calls include `conversationId` in payloads
+- Removed `setConversationId` and `getOrCreateConversationId` usage
+- `onSemEnvelope`, `hydrateEntity`, `hydrateFromTimelineSnapshot`, `fanOutArtifactPanelUpdate` all take `conversationId` parameter
+- Subtitle now shows truncated conversation ID (`${convId.slice(0,8)}…`)
+
+#### App.tsx
+- Complete rewrite for multi-window support
+- `openNewChatWindow()` creates fresh conversation ID via `crypto.randomUUID()`
+- Mounts on initial load to open first chat window
+- `renderAppWindow` matches `inventory-chat:{convId}` appKey pattern
+- Desktop icon "New Chat" (💬) and File > New Chat menu entry
+- `onCommand` callback handles `chat.new` and `icon.open.new-chat`
+
+#### DesktopShell.tsx (engine)
+- Added `onCommand?: (commandId: string) => void` prop to `DesktopShellProps`
+- `handleCommand` falls through to `onCommandProp` for unrecognized commands
+- `handleOpenIcon` delegates unknown icon IDs to `onCommandProp` as `icon.open.{id}`
+
+#### Tests
+- All 14 existing tests updated with `conversationId: C` in payloads
+- New isolation test verifies two conversations don't bleed state
+- 136 tests pass, both packages type-check clean
+
+#### What went well
+- The `WithConv<T>` pattern made the payload changes mechanical
+- `getConv()` auto-creation means no explicit "init conversation" action needed
+- Hard cutover: no transitional code, no backward-compat shims
+
+#### What was tricky
+- TypeScript project references required rebuilding engine declarations (`tsc -b packages/engine`) before inventory would see the new `onCommand` prop
+- 31 dispatch calls in InventoryChatWindow needed `conversationId` injection — systematic search-and-replace was the only way
