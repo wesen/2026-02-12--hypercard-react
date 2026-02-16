@@ -326,3 +326,176 @@ These changes were delivered in commit `d9de1c2` together with helper/story migr
 
 - Completed tasks: C9, C10, C11, C12
 - Commit carrying these changes: `d9de1c2`
+
+## Step 5: Complete C13-C17 — hard deletion of legacy shell/navigation path
+
+I removed the legacy shell and legacy navigation stack completely from engine runtime code, store composition, public exports, and dedicated reducer tests. This finalized the hard-cut architecture shift so DesktopShell/windowing is now the only supported shell path.
+
+This step was intentionally done as a single focused code commit so final migration cleanup is easy to review and bisect.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 1)
+
+**Assistant interpretation:** Continue executing migration tasks in order, including deleting unused legacy code and documenting impact.
+
+**Inferred user intent:** Remove ambiguity and duplication by eliminating old architecture rather than keeping compatibility layers.
+
+**Commit (code):** `752590a` — "refactor(HC-030): remove legacy shell and navigation stack"
+
+### What I did
+
+- Deleted legacy shell component files:
+  - `packages/engine/src/components/shell/HyperCardShell.tsx`
+  - `packages/engine/src/components/shell/LayoutSplit.tsx`
+  - `packages/engine/src/components/shell/LayoutDrawer.tsx`
+  - `packages/engine/src/components/shell/LayoutCardChat.tsx`
+  - `packages/engine/src/components/shell/TabBar.tsx`
+  - `packages/engine/src/components/shell/WindowChrome.tsx`
+  - `packages/engine/src/components/shell/NavBar.tsx`
+- Deleted legacy navigation feature files and reducer test:
+  - `packages/engine/src/features/navigation/navigationSlice.ts`
+  - `packages/engine/src/features/navigation/selectors.ts`
+  - `packages/engine/src/__tests__/navigation.test.ts`
+- Removed navigation wiring from app store:
+  - `packages/engine/src/app/createAppStore.ts`
+- Removed legacy exports from barrels:
+  - `packages/engine/src/components/shell/index.ts`
+  - `packages/engine/src/index.ts`
+- Updated integration test to stop depending on removed navigation reducer:
+  - `packages/engine/src/__tests__/integration-card-execution.test.ts`
+- Removed last stale legacy references in comments/default debug snapshot:
+  - `packages/engine/src/debug/StandardDebugPane.tsx`
+  - `packages/engine/src/theme/HyperCardTheme.tsx`
+  - `packages/engine/src/components/shell/ChatSidebar.tsx`
+
+### Why
+
+- The migration explicitly requires no backwards compatibility.
+- Keeping dead legacy exports/reducers would leave false extension points and confuse app developers.
+
+### What worked
+
+- Global search confirmed no runtime references remain to removed shell/navigation modules.
+- `npm test`, `npm run typecheck`, and `npm run build` all passed after deletion.
+
+### What didn't work
+
+- `npm run lint` still fails due baseline repository lint debt and Biome schema mismatch (`biome.json` schema `2.0.0` vs CLI `2.3.15`), plus formatting/import findings in existing migrated files.
+
+### What I learned
+
+- Hard deletion became low-risk only after helper/app cutover removed practical dependencies.
+- Runtime behavior tests were easier to preserve by asserting navigation callback effects rather than reducer internals.
+
+### What was tricky to build
+
+- The tricky part was removing navigation reducer usage in integration tests without weakening behavioral coverage. I kept the `nav.go` contract verification by spying on the `nav` adapter callback instead of mutating removed global state.
+
+### What warrants a second pair of eyes
+
+- Confirm no external consumers depend on removed navigation exports from `@hypercard/engine`.
+- Confirm DesktopShell-only behavior is acceptable for CRM/book-tracker debug workflows that previously used legacy pane composition.
+
+### What should be done in the future
+
+- Decide whether to add a dedicated DesktopShell debug companion-window pattern to replace old split-pane habits.
+
+### Code review instructions
+
+- Start with deletion scope:
+  - `packages/engine/src/components/shell/index.ts`
+  - `packages/engine/src/index.ts`
+  - `packages/engine/src/app/createAppStore.ts`
+- Then verify behavior-oriented test updates:
+  - `packages/engine/src/__tests__/integration-card-execution.test.ts`
+- Validate:
+  - `npm test`
+  - `npm run typecheck`
+  - `npm run build`
+
+### Technical details
+
+- Tasks completed by this step: C13, C14, C15, C16
+- Commit: `752590a`
+- Net change: legacy shell/navigation path removed from engine runtime surface
+
+## Step 6: Complete V1-V6 — validation closeout and migration summary
+
+I completed the final validation checklist and documented outcomes in HC-030 tasks/changelog/diary. This closes the migration execution loop with explicit evidence for what passed and what remains as baseline debt.
+
+This step is documentation-heavy and focuses on reviewability and handoff clarity.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 1)
+
+**Assistant interpretation:** Finish migration execution with task-by-task progress tracking, commits, and diary updates.
+
+**Inferred user intent:** End with a verifiable and auditable ticket state, not just merged code.
+
+**Commit (code):** N/A (documentation/validation closeout step)
+
+### What I did
+
+- Ran validation commands:
+  - `npm test` (pass, 87 tests)
+  - `npm run typecheck` (pass)
+  - `npm run build` (pass across engine + all apps)
+  - `npm run lint` (fails; documented baseline issues)
+- Ran ticket hygiene check:
+  - `docmgr doctor --ticket HC-030-DESKTOP-CUTOVER --stale-after 30` (pass)
+- Updated ticket docs:
+  - `ttmp/2026/02/15/HC-030-DESKTOP-CUTOVER--desktop-shell-hard-cutover-and-legacy-removal/tasks.md`
+  - `ttmp/2026/02/15/HC-030-DESKTOP-CUTOVER--desktop-shell-hard-cutover-and-legacy-removal/changelog.md`
+  - `ttmp/2026/02/15/HC-030-DESKTOP-CUTOVER--desktop-shell-hard-cutover-and-legacy-removal/reference/01-diary.md`
+
+### Why
+
+- Final migration acceptance requires explicit validation evidence and known-failure context.
+- Keeping checklist status in sync prevents ticket drift.
+
+### What worked
+
+- Functional validation gates passed (`test`, `typecheck`, `build`).
+- `docmgr doctor` passed with no findings.
+
+### What didn't work
+
+- Lint remains red due project-level Biome config mismatch and style/import findings in existing files; this is not a runtime blocker but is tracked in closeout notes.
+
+### What I learned
+
+- The hard cutover is stable from a compile/runtime perspective even before full lint debt cleanup.
+
+### What was tricky to build
+
+- The main challenge was distinguishing migration blockers from baseline hygiene debt. I treated runtime/type/build regressions as blockers and documented lint debt explicitly as a follow-up concern.
+
+### What warrants a second pair of eyes
+
+- Confirm whether to scope a follow-up ticket for Biome schema migration + formatting/import cleanup.
+
+### What should be done in the future
+
+- Create a dedicated hygiene ticket to:
+  - migrate `biome.json` schema to match CLI
+  - run `biome check --write` in scoped batches
+  - keep lint green going forward
+
+### Code review instructions
+
+- Review final checklist/changelog state:
+  - `ttmp/2026/02/15/HC-030-DESKTOP-CUTOVER--desktop-shell-hard-cutover-and-legacy-removal/tasks.md`
+  - `ttmp/2026/02/15/HC-030-DESKTOP-CUTOVER--desktop-shell-hard-cutover-and-legacy-removal/changelog.md`
+- Re-run final validation:
+  - `npm test`
+  - `npm run typecheck`
+  - `npm run build`
+  - `npm run lint`
+  - `docmgr doctor --ticket HC-030-DESKTOP-CUTOVER --stale-after 30`
+
+### Technical details
+
+- Tasks completed by this step: C17, V1, V2, V3, V4, V5, V6
+- Lint caveat recorded: Biome schema version mismatch and format/import debt

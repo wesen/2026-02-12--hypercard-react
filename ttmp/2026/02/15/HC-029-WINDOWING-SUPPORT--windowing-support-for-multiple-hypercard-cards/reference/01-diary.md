@@ -18,6 +18,8 @@ RelatedFiles:
       Note: Runtime action plumbing reviewed during feasibility analysis
     - Path: packages/engine/src/components/shell/HyperCardShell.tsx
       Note: Current shell architecture inspected during mapping
+    - Path: packages/engine/src/components/shell/windowing/CardSessionHost.tsx
+      Note: Critical review of runtime context semantics
     - Path: packages/engine/src/components/shell/windowing/DesktopIconLayer.stories.tsx
       Note: Dedicated component story suite for icon layer selection/open states
     - Path: packages/engine/src/components/shell/windowing/DesktopMenuBar.stories.tsx
@@ -26,12 +28,16 @@ RelatedFiles:
       Note: |-
         Storybook-first desktop primitive scenarios for HC-029
         Story rewired to consume shared interaction controller
+    - Path: packages/engine/src/components/shell/windowing/DesktopShell.tsx
+      Note: Review focus on orchestration and command routing
     - Path: packages/engine/src/components/shell/windowing/WindowLayer.stories.tsx
       Note: Window z-order and focus demos
     - Path: packages/engine/src/components/shell/windowing/WindowLayer.tsx
       Note: Deterministic z-order window rendering primitive
     - Path: packages/engine/src/components/shell/windowing/WindowSurface.stories.tsx
       Note: Window surface-focused stories for close/focus/resize affordances
+    - Path: packages/engine/src/components/shell/windowing/WindowSurface.tsx
+      Note: Review focus on focus dispatch and accessibility
     - Path: packages/engine/src/components/shell/windowing/storyFixtures.ts
       Note: Shared fixtures used by subcomponent story suites
     - Path: packages/engine/src/components/shell/windowing/useWindowInteractionController.ts
@@ -44,6 +50,8 @@ RelatedFiles:
       Note: Clean cutover plan added in Step 7
     - Path: ttmp/2026/02/15/HC-029-WINDOWING-SUPPORT--windowing-support-for-multiple-hypercard-cards/design-doc/03-css-mapping-and-design-improvements.md
       Note: CSS mapping and design improvements doc added in Step 12
+    - Path: ttmp/2026/02/15/HC-029-WINDOWING-SUPPORT--windowing-support-for-multiple-hypercard-cards/design-doc/04-implementation-code-review-hc-029-windowing-support.md
+      Note: Step 19-20 capture review document authoring and findings
     - Path: ttmp/2026/02/15/HC-029-WINDOWING-SUPPORT--windowing-support-for-multiple-hypercard-cards/sources/local/mac1-windowing.jsx
       Note: Imported source analyzed during research steps
 ExternalSources: []
@@ -52,6 +60,7 @@ LastUpdated: 2026-02-15T14:30:00-05:00
 WhatFor: Preserve full implementation/research trace and design rationale for HC-029.
 WhenToUse: Use when reviewing why design decisions were made and how to validate them.
 ---
+
 
 
 
@@ -1594,3 +1603,326 @@ Created 3 new story files bringing windowing component story coverage to 100%:
 ### Technical details
 
 - Verification: typecheck clean, biome clean, 95/95 tests pass
+
+## Step 19: Review kickoff, scope inventory, and change-surface mapping
+
+I shifted from implementation mode to audit mode and first established a strict review scope for `HC-029-WINDOWING-SUPPORT`. The goal was to avoid opinion-only feedback and anchor every conclusion to concrete touched files and commit history.
+
+This step built the evidence map used for the full report and for later risk ranking.
+
+### Prompt Context
+
+**User prompt (verbatim):** "Our colleague just worked hard on HC-029-WINDOWING-SUPPORT, but they are often a bit overenthusiasitc and make subtle mistakes, and also often do duplicated code or mix different wyas of doing the same thing. Create a detailed review of their work (check the code they touched, etc...) and write a detailed code review report, first by analyzing the new functionality and how it works and how it is implemented, in detail to explain to a new developer, then going over it critically, both in deatil exhaustively, and also looking at the bigger picture of building appllications on top of the windowing system and integrating the existings Cards and card DSL and all that into it.
+
+Write a detailed review document and keep a frequent detailed diary as you work. The document should be 7+ pages. Add to ticket and then upload to remarkable."
+
+**Assistant interpretation:** Perform a full ticket-level code review with both onboarding walkthrough and critical assessment, maintain a detailed diary during work, store the report in the ticket, and upload the deliverable to reMarkable.
+
+**Inferred user intent:** Get a rigorous, production-minded quality gate before broader windowing rollout, with clear evidence and platform-level guidance.
+
+**Commit (code):** N/A (review/docs workflow; no code commit created in this step)
+
+### What I did
+
+- Loaded and followed skill workflows for:
+  - `code-quality-review-cleanup`
+  - `diary`
+  - `docmgr`
+  - `remarkable-upload`
+- Mapped HC-029 commit chain and touched files:
+  - `git log --reverse --oneline main..HEAD`
+  - `git diff --name-status main..HEAD`
+  - `git diff --stat main..HEAD`
+- Verified ticket workspace and docs:
+  - `docmgr status --summary-only`
+  - `docmgr doc list --ticket HC-029-WINDOWING-SUPPORT`
+- Confirmed review surface includes 40 changed files with ~6312 insertions, centered around:
+  - windowing state slice
+  - desktop/window primitives
+  - `DesktopShell` + `CardSessionHost`
+  - stories and CSS
+  - inventory app cutover
+
+### Why
+
+- Needed objective evidence for exactly what the colleague changed.
+- Needed to separate core runtime-risk files from support-story/docs files.
+
+### What worked
+
+- Commit/file inventory was clean and immediately revealed the primary review centers.
+- Ticket workspace already had complete changelog/task/diary history, which reduced setup overhead.
+
+### What didn't work
+
+- N/A in this step.
+
+### What I learned
+
+- The HC-029 branch includes a very broad UI + runtime + docs footprint, so review quality depends heavily on strict scoping and not just scanning `windowingSlice.ts`.
+
+### What was tricky to build
+
+- The main challenge was deciding review depth without missing subtle integration bugs. I solved this by sequencing the audit in layers: state domain first, then shell orchestration, then runtime bridge, then UX/a11y semantics, then migration/docs consistency.
+
+### What warrants a second pair of eyes
+
+- Commit-to-ticket claim consistency (for example, claims like "DesktopShell replaces HyperCardShell") should be cross-checked against actual file state before final sign-off.
+
+### What should be done in the future
+
+- Add a standard "review-scope script" under ticket `scripts/` for repeatable touched-file and commit-surface extraction.
+
+### Code review instructions
+
+- Start with commit list:
+  - `git log --reverse --oneline main..HEAD`
+- Then inspect touched files:
+  - `git diff --name-status main..HEAD`
+  - `git diff --stat main..HEAD`
+- Confirm ticket doc inventory:
+  - `docmgr doc list --ticket HC-029-WINDOWING-SUPPORT`
+
+### Technical details
+
+- Files changed vs `main`: 40
+- Net inserts/deletes: 6312 / 51
+- Primary implementation commits audited: `d41894c` .. `a83d90b`
+
+## Step 20: Deep implementation audit, validation runs, and finding extraction
+
+After scoping, I performed a deep read of each critical HC-029 implementation file with line-numbered inspection and compared new windowing runtime behavior against legacy `HyperCardShell` behavior. This was the step where subtle correctness and architecture drift issues were identified.
+
+I also ran validation commands to avoid writing a report that ignores actual runtime/test status.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 19)
+
+**Assistant interpretation:** Produce an exhaustive technical review with concrete defects/risks and platform-level implications, not a superficial summary.
+
+**Inferred user intent:** Catch subtle mistakes early, especially duplication and mixed implementation styles that will hurt long-term maintainability.
+
+**Commit (code):** N/A
+
+### What I did
+
+- Inspected core files with line numbers:
+  - `packages/engine/src/features/windowing/types.ts`
+  - `packages/engine/src/features/windowing/windowingSlice.ts`
+  - `packages/engine/src/features/windowing/selectors.ts`
+  - `packages/engine/src/__tests__/windowing.test.ts`
+  - `packages/engine/src/components/shell/windowing/DesktopShell.tsx`
+  - `packages/engine/src/components/shell/windowing/CardSessionHost.tsx`
+  - `packages/engine/src/components/shell/windowing/useWindowInteractionController.ts`
+  - `packages/engine/src/components/shell/windowing/WindowSurface.tsx`
+  - `packages/engine/src/components/shell/HyperCardShell.tsx`
+  - `packages/engine/src/cards/runtime.ts`
+  - `packages/engine/src/cards/runtimeStateSlice.ts`
+  - `packages/engine/src/theme/base.css`
+- Cross-checked story coverage and usage patterns across all new windowing stories.
+- Ran verification commands:
+  - `npm test` (passed: 95 tests)
+  - `npm run typecheck` (passed)
+  - `npm run lint` (failed)
+- Captured lint failure details:
+  - Biome schema mismatch (`biome.json` schema 2.0.0 vs CLI 2.3.15)
+  - Existing unrelated lint/format findings in pre-existing test/app files
+
+### Why
+
+- Needed to ground findings in exact source lines and real command output.
+- Needed to distinguish proven defects from theoretical concerns.
+
+### What worked
+
+- Reducer/selectors behavior is well covered and generally robust.
+- Typecheck/test baseline is clean, giving confidence that major findings are architectural/integration, not immediate compile failures.
+- Side-by-side comparison of `CardSessionHost` vs `HyperCardShell` clearly exposed duplicated runtime wiring and semantic drift.
+
+### What didn't work
+
+- Full lint signal quality is currently reduced by configuration mismatch and existing non-HC-029 issues:
+  - `biome.json` schema mismatch error blocked a clean lint pass in this repository state.
+
+### What I learned
+
+- The highest-impact risk is not in reducer algorithms but in runtime context semantics and shell duplication.
+- Windowing currently has strong local correctness but weaker cross-layer contract guarantees (DSL/runtime/a11y/platform policy cohesion).
+
+### What was tricky to build
+
+- Ranking issues by severity required careful distinction between "code smell" and "behavioral contract risk." The critical threshold was reserved for changes likely to break existing card DSL assumptions (for example, `cardId` semantics in runtime context).
+
+### What warrants a second pair of eyes
+
+- Validate the critical finding around `cardId` semantic drift against any downstream custom shared selectors/actions that introspect `ctx.cardId`.
+- Reconfirm focus event behavior under browser-specific focus bubbling nuances.
+
+### What should be done in the future
+
+- Add integration tests that execute real card actions under both `HyperCardShell` and `DesktopShell` and compare outcomes.
+
+### Code review instructions
+
+- Re-run validation commands:
+  - `npm test`
+  - `npm run typecheck`
+  - `npm run lint`
+- Compare runtime bridges:
+  - `packages/engine/src/components/shell/HyperCardShell.tsx`
+  - `packages/engine/src/components/shell/windowing/CardSessionHost.tsx`
+- Check focus and a11y semantics:
+  - `packages/engine/src/components/shell/windowing/WindowSurface.tsx`
+
+### Technical details
+
+- Test result: 95/95 pass
+- Typecheck result: pass
+- Lint result: fail (schema mismatch + existing findings)
+- Findings extracted for final report: 10 severity-ranked issues (1 critical, 4 high, 5 medium/low-medium)
+
+## Step 21: Final report publication, ticket bookkeeping, and reMarkable upload
+
+With findings finalized, I authored and stored the full review report as a new ticket design-doc, then completed docmgr bookkeeping and uploaded a bundled PDF (report + diary) to reMarkable.
+
+This step closed the user request end-to-end: deliverable written, attached to ticket, and sent to reMarkable.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 19)
+
+**Assistant interpretation:** Persist the final 7+ page review deliverable in ticket docs, maintain diary continuity, and upload to reMarkable with safe workflow.
+
+**Inferred user intent:** Ensure the review is actionable and distributable, not just terminal output.
+
+**Commit (code):** N/A
+
+### What I did
+
+- Created ticket document:
+  - `docmgr doc add --ticket HC-029-WINDOWING-SUPPORT --doc-type design-doc --title "Implementation Code Review: HC-029 Windowing Support"`
+- Authored the full review content in:
+  - `ttmp/2026/02/15/HC-029-WINDOWING-SUPPORT--windowing-support-for-multiple-hypercard-cards/design-doc/04-implementation-code-review-hc-029-windowing-support.md`
+- Related key files to the new report and ticket index:
+  - `docmgr doc relate --doc .../04-implementation-code-review-hc-029-windowing-support.md ...`
+  - `docmgr doc relate --ticket HC-029-WINDOWING-SUPPORT ...`
+- Updated changelog:
+  - `docmgr changelog update --ticket HC-029-WINDOWING-SUPPORT --entry "Added an exhaustive HC-029 implementation code review report ..." ...`
+- Verified report length:
+  - `wc -w` => 3837 words
+  - `wc -l` => 651 lines
+- Ran reMarkable upload workflow:
+  - `remarquee status`
+  - `remarquee upload bundle --dry-run ... --name "HC-029 Windowing Review and Diary" --remote-dir "/ai/2026/02/15/HC-029-WINDOWING-SUPPORT" --toc-depth 2`
+  - `remarquee upload bundle ... --name "HC-029 Windowing Review and Diary" --remote-dir "/ai/2026/02/15/HC-029-WINDOWING-SUPPORT" --toc-depth 2`
+
+### Why
+
+- Needed formal ticket persistence for discoverability and future follow-up work.
+- Needed a safe upload path (dry-run first) to avoid wrong destination/name mistakes.
+
+### What worked
+
+- `docmgr` operations completed successfully; report now exists in the HC-029 ticket workspace.
+- Bundle dry-run validated file inputs and destination path.
+- Upload command returned success:
+  - `OK: uploaded HC-029 Windowing Review and Diary.pdf -> /ai/2026/02/15/HC-029-WINDOWING-SUPPORT`
+
+### What didn't work
+
+- Post-upload remote listing verification failed in this sandbox due DNS/network resolution errors:
+  - `remarquee cloud ls /ai/2026/02/15/HC-029-WINDOWING-SUPPORT --long --non-interactive`
+  - Errors included:
+    - `lookup internal.cloud.remarkable.com: no such host`
+    - `lookup webapp-prod.cloud.remarkable.engineering: no such host`
+
+### What I learned
+
+- Upload and remote-list commands can have different network-path behavior in restricted environments; an upload success message may not be independently verifiable from this sandbox at the same moment.
+
+### What was tricky to build
+
+- The main complexity was balancing very high report detail (7+ page equivalent) with clear severity ranking and explicit onboarding flow, while still keeping ticket metadata and file relations clean.
+
+### What warrants a second pair of eyes
+
+- Reconfirm on a network-enabled machine that `/ai/2026/02/15/HC-029-WINDOWING-SUPPORT/HC-029 Windowing Review and Diary.pdf` is visible in cloud listing/device sync.
+
+### What should be done in the future
+
+- Add a standard post-upload verification fallback (for example local upload log artifact or device-side check step) when cloud listing is blocked.
+
+### Code review instructions
+
+- Open the new report:
+  - `ttmp/2026/02/15/HC-029-WINDOWING-SUPPORT--windowing-support-for-multiple-hypercard-cards/design-doc/04-implementation-code-review-hc-029-windowing-support.md`
+- Open the updated diary:
+  - `ttmp/2026/02/15/HC-029-WINDOWING-SUPPORT--windowing-support-for-multiple-hypercard-cards/reference/01-diary.md`
+- Check changelog entry:
+  - `ttmp/2026/02/15/HC-029-WINDOWING-SUPPORT--windowing-support-for-multiple-hypercard-cards/changelog.md`
+
+### Technical details
+
+- Final report size: 3837 words, 651 lines
+- Upload target: `/ai/2026/02/15/HC-029-WINDOWING-SUPPORT`
+- Upload artifact name: `HC-029 Windowing Review and Diary.pdf`
+
+## Step 22: Ticket hygiene validation pass
+
+As a final hygiene check, I ran `docmgr doctor` for HC-029 after all updates. This verifies that metadata remained structurally healthy after adding new docs, relationships, changelog entries, and diary steps.
+
+This was a low-effort but high-signal final check before handing work back.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 19)
+
+**Assistant interpretation:** Complete the request end-to-end with robust documentation quality, not only content generation.
+
+**Inferred user intent:** Ensure the review artifact is actually usable within the team's documentation workflow.
+
+**Commit (code):** N/A
+
+### What I did
+
+- Ran: `docmgr doctor --ticket HC-029-WINDOWING-SUPPORT --stale-after 30`
+
+### Why
+
+- Needed to confirm ticket documentation consistency after heavy edits.
+
+### What worked
+
+- Doctor completed successfully and found no structural blocker errors.
+
+### What didn't work
+
+- One pre-existing vocabulary warning remains in ticket index topics:
+  - unknown topics: `frontend`, `ux`
+
+### What I learned
+
+- Ticket metadata currently mixes topic values that are not in this workspace vocabulary set (`chat, backend, websocket, review, architecture, code-quality`).
+
+### What was tricky to build
+
+- No technical complexity; this was a verification guardrail step.
+
+### What warrants a second pair of eyes
+
+- Decide whether to extend vocabulary with `frontend` and `ux`, or normalize ticket topics to existing controlled values.
+
+### What should be done in the future
+
+- Run `docmgr doctor` automatically after major doc updates and resolve vocabulary drift immediately.
+
+### Code review instructions
+
+- Re-run: `docmgr doctor --ticket HC-029-WINDOWING-SUPPORT --stale-after 30`
+- Inspect warning location:
+  - `ttmp/2026/02/15/HC-029-WINDOWING-SUPPORT--windowing-support-for-multiple-hypercard-cards/index.md`
+
+### Technical details
+
+- Doctor result: 1 warning (`unknown_topics`), 0 blocking errors

@@ -41,3 +41,26 @@ Completed C9-C12: migrated todo/crm/book-tracker-debug app entrypoints and inven
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/todo/src/App.tsx — DesktopShell app cutover
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/15/HC-030-DESKTOP-CUTOVER--desktop-shell-hard-cutover-and-legacy-removal/reference/01-diary.md — Step 4 app-level migration notes
 
+
+## 2026-02-15
+
+Completed C13-C17: removed legacy shell components and navigation feature stack, deleted legacy navigation tests, updated engine/store/barrel exports, and aligned debug/theme comments with DesktopShell-only architecture.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/shell/HyperCardShell.tsx — Deleted legacy shell implementation
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/features/navigation/navigationSlice.ts — Deleted legacy navigation reducer/actions
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/app/createAppStore.ts — Removed navigation reducer from engine app store
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/shell/index.ts — Removed legacy shell exports
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/index.ts — Removed public navigation exports
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/15/HC-030-DESKTOP-CUTOVER--desktop-shell-hard-cutover-and-legacy-removal/reference/01-diary.md — Step 5 hard-deletion details (commit `752590a`)
+
+
+## 2026-02-15
+
+Completed V1-V6 validation and closeout: tests/typecheck/build passed; lint failed due baseline Biome schema mismatch and style/import debt outside this closeout slice; docmgr doctor passed.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/15/HC-030-DESKTOP-CUTOVER--desktop-shell-hard-cutover-and-legacy-removal/tasks.md — Validation checklist completed
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/15/HC-030-DESKTOP-CUTOVER--desktop-shell-hard-cutover-and-legacy-removal/reference/01-diary.md — Step 6 validation evidence and migration summary

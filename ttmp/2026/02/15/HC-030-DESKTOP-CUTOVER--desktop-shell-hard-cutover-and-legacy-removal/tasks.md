@@ -21,15 +21,15 @@
 - [x] [C11] Update snapshot selectors/usages that rely on `state.navigation`.
 - [x] [C12] Record C9-C11 in HC-030 diary and changelog.
 
-- [ ] [C13] Delete legacy shell component files (`HyperCardShell`, `Layout*`, `TabBar`, `WindowChrome`, `NavBar`).
-- [ ] [C14] Remove legacy shell exports from `components/shell/index.ts` and root engine barrels.
-- [ ] [C15] Delete navigation feature files and tests (`features/navigation`, `navigation.test.ts`) if no longer used.
-- [ ] [C16] Remove navigation reducer wiring from `createAppStore` and dependent test fixtures.
-- [ ] [C17] Record C13-C16 in HC-030 diary and changelog.
+- [x] [C13] Delete legacy shell component files (`HyperCardShell`, `Layout*`, `TabBar`, `WindowChrome`, `NavBar`).
+- [x] [C14] Remove legacy shell exports from `components/shell/index.ts` and root engine barrels.
+- [x] [C15] Delete navigation feature files and tests (`features/navigation`, `navigation.test.ts`) if no longer used.
+- [x] [C16] Remove navigation reducer wiring from `createAppStore` and dependent test fixtures.
+- [x] [C17] Record C13-C16 in HC-030 diary and changelog.
 
-- [ ] [V1] Run `npm test`.
-- [ ] [V2] Run `npm run typecheck`.
-- [ ] [V3] Run `npm run build`.
-- [ ] [V4] Run `npm run lint` and document any non-HC-030 pre-existing failures.
-- [ ] [V5] Final docmgr hygiene pass (`docmgr doctor --ticket HC-030-DESKTOP-CUTOVER --stale-after 30`).
-- [ ] [V6] Publish final migration summary in HC-030 changelog + diary.
+- [x] [V1] Run `npm test`.
+- [x] [V2] Run `npm run typecheck`.
+- [x] [V3] Run `npm run build`.
+- [x] [V4] Run `npm run lint` and document any non-HC-030 pre-existing failures.
+- [x] [V5] Final docmgr hygiene pass (`docmgr doctor --ticket HC-030-DESKTOP-CUTOVER --stale-after 30`).
+- [x] [V6] Publish final migration summary in HC-030 changelog + diary.

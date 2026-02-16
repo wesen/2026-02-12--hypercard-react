@@ -130,3 +130,23 @@ Phase 3+4 complete: DesktopShell replaces HyperCardShell for windowing mode. Car
 - packages/engine/src/components/shell/windowing/CardSessionHost.tsx — Per-window card rendering with session-aware runtime keying
 - packages/engine/src/components/shell/windowing/DesktopShell.tsx — Multi-window shell orchestrating menus
 
+
+## 2026-02-15
+
+Added an exhaustive HC-029 implementation code review report (7+ pages equivalent) covering onboarding walkthrough, severity-ranked findings, and platform integration recommendations for Cards/DSL windowing adoption.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/15/HC-029-WINDOWING-SUPPORT--windowing-support-for-multiple-hypercard-cards/design-doc/04-implementation-code-review-hc-029-windowing-support.md — Primary review deliverable
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/15/HC-029-WINDOWING-SUPPORT--windowing-support-for-multiple-hypercard-cards/reference/01-diary.md — Frequent review-work diary updates
+
+
+## 2026-02-15
+
+Published design-doc 04 implementation review and uploaded bundled review+diary PDF to reMarkable path /ai/2026/02/15/HC-029-WINDOWING-SUPPORT (upload command succeeded; cloud list verification blocked by DNS limits in current sandbox).
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/15/HC-029-WINDOWING-SUPPORT--windowing-support-for-multiple-hypercard-cards/design-doc/04-implementation-code-review-hc-029-windowing-support.md — Final review document
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/15/HC-029-WINDOWING-SUPPORT--windowing-support-for-multiple-hypercard-cards/reference/01-diary.md — Step 19-21 diary for review and upload workflow
+

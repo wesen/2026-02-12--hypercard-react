@@ -9,7 +9,11 @@ Topics:
 DocType: index
 Intent: long-term
 Owners: []
-RelatedFiles: []
+RelatedFiles:
+    - Path: ttmp/2026/02/15/HC-029-WINDOWING-SUPPORT--windowing-support-for-multiple-hypercard-cards/design-doc/04-implementation-code-review-hc-029-windowing-support.md
+      Note: Detailed implementation code review report
+    - Path: ttmp/2026/02/15/HC-029-WINDOWING-SUPPORT--windowing-support-for-multiple-hypercard-cards/reference/01-diary.md
+      Note: Ongoing work diary including review steps
 ExternalSources:
     - local:mac1-windowing.jsx
 Summary: ""
@@ -17,6 +21,7 @@ LastUpdated: 2026-02-15T09:06:48.679931909-05:00
 WhatFor: ""
 WhenToUse: ""
 ---
+
 
 
 # Windowing support for multiple HyperCard cards
