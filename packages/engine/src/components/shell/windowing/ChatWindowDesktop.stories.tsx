@@ -268,6 +268,7 @@ function DesktopChatWindow({ stack }: { stack: CardStackDefinition }) {
         const template = CARD_TEMPLATES.find((t) => t.id === templateId);
         if (!template) return;
 
+        // 1) Register the card in the stack definition
         stack.cards[template.id] = {
           id: template.id,
           type: 'plugin',
@@ -275,6 +276,10 @@ function DesktopChatWindow({ stack }: { stack: CardStackDefinition }) {
           icon: template.icon,
           ui: { t: 'text', value: `Plugin card: ${template.id}` },
         };
+
+        // 2) Append defineCard() call to the bundle so new VM sessions include it
+        const defineCall = `\nglobalThis.__stackHost.defineCard(${JSON.stringify(template.id)}, (${template.code}));\n`;
+        stack.plugin.bundleCode += defineCall;
 
         setCreatedCards((prev) => [...prev, template.id]);
         setMessages((prev) => [
