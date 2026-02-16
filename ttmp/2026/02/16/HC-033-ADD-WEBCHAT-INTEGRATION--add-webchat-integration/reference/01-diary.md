@@ -913,3 +913,49 @@ This step reverted inventory tools back to `(context.Context, Input)` signatures
 
 - First commit attempt in `geppetto` failed lint (`SA1029`) due using anonymous struct as context key in test.
 - Fixed by introducing a dedicated key type (`type testContextKey string`) and recommitted successfully.
+
+## Step 11: Replace Event-List Spam With In-Place Timeline Widget
+
+This step implemented a real timeline widget inside the inventory chat stream so tool/hypercard/timeline updates mutate one persistent chat widget instead of appending a long list of system text lines.
+
+### Prompt Context
+
+**User prompt (verbatim):** "Ok, create a real timeline 'widget' that can be inserted into the chat, and gets updated in place when the relevant events come in. because right now we just have a very long list of messages"
+
+**Assistant interpretation:** Keep the hard-cut frontend, but move SEM event visualization into a structured `ChatWindow` inline widget with upsert semantics.
+
+### What I changed
+
+- Extended chat reducer message typing to `ChatWindowMessage` and added timeline widget domain types:
+  - `TimelineWidgetItem`
+  - `TimelineItemStatus`
+- Added reducer-side widget lifecycle:
+  - `ensureTimelineWidgetMessage` creates one stable system message (`timeline-widget-message`) with one `inventory.timeline` widget block.
+  - `upsertTimelineItem` updates rows by id, sorts by recency, and caps row count.
+- Reworked SEM event handling in `InventoryChatWindow`:
+  - `tool.start/delta/result/done` now upsert one tool row keyed by tool id.
+  - Tool args and result payload snippets are included in row detail.
+  - `hypercard.*` and `timeline.upsert` events are mapped to stable row ids and statuses.
+- Added timeline widget renderer passed to `ChatWindow` via `renderWidget`.
+- Added reducer regression test to ensure repeated updates affect one widget message + one row (in-place update behavior).
+
+### Validation
+
+- `pnpm -C apps/inventory exec tsc --noEmit` passed.
+- `npm exec vitest run apps/inventory/src/features/chat/chatSlice.test.ts` passed (`4` tests).
+- `npm run build -w apps/inventory` still fails due pre-existing Vite worker format issue:
+  - `Invalid value "iife" for option "worker.format" - UMD and IIFE output formats are not supported for code-splitting builds.`
+
+### What was tricky
+
+- Tool event ids are not always safest to read from a single field in practice, so I added `eventOrDataId` to correlate updates using `data.id` first, then `event.id`.
+- Lifecycle ids needed careful normalization so fallback ids do not accidentally become `widget:widget:unknown`.
+
+### Review pointers
+
+- Reducer + widget message model:
+  - `apps/inventory/src/features/chat/chatSlice.ts`
+- SEM -> timeline mapping + widget rendering:
+  - `apps/inventory/src/features/chat/InventoryChatWindow.tsx`
+- Reducer behavior test:
+  - `apps/inventory/src/features/chat/chatSlice.test.ts`

@@ -64,34 +64,34 @@
 
 ### 5. Geppetto middleware-driven artifact/card generation
 
-- [ ] B5.1 Add `inventory_artifact_policy` middleware package.
-- [ ] B5.2 Ensure policy middleware injects stable structured output instructions.
-- [ ] B5.3 Add `inventory_artifact_generator` middleware package.
-- [ ] B5.4 Ensure middleware does not synthesize fallback success payloads (strict no-fallback behavior).
-- [ ] B5.5 Ensure malformed/missing structured outputs are surfaced as explicit error lifecycle events.
-- [ ] B5.6 Add middleware factories and runtime middleware config wiring.
-- [ ] B5.7 Add middleware unit tests for deterministic generation and idempotence.
+- [x] B5.1 Add `inventory_artifact_policy` middleware package.
+- [x] B5.2 Ensure policy middleware injects stable structured output instructions.
+- [x] B5.3 Add `inventory_artifact_generator` middleware package.
+- [x] B5.4 Ensure middleware does not synthesize fallback success payloads (strict no-fallback behavior).
+- [x] B5.5 Ensure malformed/missing structured outputs are surfaced as explicit error lifecycle events.
+- [x] B5.6 Add middleware factories and runtime middleware config wiring.
+- [x] B5.7 Add middleware unit tests for deterministic generation and idempotence.
 
 ### 6. Structured extraction and SEM mapping
 
-- [ ] B6.1 Define custom event types for widget/card extractor outputs.
-- [ ] B6.2 Register Geppetto event factories/codecs for custom events.
-- [ ] B6.3 Implement `hypercard/widget/v1` extractor.
-- [ ] B6.4 Implement `hypercard/cardproposal/v1` extractor.
-- [ ] B6.5 Wire `WithEventSinkWrapper` + `structuredsink.NewFilteringSink`.
-- [ ] B6.6 Emit widget lifecycle events (`start`, `update`, `v1`, `error`) from extractor session.
-- [ ] B6.7 Emit card lifecycle events (`start`, `update`, `card_proposal.v1`, `error`) from extractor session.
-- [ ] B6.8 Enforce title-gated `start` emission in extractor logic.
-- [ ] B6.9 Register SEM mappings for all widget/card lifecycle events.
-- [ ] B6.10 Register timeline handlers for lifecycle projection (`status` + `tool_result` upserts).
-- [ ] B6.11 Add extractor tests for fragmented tags, malformed blocks, title-gated start, and success paths.
-- [ ] B6.12 Add websocket integration tests for progressive lifecycle events.
+- [x] B6.1 Define custom event types for widget/card extractor outputs.
+- [x] B6.2 Register Geppetto event factories/codecs for custom events.
+- [x] B6.3 Implement `hypercard/widget/v1` extractor.
+- [x] B6.4 Implement `hypercard/cardproposal/v1` extractor.
+- [x] B6.5 Wire `WithEventSinkWrapper` + `structuredsink.NewFilteringSink`.
+- [x] B6.6 Emit widget lifecycle events (`start`, `update`, `v1`, `error`) from extractor session.
+- [x] B6.7 Emit card lifecycle events (`start`, `update`, `card_proposal.v1`, `error`) from extractor session.
+- [x] B6.8 Enforce title-gated `start` emission in extractor logic.
+- [x] B6.9 Register SEM mappings for all widget/card lifecycle events.
+- [x] B6.10 Register timeline handlers for lifecycle projection (`status` + `tool_result` upserts).
+- [x] B6.11 Add extractor tests for fragmented tags, malformed blocks, title-gated start, and success paths.
+- [x] B6.12 Add websocket integration tests for progressive lifecycle events.
 
 ### 7. Frontend artifact-aware expansion (post-round-trip cutover)
 
-- [ ] F7.1 Add SEM envelope parser/type guards for widget/card lifecycle events.
-- [ ] F7.2 Extend reducer model to handle widget/card lifecycle events.
-- [ ] F7.3 Add reducer/UI state for spinner rows driven by `*.start` and `*.update`.
+- [x] F7.1 Add SEM envelope parser/type guards for widget/card lifecycle events.
+- [x] F7.2 Extend reducer model to handle widget/card lifecycle events.
+- [x] F7.3 Add reducer/UI state for spinner rows driven by `*.start` and `*.update`.
 - [ ] F7.4 Add reducer tests for streaming order, title-gated starts, and event attachment.
 - [ ] F7.5 Validate regression-free behavior for minimal round-trip flow introduced in Phase 2.5.
 

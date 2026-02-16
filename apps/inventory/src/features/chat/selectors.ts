@@ -1,11 +1,11 @@
-import type { ChatMessage } from '@hypercard/engine';
+import type { ChatWindowMessage } from '@hypercard/engine';
 import type { ChatConnectionStatus } from './chatSlice';
 
 interface ChatStateShape {
   conversationId: string | null;
   connectionStatus: ChatConnectionStatus;
   isStreaming: boolean;
-  messages: ChatMessage[];
+  messages: ChatWindowMessage[];
   lastError: string | null;
 }
 

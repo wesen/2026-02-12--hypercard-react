@@ -90,3 +90,35 @@ Implemented Phase 3/4 backend slice: SQLite inventory domain + deterministic see
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/internal/inventorydb/store_test.go — Migration/seed idempotency and mutation tests
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/scripts/reset-seed-inventory-db.sh — Operator reset/seed script
 
+## 2026-02-16
+
+Improved chat event rendering for tool lifecycle visibility: tool start events now include structured arguments, tool delta patches are displayed, and tool done events are rendered in the chat stream (commit 86f04bd).
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/InventoryChatWindow.tsx — Added tool args/delta/done rendering
+
+## 2026-02-16
+
+Implemented backend Phases 5/6 end-to-end: middleware-driven artifact policy/generator, strict no-fallback missing/malformed error surfacing, structured sink extractors, custom event factory+SEM mappings, timeline projection handlers, and websocket lifecycle integration tests (commit d31dc7c).
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/internal/pinoweb/hypercard_middleware.go — Artifact policy + generator middleware implementations
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/internal/pinoweb/hypercard_extractors.go — Widget/cardproposal progressive YAML extractors + sink wrapper
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/internal/pinoweb/hypercard_events.go — Custom event types, factory registration, SEM mappings, timeline handlers
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/internal/pinoweb/runtime_composer.go — Middleware factory/runtime wiring
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/cmd/hypercard-inventory-server/main.go — Registered extensions and sink wrapper in server bootstrap
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/internal/pinoweb/hypercard_extractors_test.go — Extractor + middleware unit tests
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/cmd/hypercard-inventory-server/main_integration_test.go — Websocket progressive lifecycle integration test
+
+## 2026-02-16
+
+Replaced event-spam system lines with a persistent in-chat timeline widget (`inventory.timeline`) that upserts tool/hypercard/timeline states in place, including tool call args and success/error transitions.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/chatSlice.ts — Added timeline widget message model and `upsertTimelineItem` reducer
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/InventoryChatWindow.tsx — Routed SEM events into timeline upserts and added `renderWidget` for timeline display
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/selectors.ts — Updated selector typing for `ChatWindowMessage`
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/chatSlice.test.ts — Added reducer test ensuring single timeline widget message with in-place item updates

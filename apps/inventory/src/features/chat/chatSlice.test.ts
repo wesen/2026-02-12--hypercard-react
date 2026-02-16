@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { applyLLMDelta, applyLLMFinal, applyLLMStart, chatReducer, queueUserPrompt, setStreamError } from './chatSlice';
+import {
+  applyLLMDelta,
+  applyLLMFinal,
+  applyLLMStart,
+  chatReducer,
+  queueUserPrompt,
+  setStreamError,
+  upsertTimelineItem,
+} from './chatSlice';
 
 function reduce(actions: Parameters<typeof chatReducer>[1][]) {
   let state = chatReducer(undefined, { type: '__test__/init' });
@@ -51,5 +59,37 @@ describe('chatSlice', () => {
     expect(ai?.status).toBe('error');
     expect(state.lastError).toBe('backend unavailable');
     expect(state.isStreaming).toBe(false);
+  });
+
+  it('creates a single timeline widget message and upserts items in place', () => {
+    const state = reduce([
+      upsertTimelineItem({
+        id: 'tool:abc',
+        title: 'Tool lookup',
+        status: 'running',
+        detail: 'started',
+        updatedAt: 10,
+      }),
+      upsertTimelineItem({
+        id: 'tool:abc',
+        title: 'Tool lookup',
+        status: 'success',
+        detail: 'done',
+        updatedAt: 20,
+      }),
+    ]);
+
+    const timelineMessages = state.messages.filter((m) => m.id === 'timeline-widget-message');
+    expect(timelineMessages).toHaveLength(1);
+    const widgetBlock = timelineMessages[0]?.content?.find((entry) => entry.kind === 'widget');
+    expect(widgetBlock?.kind).toBe('widget');
+    const items = (widgetBlock?.kind === 'widget'
+      ? ((widgetBlock.widget.props as Record<string, unknown>).items as Array<Record<string, unknown>> | undefined)
+      : undefined) ?? [];
+    expect(items).toHaveLength(1);
+    expect(items[0]?.id).toBe('tool:abc');
+    expect(items[0]?.status).toBe('success');
+    expect(items[0]?.detail).toBe('done');
+    expect(items[0]?.updatedAt).toBe(20);
   });
 });
