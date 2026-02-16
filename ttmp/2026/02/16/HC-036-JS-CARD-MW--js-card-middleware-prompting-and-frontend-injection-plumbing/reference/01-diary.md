@@ -134,3 +134,47 @@ Updated `defaultArtifactPolicyInstructions()` to compose widget prompt + runtime
 - Added `hypercard.card.v2` direct extraction test with runtimeCardId/runtimeCardCode assertions
 - Updated timeline projected test to use v2 customKind
 - 141 tests pass, TypeScript clean
+
+### Phase 3: Injection plumbing (~18:20–18:26)
+
+#### runtimeCardRegistry.ts (new file in packages/engine/src/plugin-runtime/)
+
+Simple global singleton registry — `Map<string, RuntimeCardDefinition>` with change listeners:
+
+- `registerRuntimeCard(cardId, code)` — stores card definition, notifies listeners
+- `unregisterRuntimeCard(cardId)` — removes, notifies
+- `getPendingRuntimeCards()` — returns all definitions
+- `hasRuntimeCard(cardId)` — check existence
+- `onRegistryChange(fn)` → returns unsubscribe
+- `injectPendingCards(service, sessionId)` — iterates registry, calls `service.defineCard()` for each, continues on error, returns list of successfully injected card IDs
+
+Design: intentionally not in Redux — these are ephemeral runtime definitions that need to reach the QuickJS VM layer, which lives in refs. A simple pub/sub avoids coupling raw JS code strings to serializable state.
+
+#### PluginCardSessionHost.tsx changes
+
+Two injection points:
+1. **After bundle load**: calls `injectPendingCards(runtimeService, sessionId)` right after `setRuntimeSessionStatus('ready')`
+2. **Live subscription**: `useEffect` subscribes to `onRegistryChange()` when session is `'ready'`, injects on each change
+
+This covers both scenarios:
+- Cards registered before session loads (pre-populated)
+- Cards arriving after session is running (streaming during conversation)
+
+#### InventoryChatWindow.tsx changes
+
+- Added `useStore()` for inline artifact record lookup
+- In `onSemEnvelope`: after `upsertArtifact`, if the artifact has `runtimeCardId` + `runtimeCardCode`, calls `registerRuntimeCard()`
+- In `openArtifact`: looks up `storeState.artifacts.byId[artifactId]` to get `runtimeCardId`, passes it to `buildArtifactOpenWindowPayload`
+
+#### artifactRuntime.ts changes
+
+- `buildArtifactOpenWindowPayload` accepts optional `runtimeCardId`
+- When present, uses it directly as `cardId` (skips `templateToCardId`)
+- Icon changes to 🃏 for runtime cards
+
+#### Tests
+
+6 new tests in `runtimeCardRegistry.test.ts`:
+- register/retrieve, overwrite, unregister, listener notification + unsub, inject into mock service, error recovery (one fails, others still inject)
+
+153 tests pass total

@@ -37,7 +37,7 @@ Ticket: HC-036-JS-CARD-MW
 
 ### P2.1 Replace artifact runtime (artifactRuntime.ts)
 - [x] P2.1a Add `hypercard.card.v2` parser branch extracting card.id, card.code, name
-- [ ] P2.1b Remove `hypercard.card_proposal.v1` parser branch (keeping for backward compat in timeline)
+- [x] P2.1b Remove `hypercard.card_proposal.v1` parser branch (hard cutover, no backward compat)
 - [ ] P2.1c Remove `templateToCardId()` and template-based routing (deferred to Phase 4)
 - [ ] P2.1d Add `buildRuntimeCardOpenWindowPayload()` using card.id directly (deferred to Phase 3)
 
@@ -55,11 +55,12 @@ Ticket: HC-036-JS-CARD-MW
 
 ## Phase 3: Injection plumbing
 
-- [ ] P3.1 Create `runtimeSessionRegistry.ts` with register/unregister/injectDefineCard
-- [ ] P3.2 Register runtime sessions from `PluginCardSessionHost.tsx`
-- [ ] P3.3 Wire inject-before-open in `InventoryChatWindow.tsx` openArtifact flow
-- [ ] P3.4 Update injection status in artifact state after inject
-- [ ] P3.5 Add storybook stories for runtime card injection flow
+- [x] P3.1 Create `runtimeCardRegistry.ts` with register/unregister/injectPendingCards/onRegistryChange
+- [x] P3.2 Wire `PluginCardSessionHost.tsx` to inject pending cards after bundle load + subscribe to live changes
+- [x] P3.3 Wire `InventoryChatWindow.tsx` to register runtime cards from card.v2 events + pass runtimeCardId to openArtifact
+- [x] P3.4 Update `buildArtifactOpenWindowPayload` to use runtimeCardId directly when available
+- [x] P3.5 Add 6 registry unit tests (register, overwrite, unregister, listener, inject, error recovery)
+- [ ] P3.6 Add storybook stories for runtime card injection flow (deferred)
 
 ## Phase 4: Cleanup
 - [ ] P4.1 Delete dead code paths and unused types

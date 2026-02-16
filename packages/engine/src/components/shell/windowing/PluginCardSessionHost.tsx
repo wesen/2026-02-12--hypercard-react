@@ -12,6 +12,7 @@ import {
 } from '../../../features/pluginCardRuntime';
 import { selectFocusedWindowId, selectSessionCurrentNav, selectSessionNavDepth } from '../../../features/windowing';
 import type { RuntimeIntent } from '../../../plugin-runtime/contracts';
+import { injectPendingCards, onRegistryChange } from '../../../plugin-runtime/runtimeCardRegistry';
 import { QuickJSCardRuntimeService } from '../../../plugin-runtime/runtimeService';
 import type { UINode } from '../../../plugin-runtime/uiTypes';
 import { dispatchRuntimeIntent } from './pluginIntentRouting';
@@ -140,6 +141,14 @@ export function PluginCardSessionHost({
 
         dispatch(setRuntimeSessionStatus({ sessionId, status: 'ready' }));
 
+        // Inject any runtime cards that were registered before the session loaded
+        if (runtimeService) {
+          const injected = injectPendingCards(runtimeService, sessionId);
+          if (injected.length > 0) {
+            console.log(`[PluginCardSessionHost] Injected ${injected.length} runtime cards into ${sessionId}:`, injected);
+          }
+        }
+
         if (bundle.initialSessionState && typeof bundle.initialSessionState === 'object') {
           dispatchRuntimeIntent(
             {
@@ -193,6 +202,23 @@ export function PluginCardSessionHost({
       cancelled = true;
     };
   }, [dispatch, pluginConfig, runtimeSession, sessionId, stack.id, currentCardId, windowId, store]);
+
+  // Subscribe to runtime card registry — inject new cards as they arrive
+  useEffect(() => {
+    if (!pluginConfig || !runtimeSession || runtimeSession.status !== 'ready') {
+      return;
+    }
+    const runtimeService = runtimeServiceRef.current;
+    if (!runtimeService) {
+      return;
+    }
+    return onRegistryChange(() => {
+      const injected = injectPendingCards(runtimeService, sessionId);
+      if (injected.length > 0) {
+        console.log(`[PluginCardSessionHost] Live-injected ${injected.length} runtime cards into ${sessionId}:`, injected);
+      }
+    });
+  }, [pluginConfig, runtimeSession, sessionId]);
 
   useEffect(() => {
     if (!pluginConfig) {

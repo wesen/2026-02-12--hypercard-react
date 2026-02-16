@@ -1,6 +1,6 @@
-import { ChatWindow, openWindow, type ChatWindowMessage, type InlineWidget } from '@hypercard/engine';
+import { ChatWindow, openWindow, registerRuntimeCard, type ChatWindowMessage, type InlineWidget } from '@hypercard/engine';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, useStore } from 'react-redux';
 import { buildArtifactOpenWindowPayload, extractArtifactUpsertFromSem } from './artifactRuntime';
 import { upsertArtifact } from './artifactsSlice';
 import { emitConversationEvent } from './eventBus';
@@ -334,6 +334,10 @@ function onSemEnvelope(envelope: SemEventEnvelope, dispatch: ReturnType<typeof u
   const artifactUpdate = extractArtifactUpsertFromSem(type, data);
   if (artifactUpdate) {
     dispatch(upsertArtifact(artifactUpdate));
+    // Register runtime card code into the global registry for injection into plugin sessions
+    if (artifactUpdate.runtimeCardId && artifactUpdate.runtimeCardCode) {
+      registerRuntimeCard(artifactUpdate.runtimeCardId, artifactUpdate.runtimeCardCode);
+    }
   }
 
   if (type === 'llm.start') {
@@ -584,6 +588,7 @@ export interface InventoryChatWindowProps {
 
 export function InventoryChatWindow({ conversationId }: InventoryChatWindowProps) {
   const dispatch = useDispatch();
+  const store = useStore();
   const connectionStatus = useSelector((s: ChatStateSlice) => selectConnectionStatus(s, conversationId));
   const messages = useSelector((s: ChatStateSlice) => selectMessages(s, conversationId));
   const suggestions = useSelector((s: ChatStateSlice) => selectSuggestions(s, conversationId));
@@ -685,10 +690,14 @@ export function InventoryChatWindow({ conversationId }: InventoryChatWindowProps
       if (!artifactId) {
         return;
       }
+      // Look up artifact record for runtime card info
+      const storeState = store.getState() as { artifacts?: { byId: Record<string, { runtimeCardId?: string }> } };
+      const artifactRecord = storeState.artifacts?.byId?.[artifactId];
       const payload = buildArtifactOpenWindowPayload({
         artifactId,
         template: item.template,
         title: item.title,
+        runtimeCardId: artifactRecord?.runtimeCardId,
       });
       if (!payload) {
         return;

@@ -152,20 +152,21 @@ export function buildArtifactOpenWindowPayload(input: {
   template?: string;
   title?: string;
   stackId?: string;
+  runtimeCardId?: string;
 }): OpenWindowPayload | undefined {
   const artifactId = input.artifactId.trim();
   if (artifactId.length === 0) {
     return undefined;
   }
   const safeKey = sanitizeArtifactKey(artifactId);
-  const cardId = templateToCardId(input.template);
+  const cardId = input.runtimeCardId ?? templateToCardId(input.template);
   const title = input.title?.trim() || `Artifact ${artifactId}`;
   const stackId = (input.stackId ?? 'inventory').trim() || 'inventory';
 
   return {
     id: `window:artifact:${safeKey}`,
     title,
-    icon: templateIcon(input.template),
+    icon: input.runtimeCardId ? '🃏' : templateIcon(input.template),
     bounds: { x: 220, y: 50, w: 520, h: 420 },
     content: {
       kind: 'card',
