@@ -74,8 +74,9 @@ func runServe(args []string) error {
 
 	planner := chat.NewPlanner(st)
 	srv := app.NewServer(planner, app.ServerOptions{
-		AllowOrigin: *allowOrigin,
-		TokenDelay:  time.Duration(*tokenDelayMS) * time.Millisecond,
+		AllowOrigin:   *allowOrigin,
+		TokenDelay:    time.Duration(*tokenDelayMS) * time.Millisecond,
+		TimelineStore: st,
 	})
 
 	httpSrv := &http.Server{

@@ -38,6 +38,37 @@ var schemaStatements = []string{
 	`CREATE INDEX IF NOT EXISTS idx_items_name ON items(name);`,
 	`CREATE INDEX IF NOT EXISTS idx_sales_date ON sales_log(sale_date);`,
 	`CREATE INDEX IF NOT EXISTS idx_sales_sku ON sales_log(sku);`,
+	`CREATE TABLE IF NOT EXISTS timeline_conversations (
+		conversation_id TEXT PRIMARY KEY,
+		last_seq INTEGER NOT NULL DEFAULT 0,
+		updated_at TEXT NOT NULL
+	);`,
+	`CREATE TABLE IF NOT EXISTS timeline_messages (
+		conversation_id TEXT NOT NULL,
+		message_id TEXT NOT NULL,
+		role TEXT NOT NULL,
+		text TEXT NOT NULL DEFAULT '',
+		status TEXT NOT NULL DEFAULT 'streaming',
+		artifacts_json TEXT NOT NULL DEFAULT '[]',
+		actions_json TEXT NOT NULL DEFAULT '[]',
+		updated_at TEXT NOT NULL,
+		PRIMARY KEY (conversation_id, message_id),
+		FOREIGN KEY (conversation_id) REFERENCES timeline_conversations(conversation_id)
+	);`,
+	`CREATE TABLE IF NOT EXISTS timeline_events (
+		conversation_id TEXT NOT NULL,
+		seq INTEGER NOT NULL,
+		event_id TEXT NOT NULL,
+		event_type TEXT NOT NULL,
+		stream_id TEXT NOT NULL DEFAULT '',
+		data_json TEXT NOT NULL DEFAULT '{}',
+		metadata_json TEXT NOT NULL DEFAULT '{}',
+		created_at TEXT NOT NULL,
+		PRIMARY KEY (conversation_id, seq),
+		FOREIGN KEY (conversation_id) REFERENCES timeline_conversations(conversation_id)
+	);`,
+	`CREATE INDEX IF NOT EXISTS idx_timeline_messages_conversation_updated ON timeline_messages(conversation_id, updated_at);`,
+	`CREATE INDEX IF NOT EXISTS idx_timeline_events_conversation_seq ON timeline_events(conversation_id, seq);`,
 }
 
 type SQLiteStore struct {

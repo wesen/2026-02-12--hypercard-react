@@ -39,6 +39,9 @@ type Artifact struct {
 	Title      string         `json:"title,omitempty"`
 	Icon       string         `json:"icon,omitempty"`
 	Code       string         `json:"code,omitempty"`
+	DedupeKey  string         `json:"dedupeKey,omitempty"`
+	Version    int            `json:"version,omitempty"`
+	Policy     map[string]any `json:"policy,omitempty"`
 }
 
 type SEMEvent struct {
