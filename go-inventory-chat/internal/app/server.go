@@ -3,725 +3,588 @@ package app
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"log"
 	"net/http"
-	"net/url"
-	"regexp"
-	"strconv"
 	"strings"
-	"sync"
-	"time"
 
+	"github.com/go-go-golems/geppetto/pkg/events"
+	"github.com/go-go-golems/geppetto/pkg/inference/engine"
+	geptools "github.com/go-go-golems/geppetto/pkg/inference/tools"
+	"github.com/go-go-golems/geppetto/pkg/steps/ai/settings"
+	aitypes "github.com/go-go-golems/geppetto/pkg/steps/ai/types"
+	"github.com/go-go-golems/geppetto/pkg/turns"
+	"github.com/go-go-golems/glazed/pkg/cmds/values"
+	infruntime "github.com/go-go-golems/pinocchio/pkg/inference/runtime"
+	chatstore "github.com/go-go-golems/pinocchio/pkg/persistence/chatstore"
+	webchat "github.com/go-go-golems/pinocchio/pkg/webchat"
+	webhttp "github.com/go-go-golems/pinocchio/pkg/webchat/http"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/rs/zerolog/log"
 
 	"hypercard/go-inventory-chat/internal/chat"
-	"hypercard/go-inventory-chat/internal/store"
 )
 
 const (
-	pendingTTL      = 2 * time.Minute
-	maxRequestBytes = 1 << 20
+	defaultSystemPrompt = "You are the inventory operations assistant. Always call the inventory_query tool before answering inventory questions. Keep answers concise and factual."
+	defaultRuntimeKey   = "inventory"
+	inventoryToolName   = "inventory_query"
 )
 
-type plannerRunner func(ctx context.Context, prompt string) (chat.PlannedResponse, error)
-
-type PlannerMiddleware func(next plannerRunner) plannerRunner
-
-type HTTPMiddleware func(next http.Handler) http.Handler
-
-type ServerOptions struct {
-	AllowOrigin       string
-	TokenDelay        time.Duration
-	TimelineStore     *store.SQLiteStore
-	HTTPMiddlewares   []HTTPMiddleware
-	PlannerMiddleware []PlannerMiddleware
+type RuntimeConfig struct {
+	Enabled      bool
+	Provider     string
+	Model        string
+	APIKey       string
+	BaseURL      string
+	SystemPrompt string
 }
 
-type pendingStream struct {
-	ConversationID     string
-	MessageID          string
-	UserMessageID      string
-	AssistantMessageID string
-	Response           chat.PlannedResponse
-	CreatedAt          time.Time
+type ServerConfig struct {
+	Addr            string
+	AllowOrigin     string
+	Runtime         RuntimeConfig
+	TimelineStore   chatstore.TimelineStore
+	TurnStore       chatstore.TurnStore
+	DebugRoutes     bool
+	DefaultConvID   string
+	DefaultToolList []string
 }
 
-type Server struct {
-	plan     plannerRunner
-	opts     ServerOptions
-	timeline *store.SQLiteStore
-
-	mu      sync.Mutex
-	pending map[string]pendingStream
-
-	upgrader websocket.Upgrader
+type inventoryRuntimeComposer struct {
+	stepSettings *settings.StepSettings
+	planner      *chat.Planner
+	llmEnabled   bool
+	systemPrompt string
+	allowedTools []string
 }
 
-type chatRequestBody struct {
-	ConvID string `json:"conv_id"`
-	Prompt string `json:"prompt"`
+func newInventoryRuntimeComposer(stepSettings *settings.StepSettings, planner *chat.Planner, llmEnabled bool, systemPrompt string, allowedTools []string) *inventoryRuntimeComposer {
+	if strings.TrimSpace(systemPrompt) == "" {
+		systemPrompt = defaultSystemPrompt
+	}
+	if len(allowedTools) == 0 {
+		allowedTools = []string{inventoryToolName}
+	}
+	return &inventoryRuntimeComposer{
+		stepSettings: stepSettings,
+		planner:      planner,
+		llmEnabled:   llmEnabled,
+		systemPrompt: systemPrompt,
+		allowedTools: append([]string(nil), allowedTools...),
+	}
 }
 
-type chatResponseBody struct {
-	ConvID    string `json:"conv_id"`
-	RequestID string `json:"request_id"`
-	Status    string `json:"status"`
-	StreamURL string `json:"stream_url"`
-}
-
-func NewServer(planner *chat.Planner, opts ServerOptions) *Server {
-	if planner == nil {
-		panic("planner is required")
+func (c *inventoryRuntimeComposer) Compose(ctx context.Context, req infruntime.RuntimeComposeRequest) (infruntime.RuntimeArtifacts, error) {
+	if c == nil {
+		return infruntime.RuntimeArtifacts{}, fmt.Errorf("runtime composer is nil")
 	}
-	if opts.TimelineStore == nil {
-		panic("timeline store is required")
-	}
-	if strings.TrimSpace(opts.AllowOrigin) == "" {
-		opts.AllowOrigin = "*"
-	}
-	if opts.TokenDelay <= 0 {
-		opts.TokenDelay = 16 * time.Millisecond
-	}
-
-	plannerMiddlewares := append([]PlannerMiddleware{
-		StructuredExtractionMiddleware(),
-		ArtifactValidationMiddleware(),
-	}, opts.PlannerMiddleware...)
-
-	s := &Server{
-		plan: chainPlanner(func(ctx context.Context, prompt string) (chat.PlannedResponse, error) {
-			return planner.Plan(ctx, prompt)
-		}, plannerMiddlewares...),
-		opts:     opts,
-		timeline: opts.TimelineStore,
-		pending:  map[string]pendingStream{},
-	}
-
-	allowOrigin := strings.TrimSpace(opts.AllowOrigin)
-	s.upgrader = websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
-		CheckOrigin: func(r *http.Request) bool {
-			if allowOrigin == "*" {
-				return true
+	systemPrompt := c.systemPrompt
+	allowedTools := append([]string(nil), c.allowedTools...)
+	if req.Overrides != nil {
+		if v, ok := req.Overrides["system_prompt"].(string); ok && strings.TrimSpace(v) != "" {
+			systemPrompt = strings.TrimSpace(v)
+		}
+		if raw, ok := req.Overrides["tools"].([]any); ok {
+			custom := make([]string, 0, len(raw))
+			for _, item := range raw {
+				name, ok := item.(string)
+				if !ok {
+					continue
+				}
+				name = strings.TrimSpace(name)
+				if name == "" {
+					continue
+				}
+				custom = append(custom, name)
 			}
-			origin := strings.TrimSpace(r.Header.Get("Origin"))
-			if origin == "" {
-				return true
+			if len(custom) > 0 {
+				allowedTools = custom
 			}
-			return origin == allowOrigin
-		},
-	}
-	return s
-}
-
-func (s *Server) Handler() http.Handler {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/api/chat/completions", s.handleCompletions)
-	mux.HandleFunc("/chat", s.handleChat)
-	mux.HandleFunc("/api/timeline", s.handleTimeline)
-	mux.HandleFunc("/ws", s.handleWS)
-	mux.HandleFunc("/healthz", s.handleHealth)
-
-	defaultMws := []HTTPMiddleware{
-		recoveryMiddleware(),
-		requestLogMiddleware(),
-	}
-	return chainHTTPMiddlewares(mux, append(defaultMws, s.opts.HTTPMiddlewares...)...)
-}
-
-func (s *Server) handleHealth(w http.ResponseWriter, _ *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	_, _ = w.Write([]byte(`{"ok":true}`))
-}
-
-func (s *Server) handleChat(w http.ResponseWriter, r *http.Request) {
-	s.writeCORSHeaders(w)
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
+		}
 	}
 
-	var req chatRequestBody
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, maxRequestBytes)).Decode(&req); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
-		return
-	}
-	conversationID := strings.TrimSpace(req.ConvID)
-	if conversationID == "" {
-		conversationID = "default"
-	}
-	prompt := strings.TrimSpace(req.Prompt)
-	if prompt == "" {
-		http.Error(w, "missing prompt", http.StatusBadRequest)
-		return
+	runtimeKey := strings.TrimSpace(req.RuntimeKey)
+	if runtimeKey == "" {
+		runtimeKey = defaultRuntimeKey
 	}
 
-	resp, err := s.submitPrompt(r.Context(), r, conversationID, prompt)
-	if err != nil {
-		log.Printf("submit prompt failed: %v", err)
-		http.Error(w, "failed to prepare completion", http.StatusInternalServerError)
-		return
+	if c.llmEnabled && c.stepSettings != nil {
+		eng, err := infruntime.ComposeEngineFromSettings(ctx, c.stepSettings.Clone(), systemPrompt, nil, nil)
+		if err == nil {
+			return infruntime.RuntimeArtifacts{
+				Engine:             eng,
+				RuntimeKey:         runtimeKey,
+				RuntimeFingerprint: runtimeFingerprint(runtimeKey, systemPrompt, true, c.stepSettings.GetMetadata(), allowedTools),
+				SeedSystemPrompt:   systemPrompt,
+				AllowedTools:       allowedTools,
+			}, nil
+		}
+		log.Warn().Err(err).Msg("inventory-chat llm engine init failed; falling back to deterministic planner engine")
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(chatResponseBody{
-		ConvID:    resp.ConversationID,
-		RequestID: resp.MessageID,
-		Status:    "queued",
-		StreamURL: resp.StreamURL,
-	})
-}
-
-func (s *Server) handleCompletions(w http.ResponseWriter, r *http.Request) {
-	s.writeCORSHeaders(w)
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	var req chat.CompletionRequest
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, maxRequestBytes)).Decode(&req); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	conversationID := strings.TrimSpace(req.ConversationID)
-	if conversationID == "" {
-		conversationID = "default"
-	}
-	prompt := lastUserPrompt(req.Messages)
-	if strings.TrimSpace(prompt) == "" {
-		http.Error(w, "at least one user message is required", http.StatusBadRequest)
-		return
-	}
-
-	resp, err := s.submitPrompt(r.Context(), r, conversationID, prompt)
-	if err != nil {
-		log.Printf("submit prompt failed: %v", err)
-		http.Error(w, "failed to prepare completion", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(resp)
-}
-
-func (s *Server) submitPrompt(ctx context.Context, r *http.Request, conversationID string, prompt string) (chat.CompletionResponse, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	planned, err := s.plan(ctx, prompt)
-	if err != nil {
-		return chat.CompletionResponse{}, err
-	}
-
-	messageID := "msg-" + uuid.NewString()
-	userMessageID := "user-" + uuid.NewString()
-	assistantMessageID := "ai-" + messageID
-
-	now := time.Now().UTC()
-
-	if err := s.timeline.UpsertTimelineMessage(ctx, store.TimelineMessageUpsert{
-		ConversationID: conversationID,
-		MessageID:      userMessageID,
-		Role:           "user",
-		Text:           prompt,
-		Status:         "complete",
-		UpdatedAt:      now,
-	}); err != nil {
-		return chat.CompletionResponse{}, err
-	}
-
-	if err := s.timeline.UpsertTimelineMessage(ctx, store.TimelineMessageUpsert{
-		ConversationID: conversationID,
-		MessageID:      assistantMessageID,
-		Role:           "ai",
-		Text:           "",
-		Status:         "streaming",
-		UpdatedAt:      now,
-	}); err != nil {
-		return chat.CompletionResponse{}, err
-	}
-
-	if _, err := s.appendEvent(ctx, conversationID, messageID, chat.SEMEventMessageUser, map[string]any{
-		"messageId": userMessageID,
-		"role":      "user",
-		"text":      prompt,
-	}, map[string]any{"source": "api.chat.completions"}); err != nil {
-		return chat.CompletionResponse{}, err
-	}
-
-	s.storePending(messageID, pendingStream{
-		ConversationID:     conversationID,
-		MessageID:          messageID,
-		UserMessageID:      userMessageID,
-		AssistantMessageID: assistantMessageID,
-		Response:           planned,
-		CreatedAt:          now,
-	})
-
-	streamURL, err := makeStreamURL(r, conversationID, messageID)
-	if err != nil {
-		return chat.CompletionResponse{}, err
-	}
-	return chat.CompletionResponse{
-		ConversationID: conversationID,
-		MessageID:      messageID,
-		StreamURL:      streamURL,
+	fallback := &plannerEngine{planner: c.planner}
+	return infruntime.RuntimeArtifacts{
+		Engine:             fallback,
+		RuntimeKey:         runtimeKey,
+		RuntimeFingerprint: runtimeFingerprint(runtimeKey, systemPrompt, false, nil, allowedTools),
+		SeedSystemPrompt:   systemPrompt,
+		AllowedTools:       allowedTools,
 	}, nil
 }
 
-func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
-	messageID := strings.TrimSpace(r.URL.Query().Get("message_id"))
-	if messageID == "" {
-		http.Error(w, "missing message_id", http.StatusBadRequest)
-		return
+func runtimeFingerprint(runtimeKey, systemPrompt string, llmEnabled bool, metadata map[string]any, tools []string) string {
+	payload := map[string]any{
+		"runtime_key":   runtimeKey,
+		"system_prompt": systemPrompt,
+		"llm_enabled":   llmEnabled,
+		"tools":         tools,
 	}
-
-	pending, ok := s.popPending(messageID)
-	if !ok {
-		http.Error(w, "unknown message_id", http.StatusNotFound)
-		return
+	if len(metadata) > 0 {
+		payload["step_metadata"] = metadata
 	}
-
-	if conversationID := strings.TrimSpace(r.URL.Query().Get("conversation_id")); conversationID != "" && conversationID != pending.ConversationID {
-		http.Error(w, "conversation mismatch", http.StatusBadRequest)
-		return
-	}
-
-	conn, err := s.upgrader.Upgrade(w, r, nil)
+	b, err := json.Marshal(payload)
 	if err != nil {
-		log.Printf("ws upgrade failed: %v", err)
-		return
+		return runtimeKey
 	}
-	defer conn.Close()
-	_ = conn.SetReadDeadline(time.Now().Add(60 * time.Second))
-	_ = conn.SetWriteDeadline(time.Now().Add(60 * time.Second))
+	return string(b)
+}
 
-	ctx := r.Context()
-	textSoFar := ""
-	artifacts := []chat.Artifact{}
+type plannerEngine struct {
+	planner *chat.Planner
+}
 
-	for _, token := range tokenize(pending.Response.Text) {
-		textSoFar += token
-		if err := s.timeline.UpsertTimelineMessage(ctx, store.TimelineMessageUpsert{
-			ConversationID: pending.ConversationID,
-			MessageID:      pending.AssistantMessageID,
-			Role:           "ai",
-			Text:           textSoFar,
-			Status:         "streaming",
-			ArtifactsJSON:  mustJSON(artifacts),
-			UpdatedAt:      time.Now().UTC(),
-		}); err != nil {
-			s.writeWSError(ctx, conn, pending, "failed to persist assistant token")
-			return
-		}
-
-		envelope, err := s.appendEvent(ctx, pending.ConversationID, pending.MessageID, chat.SEMEventMessageToken, map[string]any{
-			"content":   token,
-			"messageId": pending.AssistantMessageID,
-		}, map[string]any{"stage": "token"})
+func (e *plannerEngine) RunInference(ctx context.Context, t *turns.Turn) (*turns.Turn, error) {
+	if t == nil {
+		return nil, fmt.Errorf("turn is nil")
+	}
+	out := t.Clone()
+	prompt := latestUserPrompt(out)
+	planned := chat.PlannedResponse{
+		Text: "I can answer inventory questions. Ask about low stock, sales, or inventory value.",
+	}
+	if e != nil && e.planner != nil && strings.TrimSpace(prompt) != "" {
+		p, err := e.planner.Plan(ctx, prompt)
 		if err != nil {
-			s.writeWSError(ctx, conn, pending, "failed to append token event")
-			return
+			return nil, err
 		}
-		if err := conn.WriteJSON(envelope); err != nil {
-			s.writeWSError(ctx, conn, pending, "websocket token write failure")
-			return
-		}
-		time.Sleep(s.opts.TokenDelay)
+		planned = NormalizePlannedResponse(p)
 	}
+	text := serializePlannedResponse(planned)
 
-	for i := range pending.Response.Artifacts {
-		artifact := pending.Response.Artifacts[i]
-		if err := validateArtifact(artifact); err != nil {
-			s.writeWSError(ctx, conn, pending, "artifact validation failed: "+err.Error())
+	md := eventMetadataFromTurn(out)
+	events.PublishEventToContext(ctx, events.NewStartEvent(md))
+	events.PublishEventToContext(ctx, events.NewPartialCompletionEvent(md, text, text))
+	events.PublishEventToContext(ctx, events.NewFinalEvent(md, text))
+
+	turns.AppendBlock(out, turns.NewAssistantTextBlock(text))
+	return out, nil
+}
+
+func eventMetadataFromTurn(t *turns.Turn) events.EventMetadata {
+	md := events.EventMetadata{
+		ID: uuid.New(),
+	}
+	if t == nil {
+		return md
+	}
+	if t.ID != "" {
+		md.TurnID = t.ID
+	}
+	if sid, ok, err := turns.KeyTurnMetaSessionID.Get(t.Metadata); err == nil && ok {
+		md.SessionID = sid
+	}
+	if iid, ok, err := turns.KeyTurnMetaInferenceID.Get(t.Metadata); err == nil && ok {
+		md.InferenceID = iid
+	}
+	return md
+}
+
+func latestUserPrompt(t *turns.Turn) string {
+	if t == nil {
+		return ""
+	}
+	for i := len(t.Blocks) - 1; i >= 0; i-- {
+		b := t.Blocks[i]
+		if b.Kind != turns.BlockKindUser {
 			continue
 		}
-
-		artifacts = append(artifacts, artifact)
-		if err := s.timeline.UpsertTimelineMessage(ctx, store.TimelineMessageUpsert{
-			ConversationID: pending.ConversationID,
-			MessageID:      pending.AssistantMessageID,
-			Role:           "ai",
-			Text:           textSoFar,
-			Status:         "streaming",
-			ArtifactsJSON:  mustJSON(artifacts),
-			UpdatedAt:      time.Now().UTC(),
-		}); err != nil {
-			s.writeWSError(ctx, conn, pending, "failed to persist artifact")
-			return
-		}
-
-		envelope, err := s.appendEvent(ctx, pending.ConversationID, pending.MessageID, chat.SEMEventMessageArtifact, map[string]any{
-			"messageId": pending.AssistantMessageID,
-			"artifact":  artifactToMap(artifact),
-		}, map[string]any{"stage": "artifact"})
-		if err != nil {
-			s.writeWSError(ctx, conn, pending, "failed to append artifact event")
-			return
-		}
-		if err := conn.WriteJSON(envelope); err != nil {
-			s.writeWSError(ctx, conn, pending, "websocket artifact write failure")
-			return
-		}
-	}
-
-	if err := s.timeline.UpsertTimelineMessage(ctx, store.TimelineMessageUpsert{
-		ConversationID: pending.ConversationID,
-		MessageID:      pending.AssistantMessageID,
-		Role:           "ai",
-		Text:           textSoFar,
-		Status:         "complete",
-		ArtifactsJSON:  mustJSON(artifacts),
-		ActionsJSON:    mustJSON(pending.Response.Actions),
-		UpdatedAt:      time.Now().UTC(),
-	}); err != nil {
-		s.writeWSError(ctx, conn, pending, "failed to persist done state")
-		return
-	}
-
-	doneEnvelope, err := s.appendEvent(ctx, pending.ConversationID, pending.MessageID, chat.SEMEventMessageDone, map[string]any{
-		"messageId": pending.AssistantMessageID,
-		"actions":   actionsToMaps(pending.Response.Actions),
-	}, map[string]any{"stage": "done"})
-	if err != nil {
-		s.writeWSError(ctx, conn, pending, "failed to append done event")
-		return
-	}
-	if err := conn.WriteJSON(doneEnvelope); err != nil {
-		log.Printf("ws write done failed: %v", err)
-	}
-}
-
-func (s *Server) writeWSError(ctx context.Context, conn *websocket.Conn, pending pendingStream, errMessage string) {
-	_ = s.timeline.UpsertTimelineMessage(ctx, store.TimelineMessageUpsert{
-		ConversationID: pending.ConversationID,
-		MessageID:      pending.AssistantMessageID,
-		Role:           "ai",
-		Text:           errMessage,
-		Status:         "error",
-		UpdatedAt:      time.Now().UTC(),
-	})
-	envelope, err := s.appendEvent(ctx, pending.ConversationID, pending.MessageID, chat.SEMEventMessageError, map[string]any{
-		"messageId": pending.AssistantMessageID,
-		"error":     errMessage,
-	}, map[string]any{"stage": "error"})
-	if err != nil {
-		return
-	}
-	_ = conn.WriteJSON(envelope)
-}
-
-func (s *Server) handleTimeline(w http.ResponseWriter, r *http.Request) {
-	s.writeCORSHeaders(w)
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	conversationID := strings.TrimSpace(r.URL.Query().Get("conversation_id"))
-	if conversationID == "" {
-		conversationID = strings.TrimSpace(r.URL.Query().Get("conv_id"))
-	}
-	if conversationID == "" {
-		conversationID = "default"
-	}
-
-	sinceSeq := uint64(0)
-	if raw := strings.TrimSpace(r.URL.Query().Get("since_seq")); raw != "" {
-		if parsed, err := strconv.ParseUint(raw, 10, 64); err == nil {
-			sinceSeq = parsed
-		}
-	}
-	limit := 0
-	if raw := strings.TrimSpace(r.URL.Query().Get("limit")); raw != "" {
-		if parsed, err := strconv.Atoi(raw); err == nil && parsed > 0 {
-			limit = parsed
-		}
-	}
-
-	snapshot, err := s.timeline.GetTimelineSnapshot(r.Context(), conversationID, sinceSeq, limit)
-	if err != nil {
-		http.Error(w, "failed to load timeline", http.StatusInternalServerError)
-		return
-	}
-
-	messages := make([]chat.TimelineMessage, 0, len(snapshot.Messages))
-	for _, row := range snapshot.Messages {
-		artifacts := []chat.Artifact{}
-		actions := []chat.Action{}
-		_ = json.Unmarshal([]byte(row.ArtifactsJSON), &artifacts)
-		_ = json.Unmarshal([]byte(row.ActionsJSON), &actions)
-		messages = append(messages, chat.TimelineMessage{
-			ID:        row.MessageID,
-			Role:      row.Role,
-			Text:      row.Text,
-			Status:    row.Status,
-			Artifacts: artifacts,
-			Actions:   actions,
-			UpdatedAt: row.UpdatedAt,
-		})
-	}
-
-	events := make([]chat.SEMEnvelope, 0, len(snapshot.Events))
-	for _, row := range snapshot.Events {
-		events = append(events, chat.SEMEnvelope{
-			SEM: true,
-			Event: chat.SEMEvent{
-				Type:     row.EventType,
-				ID:       row.EventID,
-				Seq:      row.Seq,
-				StreamID: row.StreamID,
-				Data:     cloneMap(row.Data),
-				Metadata: cloneMap(row.Metadata),
-			},
-		})
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(chat.TimelineResponse{
-		ConversationID: conversationID,
-		Messages:       messages,
-		Events:         events,
-		LastSeq:        snapshot.LastSeq,
-	})
-}
-
-func (s *Server) appendEvent(ctx context.Context, conversationID, streamID, eventType string, data, metadata map[string]any) (chat.SEMEnvelope, error) {
-	metadata = cloneMap(metadata)
-	if metadata == nil {
-		metadata = map[string]any{}
-	}
-	metadata["conversationId"] = conversationID
-	metadata["emittedAt"] = time.Now().UTC().Format(time.RFC3339Nano)
-
-	record, err := s.timeline.AppendTimelineEvent(ctx, store.TimelineEventAppend{
-		ConversationID: conversationID,
-		EventType:      eventType,
-		StreamID:       streamID,
-		Data:           cloneMap(data),
-		Metadata:       metadata,
-		CreatedAt:      time.Now().UTC(),
-	})
-	if err != nil {
-		return chat.SEMEnvelope{}, err
-	}
-	return chat.SEMEnvelope{
-		SEM: true,
-		Event: chat.SEMEvent{
-			Type:     record.EventType,
-			ID:       record.EventID,
-			Seq:      record.Seq,
-			StreamID: record.StreamID,
-			Data:     cloneMap(record.Data),
-			Metadata: cloneMap(record.Metadata),
-		},
-	}, nil
-}
-
-func (s *Server) writeCORSHeaders(w http.ResponseWriter) {
-	w.Header().Set("Access-Control-Allow-Origin", s.opts.AllowOrigin)
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Idempotency-Key, X-Idempotency-Key, X-Request-ID")
-	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-}
-
-func (s *Server) storePending(messageID string, data pendingStream) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.pending[messageID] = data
-	cutoff := time.Now().Add(-pendingTTL)
-	for key, item := range s.pending {
-		if item.CreatedAt.Before(cutoff) {
-			delete(s.pending, key)
-		}
-	}
-}
-
-func (s *Server) popPending(messageID string) (pendingStream, bool) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	item, ok := s.pending[messageID]
-	if ok {
-		delete(s.pending, messageID)
-	}
-	return item, ok
-}
-
-func lastUserPrompt(messages []chat.Message) string {
-	for i := len(messages) - 1; i >= 0; i-- {
-		if strings.EqualFold(strings.TrimSpace(messages[i].Role), "user") {
-			return messages[i].Text
+		if raw, ok := b.Payload[turns.PayloadKeyText].(string); ok {
+			return strings.TrimSpace(raw)
 		}
 	}
 	return ""
 }
 
-func makeStreamURL(r *http.Request, conversationID, messageID string) (string, error) {
-	if r == nil {
-		return "", errors.New("request is nil")
+func serializePlannedResponse(planned chat.PlannedResponse) string {
+	text := strings.TrimSpace(planned.Text)
+	blocks := make([]string, 0, len(planned.Artifacts))
+	for _, artifact := range planned.Artifacts {
+		payload := map[string]any{
+			"id": artifact.ID,
+		}
+		switch artifact.Kind {
+		case "widget":
+			payload["widgetType"] = artifact.WidgetType
+			if artifact.Label != "" {
+				payload["label"] = artifact.Label
+			}
+			if artifact.Props != nil {
+				payload["props"] = artifact.Props
+			}
+		case "card-proposal":
+			payload["cardId"] = artifact.CardID
+			payload["title"] = artifact.Title
+			payload["icon"] = artifact.Icon
+			payload["code"] = artifact.Code
+			if artifact.DedupeKey != "" {
+				payload["dedupeKey"] = artifact.DedupeKey
+			}
+			if artifact.Version > 0 {
+				payload["version"] = artifact.Version
+			}
+			if artifact.Policy != nil {
+				payload["policy"] = artifact.Policy
+			}
+		default:
+			continue
+		}
+		jsonPayload, err := json.Marshal(payload)
+		if err != nil {
+			continue
+		}
+		tagKind := "widget"
+		if artifact.Kind == "card-proposal" {
+			tagKind = "card"
+		}
+		blocks = append(blocks, fmt.Sprintf("<hypercard:%s:1>%s</hypercard:%s:1>", tagKind, string(jsonPayload), tagKind))
 	}
-	host := strings.TrimSpace(r.Host)
-	if host == "" {
-		return "", errors.New("request host is empty")
+	if len(blocks) == 0 {
+		if len(planned.Actions) == 0 {
+			return text
+		}
+		actionsJSON, err := json.Marshal(planned.Actions)
+		if err != nil {
+			return text
+		}
+		if text == "" {
+			return fmt.Sprintf("<hypercard:actions:1>%s</hypercard:actions:1>", string(actionsJSON))
+		}
+		return text + "\n\n" + fmt.Sprintf("<hypercard:actions:1>%s</hypercard:actions:1>", string(actionsJSON))
 	}
-
-	scheme := "ws"
-	if r.TLS != nil || strings.EqualFold(strings.TrimSpace(r.Header.Get("X-Forwarded-Proto")), "https") {
-		scheme = "wss"
+	if len(planned.Actions) > 0 {
+		actionsJSON, err := json.Marshal(planned.Actions)
+		if err == nil {
+			blocks = append(blocks, fmt.Sprintf("<hypercard:actions:1>%s</hypercard:actions:1>", string(actionsJSON)))
+		}
 	}
-
-	q := url.Values{}
-	q.Set("conversation_id", conversationID)
-	q.Set("message_id", messageID)
-	return fmt.Sprintf("%s://%s/ws?%s", scheme, host, q.Encode()), nil
+	if text == "" {
+		return strings.Join(blocks, "\n")
+	}
+	return text + "\n\n" + strings.Join(blocks, "\n")
 }
 
-var tokenRe = regexp.MustCompile(`\S+\s*`)
+type inventoryRequestResolver struct {
+	defaultRuntimeKey string
+	defaultOverrides  map[string]any
+	defaultConvID     string
+}
 
-func tokenize(text string) []string {
-	trimmed := strings.TrimSpace(text)
-	if trimmed == "" {
+func newInventoryRequestResolver(runtimeKey string, systemPrompt string, defaultConvID string) *inventoryRequestResolver {
+	if strings.TrimSpace(runtimeKey) == "" {
+		runtimeKey = defaultRuntimeKey
+	}
+	if strings.TrimSpace(systemPrompt) == "" {
+		systemPrompt = defaultSystemPrompt
+	}
+	overrides := map[string]any{
+		"system_prompt": systemPrompt,
+		"tools":         []any{inventoryToolName},
+	}
+	return &inventoryRequestResolver{
+		defaultRuntimeKey: runtimeKey,
+		defaultOverrides:  overrides,
+		defaultConvID:     strings.TrimSpace(defaultConvID),
+	}
+}
+
+func (r *inventoryRequestResolver) Resolve(req *http.Request) (webhttp.ConversationRequestPlan, error) {
+	if req == nil {
+		return webhttp.ConversationRequestPlan{}, &webhttp.RequestResolutionError{Status: http.StatusBadRequest, ClientMsg: "bad request"}
+	}
+	switch req.Method {
+	case http.MethodGet:
+		convID := strings.TrimSpace(req.URL.Query().Get("conv_id"))
+		if convID == "" {
+			return webhttp.ConversationRequestPlan{}, &webhttp.RequestResolutionError{Status: http.StatusBadRequest, ClientMsg: "missing conv_id"}
+		}
+		return webhttp.ConversationRequestPlan{
+			ConvID:     convID,
+			RuntimeKey: r.defaultRuntimeKey,
+			Overrides:  cloneOverrides(r.defaultOverrides),
+		}, nil
+	case http.MethodPost:
+		var body webhttp.ChatRequestBody
+		if err := json.NewDecoder(req.Body).Decode(&body); err != nil {
+			return webhttp.ConversationRequestPlan{}, &webhttp.RequestResolutionError{Status: http.StatusBadRequest, ClientMsg: "bad request", Err: err}
+		}
+		if body.Prompt == "" && body.Text != "" {
+			body.Prompt = body.Text
+		}
+		convID := strings.TrimSpace(body.ConvID)
+		if convID == "" {
+			if r.defaultConvID != "" {
+				convID = r.defaultConvID
+			} else {
+				convID = uuid.NewString()
+			}
+		}
+		overrides := cloneOverrides(r.defaultOverrides)
+		for k, v := range body.Overrides {
+			overrides[k] = v
+		}
+		return webhttp.ConversationRequestPlan{
+			ConvID:         convID,
+			RuntimeKey:     r.defaultRuntimeKey,
+			Overrides:      overrides,
+			Prompt:         strings.TrimSpace(body.Prompt),
+			IdempotencyKey: strings.TrimSpace(body.IdempotencyKey),
+		}, nil
+	default:
+		return webhttp.ConversationRequestPlan{}, &webhttp.RequestResolutionError{Status: http.StatusMethodNotAllowed, ClientMsg: "method not allowed"}
+	}
+}
+
+func cloneOverrides(in map[string]any) map[string]any {
+	if len(in) == 0 {
 		return nil
 	}
-	tokens := tokenRe.FindAllString(trimmed, -1)
-	if len(tokens) == 0 {
-		return []string{trimmed}
-	}
-	return tokens
-}
-
-func mustJSON(v any) string {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return "[]"
-	}
-	return string(b)
-}
-
-func actionsToMaps(actions []chat.Action) []map[string]any {
-	if len(actions) == 0 {
-		return nil
-	}
-	out := make([]map[string]any, 0, len(actions))
-	for _, action := range actions {
-		out = append(out, map[string]any{
-			"label":  action.Label,
-			"action": cloneMap(action.Action),
-		})
-	}
-	return out
-}
-
-func artifactToMap(artifact chat.Artifact) map[string]any {
-	out := map[string]any{
-		"kind": artifact.Kind,
-		"id":   artifact.ID,
-	}
-	if artifact.WidgetType != "" {
-		out["widgetType"] = artifact.WidgetType
-	}
-	if artifact.Label != "" {
-		out["label"] = artifact.Label
-	}
-	if artifact.Props != nil {
-		out["props"] = cloneMap(artifact.Props)
-	}
-	if artifact.CardID != "" {
-		out["cardId"] = artifact.CardID
-	}
-	if artifact.Title != "" {
-		out["title"] = artifact.Title
-	}
-	if artifact.Icon != "" {
-		out["icon"] = artifact.Icon
-	}
-	if artifact.Code != "" {
-		out["code"] = artifact.Code
-	}
-	if artifact.DedupeKey != "" {
-		out["dedupeKey"] = artifact.DedupeKey
-	}
-	if artifact.Version > 0 {
-		out["version"] = artifact.Version
-	}
-	if artifact.Policy != nil {
-		out["policy"] = cloneMap(artifact.Policy)
-	}
-	return out
-}
-
-func cloneMap(input map[string]any) map[string]any {
-	if len(input) == 0 {
-		return nil
-	}
-	out := make(map[string]any, len(input))
-	for k, v := range input {
+	out := make(map[string]any, len(in))
+	for k, v := range in {
 		out[k] = v
 	}
 	return out
 }
 
-func chainPlanner(base plannerRunner, mws ...PlannerMiddleware) plannerRunner {
-	out := base
-	for i := len(mws) - 1; i >= 0; i-- {
-		out = mws[i](out)
+func wrapCORS(next http.Handler, allowOrigin string) http.Handler {
+	origin := strings.TrimSpace(allowOrigin)
+	if origin == "" {
+		origin = "*"
 	}
-	return out
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", origin)
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Idempotency-Key, X-Idempotency-Key, X-Request-ID")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
-func chainHTTPMiddlewares(h http.Handler, mws ...HTTPMiddleware) http.Handler {
-	out := h
-	for i := len(mws) - 1; i >= 0; i-- {
-		out = mws[i](out)
-	}
-	return out
+type InventoryToolRequest struct {
+	Mode      string `json:"mode" jsonschema:"required,description=Query mode,enum=low_stock,enum=sales_summary,enum=inventory_value,enum=item_lookup,enum=search,enum=help"`
+	Threshold int    `json:"threshold,omitempty" jsonschema:"description=Low stock threshold for low_stock mode,default=3"`
+	Days      int    `json:"days,omitempty" jsonschema:"description=Rolling day window for sales_summary mode,default=7"`
+	SKU       string `json:"sku,omitempty" jsonschema:"description=SKU for item_lookup mode"`
+	Query     string `json:"query,omitempty" jsonschema:"description=Search query for search mode"`
+	Limit     int    `json:"limit,omitempty" jsonschema:"description=Optional result cap"`
 }
 
-func recoveryMiddleware() HTTPMiddleware {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			defer func() {
-				if rec := recover(); rec != nil {
-					log.Printf("panic recovered: %v", rec)
-					http.Error(w, "internal server error", http.StatusInternalServerError)
-				}
-			}()
-			next.ServeHTTP(w, r)
-		})
-	}
+type InventoryToolResponse struct {
+	Mode      string          `json:"mode"`
+	Summary   string          `json:"summary"`
+	Artifacts []chat.Artifact `json:"artifacts,omitempty"`
+	Actions   []chat.Action   `json:"actions,omitempty"`
 }
 
-func requestLogMiddleware() HTTPMiddleware {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			requestID := strings.TrimSpace(r.Header.Get("X-Request-ID"))
-			if requestID == "" {
-				requestID = "req-" + uuid.NewString()
+func RegisterInventoryQueryTool(registry geptools.ToolRegistry, planner *chat.Planner) error {
+	im, ok := registry.(*geptools.InMemoryToolRegistry)
+	if ok {
+		return registerInventoryQueryToolInMemory(im, planner)
+	}
+
+	tmp := geptools.NewInMemoryToolRegistry()
+	if err := registerInventoryQueryToolInMemory(tmp, planner); err != nil {
+		return err
+	}
+	for _, td := range tmp.ListTools() {
+		if err := registry.RegisterTool(td.Name, td); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func registerInventoryQueryToolInMemory(registry *geptools.InMemoryToolRegistry, planner *chat.Planner) error {
+	if registry == nil {
+		return fmt.Errorf("tool registry is nil")
+	}
+	if planner == nil {
+		return fmt.Errorf("planner is nil")
+	}
+	def, err := geptools.NewToolFromFunc(
+		inventoryToolName,
+		"Run inventory SQLite-backed queries and return UI-ready artifacts (report-view/data-table/card-proposal) with actions.",
+		func(ctx context.Context, req InventoryToolRequest) (InventoryToolResponse, error) {
+			prompt := toolPromptFromRequest(req)
+			planned, err := planner.Plan(ctx, prompt)
+			if err != nil {
+				return InventoryToolResponse{}, err
 			}
-			start := time.Now()
-			r2 := r.WithContext(context.WithValue(r.Context(), requestIDContextKey{}, requestID))
-			w.Header().Set("X-Request-ID", requestID)
-			next.ServeHTTP(w, r2)
-			log.Printf("request id=%s method=%s path=%s duration=%s", requestID, r.Method, r.URL.Path, time.Since(start))
-		})
+			planned = NormalizePlannedResponse(planned)
+			return InventoryToolResponse{
+				Mode:      strings.TrimSpace(req.Mode),
+				Summary:   planned.Text,
+				Artifacts: planned.Artifacts,
+				Actions:   planned.Actions,
+			}, nil
+		},
+	)
+	if err != nil {
+		return err
+	}
+	return registry.RegisterTool(inventoryToolName, *def)
+}
+
+func toolPromptFromRequest(req InventoryToolRequest) string {
+	mode := strings.ToLower(strings.TrimSpace(req.Mode))
+	switch mode {
+	case "low_stock":
+		threshold := req.Threshold
+		if threshold <= 0 {
+			threshold = 3
+		}
+		return fmt.Sprintf("Show low stock below %d", threshold)
+	case "sales_summary":
+		days := req.Days
+		if days <= 0 {
+			days = 7
+		}
+		return fmt.Sprintf("Show sales last %d days", days)
+	case "inventory_value":
+		return "What is total inventory value?"
+	case "item_lookup":
+		sku := strings.TrimSpace(req.SKU)
+		if sku == "" {
+			return "Find A-1002"
+		}
+		return "Find " + sku
+	case "search":
+		q := strings.TrimSpace(req.Query)
+		if q == "" {
+			return "Search mug"
+		}
+		return "Search " + q
+	default:
+		return "Help with inventory chat queries"
 	}
 }
 
-type requestIDContextKey struct{}
+func BuildStepSettings(cfg RuntimeConfig) (*settings.StepSettings, bool, error) {
+	if !cfg.Enabled {
+		return nil, false, nil
+	}
+	provider := strings.ToLower(strings.TrimSpace(cfg.Provider))
+	if provider == "" {
+		provider = string(aitypes.ApiTypeOpenAI)
+	}
+	model := strings.TrimSpace(cfg.Model)
+	if model == "" {
+		model = "gpt-4.1-mini"
+	}
+	apiKey := strings.TrimSpace(cfg.APIKey)
+	if apiKey == "" {
+		return nil, false, nil
+	}
+
+	st, err := settings.NewStepSettings()
+	if err != nil {
+		return nil, false, err
+	}
+	apiType := aitypes.ApiType(provider)
+	st.Chat.ApiType = &apiType
+	st.Chat.Engine = &model
+	st.API.APIKeys[provider+"-api-key"] = apiKey
+	if provider == string(aitypes.ApiTypeOpenAIResponses) {
+		st.API.APIKeys[string(aitypes.ApiTypeOpenAI)+"-api-key"] = apiKey
+	}
+	if baseURL := strings.TrimSpace(cfg.BaseURL); baseURL != "" {
+		st.API.BaseUrls[provider+"-base-url"] = baseURL
+	}
+	return st, true, nil
+}
+
+func NewServer(ctx context.Context, planner *chat.Planner, cfg ServerConfig) (*webchat.Server, error) {
+	if planner == nil {
+		return nil, fmt.Errorf("planner is required")
+	}
+
+	stepSettings, llmEnabled, err := BuildStepSettings(cfg.Runtime)
+	if err != nil {
+		return nil, err
+	}
+	if cfg.Runtime.Enabled && !llmEnabled {
+		log.Warn().Msg("inventory-chat llm runtime disabled because API key is missing; using deterministic planner engine")
+	}
+
+	systemPrompt := cfg.Runtime.SystemPrompt
+	if strings.TrimSpace(systemPrompt) == "" {
+		systemPrompt = defaultSystemPrompt
+	}
+	composer := newInventoryRuntimeComposer(stepSettings, planner, llmEnabled, systemPrompt, cfg.DefaultToolList)
+
+	routerOpts := []webchat.RouterOption{
+		webchat.WithRuntimeComposer(composer),
+		webchat.WithDebugRoutesEnabled(cfg.DebugRoutes),
+	}
+	if cfg.TimelineStore != nil {
+		routerOpts = append(routerOpts, webchat.WithTimelineStore(cfg.TimelineStore))
+	}
+	if cfg.TurnStore != nil {
+		routerOpts = append(routerOpts, webchat.WithTurnStore(cfg.TurnStore))
+	}
+
+	srv, err := webchat.NewServer(ctx, values.New(), nil, routerOpts...)
+	if err != nil {
+		return nil, err
+	}
+	srv.RegisterTool(inventoryToolName, func(reg geptools.ToolRegistry) error {
+		return RegisterInventoryQueryTool(reg, planner)
+	})
+
+	resolver := newInventoryRequestResolver(defaultRuntimeKey, systemPrompt, cfg.DefaultConvID)
+	chatHandler := webhttp.NewChatHandler(srv.ChatService(), resolver)
+	wsHandler := webhttp.NewWSHandler(
+		srv.StreamHub(),
+		resolver,
+		websocket.Upgrader{CheckOrigin: func(*http.Request) bool { return true }},
+	)
+	timelineLogger := log.With().Str("component", "inventory-chat").Str("route", "/api/timeline").Logger()
+	timelineHandler := webhttp.NewTimelineHandler(srv.TimelineService(), timelineLogger)
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/chat", chatHandler)
+	mux.HandleFunc("/chat/", chatHandler)
+	mux.HandleFunc("/ws", wsHandler)
+	mux.HandleFunc("/api/timeline", timelineHandler)
+	mux.HandleFunc("/api/timeline/", timelineHandler)
+	mux.Handle("/api/", srv.APIHandler())
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"ok":true}`))
+	})
+
+	httpSrv := srv.HTTPServer()
+	if httpSrv == nil {
+		return nil, fmt.Errorf("http server is not initialized")
+	}
+	if strings.TrimSpace(cfg.Addr) != "" {
+		httpSrv.Addr = cfg.Addr
+	}
+	httpSrv.Handler = wrapCORS(mux, cfg.AllowOrigin)
+	return srv, nil
+}
+
+var _ engine.Engine = (*plannerEngine)(nil)

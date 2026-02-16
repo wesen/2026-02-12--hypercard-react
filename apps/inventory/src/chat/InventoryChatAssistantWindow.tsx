@@ -9,16 +9,16 @@ import {
   type ColumnConfig,
   type InlineWidget,
 } from '@hypercard/engine';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { injectPluginCard, type CardProposal } from './cardInjector';
 import {
-  connectCompletionStream,
+  connectConversationStream,
   fetchTimeline,
-  startCompletion,
+  parseToolPayload,
+  startChatTurn,
   type BackendArtifact,
-  type BackendMessage,
-  type BackendTimelineMessage,
+  type BackendTimelineEntity,
 } from './protocol';
 
 const SUGGESTIONS = [
@@ -29,6 +29,11 @@ const SUGGESTIONS = [
 ];
 
 const STORAGE_CONVERSATION_KEY = 'hc-inventory-chat-conversation-id';
+
+const STRUCTURED_BLOCK_RE =
+  /<hypercard:(widget|card):1>\s*(\{[\s\S]*?\})\s*<\/hypercard:(?:widget|card):1>/g;
+const ACTION_BLOCK_RE =
+  /<hypercard:actions:1>\s*(\[[\s\S]*?\])\s*<\/hypercard:actions:1>/g;
 
 interface InventoryChatAssistantWindowProps {
   stack: CardStackDefinition;
@@ -104,16 +109,6 @@ function normalizeReportSections(raw: unknown): Array<{ label: string; value: st
     }));
 }
 
-function toBackendHistory(messages: ChatWindowMessage[], nextUserText: string): BackendMessage[] {
-  const prior = messages
-    .filter((message) => message.role === 'user' || message.role === 'ai')
-    .slice(-12)
-    .map((message) => ({ role: message.role, text: message.text }));
-
-  prior.push({ role: 'user', text: nextUserText });
-  return prior;
-}
-
 function createMessageContent(text: string, blocks: ChatContentBlock[]): ChatContentBlock[] | undefined {
   if (blocks.length === 0) {
     return undefined;
@@ -136,32 +131,104 @@ function normalizeRole(role: string): ChatWindowMessage['role'] {
   return 'system';
 }
 
-function normalizeStatus(status: string): ChatWindowMessage['status'] {
-  if (status === 'streaming' || status === 'error') {
-    return status;
+function upsertTimelineEntity(
+  previous: BackendTimelineEntity[],
+  nextEntity: BackendTimelineEntity,
+): BackendTimelineEntity[] {
+  const index = previous.findIndex((entity) => entity.id === nextEntity.id);
+  if (index === -1) {
+    return [...previous, nextEntity];
   }
-  return 'complete';
+  const out = [...previous];
+  out[index] = nextEntity;
+  return out;
 }
 
-function toTimelineChatMessage(
-  message: BackendTimelineMessage,
-  toContentBlock: (artifact: BackendArtifact) => ChatContentBlock | null,
-): ChatWindowMessage {
-  const blocks: ChatContentBlock[] = [];
-  for (const artifact of message.artifacts ?? []) {
-    const block = toContentBlock(artifact);
-    if (block) {
-      blocks.push(block);
+function extractStructuredArtifactsFromText(text: string): {
+  cleanText: string;
+  artifacts: BackendArtifact[];
+  actions: Array<{ label: string; action: Record<string, unknown> }>;
+} {
+  if (!text.trim()) {
+    return { cleanText: text, artifacts: [], actions: [] };
+  }
+
+  const artifacts: BackendArtifact[] = [];
+  const actions: Array<{ label: string; action: Record<string, unknown> }> = [];
+  let lastIndex = 0;
+  let output = '';
+
+  for (const match of text.matchAll(STRUCTURED_BLOCK_RE)) {
+    const start = match.index ?? 0;
+    const end = start + match[0].length;
+    const kind = match[1];
+    const payloadRaw = match[2];
+
+    output += text.slice(lastIndex, start);
+    lastIndex = end;
+
+    try {
+      const parsed = JSON.parse(payloadRaw) as unknown;
+      if (!isRecord(parsed) || typeof parsed.id !== 'string') {
+        continue;
+      }
+      if (kind === 'widget') {
+        artifacts.push({
+          kind: 'widget',
+          id: parsed.id,
+          widgetType: typeof parsed.widgetType === 'string' ? parsed.widgetType : undefined,
+          label: typeof parsed.label === 'string' ? parsed.label : undefined,
+          props: isRecord(parsed.props) ? parsed.props : undefined,
+        });
+      } else {
+        artifacts.push({
+          kind: 'card-proposal',
+          id: parsed.id,
+          cardId: typeof parsed.cardId === 'string' ? parsed.cardId : undefined,
+          title: typeof parsed.title === 'string' ? parsed.title : undefined,
+          icon: typeof parsed.icon === 'string' ? parsed.icon : undefined,
+          code: typeof parsed.code === 'string' ? parsed.code : undefined,
+          dedupeKey: typeof parsed.dedupeKey === 'string' ? parsed.dedupeKey : undefined,
+          version: typeof parsed.version === 'number' ? parsed.version : undefined,
+          policy: isRecord(parsed.policy) ? parsed.policy : undefined,
+        });
+      }
+    } catch {
+      continue;
     }
+  }
+  output += text.slice(lastIndex);
+
+  let textWithoutActions = output;
+  for (const actionMatch of output.matchAll(ACTION_BLOCK_RE)) {
+    const payloadRaw = actionMatch[1];
+    try {
+      const parsed = JSON.parse(payloadRaw) as unknown;
+      if (!Array.isArray(parsed)) {
+        continue;
+      }
+      for (const rawAction of parsed) {
+        if (!isRecord(rawAction)) {
+          continue;
+        }
+        if (typeof rawAction.label !== 'string' || !isRecord(rawAction.action)) {
+          continue;
+        }
+        actions.push({
+          label: rawAction.label,
+          action: rawAction.action,
+        });
+      }
+    } catch {
+      continue;
+    }
+    textWithoutActions = textWithoutActions.replace(actionMatch[0], '');
   }
 
   return {
-    id: message.id,
-    role: normalizeRole(message.role),
-    text: message.text,
-    status: normalizeStatus(message.status),
-    actions: message.actions,
-    content: createMessageContent(message.text, blocks),
+    cleanText: textWithoutActions.trim(),
+    artifacts,
+    actions,
   };
 }
 
@@ -170,12 +237,11 @@ export function InventoryChatAssistantWindow({
   backendBaseUrl,
 }: InventoryChatAssistantWindowProps) {
   const dispatch = useDispatch();
-  const [messages, setMessages] = useState<ChatWindowMessage[]>([]);
-  const [isStreaming, setIsStreaming] = useState(false);
   const [conversationId, setConversationId] = useState(readConversationId());
+  const [entities, setEntities] = useState<BackendTimelineEntity[]>([]);
+  const [systemMessages, setSystemMessages] = useState<ChatWindowMessage[]>([]);
 
   const streamCancelRef = useRef<(() => void) | null>(null);
-  const hydratedConversationRef = useRef<string | null>(null);
   const cardProposalsRef = useRef<Map<string, CardProposal>>(new Map());
   const sessionCounterRef = useRef(2000);
 
@@ -188,7 +254,7 @@ export function InventoryChatAssistantWindow({
     (cardId: string, param?: string) => {
       const cardDef = stack.cards[cardId];
       if (!cardDef) {
-        setMessages((prev) => [...prev, makeSystemMessage(`Card '${cardId}' does not exist.`)]);
+        setSystemMessages((prev) => [...prev, makeSystemMessage(`Card '${cardId}' does not exist.`)]);
         return;
       }
 
@@ -257,44 +323,111 @@ export function InventoryChatAssistantWindow({
     return null;
   }, []);
 
-  useEffect(() => {
-    if (hydratedConversationRef.current === conversationId) {
-      return;
+  const timelineMessages = useMemo(() => {
+    cardProposalsRef.current.clear();
+    const ordered = [...entities].sort((a, b) => {
+      if (a.createdAt === b.createdAt) {
+        return a.id.localeCompare(b.id);
+      }
+      return a.createdAt - b.createdAt;
+    });
+    const out: ChatWindowMessage[] = [];
+
+    for (const entity of ordered) {
+      if (entity.kind === 'message' && entity.message) {
+        const extracted = extractStructuredArtifactsFromText(entity.message.content);
+        const artifacts = [...(entity.message.artifacts ?? []), ...extracted.artifacts];
+        const actions = [
+          ...(entity.message.actions ?? []),
+          ...extracted.actions,
+        ];
+        const blocks: ChatContentBlock[] = artifacts
+          .map((artifact) => toContentBlock(artifact))
+          .filter((value): value is ChatContentBlock => value !== null);
+
+        out.push({
+          id: entity.id,
+          role: normalizeRole(entity.message.role),
+          text: extracted.cleanText,
+          status: entity.message.streaming ? 'streaming' : 'complete',
+          actions,
+          content: createMessageContent(extracted.cleanText, blocks),
+        });
+        continue;
+      }
+
+      if (entity.kind === 'tool_result' && entity.toolResult) {
+        const payload = parseToolPayload(entity.toolResult.resultRaw);
+        if (!payload) {
+          continue;
+        }
+        const blocks: ChatContentBlock[] = payload.artifacts
+          .map((artifact) => toContentBlock(artifact))
+          .filter((value): value is ChatContentBlock => value !== null);
+        out.push({
+          id: entity.id,
+          role: 'ai',
+          text: payload.summary || 'Tool result',
+          status: 'complete',
+          actions: payload.actions,
+          content: createMessageContent(payload.summary, blocks),
+        });
+      }
     }
 
+    return out;
+  }, [entities, toContentBlock]);
+
+  const messages = useMemo(() => [...timelineMessages, ...systemMessages], [timelineMessages, systemMessages]);
+  const isStreaming = useMemo(
+    () => timelineMessages.some((message) => message.status === 'streaming'),
+    [timelineMessages],
+  );
+
+  useEffect(() => {
     let cancelled = false;
+    const conv = conversationId || 'default';
+
     void (async () => {
       try {
-        const timeline = await fetchTimeline(conversationId, resolvedBaseUrl);
+        const timeline = await fetchTimeline(conv, resolvedBaseUrl);
         if (cancelled) {
           return;
         }
-
-        cardProposalsRef.current.clear();
-        const hydratedMessages = timeline.messages.map((message) =>
-          toTimelineChatMessage(message, toContentBlock),
-        );
-        setMessages(hydratedMessages);
-        setIsStreaming(hydratedMessages.some((message) => message.status === 'streaming'));
-
-        hydratedConversationRef.current = timeline.conversationId;
-        setConversationId(timeline.conversationId);
-        writeConversationId(timeline.conversationId);
+        setEntities(timeline.entities);
+        if (timeline.conversationId !== conversationId) {
+          setConversationId(timeline.conversationId);
+          writeConversationId(timeline.conversationId);
+        }
       } catch (error) {
         if (cancelled) {
           return;
         }
         const message = error instanceof Error ? error.message : String(error);
-        setMessages((prev) =>
-          prev.length > 0 ? prev : [makeSystemMessage(`Timeline hydration failed: ${message}`)],
-        );
+        setSystemMessages((prev) => [...prev, makeSystemMessage(`Timeline hydration failed: ${message}`)]);
       }
     })();
 
+    if (streamCancelRef.current) {
+      streamCancelRef.current();
+    }
+    streamCancelRef.current = connectConversationStream(conv, resolvedBaseUrl, {
+      onUpsert: (entity) => {
+        setEntities((prev) => upsertTimelineEntity(prev, entity));
+      },
+      onError: (error) => {
+        setSystemMessages((prev) => [...prev, makeSystemMessage(`Backend stream error: ${error}`)]);
+      },
+    });
+
     return () => {
       cancelled = true;
+      if (streamCancelRef.current) {
+        streamCancelRef.current();
+        streamCancelRef.current = null;
+      }
     };
-  }, [conversationId, resolvedBaseUrl, toContentBlock]);
+  }, [conversationId, resolvedBaseUrl]);
 
   const send = useCallback(
     async (text: string) => {
@@ -302,128 +435,37 @@ export function InventoryChatAssistantWindow({
       if (!trimmed || isStreaming) {
         return;
       }
-
-      const userId = `u-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-      const aiId = `ai-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-
-      setMessages((prev) => [
-        ...prev,
-        { id: userId, role: 'user', text: trimmed, status: 'complete' },
-        { id: aiId, role: 'ai', text: '', status: 'streaming' },
-      ]);
-      setIsStreaming(true);
-
-      const requestMessages = toBackendHistory(messages, trimmed);
-      let contentBlocks: ChatContentBlock[] = [];
-
       try {
-        const response = await startCompletion(
+        const response = await startChatTurn(
           {
             conversationId,
-            messages: requestMessages,
+            prompt: trimmed,
           },
           resolvedBaseUrl,
         );
-
-        setConversationId(response.conversationId);
-        writeConversationId(response.conversationId);
-
-        const cancel = connectCompletionStream(response.streamUrl, {
-          onToken: (token) => {
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === aiId
-                  ? {
-                      ...msg,
-                      text: msg.text + token,
-                    }
-                  : msg,
-              ),
-            );
-          },
-          onArtifact: (artifact) => {
-            const block = toContentBlock(artifact);
-            if (block) {
-              contentBlocks = [...contentBlocks, block];
-            }
-          },
-          onDone: (actions) => {
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === aiId
-                  ? {
-                      ...msg,
-                      status: 'complete',
-                      actions,
-                      content: createMessageContent(msg.text, contentBlocks),
-                    }
-                  : msg,
-              ),
-            );
-            setIsStreaming(false);
-            streamCancelRef.current = null;
-          },
-          onError: (error) => {
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === aiId
-                  ? {
-                      ...msg,
-                      status: 'error',
-                      text: msg.text || error,
-                    }
-                  : msg,
-              ),
-            );
-            setMessages((prev) => [...prev, makeSystemMessage(`Backend stream error: ${error}`)]);
-            setIsStreaming(false);
-            streamCancelRef.current = null;
-          },
-        });
-
-        streamCancelRef.current = cancel;
+        if (response.conversationId && response.conversationId !== conversationId) {
+          setConversationId(response.conversationId);
+          writeConversationId(response.conversationId);
+        }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === aiId
-              ? {
-                  ...msg,
-                  status: 'error',
-                  text: message,
-                }
-              : msg,
-          ),
-        );
-        setMessages((prev) => [...prev, makeSystemMessage(`Request failed: ${message}`)]);
-        setIsStreaming(false);
+        setSystemMessages((prev) => [...prev, makeSystemMessage(`Request failed: ${message}`)]);
       }
     },
-    [conversationId, isStreaming, messages, resolvedBaseUrl, toContentBlock],
+    [conversationId, isStreaming, resolvedBaseUrl],
   );
 
   const handleCancel = useCallback(() => {
-    if (streamCancelRef.current) {
-      streamCancelRef.current();
-      streamCancelRef.current = null;
-    }
-    setIsStreaming(false);
-    setMessages((prev) =>
-      prev.map((msg) =>
-        msg.status === 'streaming'
-          ? {
-              ...msg,
-              status: 'complete',
-            }
-          : msg,
-      ),
-    );
+    setSystemMessages((prev) => [
+      ...prev,
+      makeSystemMessage('Interrupt is not exposed yet by this backend. The current turn will finish server-side.'),
+    ]);
   }, []);
 
   const handleAction = useCallback(
     (rawAction: unknown) => {
       if (!isRecord(rawAction) || typeof rawAction.type !== 'string') {
-        setMessages((prev) => [...prev, makeSystemMessage('Unsupported action payload from backend.')]);
+        setSystemMessages((prev) => [...prev, makeSystemMessage('Unsupported action payload from backend.')]);
         return;
       }
 
@@ -442,17 +484,20 @@ export function InventoryChatAssistantWindow({
       if (actionType === 'create-card' && typeof rawAction.proposalId === 'string') {
         const proposal = cardProposalsRef.current.get(rawAction.proposalId);
         if (!proposal) {
-          setMessages((prev) => [...prev, makeSystemMessage(`Proposal '${rawAction.proposalId}' is not available.`)]);
+          setSystemMessages((prev) => [
+            ...prev,
+            makeSystemMessage(`Proposal '${rawAction.proposalId}' is not available.`),
+          ]);
           return;
         }
 
         const result = injectPluginCard(stack, proposal);
-        setMessages((prev) => [...prev, makeSystemMessage(result.reason)]);
+        setSystemMessages((prev) => [...prev, makeSystemMessage(result.reason)]);
         openCardWindow(proposal.cardId);
         return;
       }
 
-      setMessages((prev) => [...prev, makeSystemMessage(`Unhandled action type: ${actionType}`)]);
+      setSystemMessages((prev) => [...prev, makeSystemMessage(`Unhandled action type: ${actionType}`)]);
     },
     [openCardWindow, send, stack],
   );
@@ -483,7 +528,7 @@ export function InventoryChatAssistantWindow({
       onAction={handleAction}
       suggestions={SUGGESTIONS}
       title="Inventory Assistant"
-      subtitle="SQLite tool-backed chat"
+      subtitle="Pinocchio/Geppetto web-chat runtime"
       placeholder="Ask about stock levels, sales, inventory value, or a SKU..."
       renderWidget={renderWidget}
       footer={<span>Conversation: {conversationId} · Backend: {resolvedBaseUrl}</span>}

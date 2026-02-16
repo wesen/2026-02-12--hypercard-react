@@ -1,20 +1,3 @@
-export interface BackendMessage {
-  role: string;
-  text: string;
-}
-
-export interface BackendCompletionRequest {
-  conversationId: string;
-  messages: BackendMessage[];
-  model?: string;
-}
-
-export interface BackendCompletionResponse {
-  conversationId: string;
-  messageId: string;
-  streamUrl: string;
-}
-
 export interface BackendAction {
   label: string;
   action: Record<string, unknown>;
@@ -35,58 +18,102 @@ export interface BackendArtifact {
   policy?: Record<string, unknown>;
 }
 
-export interface BackendTimelineMessage {
-  id: string;
+export interface BackendMessageSnapshot {
   role: string;
-  text: string;
-  status: 'complete' | 'streaming' | 'error';
+  content: string;
+  streaming: boolean;
+  metadata?: Record<string, string>;
   artifacts?: BackendArtifact[];
   actions?: BackendAction[];
 }
 
+export interface BackendToolResultSnapshot {
+  resultRaw: string;
+  customKind?: string;
+  toolCallId?: string;
+}
+
+export interface BackendTimelineEntity {
+  id: string;
+  kind: string;
+  createdAt: number;
+  updatedAt?: number;
+  version?: number;
+  message?: BackendMessageSnapshot;
+  toolResult?: BackendToolResultSnapshot;
+}
+
 export interface BackendTimelineResponse {
   conversationId: string;
-  messages: BackendTimelineMessage[];
-  events: BackendSEMEnvelope[];
-  lastSeq: number;
+  version: number;
+  entities: BackendTimelineEntity[];
 }
 
-export interface BackendSEMEvent {
-  type: string;
-  id: string;
-  seq: number;
-  stream_id?: string;
-  data?: Record<string, unknown>;
-  metadata?: Record<string, unknown>;
+export interface StartChatRequest {
+  conversationId: string;
+  prompt: string;
+  overrides?: Record<string, unknown>;
 }
 
-export interface BackendSEMEnvelope {
+export interface StartChatResponse {
+  conversationId: string;
+  status: string;
+  sessionId?: string;
+  turnId?: string;
+  inferenceId?: string;
+}
+
+interface SEMEnvelope {
   sem: true;
-  event: BackendSEMEvent;
+  event: {
+    type: string;
+    id: string;
+    seq?: number;
+    data?: Record<string, unknown>;
+  };
 }
 
 export interface StreamHandlers {
-  onToken: (token: string) => void;
-  onArtifact: (artifact: BackendArtifact) => void;
-  onDone: (actions: BackendAction[]) => void;
+  onUpsert: (entity: BackendTimelineEntity) => void;
   onError: (error: string) => void;
 }
 
-export async function startCompletion(
-  request: BackendCompletionRequest,
+export async function startChatTurn(
+  request: StartChatRequest,
   baseUrl: string,
-): Promise<BackendCompletionResponse> {
-  const res = await fetch(`${baseUrl}/api/chat/completions`, {
+): Promise<StartChatResponse> {
+  const res = await fetch(`${baseUrl}/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(request),
+    body: JSON.stringify({
+      conv_id: request.conversationId,
+      prompt: request.prompt,
+      overrides: request.overrides,
+    }),
   });
 
   if (!res.ok) {
     throw new Error(`Chat backend returned ${res.status} ${res.statusText}`);
   }
 
-  return (await res.json()) as BackendCompletionResponse;
+  const raw = (await res.json()) as unknown;
+  if (!isRecord(raw)) {
+    throw new Error('Chat response is not an object');
+  }
+  const conversationId =
+    typeof raw.conv_id === 'string'
+      ? raw.conv_id
+      : typeof raw.conversationId === 'string'
+        ? raw.conversationId
+        : request.conversationId;
+  const status = typeof raw.status === 'string' ? raw.status : 'started';
+  return {
+    conversationId,
+    status,
+    sessionId: typeof raw.session_id === 'string' ? raw.session_id : undefined,
+    turnId: typeof raw.turn_id === 'string' ? raw.turn_id : undefined,
+    inferenceId: typeof raw.inference_id === 'string' ? raw.inference_id : undefined,
+  };
 }
 
 export async function fetchTimeline(
@@ -94,41 +121,66 @@ export async function fetchTimeline(
   baseUrl: string,
 ): Promise<BackendTimelineResponse> {
   const url = new URL(`${baseUrl}/api/timeline`);
-  url.searchParams.set('conversation_id', conversationId || 'default');
+  url.searchParams.set('conv_id', conversationId || 'default');
 
-  const res = await fetch(url.toString(), {
-    method: 'GET',
-  });
-
+  const res = await fetch(url.toString(), { method: 'GET' });
   if (!res.ok) {
     throw new Error(`Timeline endpoint returned ${res.status} ${res.statusText}`);
   }
 
-  return normalizeTimelineResponse(await res.json());
+  const raw = (await res.json()) as unknown;
+  return normalizeTimelineResponse(raw, conversationId || 'default');
 }
 
-export function connectCompletionStream(streamUrl: string, handlers: StreamHandlers): () => void {
-  const ws = new WebSocket(streamUrl);
+export function connectConversationStream(
+  conversationId: string,
+  baseUrl: string,
+  handlers: StreamHandlers,
+): () => void {
+  const wsUrl = buildWSURL(baseUrl, conversationId || 'default');
+  const ws = new WebSocket(wsUrl);
+  let opened = false;
+  let reportedError = false;
+
+  ws.onopen = () => {
+    opened = true;
+  };
 
   ws.onmessage = (event) => {
     try {
       const parsed = JSON.parse(String(event.data)) as unknown;
-
-      if (isSEMEnvelope(parsed)) {
-        handleSEMEnvelope(parsed, handlers, ws);
+      if (!isSEMEnvelope(parsed)) {
         return;
       }
-
-      handlers.onError('Unknown stream frame shape from backend');
-      ws.close();
+      if (parsed.event.type !== 'timeline.upsert') {
+        return;
+      }
+      const data = parsed.event.data;
+      if (!isRecord(data) || !isRecord(data.entity)) {
+        return;
+      }
+      const entity = toTimelineEntity(data.entity, toNumber(data.version));
+      if (!entity) {
+        return;
+      }
+      handlers.onUpsert(entity);
     } catch {
       handlers.onError('Malformed stream frame from backend');
-      ws.close();
     }
   };
 
   ws.onerror = () => {
-    handlers.onError('WebSocket connection error');
+    if (!reportedError) {
+      reportedError = true;
+      handlers.onError('WebSocket connection error');
+    }
+  };
+
+  ws.onclose = (event) => {
+    if (!opened && !reportedError) {
+      reportedError = true;
+      handlers.onError(`WebSocket closed before open (${event.code})`);
+    }
   };
 
   return () => {
@@ -138,126 +190,137 @@ export function connectCompletionStream(streamUrl: string, handlers: StreamHandl
   };
 }
 
-function handleSEMEnvelope(envelope: BackendSEMEnvelope, handlers: StreamHandlers, ws: WebSocket) {
-  const eventType = envelope.event.type;
-  const data = envelope.event.data ?? {};
-
-  switch (eventType) {
-    case 'chat.message.token': {
-      const token = typeof data.content === 'string' ? data.content : '';
-      if (token) {
-        handlers.onToken(token);
-      }
-      return;
-    }
-    case 'chat.message.artifact': {
-      const artifact = toArtifact(data.artifact);
-      if (artifact) {
-        handlers.onArtifact(artifact);
-      }
-      return;
-    }
-    case 'chat.message.done': {
-      handlers.onDone(toActions(data.actions));
-      ws.close();
-      return;
-    }
-    case 'chat.message.error': {
-      const error = typeof data.error === 'string' ? data.error : 'Unknown stream error';
-      handlers.onError(error);
-      ws.close();
-      return;
-    }
-    default:
-      return;
-  }
-}
-
-function normalizeTimelineResponse(raw: unknown): BackendTimelineResponse {
+function normalizeTimelineResponse(raw: unknown, fallbackConversationId: string): BackendTimelineResponse {
   if (!isRecord(raw)) {
     throw new Error('Timeline response is not an object');
   }
 
-  const conversationId = typeof raw.conversationId === 'string' ? raw.conversationId : 'default';
-  const messages = Array.isArray(raw.messages)
-    ? raw.messages.map(toTimelineMessage).filter((v): v is BackendTimelineMessage => v !== null)
+  const conversationId =
+    typeof raw.convId === 'string'
+      ? raw.convId
+      : typeof raw.conv_id === 'string'
+        ? raw.conv_id
+        : fallbackConversationId;
+  const version = toNumber(raw.version) ?? 0;
+  const entities = Array.isArray(raw.entities)
+    ? raw.entities.map((entity) => toTimelineEntity(entity, version)).filter((v): v is BackendTimelineEntity => v !== null)
     : [];
-  const events = Array.isArray(raw.events)
-    ? raw.events.map(toSEMEnvelope).filter((v): v is BackendSEMEnvelope => v !== null)
-    : [];
-  const lastSeq =
-    typeof raw.lastSeq === 'number'
-      ? raw.lastSeq
-      : Number.isFinite(Number(raw.lastSeq))
-        ? Number(raw.lastSeq)
-        : 0;
 
   return {
     conversationId,
-    messages,
-    events,
-    lastSeq,
+    version,
+    entities,
   };
 }
 
-function toTimelineMessage(raw: unknown): BackendTimelineMessage | null {
-  if (!isRecord(raw) || typeof raw.id !== 'string' || typeof raw.role !== 'string') {
+function toTimelineEntity(raw: unknown, version?: number): BackendTimelineEntity | null {
+  if (!isRecord(raw) || typeof raw.id !== 'string' || typeof raw.kind !== 'string') {
     return null;
   }
-
-  const statusRaw = typeof raw.status === 'string' ? raw.status : 'complete';
-  const status: BackendTimelineMessage['status'] =
-    statusRaw === 'streaming' || statusRaw === 'error' ? statusRaw : 'complete';
-
-  const artifacts = Array.isArray(raw.artifacts)
-    ? raw.artifacts.map(toArtifact).filter((v): v is BackendArtifact => v !== null)
-    : undefined;
-  const actions = Array.isArray(raw.actions)
-    ? raw.actions.map(toAction).filter((v): v is BackendAction => v !== null)
-    : undefined;
+  const message = toMessageSnapshot(raw.message);
+  const toolResult = toToolResultSnapshot(raw.toolResult);
 
   return {
     id: raw.id,
-    role: raw.role,
-    text: typeof raw.text === 'string' ? raw.text : '',
-    status,
-    artifacts,
-    actions,
+    kind: raw.kind,
+    createdAt: toNumber(raw.createdAtMs) ?? Date.now(),
+    updatedAt: toNumber(raw.updatedAtMs) ?? undefined,
+    version,
+    message,
+    toolResult,
   };
 }
 
-function toSEMEnvelope(raw: unknown): BackendSEMEnvelope | null {
-  if (!isRecord(raw) || raw.sem !== true || !isRecord(raw.event)) {
-    return null;
+function toMessageSnapshot(raw: unknown): BackendMessageSnapshot | undefined {
+  if (!isRecord(raw)) {
+    return undefined;
   }
-  const event = raw.event;
-  if (typeof event.type !== 'string' || typeof event.id !== 'string') {
-    return null;
-  }
-
+  const metadata = toStringMap(raw.metadata);
   return {
-    sem: true,
-    event: {
-      type: event.type,
-      id: event.id,
-      seq:
-        typeof event.seq === 'number'
-          ? event.seq
-          : Number.isFinite(Number(event.seq))
-            ? Number(event.seq)
-            : 0,
-      stream_id: typeof event.stream_id === 'string' ? event.stream_id : undefined,
-      data: isRecord(event.data) ? event.data : undefined,
-      metadata: isRecord(event.metadata) ? event.metadata : undefined,
-    },
+    role: typeof raw.role === 'string' ? raw.role : 'assistant',
+    content: typeof raw.content === 'string' ? raw.content : '',
+    streaming: raw.streaming === true,
+    metadata,
+    artifacts: parseArtifactsFromMetadata(metadata),
+    actions: parseActionsFromMetadata(metadata),
   };
 }
 
-function toActions(raw: unknown): BackendAction[] {
-  if (!Array.isArray(raw)) {
-    return [];
+function toToolResultSnapshot(raw: unknown): BackendToolResultSnapshot | undefined {
+  if (!isRecord(raw)) {
+    return undefined;
   }
-  return raw.map(toAction).filter((v): v is BackendAction => v !== null);
+  let resultRaw = typeof raw.resultRaw === 'string' ? raw.resultRaw : '';
+  if (!resultRaw && isRecord(raw.result) && typeof raw.result.raw === 'string') {
+    resultRaw = raw.result.raw;
+  }
+  return {
+    resultRaw,
+    customKind: typeof raw.customKind === 'string' ? raw.customKind : undefined,
+    toolCallId: typeof raw.toolCallId === 'string' ? raw.toolCallId : undefined,
+  };
+}
+
+function parseArtifactsFromMetadata(metadata: Record<string, string> | undefined): BackendArtifact[] | undefined {
+  if (!metadata) {
+    return undefined;
+  }
+  const raw =
+    metadata.hypercard_artifacts ??
+    metadata.hypercardArtifacts ??
+    metadata.artifacts ??
+    metadata.artifacts_json;
+  if (!raw) {
+    return undefined;
+  }
+  const parsed = safeJSONParse(raw);
+  if (!Array.isArray(parsed)) {
+    return undefined;
+  }
+  const artifacts = parsed.map(toArtifact).filter((v): v is BackendArtifact => v !== null);
+  return artifacts.length > 0 ? artifacts : undefined;
+}
+
+function parseActionsFromMetadata(metadata: Record<string, string> | undefined): BackendAction[] | undefined {
+  if (!metadata) {
+    return undefined;
+  }
+  const raw =
+    metadata.hypercard_actions ??
+    metadata.hypercardActions ??
+    metadata.actions ??
+    metadata.actions_json;
+  if (!raw) {
+    return undefined;
+  }
+  const parsed = safeJSONParse(raw);
+  if (!Array.isArray(parsed)) {
+    return undefined;
+  }
+  const actions = parsed.map(toAction).filter((v): v is BackendAction => v !== null);
+  return actions.length > 0 ? actions : undefined;
+}
+
+export function parseToolPayload(rawJSON: string): {
+  summary: string;
+  artifacts: BackendArtifact[];
+  actions: BackendAction[];
+} | null {
+  const parsed = safeJSONParse(rawJSON);
+  if (!isRecord(parsed)) {
+    return null;
+  }
+  const summary = typeof parsed.summary === 'string' ? parsed.summary : '';
+  const artifacts = Array.isArray(parsed.artifacts)
+    ? parsed.artifacts.map(toArtifact).filter((v): v is BackendArtifact => v !== null)
+    : [];
+  const actions = Array.isArray(parsed.actions)
+    ? parsed.actions.map(toAction).filter((v): v is BackendAction => v !== null)
+    : [];
+  if (!summary && artifacts.length === 0 && actions.length === 0) {
+    return null;
+  }
+  return { summary, artifacts, actions };
 }
 
 function toAction(raw: unknown): BackendAction | null {
@@ -294,7 +357,52 @@ function toArtifact(raw: unknown): BackendArtifact | null {
   };
 }
 
-function isSEMEnvelope(raw: unknown): raw is BackendSEMEnvelope {
+function toStringMap(raw: unknown): Record<string, string> | undefined {
+  if (!isRecord(raw)) {
+    return undefined;
+  }
+  const out: Record<string, string> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (typeof value === 'string') {
+      out[key] = value;
+    }
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+function buildWSURL(baseUrl: string, conversationId: string): string {
+  const url = new URL(baseUrl);
+  const wsProtocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsURL = new URL(`${wsProtocol}//${url.host}/ws`);
+  wsURL.searchParams.set('conv_id', conversationId);
+  return wsURL.toString();
+}
+
+function toNumber(raw: unknown): number | undefined {
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    return raw;
+  }
+  if (typeof raw === 'string') {
+    const n = Number(raw);
+    if (Number.isFinite(n)) {
+      return n;
+    }
+  }
+  return undefined;
+}
+
+function safeJSONParse(raw: string): unknown {
+  if (!raw.trim()) {
+    return null;
+  }
+  try {
+    return JSON.parse(raw) as unknown;
+  } catch {
+    return null;
+  }
+}
+
+function isSEMEnvelope(raw: unknown): raw is SEMEnvelope {
   return (
     isRecord(raw) &&
     raw.sem === true &&

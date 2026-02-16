@@ -1,7 +1,6 @@
 package app
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -18,52 +17,34 @@ var (
 	validCardIDRe     = regexp.MustCompile(`^[a-z][a-z0-9_-]{2,63}$`)
 )
 
-func StructuredExtractionMiddleware() PlannerMiddleware {
-	return func(next plannerRunner) plannerRunner {
-		return func(ctx context.Context, prompt string) (chat.PlannedResponse, error) {
-			planned, err := next(ctx, prompt)
-			if err != nil {
-				return planned, err
-			}
-			cleanedText, extracted := extractStructuredArtifacts(planned.Text)
-			planned.Text = cleanedText
-			if len(extracted) > 0 {
-				planned.Artifacts = append(planned.Artifacts, extracted...)
-			}
-			return planned, nil
+// NormalizePlannedResponse extracts inline structured artifacts, validates all artifacts,
+// and appends a warning text when invalid payloads are dropped.
+func NormalizePlannedResponse(planned chat.PlannedResponse) chat.PlannedResponse {
+	cleanedText, extracted := extractStructuredArtifacts(planned.Text)
+	planned.Text = cleanedText
+	if len(extracted) > 0 {
+		planned.Artifacts = append(planned.Artifacts, extracted...)
+	}
+
+	valid := make([]chat.Artifact, 0, len(planned.Artifacts))
+	rejected := make([]string, 0)
+	for _, artifact := range planned.Artifacts {
+		if err := validateArtifact(artifact); err != nil {
+			rejected = append(rejected, fmt.Sprintf("%s(%s): %v", artifact.Kind, artifact.ID, err))
+			continue
+		}
+		valid = append(valid, artifact)
+	}
+	planned.Artifacts = valid
+	if len(rejected) > 0 {
+		suffix := "Some generated artifacts were filtered by validation: " + strings.Join(rejected, "; ")
+		if strings.TrimSpace(planned.Text) == "" {
+			planned.Text = suffix
+		} else {
+			planned.Text = strings.TrimSpace(planned.Text) + "\n\n" + suffix
 		}
 	}
-}
-
-func ArtifactValidationMiddleware() PlannerMiddleware {
-	return func(next plannerRunner) plannerRunner {
-		return func(ctx context.Context, prompt string) (chat.PlannedResponse, error) {
-			planned, err := next(ctx, prompt)
-			if err != nil {
-				return planned, err
-			}
-
-			valid := make([]chat.Artifact, 0, len(planned.Artifacts))
-			rejected := make([]string, 0)
-			for _, artifact := range planned.Artifacts {
-				if err := validateArtifact(artifact); err != nil {
-					rejected = append(rejected, fmt.Sprintf("%s(%s): %v", artifact.Kind, artifact.ID, err))
-					continue
-				}
-				valid = append(valid, artifact)
-			}
-			planned.Artifacts = valid
-			if len(rejected) > 0 {
-				suffix := "Some generated artifacts were filtered by validation: " + strings.Join(rejected, "; ")
-				if strings.TrimSpace(planned.Text) == "" {
-					planned.Text = suffix
-				} else {
-					planned.Text = strings.TrimSpace(planned.Text) + "\n\n" + suffix
-				}
-			}
-			return planned, nil
-		}
-	}
+	return planned
 }
 
 func extractStructuredArtifacts(text string) (string, []chat.Artifact) {
@@ -206,4 +187,15 @@ func validateArtifact(artifact chat.Artifact) error {
 	default:
 		return fmt.Errorf("unsupported artifact kind %q", artifact.Kind)
 	}
+}
+
+func cloneMap(input map[string]any) map[string]any {
+	if len(input) == 0 {
+		return nil
+	}
+	out := make(map[string]any, len(input))
+	for k, v := range input {
+		out[k] = v
+	}
+	return out
 }

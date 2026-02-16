@@ -5,18 +5,18 @@ Minimal Go backend for the inventory chat integration in `apps/inventory`.
 ## Features
 
 - SQLite-backed inventory and sales data
-- Deterministic chat planner with tool-style data queries
-- `POST /api/chat/completions` endpoint
-- `GET /ws` streaming endpoint (SEM envelope only)
-- Per-conversation timeline projection (messages + bounded SEM event buffer)
-- `GET /api/timeline` hydration endpoint for reconnect/reload
+- Pinocchio app-owned web-chat transport (`/chat` + `/ws`)
+- Geppetto runtime composition (provider/model/API-key configurable)
+- Inventory SQLite tool registration (`inventory_query`)
+- Durable Pinocchio timeline store + turn store (SQLite)
+- Frontend-hydratable timeline projection via `GET /api/timeline`
 - Seed command and script for mock data
 
 ## Endpoints
 
-- `POST /api/chat/completions`
-- `GET /ws?conversation_id=<id>&message_id=<id>`
-- `GET /api/timeline?conversation_id=<id>`
+- `POST /chat`
+- `GET /ws?conv_id=<id>`
+- `GET /api/timeline?conv_id=<id>`
 - `GET /healthz`
 
 ## Run
@@ -28,16 +28,19 @@ cd go-inventory-chat
 ./scripts/seed.sh
 
 # serve
-go run ./cmd/inventory-chat serve --db ./data/inventory.db --allow-origin http://localhost:5173
+go run ./cmd/inventory-chat serve \
+  --db ./data/inventory.db \
+  --timeline-db ./data/webchat-timeline.db \
+  --turns-db ./data/webchat-turns.db \
+  --allow-origin http://127.0.0.1:15173 \
+  --llm-enabled=false
 ```
 
 ## Request example
 
 ```json
 {
-  "conversationId": "default",
-  "messages": [
-    { "role": "user", "text": "show low stock below 3" }
-  ]
+  "conv_id": "default",
+  "prompt": "show low stock below 3"
 }
 ```
