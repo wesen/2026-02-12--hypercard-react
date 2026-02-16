@@ -235,3 +235,51 @@ Implemented the full keyed-conversation refactor in a single pass:
 #### What was tricky
 - TypeScript project references required rebuilding engine declarations (`tsc -b packages/engine`) before inventory would see the new `onCommand` prop
 - 31 dispatch calls in InventoryChatWindow needed `conversationId` injection — systematic search-and-replace was the only way
+
+---
+
+### F7: Streaming Event Viewer (~17:00–17:12)
+
+Implemented the complete event viewer as a standalone window component.
+
+#### eventBus.ts
+- Simple per-conversation pub/sub: `emitConversationEvent(convId, envelope)` and `subscribeConversationEvents(convId, callback)`
+- Uses `Map<string, Set<Listener>>` internally, auto-cleans on last unsubscribe
+- Classifies events into families (llm/tool/hypercard/timeline/ws/other)
+- Generates one-line summaries per event type
+- Re-uses `SemEventEnvelope` type from webchatClient (avoided duplicate type definition causing TS index signature mismatch)
+
+#### EventViewerWindow.tsx
+- Filter toggle bar with color-coded family buttons (6 families)
+- Each event row: timestamp | type (colored) | ID | summary | expand arrow
+- Expand reveals full envelope as YAML (reuses `toYaml` from F2)
+- Pause/Resume, Clear, Auto-scroll (📌 Pinned/Free) controls
+- Ring buffer capped at 500 entries
+- Accepts `initialEntries` prop for storybook testing
+- Hover highlight on rows, monospace font throughout
+
+#### Wiring
+- InventoryChatWindow: `emitConversationEvent()` called in WS `onEnvelope` handler, before `onSemEnvelope()`
+- New "📡 Events" button in header actions alongside debug toggle
+- App.tsx: `event-viewer:{convId}` appKey pattern registered in `renderAppWindow`
+- Deduped via `dedupeKey: event-viewer:{convId}` so only one viewer per conversation
+
+#### Tests
+- 4 eventBus tests: delivery, conversation isolation, unsubscribe cleanup, family classification
+- 4 storybook stories: Empty, MixedEvents (10+ events with realistic payloads), HighVolume (200 events), ColorCoded (one of each family)
+- 140 total tests pass
+
+---
+
+## Summary of all features completed
+
+| Feature | Status | Tests | Stories |
+|---------|--------|-------|---------|
+| F5: Text selection | ✅ | — | Verified in existing |
+| F2: Collapsible tool calls + YAML | ✅ | 8 (yamlFormat) | 6 |
+| F4: Model info + token counts + TPS | ✅ | — | 5 |
+| F1: Per-round timeline widgets | ✅ | 3 new + 11 updated | 4 |
+| F6: Debug mode toggle | ✅ | — | 2 |
+| F3: Multi-window keyed Redux store | ✅ | 15 updated + 1 new | — |
+| F7: Streaming event viewer | ✅ | 4 (eventBus) | 4 |
+| **Total** | **7/7 ✅** | **140** | **21** |

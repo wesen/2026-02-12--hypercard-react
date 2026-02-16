@@ -54,13 +54,13 @@ Ticket: HC-034-BETTER-UI
 - [ ] F6.6 Add storybook stories (4 stories)
 
 ## F7: Streaming event viewer window
-- [ ] F7.1 Create conversation event bus utility
-- [ ] F7.2 Create EventViewerWindow component
-- [ ] F7.3 Implement filter toggle bar
-- [ ] F7.4 Implement expand/collapse per entry
-- [ ] F7.5 Add pause/resume and clear controls
-- [ ] F7.6 Add auto-scroll toggle
-- [ ] F7.7 Wire event viewer launch from chat window
-- [ ] F7.8 Register event viewer appKey in App.tsx
-- [ ] F7.9 Add CSS styling for event viewer
-- [ ] F7.10 Add storybook stories (8 stories)
+- [x] F7.1 Create conversation event bus utility
+- [x] F7.2 Create EventViewerWindow component
+- [x] F7.3 Implement filter toggle bar
+- [x] F7.4 Implement expand/collapse per entry
+- [x] F7.5 Add pause/resume and clear controls
+- [x] F7.6 Add auto-scroll toggle
+- [x] F7.7 Wire event viewer launch from chat window
+- [x] F7.8 Register event viewer appKey in App.tsx
+- [x] F7.9 Add CSS styling for event viewer (inline styles)
+- [x] F7.10 Add storybook stories (4 stories) + 4 eventBus tests
