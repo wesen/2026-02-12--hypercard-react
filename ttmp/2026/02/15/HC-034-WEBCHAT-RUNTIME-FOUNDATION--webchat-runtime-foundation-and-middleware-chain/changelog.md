@@ -22,3 +22,8 @@
   - `GOWORK=off go test ./...`
   - frontend typecheck/build
   - Playwright end-to-end chat + create-card flow.
+
+## 2026-02-15
+
+Runtime foundation completed: Pinocchio app-owned contract and middleware chain delivered.
+

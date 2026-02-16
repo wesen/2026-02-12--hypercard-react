@@ -13,3 +13,8 @@
 - Added extraction of structured hypercard blocks into normalized artifact payloads.
 - Added strict artifact validation gate before streaming artifact events.
 - Commit `2780008`.
+
+## 2026-02-15
+
+Structured artifact extraction and SEM translation completed and validated.
+

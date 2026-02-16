@@ -16,3 +16,8 @@
 - Removed duplicated local timeline persistence implementation in favor of Pinocchio `chatstore` timeline/turn stores.
 - Deleted `go-inventory-chat/internal/store/timeline.go` and removed timeline tables from inventory DB schema.
 - Revalidated hydration and replay behavior against Pinocchio timeline snapshots.
+
+## 2026-02-15
+
+Durable timeline/turn persistence and replay/hydration completed.
+

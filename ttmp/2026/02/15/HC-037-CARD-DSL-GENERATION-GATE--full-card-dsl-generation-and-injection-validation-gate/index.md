@@ -1,7 +1,7 @@
 ---
 Title: Full Card DSL Generation and Injection Validation Gate
 Ticket: HC-037-CARD-DSL-GENERATION-GATE
-Status: active
+Status: complete
 Topics:
     - chat
     - frontend
@@ -18,10 +18,11 @@ RelatedFiles:
       Note: Validation gate and apply flow target.
 ExternalSources: []
 Summary: Implements reports/tables artifact generation and full card DSL generation with validation before runtime injection.
-LastUpdated: 2026-02-16T15:00:00-05:00
+LastUpdated: 2026-02-15T22:26:01.833062949-05:00
 WhatFor: Landing page for HC-037 implementation scope and status.
 WhenToUse: Start here before working on DSL generation and validation gate.
 ---
+
 
 # Full Card DSL Generation and Injection Validation Gate
 

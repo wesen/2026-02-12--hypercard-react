@@ -13,3 +13,8 @@
 - Added proposal metadata (`dedupeKey`, `version`, `policy`) to artifact stream.
 - Implemented frontend injection validation gate and signature dedupe marker.
 - Commit `1bc60d3`.
+
+## 2026-02-15
+
+Report/table artifacts and full card DSL generation gate completed.
+

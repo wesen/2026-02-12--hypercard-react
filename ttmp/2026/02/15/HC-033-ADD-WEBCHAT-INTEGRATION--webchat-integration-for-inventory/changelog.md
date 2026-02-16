@@ -74,3 +74,8 @@
   - report/table rendering,
   - create-card action,
   - saved card window opened.
+
+## 2026-02-15
+
+Implementation complete; child tickets HC-034..HC-038 delivered and validated.
+

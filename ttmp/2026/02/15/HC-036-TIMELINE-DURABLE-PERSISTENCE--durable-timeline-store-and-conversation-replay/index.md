@@ -1,7 +1,7 @@
 ---
 Title: Durable Timeline Store and Conversation Replay
 Ticket: HC-036-TIMELINE-DURABLE-PERSISTENCE
-Status: active
+Status: complete
 Topics:
     - chat
     - backend
@@ -17,10 +17,11 @@ RelatedFiles:
       Note: Hydration endpoint integration point.
 ExternalSources: []
 Summary: Adds durable SQLite-backed timeline persistence, replay, and hydration/reconnect semantics.
-LastUpdated: 2026-02-16T15:00:00-05:00
+LastUpdated: 2026-02-15T22:26:01.827520767-05:00
 WhatFor: Landing page for HC-036 implementation scope and status.
 WhenToUse: Start here before implementing durable timeline work.
 ---
+
 
 # Durable Timeline Store and Conversation Replay
 

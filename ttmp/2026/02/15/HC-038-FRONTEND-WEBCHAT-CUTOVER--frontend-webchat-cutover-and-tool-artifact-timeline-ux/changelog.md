@@ -13,3 +13,8 @@
 - Replaced message queue/stream-url client flow with timeline entity hydration and `timeline.upsert` projection.
 - Added structured fallback parsing (`hypercard:widget`, `hypercard:card`, `hypercard:actions`) so deterministic backend mode still renders full widgets/actions.
 - Verified end-to-end create-card workflow after contract cutover.
+
+## 2026-02-15
+
+Frontend cutover to Pinocchio timeline + ws contract completed and smoke-tested.
+
