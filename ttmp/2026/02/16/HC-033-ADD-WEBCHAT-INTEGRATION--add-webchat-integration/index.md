@@ -20,8 +20,8 @@ RelatedFiles:
       Note: Detailed checklist for implementation execution
 ExternalSources:
     - local:webchat-hyper-integration.md
-Summary: Planning ticket for hard-cutover inventory webchat integration using Glazed command composition, Pinocchio webchat reuse, Geppetto middleware artifact/card generation, and HyperCard app-window frontend integration.
-LastUpdated: 2026-02-16T13:23:00-05:00
+Summary: Execution ticket for hard-cutover inventory webchat integration using Glazed command composition, Pinocchio webchat reuse, Geppetto middleware artifact/card generation, and HyperCard app-window frontend integration.
+LastUpdated: 2026-02-16T12:40:00-05:00
 WhatFor: Coordinate analysis, planning, task execution, and implementation diary for inventory chat integration.
 WhenToUse: Start here for ticket context and links to the validated implementation plan.
 ---
@@ -37,9 +37,9 @@ This ticket plans and tracks a hard-cutover migration from inventory app mock ch
 2. Geppetto tools + structured sink extraction
 3. HyperCard app-window chat UI with inline widgets and artifact-to-card actions
 
-No implementation has started yet in this ticket after the explicit planning-only directive.
+Implementation is now active. Backend scaffold (`B1`, `B2`) and early frontend cutover (`F2.5`) are complete, including a validated tmux + Playwright round-trip smoke flow.
 
-Planning now includes an explicit early round-trip checkpoint immediately after backend Phase 2, where frontend is cut over to real streaming chat before artifact/card features are added.
+The next execution focus is SQLite inventory domain + tool wiring before artifact/card lifecycle expansion.
 
 ## Key Links
 
@@ -50,7 +50,7 @@ Planning now includes an explicit early round-trip checkpoint immediately after 
 
 ## Status
 
-Current status: **active (planning-only)**
+Current status: **active (implementation in progress)**
 
 ## Decision Gates
 

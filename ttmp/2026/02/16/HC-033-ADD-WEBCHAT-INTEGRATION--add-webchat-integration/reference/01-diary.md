@@ -18,6 +18,20 @@ RelatedFiles:
       Note: Imported source analyzed and validated against real code
     - Path: 2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/tasks.md
       Note: Task decomposition referenced by diary steps
+    - Path: apps/inventory/src/App.tsx
+      Note: Phase 2.5 app-window cutover wiring
+    - Path: apps/inventory/src/features/chat/InventoryChatWindow.tsx
+      Note: Chat UI integration with SEM events
+    - Path: apps/inventory/src/features/chat/chatSlice.test.ts
+      Note: Reducer validation tests
+    - Path: apps/inventory/src/features/chat/chatSlice.ts
+      Note: Streaming reducer path
+    - Path: apps/inventory/src/features/chat/webchatClient.ts
+      Note: Frontend webchat transport implementation
+    - Path: apps/inventory/vite.config.ts
+      Note: Proxy configuration for backend endpoints
+    - Path: ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/scripts/smoke-roundtrip-playwright.mjs
+      Note: Playwright smoke script for round-trip gate
 ExternalSources:
     - local:webchat-hyper-integration.md
 Summary: Detailed planning diary for the webchat integration ticket before implementation starts.
@@ -25,6 +39,7 @@ LastUpdated: 2026-02-16T13:25:00-05:00
 WhatFor: Preserve detailed planning trace and decision rationale before coding.
 WhenToUse: Use when reviewing why the implementation plan was shaped this way.
 ---
+
 
 
 # Diary
@@ -610,3 +625,117 @@ I updated the implementation phases and tasks to include this milestone as Phase
 
 - New early cutover block in tasks:
   - `F2.5.1` to `F2.5.7`
+
+## Step 8: Implement Phase 2.5 Frontend Hard Cutover and Validate in Tmux
+
+This step executed the early frontend cutover milestone from plan Phase 2.5. I replaced the inventory frontend chat path with a real `/chat` + `/ws` transport flow, wired it into an app-window in `DesktopShell`, and validated a real round-trip with Playwright.
+
+I treated this as a hard-cut implementation slice (no backward-compat behavior retained for the primary chat surface), and committed code before ticket-bookkeeping updates per the requested task-by-task flow.
+
+### Prompt Context
+
+**User prompt (verbatim):** "Alright, let's go. Build task by task, commit at regular intervals, update your diary as you work, and check off tasks."
+
+**Assistant interpretation:** Start implementation immediately in phased increments, commit regularly, and keep ticket tasks/diary continuously updated.
+
+**Inferred user intent:** Execute the agreed HC-033 plan with visible progress, durable documentation, and runnable validation loops.
+
+**Commit (code):** 42a085d — "HC-033: hard-cut inventory frontend to /chat+/ws streaming"
+
+### What I did
+
+- Replaced inventory chat state with a streaming-aware reducer in:
+  - `apps/inventory/src/features/chat/chatSlice.ts`
+- Added selectors for conversation/connection/stream status:
+  - `apps/inventory/src/features/chat/selectors.ts`
+- Added minimal real transport client with persisted `conv_id`, WS attach, and `/chat` submit:
+  - `apps/inventory/src/features/chat/webchatClient.ts`
+- Added chat app-window component that consumes SEM frames (`llm.start/delta/final`, optional `tool.*`):
+  - `apps/inventory/src/features/chat/InventoryChatWindow.tsx`
+- Cut over inventory shell to open a dedicated app-window chat on startup:
+  - `apps/inventory/src/App.tsx`
+- Added Vite proxy routing for backend endpoints:
+  - `apps/inventory/vite.config.ts`
+- Added reducer tests:
+  - `apps/inventory/src/features/chat/chatSlice.test.ts`
+- Added Playwright smoke script under ticket scripts:
+  - `ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/scripts/smoke-roundtrip-playwright.mjs`
+- Ran validations:
+  - `npm exec -w apps/inventory vitest run src/features/chat/chatSlice.test.ts`
+  - `npm exec -w apps/inventory tsc -b`
+  - `node ./ttmp/.../scripts/smoke-roundtrip-playwright.mjs`
+- Started backend/frontend in tmux sessions:
+  - `hc033-backend`
+  - `hc033-frontend`
+
+### Why
+
+- Phase 2.5 requires early end-to-end round-trip validation before artifact/card lifecycle work.
+- Hard-cut frontend rewrite avoids carrying mock-stream compatibility into the new webchat path.
+
+### What worked
+
+- Streaming reducer path correctly handled `llm.start -> llm.delta -> llm.final` in tests.
+- Frontend connected through proxied `/ws` and posted prompts to `/chat` with persisted `conv_id`.
+- Playwright smoke test passed with real streamed output:
+  - `OK: received AI stream output: To provide an accurate`
+- Backend logs confirmed conversation stream + inference loop execution under test run.
+
+### What didn't work
+
+- Attempt to mark task IDs via `docmgr task check` failed because the command expects numeric indexes:
+  - command: `docmgr task check --ticket HC-033-ADD-WEBCHAT-INTEGRATION --id F2.5.1,...`
+  - error: `strconv.Atoi: parsing "F2.5.1": invalid syntax`
+- `pnpm dev` from `apps/inventory` failed in this workspace because `vite` binary is not linked there under current install layout:
+  - command: `pnpm dev --host 127.0.0.1 --port 5173`
+  - error: `sh: 1: vite: not found`
+- Existing workspace build issue (not introduced by this step) still occurs on full `vite build`:
+  - error: `Invalid value "iife" for option "worker.format"`
+- First frontend tmux launch attempt hit a stale session name:
+  - error: `duplicate session: hc033-frontend`
+
+### What I learned
+
+- Running `pnpm dev` from repo root (which delegates to npm workspace script) works in this mixed workspace setup, while direct app-level `pnpm dev` does not.
+- The minimal SEM handler set is sufficient for the Phase 2.5 gate; artifact/card rendering can stay disabled until later phases.
+
+### What was tricky to build
+
+- The tricky part was keeping the UI responsive before first `llm.start` while still enforcing single in-flight request semantics.
+- I solved this by adding a pending streaming AI placeholder on submit, then rebinding it to the real LLM message id when `llm.start` arrives.
+
+### What warrants a second pair of eyes
+
+- Confirm whether we should fully delete/replace the plugin `assistant` card path now or in later cleanup (primary surface is already cut over).
+- Confirm desired UX if `/chat` succeeds but no `llm.*` frame arrives before timeout (currently surfaces stream error via reducer).
+
+### What should be done in the future
+
+- Proceed to Phase 3 (SQLite domain + seed scripts), then wire inventory tools and geppetto middleware extraction.
+
+### Code review instructions
+
+- Start with frontend cutover wiring:
+  - `apps/inventory/src/App.tsx`
+  - `apps/inventory/src/features/chat/InventoryChatWindow.tsx`
+  - `apps/inventory/src/features/chat/webchatClient.ts`
+- Review reducer/event semantics:
+  - `apps/inventory/src/features/chat/chatSlice.ts`
+  - `apps/inventory/src/features/chat/chatSlice.test.ts`
+- Review dev routing and smoke script:
+  - `apps/inventory/vite.config.ts`
+  - `ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/scripts/smoke-roundtrip-playwright.mjs`
+- Re-run validations:
+  - `npm exec -w apps/inventory vitest run src/features/chat/chatSlice.test.ts`
+  - `npm exec -w apps/inventory tsc -b`
+  - with tmux sessions running: `node ./ttmp/.../scripts/smoke-roundtrip-playwright.mjs`
+
+### Technical details
+
+- Backend tmux launch:
+  - `go run ./cmd/hypercard-inventory-server hypercard-inventory-server --addr :8091`
+- Frontend tmux launch:
+  - `INVENTORY_CHAT_BACKEND=http://127.0.0.1:8091 pnpm dev -- --host 127.0.0.1 --port 5173`
+- Smoke acceptance evidence:
+  - backend log shows `stream coordinator: started` and `starting inference loop`
+  - Playwright script returns non-empty AI output from the chat window

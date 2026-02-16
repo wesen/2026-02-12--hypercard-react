@@ -32,13 +32,13 @@
 
 ### 2.5 Early frontend cutover (minimal streaming round-trip)
 
-- [ ] F2.5.1 Add inventory Vite proxy for `/chat`, `/ws`, `/api`.
-- [ ] F2.5.2 Add minimal transport module (`conv_id` persistence, ws attach, prompt submit).
-- [ ] F2.5.3 Replace inventory fake-stream path for primary chat surface at this checkpoint.
-- [ ] F2.5.4 Implement minimal reducer path for `llm.start/delta/final` (+ optional `tool.*` display).
-- [ ] F2.5.5 Render minimal streaming chat in app-window and verify send/receive loop.
-- [ ] F2.5.6 Add end-to-end smoke test for round-trip (`UI -> /chat -> /ws -> streamed text`).
-- [ ] F2.5.7 Keep artifact/card lifecycle rendering disabled until later phases.
+- [x] F2.5.1 Add inventory Vite proxy for `/chat`, `/ws`, `/api`.
+- [x] F2.5.2 Add minimal transport module (`conv_id` persistence, ws attach, prompt submit).
+- [x] F2.5.3 Replace inventory fake-stream path for primary chat surface at this checkpoint.
+- [x] F2.5.4 Implement minimal reducer path for `llm.start/delta/final` (+ optional `tool.*` display).
+- [x] F2.5.5 Render minimal streaming chat in app-window and verify send/receive loop.
+- [x] F2.5.6 Add end-to-end smoke test for round-trip (`UI -> /chat -> /ws -> streamed text`).
+- [x] F2.5.7 Keep artifact/card lifecycle rendering disabled until later phases.
 
 ### 3. SQLite inventory domain
 
