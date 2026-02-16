@@ -381,6 +381,21 @@ const chatSlice = createSlice({
         }
         return;
       }
+
+      // De-duplicate: if the backend echoes back a user/ai message we already
+      // created locally (different ID, same role + text), adopt the server ID
+      // instead of creating a duplicate row.
+      if (nextText.length > 0) {
+        const duplicate = conv.messages.find(
+          (m) => m.role === role && m.text === nextText && m.id !== id,
+        );
+        if (duplicate) {
+          duplicate.id = id;
+          duplicate.status = status;
+          return;
+        }
+      }
+
       conv.messages.push({
         id,
         role,

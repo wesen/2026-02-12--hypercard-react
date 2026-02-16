@@ -327,6 +327,27 @@ describe('chatSlice (keyed conversations)', () => {
     expect(timelineMessages).toHaveLength(0);
   });
 
+  it('deduplicates backend-echoed user messages by adopting server ID', () => {
+    const conv = reduce([
+      // User sends a message locally (gets id user-N)
+      queueUserPrompt({ conversationId: C, text: 'hello' }),
+      // Backend echoes back the same message with a UUID
+      upsertHydratedMessage({
+        conversationId: C,
+        id: 'user-abc123-uuid',
+        role: 'user',
+        text: 'hello',
+        status: 'complete',
+      }),
+    ]);
+
+    // Should have exactly ONE user message with "hello", not two
+    const userMessages = conv.messages.filter((m) => m.role === 'user' && m.text === 'hello');
+    expect(userMessages).toHaveLength(1);
+    // The ID should be updated to the server-assigned UUID
+    expect(userMessages[0].id).toBe('user-abc123-uuid');
+  });
+
   it('isolates separate conversations', () => {
     const C2 = 'test-conv-2';
     let state = chatReducer(undefined, { type: '__test__/init' });
