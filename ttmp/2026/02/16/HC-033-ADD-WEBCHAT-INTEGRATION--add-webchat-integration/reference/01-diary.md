@@ -1378,3 +1378,112 @@ The behavior was caused by dual sources updating the same row (`hypercard.*` lif
   - `parseProjectedLifecycleStatus(text)`
 - Mapping change:
   - projected widget/card status text now updates `detail` and `status` while preserving stable titles when projection text is generic.
+
+## Step 19: Lock Decision Gates and Complete Phase 9 Artifact/Card Runtime Integration
+
+This step closed the remaining Phase 0 decision gates and implemented the full Phase 9 slice so generated artifacts can be persisted in frontend state and opened as deduped card windows. The work intentionally stayed hard-cut and direct: no compatibility branch, no mock artifact layer, and no fallback generated payloads.
+
+Phase 9 required connecting three planes end-to-end: SEM event ingestion, durable artifact state, and card-window opening behavior keyed by artifact id. The result is that card/widget ready events now feed a canonical artifact store and generated rows have an explicit Open action that launches a template viewer card with `artifactId` passed as nav param.
+
+### Prompt Context
+
+**User prompt (verbatim):** "D0.1 : no override. D0.2: remove plugin assistant, one surface only D0.3: dedupe D0.4, D0.5 : freeze. 
+
+then do phase 9"
+
+**Assistant interpretation:** Mark the remaining decision tasks as locked per user choices, then implement all Phase 9 tasks (`F9.1` through `F9.5`) with code + tests.
+
+**Inferred user intent:** Move from planning ambiguity to implementation velocity by freezing policy/schema decisions and immediately shipping the artifact-to-card runtime path.
+
+**Commit (code):** `fe56bb3` — "Implement phase 9 artifact state and card opening flow"
+
+### What I did
+
+- Added artifact domain state keyed by artifact id:
+  - `apps/inventory/src/features/chat/artifactsSlice.ts`
+  - `apps/inventory/src/features/chat/artifactsSelectors.ts`
+  - reducer supports `upsertArtifact` merge behavior and `clearArtifacts`
+- Wired artifact state into app store:
+  - `apps/inventory/src/app/store.ts` now includes `artifacts: artifactsReducer`
+- Added pure runtime helpers for artifact behavior:
+  - `apps/inventory/src/features/chat/artifactRuntime.ts`
+  - helpers include:
+    - `extractArtifactUpsertFromSem(...)`
+    - `templateToCardId(...)`
+    - `buildArtifactOpenWindowPayload(...)`
+- Updated SEM ingest flow to upsert artifacts on ready/projection events:
+  - `apps/inventory/src/features/chat/InventoryChatWindow.tsx`
+  - artifact upsert now happens for direct `hypercard.widget.v1` / `hypercard.card_proposal.v1` and projected `timeline.upsert` tool results with matching `customKind`
+- Added card open action wiring from chat panel rows:
+  - `apps/inventory/src/features/chat/InventoryArtifactPanelWidgets.tsx`
+  - row-level `Open` button for successful rows with `artifactId`
+  - callback from `InventoryChatWindow` dispatches `openWindow(...)` payload with `card.param = artifactId` and dedupe key `artifact:<id>`
+- Added template viewer cards to stack metadata:
+  - `apps/inventory/src/domain/stack.ts`
+  - new card ids: `reportViewer`, `itemViewer`
+- Added plugin implementations for template viewer cards:
+  - `apps/inventory/src/domain/pluginBundle.vm.js`
+  - `reportViewer` and `itemViewer` now read `domains.artifacts.byId` via nav param artifact id and render artifact data in table form
+
+### Why
+
+- Phase 9’s objective is to make generated artifacts first-class state and navigable UI destinations.
+- Artifact-keyed dedupe aligns with the locked decision to avoid multiple windows for the same artifact and gives stable reopen/focus behavior.
+- Keeping the mapping logic in pure helper functions makes the contract testable and easier to evolve during Phase 10 hydration work.
+
+### What worked
+
+- Typecheck and tests passed across backend/frontend after Phase 9 changes.
+- Artifact upserts now occur as soon as ready events arrive; no manual parsing in UI widgets.
+- Open action payloads are deterministic and include the required artifact param for card rendering.
+
+### What didn't work
+
+- N/A for runtime behavior in this step; implementation and validation succeeded on first pass once helper boundaries were set.
+
+### What I learned
+
+- Modeling artifact extraction as a pure SEM adapter (`extractArtifactUpsertFromSem`) avoids duplicating extraction logic between direct lifecycle and projected timeline events.
+- Passing `artifactId` through card session nav param is the cleanest bridge into plugin card renderers without introducing ad-hoc global variables or event buses.
+
+### What was tricky to build
+
+- The same artifact can appear from both direct and projected event streams with slightly different payload containers (`data.artifact` vs tool_result result object). The adapter had to normalize both consistently.
+- Stack metadata and plugin bundle card registry both needed template viewer additions; updating only one side would either hide menu/card ids or trigger runtime "card not found" failures.
+
+### What warrants a second pair of eyes
+
+- Viewer-card rendering in `pluginBundle.vm.js` is intentionally generic for MVP; review whether additional formatting rules are needed for specific artifact shapes.
+- Dedupe key policy is artifact-only by decision; confirm this remains acceptable if multiple templates ever intentionally share an artifact id.
+
+### What should be done in the future
+
+- Add focused UI-level Playwright assertion for clicking `Open` in card panel and verifying the viewer card window opens/focuses with expected artifact content.
+
+### Code review instructions
+
+- Start with state and adapter contracts:
+  - `apps/inventory/src/features/chat/artifactsSlice.ts`
+  - `apps/inventory/src/features/chat/artifactRuntime.ts`
+- Then verify UI wiring:
+  - `apps/inventory/src/features/chat/InventoryChatWindow.tsx`
+  - `apps/inventory/src/features/chat/InventoryArtifactPanelWidgets.tsx`
+- Then template card runtime:
+  - `apps/inventory/src/domain/stack.ts`
+  - `apps/inventory/src/domain/pluginBundle.vm.js`
+- Validate with:
+  - `pnpm -C packages/engine exec tsc -b`
+  - `pnpm -C apps/inventory exec tsc --noEmit`
+  - `npm exec vitest run apps/inventory/src/features/chat/chatSlice.test.ts apps/inventory/src/features/chat/artifactsSlice.test.ts apps/inventory/src/features/chat/artifactRuntime.test.ts`
+  - `cd go-inventory-chat && go test ./...`
+
+### Technical details
+
+- New tests added:
+  - `apps/inventory/src/features/chat/artifactsSlice.test.ts`
+  - `apps/inventory/src/features/chat/artifactRuntime.test.ts`
+- Open-window payload contract now includes:
+  - `content.kind = 'card'`
+  - `content.card.cardId = templateToCardId(template)`
+  - `content.card.param = artifactId`
+  - `dedupeKey = artifact:<artifactId>`

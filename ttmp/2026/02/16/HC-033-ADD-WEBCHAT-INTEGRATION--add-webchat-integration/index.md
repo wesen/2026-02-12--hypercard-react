@@ -23,7 +23,7 @@ RelatedFiles:
 ExternalSources:
     - local:webchat-hyper-integration.md
 Summary: Execution ticket for hard-cutover inventory webchat integration using Glazed command composition, Pinocchio webchat reuse, Geppetto middleware artifact/card generation, and HyperCard app-window frontend integration.
-LastUpdated: 2026-02-16T14:02:00-05:00
+LastUpdated: 2026-02-16T15:25:00-05:00
 WhatFor: Coordinate analysis, planning, task execution, and implementation diary for inventory chat integration.
 WhenToUse: Start here for ticket context and links to the validated implementation plan.
 ---
@@ -41,7 +41,7 @@ This ticket plans and tracks a hard-cutover migration from inventory app mock ch
 
 Implementation is now active. Backend scaffold (`B1`, `B2`), early frontend cutover (`F2.5`), and backend SQLite+tools slices (`B3`, `B4`) are complete, including validated tmux + Playwright round-trip smoke flows.
 
-The next execution focus is middleware-driven structured extraction + artifact/card lifecycle projection (Phases 5/6 onward).
+The next execution focus is timeline bootstrap/hydration and persistence validation (Phase 10 onward).
 
 ## Key Links
 
@@ -55,20 +55,16 @@ The next execution focus is middleware-driven structured extraction + artifact/c
 
 Current status: **active (implementation in progress)**
 
-## Decision Gates
-
-Pending decisions before implementation starts:
-
-1. default model/runtime provider
-2. keep/remove plugin `assistant` card after cutover
-3. timeline persistence default policy
-4. create-card dedupe policy
-
 ## Locked Decisions
 
 1. No fallback synthesis for artifact/card success events (model-authored structured blocks only).
 2. Progressive lifecycle events are required for widget/card parsing.
 3. `widget.start`/`card.start` are emitted only once a non-empty title is parsed.
+4. Runtime overrides are disabled in MVP.
+5. Cutover keeps one assistant surface (remove plugin assistant surface from primary UX path).
+6. Default card open behavior is dedupe per artifact.
+7. `hypercard.widget.v1` schema is frozen for MVP.
+8. `hypercard.card_proposal.v1` schema is frozen for MVP.
 
 ## Tasks
 

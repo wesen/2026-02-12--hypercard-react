@@ -410,11 +410,13 @@ Custom timeline handlers to add:
 4. Hard cutover introduces UX regressions.
 - Mitigation: explicit acceptance checklist before removing fake path.
 
-## Open Decisions Requiring User Input
+## Resolved Decisions
 
-1. Should runtime overrides remain fully disabled in MVP, or permit a debug-only flag?
-2. For card open behavior, default to dedupe per artifact or always new window?
-3. Should existing plugin assistant surface be removed immediately at cutover or kept behind a temporary feature flag?
+1. Runtime overrides remain fully disabled in MVP.
+2. Card open behavior defaults to dedupe per artifact.
+3. Existing plugin assistant surface is removed as the primary cutover path (one assistant surface).
+4. `hypercard.widget.v1` schema is frozen for MVP.
+5. `hypercard.card_proposal.v1` schema is frozen for MVP.
 
 ## References
 

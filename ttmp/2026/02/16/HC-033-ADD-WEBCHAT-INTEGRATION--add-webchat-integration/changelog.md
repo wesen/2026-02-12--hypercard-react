@@ -179,3 +179,21 @@ Added optional model-authored suggestion chips end-to-end: runtime suggestions p
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/widgets/ChatWindow.tsx — Added `showSuggestionsAlways` support for streaming-time suggestion updates
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/design-doc/02-widget-timeline-event-integration-playbook.md — Updated playbook for suggestions + no mandatory structured blocks
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/tasks.md — Checked off suggestions-related backend/frontend tasks
+
+## 2026-02-16
+
+Locked remaining Phase 0 decisions (runtime override policy, single assistant surface, dedupe behavior, schema freezes) and completed Phase 9 artifact/card runtime integration: added artifact state keyed by `artifactId`, wired upserts from structured lifecycle events, introduced report/item viewer template cards, and wired card-panel open actions to deduped card windows with `artifactId` nav param (commit `fe56bb3`).
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/artifactsSlice.ts — New artifact state domain keyed by artifact id
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/artifactRuntime.ts — SEM artifact extraction + template mapping + open-window payload builder
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/InventoryChatWindow.tsx — Artifact upsert dispatch and open-card action wiring
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/InventoryArtifactPanelWidgets.tsx — Added per-row Open action for generated card/widget artifacts
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/domain/stack.ts — Added `reportViewer` and `itemViewer` template card ids
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/domain/pluginBundle.vm.js — Added plugin card implementations for report/item artifact viewers
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/artifactRuntime.test.ts — Tests for open-window payload and artifact extraction behavior
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/artifactsSlice.test.ts — Artifact reducer tests
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/tasks.md — Marked `D0.1..D0.5` and `F9.1..F9.5` complete
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/index.md — Updated locked decision list and execution focus
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/design-doc/01-validated-analysis-and-hard-cutover-implementation-plan.md — Converted open decisions to resolved decisions

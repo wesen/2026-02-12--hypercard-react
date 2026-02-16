@@ -4,11 +4,11 @@
 
 ### 0. Decision freeze
 
-- [ ] D0.1 Confirm runtime override policy for MVP (`disabled` vs `debug-flag-only`).
-- [ ] D0.2 Confirm assistant surface strategy at cutover (`remove plugin assistant` vs `temporary feature flag`).
-- [ ] D0.3 Confirm default card open behavior (`dedupe per artifact` vs `always new window`).
-- [ ] D0.4 Freeze `hypercard.widget.v1` schema.
-- [ ] D0.5 Freeze `hypercard.card_proposal.v1` schema.
+- [x] D0.1 Confirm runtime override policy for MVP (`disabled` vs `debug-flag-only`).
+- [x] D0.2 Confirm assistant surface strategy at cutover (`remove plugin assistant` vs `temporary feature flag`).
+- [x] D0.3 Confirm default card open behavior (`dedupe per artifact` vs `always new window`).
+- [x] D0.4 Freeze `hypercard.widget.v1` schema.
+- [x] D0.5 Freeze `hypercard.card_proposal.v1` schema.
 - [x] D0.6 Lock no-fallback policy for widget/card generation (model-authored only).
 - [x] D0.7 Lock title-gated `*.start` lifecycle event rule.
 - [x] D0.8 Remove mandatory structured-block enforcement for every assistant turn (no missing-block errors by default).
@@ -113,11 +113,11 @@
 
 ### 9. Artifact/card runtime integration
 
-- [ ] F9.1 Add artifacts state keyed by artifact id.
-- [ ] F9.2 Upsert artifact state on `hypercard.widget.v1` and `hypercard.card_proposal.v1`.
-- [ ] F9.3 Add template cards for report/item viewers.
-- [ ] F9.4 Wire card open action dispatch with `artifactId` parameter.
-- [ ] F9.5 Add tests for action payload and window/card opening behavior.
+- [x] F9.1 Add artifacts state keyed by artifact id.
+- [x] F9.2 Upsert artifact state on `hypercard.widget.v1` and `hypercard.card_proposal.v1`.
+- [x] F9.3 Add template cards for report/item viewers.
+- [x] F9.4 Wire card open action dispatch with `artifactId` parameter.
+- [x] F9.5 Add tests for action payload and window/card opening behavior.
 
 ### 10. Timeline hydration and persistence validation
 

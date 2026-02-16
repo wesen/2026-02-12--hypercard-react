@@ -30,6 +30,10 @@ RelatedFiles:
       Note: Frontend SEM handling and timeline projection to chat widget
     - Path: apps/inventory/src/features/chat/chatSlice.ts
       Note: Chat reducer, timeline widget message model, and upsert action
+    - Path: apps/inventory/src/features/chat/artifactsSlice.ts
+      Note: Artifact state domain keyed by artifact id
+    - Path: apps/inventory/src/features/chat/artifactRuntime.ts
+      Note: SEM-to-artifact extraction and card-open payload generation
     - Path: apps/inventory/src/features/chat/InventoryTimelineWidget.tsx
       Note: Timeline widget presentation component
     - Path: apps/inventory/src/features/chat/webchatClient.ts
@@ -37,7 +41,7 @@ RelatedFiles:
     - Path: apps/inventory/src/stories/InventoryTimelineWidget.stories.tsx
       Note: Storybook examples for timeline renderer behavior
 Summary: Textbook-style onboarding playbook for understanding and extending the inventory webchat widget/timeline/event stack end-to-end.
-LastUpdated: 2026-02-16T14:45:00-05:00
+LastUpdated: 2026-02-16T15:25:00-05:00
 WhatFor: Give new developers enough context to confidently add or modify widgets, timeline projections, and event handling without prior project knowledge.
 WhenToUse: Read this before implementing any new structured widget/card format, timeline projection rule, or chat UI event mapping.
 ---
@@ -496,6 +500,12 @@ Client responsibilities:
 
 Notably, timeline content is not stored in separate Redux slices yet. It is currently embedded in `ChatWindowMessage.content` for direct rendering.
 
+Artifact records are stored separately in `artifactsSlice.ts`:
+
+- keyed by `artifactId`
+- upserted from `hypercard.widget.v1`, `hypercard.card_proposal.v1`, and equivalent projected `timeline.upsert` tool-result events
+- consumed by template viewer cards via global domain projection (`domains.artifacts.byId`)
+
 Suggestion chips are kept in chat state and passed through to `ChatWindow`:
 
 - clear suggestions when a new user prompt is queued
@@ -784,7 +794,9 @@ During frontend coding:
 
 - update envelope mapping
 - update `upsertTimelineItem` payloads
+- update artifact upsert mapping (`extractArtifactUpsertFromSem`)
 - update timeline widget renderer
+- update card open payload mapping (`buildArtifactOpenWindowPayload`)
 - add/refresh stories
 
 Before merge:
