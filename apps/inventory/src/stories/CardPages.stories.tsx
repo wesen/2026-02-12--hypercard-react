@@ -29,4 +29,3 @@ export const NewItem: Story = createStory('newItem');
 export const Receive: Story = createStory('receive');
 export const PriceChecker: Story = createStory('priceCheck');
 export const Report: Story = createStory('report');
-export const AIAssistant: Story = createStory('assistant');

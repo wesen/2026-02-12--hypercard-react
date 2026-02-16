@@ -213,3 +213,15 @@ Completed Phase 10 timeline hydration + persistence validation: frontend now boo
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/cmd/hypercard-inventory-server/main_integration_test.go — Added turn store persistence integration test
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/scripts/smoke-reload-hydration-playwright.mjs — Added reload/hydration Playwright smoke script
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/tasks.md — Marked `F10.1..F10.6` complete
+
+## 2026-02-16
+
+Completed Phase 11 hard-cut cleanup and final verification pass: removed remaining plugin-side AI assistant surface (single chat surface policy), confirmed no fake-stream runtime path remains in inventory app wiring, re-ran backend/frontend validations and both Playwright smokes, and documented the final operator runbook + known limitations in backend README.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/domain/stack.ts — Removed legacy `assistant` card metadata entry
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/domain/pluginBundle.vm.js — Removed `assistant` card implementation/state and home "Ask AI" nav action
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/stories/CardPages.stories.tsx — Removed assistant story export to match hard-cut surface policy
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/README.md — Added end-to-end runbook and known-limitation section
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/tasks.md — Marked `C11.1..C11.5` complete

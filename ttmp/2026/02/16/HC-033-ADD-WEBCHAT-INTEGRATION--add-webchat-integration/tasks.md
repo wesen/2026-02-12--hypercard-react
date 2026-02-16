@@ -130,11 +130,11 @@
 
 ### 11. Hard-cut cleanup and final verification
 
-- [ ] C11.1 Remove inventory fake-stream dependencies from runtime path.
-- [ ] C11.2 Remove duplicate assistant surfaces per final decision.
-- [ ] C11.3 Run backend unit/integration tests.
-- [ ] C11.4 Run frontend tests/smoke checks.
-- [ ] C11.5 Document final runbook and known limitations.
+- [x] C11.1 Remove inventory fake-stream dependencies from runtime path.
+- [x] C11.2 Remove duplicate assistant surfaces per final decision.
+- [x] C11.3 Run backend unit/integration tests.
+- [x] C11.4 Run frontend tests/smoke checks.
+- [x] C11.5 Document final runbook and known limitations.
 
 ### 12. Deferred (post-MVP)
 

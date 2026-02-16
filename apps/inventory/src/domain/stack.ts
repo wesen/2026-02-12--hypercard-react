@@ -19,7 +19,6 @@ const INVENTORY_CARD_META: PluginCardMeta[] = [
   { id: 'report', title: 'Inventory Report', icon: '📊' },
   { id: 'reportViewer', title: 'Generated Report Viewer', icon: '📊' },
   { id: 'itemViewer', title: 'Generated Item Viewer', icon: '📦' },
-  { id: 'assistant', title: 'AI Assistant', icon: '💬' },
 ];
 
 function toPluginCard(card: PluginCardMeta): CardDefinition {

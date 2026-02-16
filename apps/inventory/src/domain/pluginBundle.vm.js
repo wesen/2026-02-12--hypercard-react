@@ -155,37 +155,6 @@ defineStackBundle(({ ui }) => {
       .filter((part) => part.length > 0);
   }
 
-  function assistantReply(text, globalState, sessionState) {
-    const lower = String(text || '').toLowerCase();
-    const items = selectItems(globalState);
-    if (lower.includes('low stock') || lower.includes('reorder')) {
-      const low = threshold(sessionState);
-      const rows = items
-        .filter((item) => toNumber(asRecord(item).qty, 0) <= low)
-        .map((item) => {
-          const row = asRecord(item);
-          return String(row.sku || '?') + ' (' + String(toNumber(row.qty, 0)) + ')';
-        })
-        .slice(0, 6);
-      return rows.length ? 'Low stock: ' + rows.join(', ') : 'No low-stock items right now.';
-    }
-
-    if (lower.includes('value') || lower.includes('worth')) {
-      const total = items.reduce(
-        (sum, item) => sum + toNumber(asRecord(item).price, 0) * toNumber(asRecord(item).qty, 0),
-        0
-      );
-      return 'Total retail inventory value is ' + toMoney(total) + '.';
-    }
-
-    if (lower.includes('sales')) {
-      const total = selectSales(globalState).reduce((sum, sale) => sum + toNumber(asRecord(sale).total, 0), 0);
-      return 'Recent sales total is ' + toMoney(total) + '.';
-    }
-
-    return 'Try asking about low stock, sales, or total value.';
-  }
-
   return {
     id: 'inventory',
     title: 'Shop Inventory',
@@ -201,7 +170,6 @@ defineStackBundle(({ ui }) => {
       },
       receive: { form: { sku: '', qty: 1, note: '' }, submitResult: '' },
       priceCheck: { form: { sku: '' }, submitResult: '' },
-      assistant: { draft: '', history: [] },
     },
     cards: {
       home: {
@@ -214,7 +182,6 @@ defineStackBundle(({ ui }) => {
             ui.button('💰 Sales Today', { onClick: { handler: 'go', args: { cardId: 'salesToday' } } }),
             ui.button('📊 Inventory Report', { onClick: { handler: 'go', args: { cardId: 'report' } } }),
             ui.button('📦 Receive Shipment', { onClick: { handler: 'go', args: { cardId: 'receive' } } }),
-            ui.button('💬 Ask AI', { onClick: { handler: 'go', args: { cardId: 'assistant' } } }),
             ui.button('➕ New Item', { onClick: { handler: 'go', args: { cardId: 'newItem' } } }),
             ui.button('🏷 Price Checker', { onClick: { handler: 'go', args: { cardId: 'priceCheck' } } }),
           ]);
@@ -717,65 +684,6 @@ defineStackBundle(({ ui }) => {
         },
       },
 
-      assistant: {
-        render({ cardState }) {
-          const state = asRecord(cardState);
-          const draft = String(state.draft || '');
-          const history = asArray(state.history).slice(-12);
-          const timeline = history.map((entry) => {
-            const row = asRecord(entry);
-            const role = String(row.role || 'ai');
-            const text = String(row.text || '');
-            return ui.text((role === 'user' ? 'You: ' : 'AI: ') + text);
-          });
-
-          return ui.panel([
-            ui.text('AI Assistant'),
-            ui.column(timeline),
-            ui.row([
-              ui.input(draft, { onChange: { handler: 'changeDraft' }, placeholder: 'Ask about stock, sales, value…' }),
-              ui.button('Send', { onClick: { handler: 'send' } }),
-            ]),
-            ui.row([
-              ui.button('Low stock?', { onClick: { handler: 'suggest', args: { text: 'low stock' } } }),
-              ui.button('Total value?', { onClick: { handler: 'suggest', args: { text: 'total value' } } }),
-              ui.button('Sales?', { onClick: { handler: 'suggest', args: { text: 'sales' } } }),
-            ]),
-          ]);
-        },
-        handlers: {
-          changeDraft({ dispatchCardAction }, args) {
-            dispatchCardAction('set', {
-              path: 'draft',
-              value: String(asRecord(args).value || ''),
-            });
-          },
-          suggest({ dispatchCardAction }, args) {
-            dispatchCardAction('set', {
-              path: 'draft',
-              value: String(asRecord(args).text || ''),
-            });
-          },
-          send({ dispatchCardAction, cardState, globalState, sessionState }, args) {
-            const state = asRecord(cardState);
-            const explicit = String(asRecord(args).text || '').trim();
-            const draft = String(state.draft || '').trim();
-            const text = explicit || draft;
-            if (!text) return;
-
-            const response = assistantReply(text, globalState, sessionState);
-            const history = asArray(state.history).concat([
-              { role: 'user', text },
-              { role: 'ai', text: response },
-            ]);
-
-            dispatchCardAction('patch', {
-              draft: '',
-              history: history.slice(-12),
-            });
-          },
-        },
-      },
     },
   };
 });

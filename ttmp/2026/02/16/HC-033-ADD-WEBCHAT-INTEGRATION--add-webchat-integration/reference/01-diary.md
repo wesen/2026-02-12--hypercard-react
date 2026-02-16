@@ -49,7 +49,7 @@ RelatedFiles:
 ExternalSources:
     - local:webchat-hyper-integration.md
 Summary: Detailed planning diary for the webchat integration ticket before implementation starts.
-LastUpdated: 2026-02-16T15:36:00-05:00
+LastUpdated: 2026-02-16T15:44:00-05:00
 WhatFor: Preserve detailed planning trace and decision rationale before coding.
 WhenToUse: Use when reviewing why the implementation plan was shaped this way.
 ---
@@ -1626,3 +1626,79 @@ This step also extracted timeline projection logic into a pure frontend module s
   - `F10.4` ✅ reload/hydration Playwright smoke
   - `F10.5` ✅ turn store snapshot integration test
   - `F10.6` ✅ status/tool_result projection tests
+
+## Step 21: Phase 11 Hard-Cut Cleanup and Final Verification
+
+I executed the Phase 11 cleanup pass and removed the remaining duplicate assistant surface from the inventory plugin card stack so the webchat app-window is now the only assistant UX surface. I also refreshed final verification and documented the runbook/limitations in backend README.
+
+### Prompt Context
+
+**User prompt (verbatim):** "Continue."
+
+**Assistant interpretation:** Continue from completed Phase 10 into the next phase tasks and keep implementation + docs synchronized.
+
+**Inferred user intent:** Keep moving through the task plan with concrete code/test/checklist updates.
+
+**Commit (code):** pending at the time of writing this diary step.
+
+### What I did
+
+- Removed duplicate plugin assistant surface:
+  - `apps/inventory/src/domain/stack.ts`
+    - removed `assistant` card metadata entry
+  - `apps/inventory/src/domain/pluginBundle.vm.js`
+    - removed `assistantReply(...)`
+    - removed `initialCardState.assistant`
+    - removed home card `"💬 Ask AI"` navigation button
+    - removed full `assistant` card implementation block
+  - `apps/inventory/src/stories/CardPages.stories.tsx`
+    - removed `AIAssistant` story export so storybook card list matches runtime surface
+- Marked hard-cut cleanup tasks done in ticket:
+  - `ttmp/.../tasks.md`
+    - checked `C11.1..C11.5`
+- Added final operator runbook + known limitations:
+  - `go-inventory-chat/README.md`
+    - tmux startup commands
+    - round-trip + reload/hydration smoke commands
+    - focused backend/frontend test commands
+    - known limitations section
+- Re-ran verification after cleanup:
+  - `pnpm -C apps/inventory exec tsc --noEmit`
+  - `npm exec vitest run apps/inventory/src/features/chat/chatSlice.test.ts apps/inventory/src/features/chat/artifactsSlice.test.ts apps/inventory/src/features/chat/artifactRuntime.test.ts apps/inventory/src/features/chat/InventoryChatWindow.timeline.test.ts`
+  - `cd go-inventory-chat && go test ./...`
+  - `node ttmp/.../scripts/smoke-roundtrip-playwright.mjs`
+  - `node ttmp/.../scripts/smoke-reload-hydration-playwright.mjs`
+
+### Why
+
+- The ticket decision lock (`D0.2`) requires one assistant surface only.
+- Leaving the plugin assistant card in stack/storybook would create policy drift and confuse operators about the canonical UX.
+- README runbook is required to close `C11.5` with practical, executable guidance.
+
+### What worked
+
+- All post-cleanup checks passed.
+- Both smoke scripts remained green after removing assistant card code.
+- Chat behavior remains routed through webchat app-window only.
+
+### What didn't work
+
+- No functional blockers in this step.
+
+### What I learned
+
+- Removing policy-violating legacy surface is cleaner than feature-flagging in this hard-cut ticket.
+- Storybook card exports must be trimmed when stack card ids are removed; otherwise examples become stale and misleading.
+
+### What warrants a second pair of eyes
+
+- Remaining open non-deferred tasks are frontend backlog-style (`F7.4`, `F8.*`) and should be reconciled against already-delivered behavior vs intended explicit checklist wording.
+
+### Technical details
+
+- Phase 11 task closure status:
+  - `C11.1` ✅ no fake-stream runtime path in primary inventory app wiring
+  - `C11.2` ✅ duplicate assistant surface removed
+  - `C11.3` ✅ backend tests re-run
+  - `C11.4` ✅ frontend tests + smokes re-run
+  - `C11.5` ✅ final runbook + limitations documented
