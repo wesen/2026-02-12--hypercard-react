@@ -1,6 +1,8 @@
-import { ChatWindow, type ChatWindowMessage, type InlineWidget } from '@hypercard/engine';
+import { ChatWindow, openWindow, type ChatWindowMessage, type InlineWidget } from '@hypercard/engine';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { buildArtifactOpenWindowPayload, extractArtifactUpsertFromSem } from './artifactRuntime';
+import { upsertArtifact } from './artifactsSlice';
 import {
   applyLLMDelta,
   applyLLMFinal,
@@ -12,6 +14,7 @@ import {
   setConversationId,
   setStreamError,
   type TimelineItemStatus,
+  type TimelineWidgetItem,
   upsertCardPanelItem,
   upsertTimelineItem,
   upsertWidgetPanelItem,
@@ -388,6 +391,11 @@ function onSemEnvelope(envelope: SemEventEnvelope, dispatch: ReturnType<typeof u
   const data = envelope.event?.data ?? {};
   const messageId = eventIdFromEnvelope(envelope);
 
+  const artifactUpdate = extractArtifactUpsertFromSem(type, data);
+  if (artifactUpdate) {
+    dispatch(upsertArtifact(artifactUpdate));
+  }
+
   if (type === 'llm.start') {
     dispatch(applyLLMStart({ messageId }));
     return;
@@ -578,17 +586,32 @@ export function InventoryChatWindow() {
 
   const renderWidget = useCallback((widget: InlineWidget) => {
     const items = timelineItemsFromInlineWidget(widget);
+    const openArtifact = (item: TimelineWidgetItem) => {
+      const artifactId = item.artifactId?.trim();
+      if (!artifactId) {
+        return;
+      }
+      const payload = buildArtifactOpenWindowPayload({
+        artifactId,
+        template: item.template,
+        title: item.title,
+      });
+      if (!payload) {
+        return;
+      }
+      dispatch(openWindow(payload));
+    };
     if (widget.type !== 'inventory.timeline') {
       if (widget.type === 'inventory.cards') {
-        return <InventoryCardPanelWidget items={items} />;
+        return <InventoryCardPanelWidget items={items} onOpenArtifact={openArtifact} />;
       }
       if (widget.type === 'inventory.widgets') {
-        return <InventoryGeneratedWidgetPanel items={items} />;
+        return <InventoryGeneratedWidgetPanel items={items} onOpenArtifact={openArtifact} />;
       }
       return null;
     }
     return <InventoryTimelineWidget items={items} />;
-  }, []);
+  }, [dispatch]);
 
   const handleSend = useCallback(
     async (text: string) => {

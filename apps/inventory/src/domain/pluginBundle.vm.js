@@ -30,12 +30,24 @@ defineStackBundle(({ ui }) => {
     return asRecord(domains(globalState).sales);
   }
 
+  function artifacts(globalState) {
+    return asRecord(domains(globalState).artifacts);
+  }
+
   function selectItems(globalState) {
     return asArray(inventory(globalState).items);
   }
 
   function selectSales(globalState) {
     return asArray(sales(globalState).log);
+  }
+
+  function selectArtifactsById(globalState) {
+    return asRecord(artifacts(globalState).byId);
+  }
+
+  function findArtifact(globalState, artifactId) {
+    return asRecord(selectArtifactsById(globalState)[String(artifactId || '')]);
   }
 
   function navParam(globalState) {
@@ -107,6 +119,33 @@ defineStackBundle(({ ui }) => {
         toMoney(row.total),
       ];
     });
+  }
+
+  function valueToCell(value) {
+    if (value === null || value === undefined) {
+      return '';
+    }
+    if (typeof value === 'number') {
+      return String(value);
+    }
+    if (typeof value === 'string') {
+      return value;
+    }
+    if (typeof value === 'boolean') {
+      return value ? 'true' : 'false';
+    }
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
+  }
+
+  function objectRows(recordLike, maxRows = 16) {
+    const record = asRecord(recordLike);
+    return Object.keys(record)
+      .slice(0, maxRows)
+      .map((key) => [key, valueToCell(record[key])]);
   }
 
   function parseTags(value) {
@@ -587,6 +626,93 @@ defineStackBundle(({ ui }) => {
         handlers: {
           notify({ dispatchSystemCommand }, args) {
             dispatchSystemCommand('notify', { message: String(asRecord(args).message || '') });
+          },
+        },
+      },
+
+      reportViewer: {
+        render({ globalState }) {
+          const artifactId = navParam(globalState);
+          const artifact = findArtifact(globalState, artifactId);
+          if (!artifactId) {
+            return ui.panel([
+              ui.text('Report Viewer'),
+              ui.text('No artifact id provided.'),
+            ]);
+          }
+          if (Object.keys(artifact).length === 0) {
+            return ui.panel([
+              ui.text('Report Viewer'),
+              ui.text('Artifact not found: ' + artifactId),
+              ui.button('← Back', { onClick: { handler: 'back' } }),
+            ]);
+          }
+
+          const artifactTitle = String(artifact.title || artifactId);
+          const artifactTemplate = String(artifact.template || 'reportViewer');
+          const artifactData = asRecord(artifact.data);
+          const rows = objectRows(artifactData, 24);
+
+          return ui.panel([
+            ui.text('Report Viewer'),
+            ui.badge('artifact: ' + artifactId),
+            ui.badge('template: ' + artifactTemplate),
+            ui.text(artifactTitle),
+            rows.length > 0
+              ? ui.table(rows, { headers: ['Field', 'Value'] })
+              : ui.text('No artifact data fields.'),
+            ui.button('← Back', { onClick: { handler: 'back' } }),
+          ]);
+        },
+        handlers: {
+          back({ dispatchSystemCommand }) {
+            dispatchSystemCommand('nav.back', {});
+          },
+        },
+      },
+
+      itemViewer: {
+        render({ globalState }) {
+          const artifactId = navParam(globalState);
+          const artifact = findArtifact(globalState, artifactId);
+          if (!artifactId) {
+            return ui.panel([
+              ui.text('Item Viewer'),
+              ui.text('No artifact id provided.'),
+            ]);
+          }
+          if (Object.keys(artifact).length === 0) {
+            return ui.panel([
+              ui.text('Item Viewer'),
+              ui.text('Artifact not found: ' + artifactId),
+              ui.button('← Back', { onClick: { handler: 'back' } }),
+            ]);
+          }
+
+          const artifactTitle = String(artifact.title || artifactId);
+          const artifactTemplate = String(artifact.template || 'itemViewer');
+          const artifactData = asRecord(artifact.data);
+          const candidates = asArray(artifactData.items);
+          const primary =
+            candidates.length > 0
+              ? asRecord(candidates[0])
+              : asRecord(artifactData.item || artifactData);
+          const rows = objectRows(primary, 24);
+
+          return ui.panel([
+            ui.text('Item Viewer'),
+            ui.badge('artifact: ' + artifactId),
+            ui.badge('template: ' + artifactTemplate),
+            ui.text(artifactTitle),
+            rows.length > 0
+              ? ui.table(rows, { headers: ['Field', 'Value'] })
+              : ui.text('No item fields available in artifact data.'),
+            ui.button('← Back', { onClick: { handler: 'back' } }),
+          ]);
+        },
+        handlers: {
+          back({ dispatchSystemCommand }) {
+            dispatchSystemCommand('nav.back', {});
           },
         },
       },
