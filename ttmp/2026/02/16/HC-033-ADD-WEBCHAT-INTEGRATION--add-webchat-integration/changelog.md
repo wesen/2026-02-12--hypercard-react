@@ -134,3 +134,12 @@ Improved timeline widget richness and display hygiene: AI/system messages now st
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/InventoryTimelineWidget.tsx — Reusable rich timeline widget renderer
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/stories/InventoryTimelineWidget.stories.tsx — New timeline widget stories
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/chatSlice.test.ts — Added trimming and metadata-preservation reducer tests
+
+## 2026-02-16
+
+Authored a textbook-style onboarding playbook for widget/timeline/event integration (5+ pages) covering architecture, API signatures, lifecycle contracts, timeline projection semantics, frontend renderer behavior, end-to-end extension cookbook, testing workflows, and operational guardrails for new developers.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/design-doc/02-widget-timeline-event-integration-playbook.md — New comprehensive integration playbook
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/index.md — Added playbook to index links and related files

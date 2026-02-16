@@ -14,6 +14,8 @@ Owners: []
 RelatedFiles:
     - Path: ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/design-doc/01-validated-analysis-and-hard-cutover-implementation-plan.md
       Note: Validated implementation plan and architecture source of truth
+    - Path: ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/design-doc/02-widget-timeline-event-integration-playbook.md
+      Note: Textbook-style onboarding and implementation playbook for widget/timeline/event work
     - Path: ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/reference/01-diary.md
       Note: Detailed planning diary and command/error trace
     - Path: ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/tasks.md
@@ -21,7 +23,7 @@ RelatedFiles:
 ExternalSources:
     - local:webchat-hyper-integration.md
 Summary: Execution ticket for hard-cutover inventory webchat integration using Glazed command composition, Pinocchio webchat reuse, Geppetto middleware artifact/card generation, and HyperCard app-window frontend integration.
-LastUpdated: 2026-02-16T12:54:00-05:00
+LastUpdated: 2026-02-16T14:02:00-05:00
 WhatFor: Coordinate analysis, planning, task execution, and implementation diary for inventory chat integration.
 WhenToUse: Start here for ticket context and links to the validated implementation plan.
 ---
@@ -45,6 +47,7 @@ The next execution focus is middleware-driven structured extraction + artifact/c
 
 - Imported source document: `sources/local/webchat-hyper-integration.md`
 - Validated plan: `design-doc/01-validated-analysis-and-hard-cutover-implementation-plan.md`
+- Widget/timeline/events playbook: `design-doc/02-widget-timeline-event-integration-playbook.md`
 - Detailed diary: `reference/01-diary.md`
 - Task breakdown: `tasks.md`
 

@@ -1040,3 +1040,42 @@ I also extracted the timeline renderer into its own component and added Storyboo
 - `chatSlice.test.ts`:
   - strips trailing whitespace from AI final text,
   - preserves timeline metadata across later upserts that do not resend metadata.
+
+## Step 14: Write Full Widget/Timeline/Event Playbook for New Developers
+
+This step produced a long-form onboarding and implementation playbook intended for developers who do not already know the project. The document is structured as a textbook-style guide (prose + checklists + signatures + snippets + diagrams) and is designed to be used both for first-read onboarding and day-to-day implementation support.
+
+### Prompt Context
+
+**User prompt (verbatim):** \"Then, create a detailed documentation / playbook on how to add widgets / work with the timeline and incoming events and all that , 5+ pages in a nice style for new develoeprs to get the full context, with a textbook style: prose paragraphs and bullet points and api signature and code snippets and diagrams and all that. It should explain all the context necessary to get to work, even when you don't know the project.\"
+
+### What I wrote
+
+- New document:
+  - `ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/design-doc/02-widget-timeline-event-integration-playbook.md`
+- Scope covered:
+  - full system orientation from zero
+  - backend command/runtime/resolver architecture
+  - structured sink + middleware + custom event lifecycle pipeline
+  - SEM mapping and timeline projection model
+  - frontend transport/reducer/widget rendering architecture
+  - end-to-end cookbook for adding new widget types
+  - testing and debugging workflows
+  - operational guardrails, invariants, and definition-of-done checklist
+- Included:
+  - API signatures (Go + TypeScript)
+  - concrete snippets mapped to current code
+  - Mermaid flowchart + sequence + state diagrams
+
+### Ticket doc wiring updates
+
+- Updated `index.md` to include the new playbook in `RelatedFiles` and key links.
+- Added changelog entry documenting the playbook and intended audience/use.
+
+### Notes
+
+- Content reflects the current implementation as of commit `f12b8dc`, including:
+  - in-place timeline widget model
+  - no-fallback structured output policy
+  - title-gated `*.start` lifecycle semantics
+  - richer timeline row metadata (`kind/template/artifactId`)
