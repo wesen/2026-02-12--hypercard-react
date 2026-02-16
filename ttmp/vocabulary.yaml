@@ -15,6 +15,10 @@ topics:
       description: Domain-specific language related work
     - slug: frontend
       description: Frontend runtime, UI, and browser integration work
+    - slug: go
+      description: Go language and backend implementation
+    - slug: sqlite
+      description: SQLite persistence and query tooling
 docTypes:
     - slug: design-doc
       description: Structured rationale and architecture notes
