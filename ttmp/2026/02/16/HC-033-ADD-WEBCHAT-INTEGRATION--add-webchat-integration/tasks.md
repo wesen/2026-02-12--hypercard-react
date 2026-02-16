@@ -96,7 +96,7 @@
 - [x] F7.1 Add SEM envelope parser/type guards for widget/card lifecycle events.
 - [x] F7.2 Extend reducer model to handle widget/card lifecycle events.
 - [x] F7.3 Add reducer/UI state for spinner rows driven by `*.start` and `*.update`.
-- [ ] F7.4 Add reducer tests for streaming order, title-gated starts, and event attachment.
+- [x] F7.4 Add reducer tests for streaming order, title-gated starts, and event attachment.
 - [x] F7.5 Validate regression-free behavior for minimal round-trip flow introduced in Phase 2.5.
 - [x] F7.6 Add Storybook stories for the timeline widget renderer.
 - [x] F7.7 Add separate in-chat widget panels for generated cards and generated widgets.
@@ -105,11 +105,11 @@
 
 ### 8. Chat window integration
 
-- [ ] F8.1 Implement inventory chat app-window component based on engine `ChatWindow`.
-- [ ] F8.2 Wire custom widget renderer for `hypercard.widget.v1` content blocks.
-- [ ] F8.3 Auto-open chat window on app start with stable dedupe key.
-- [ ] F8.4 Wire send/actions to transport and reducer actions.
-- [ ] F8.5 Add smoke test for app-window chat mount and send flow.
+- [x] F8.1 Implement inventory chat app-window component based on engine `ChatWindow`.
+- [x] F8.2 Wire custom widget renderer for `hypercard.widget.v1` content blocks.
+- [x] F8.3 Auto-open chat window on app start with stable dedupe key.
+- [x] F8.4 Wire send/actions to transport and reducer actions.
+- [x] F8.5 Add smoke test for app-window chat mount and send flow.
 
 ### 9. Artifact/card runtime integration
 

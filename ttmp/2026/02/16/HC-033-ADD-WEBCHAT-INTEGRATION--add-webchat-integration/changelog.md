@@ -225,3 +225,12 @@ Completed Phase 11 hard-cut cleanup and final verification pass: removed remaini
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/stories/CardPages.stories.tsx — Removed assistant story export to match hard-cut surface policy
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/README.md — Added end-to-end runbook and known-limitation section
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/tasks.md — Marked `C11.1..C11.5` complete
+
+## 2026-02-16
+
+Reconciled remaining non-deferred checklist items with delivered implementation/tests: marked `F7.4` and `F8.1..F8.5` complete based on existing reducer/projection tests, app-window cutover wiring, and smoke coverage already present in the codebase.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/tasks.md — Marked `F7.4` and `F8.1..F8.5` complete
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/16/HC-033-ADD-WEBCHAT-INTEGRATION--add-webchat-integration/index.md — Updated execution-focus summary after non-deferred phase completion

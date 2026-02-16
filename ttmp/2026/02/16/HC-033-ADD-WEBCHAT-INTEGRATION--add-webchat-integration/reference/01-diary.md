@@ -49,7 +49,7 @@ RelatedFiles:
 ExternalSources:
     - local:webchat-hyper-integration.md
 Summary: Detailed planning diary for the webchat integration ticket before implementation starts.
-LastUpdated: 2026-02-16T15:44:00-05:00
+LastUpdated: 2026-02-16T15:47:00-05:00
 WhatFor: Preserve detailed planning trace and decision rationale before coding.
 WhenToUse: Use when reviewing why the implementation plan was shaped this way.
 ---
@@ -1702,3 +1702,39 @@ I executed the Phase 11 cleanup pass and removed the remaining duplicate assista
   - `C11.3` ✅ backend tests re-run
   - `C11.4` ✅ frontend tests + smokes re-run
   - `C11.5` ✅ final runbook + limitations documented
+
+## Step 22: Final Non-Deferred Task Reconciliation
+
+I reconciled the remaining open non-deferred checklist entries against the implementation that already exists in repo after Phases 2.5, 7, 8, 10, and 11. This closes the active delivery scope and leaves only the explicitly deferred post-MVP items (`A12.*`).
+
+### Prompt Context
+
+**User prompt (verbatim):** "Continue."
+
+**Assistant interpretation:** Continue execution until active phase work and checklist alignment are complete.
+
+**Inferred user intent:** Finish concrete delivery flow, not just code changes, including task/accountability hygiene in ticket docs.
+
+### What I did
+
+- Updated `tasks.md`:
+  - marked `F7.4` complete (covered by reducer/projection tests now in tree)
+  - marked `F8.1..F8.5` complete (app-window cutover, send wiring, custom widget renderer path, and smoke coverage already implemented)
+- Updated `index.md` execution summary:
+  - non-deferred phases complete
+  - remaining backlog is deferred post-MVP (`A12.*`)
+- Appended changelog entry documenting this reconciliation.
+
+### Why
+
+- Open checkboxes no longer reflected real implementation state after the recent phase commits.
+- Closing the loop in ticket docs prevents false-negative status and supports handoff/review clarity.
+
+### What worked
+
+- Checklist now matches shipped behavior and test/smoke evidence.
+- Ticket index now reflects the true remaining scope.
+
+### What warrants a second pair of eyes
+
+- If desired, we can split deferred `A12.*` items into a follow-up ticket and link it from this index/changelog.
