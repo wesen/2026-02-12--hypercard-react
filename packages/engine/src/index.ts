@@ -33,10 +33,6 @@ export * from './features/notifications/selectors';
 export * from './features/pluginCardRuntime';
 // ── Windowing ──
 export * from './features/windowing';
-// ── Desktop namespaces (Phase 1 cleanup, non-breaking aliases) ──
-export * as desktop from './desktop';
-export * as desktopCore from './desktop/core';
-export * as desktopReact from './desktop/react';
 export * from './parts';
 // ── Theme ──
 export { HyperCardTheme, type HyperCardThemeProps } from './theme/HyperCardTheme';
