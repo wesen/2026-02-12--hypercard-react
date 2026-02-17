@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { createWindow, WINDOWING_WINDOWS } from './storyFixtures';
 import type { DesktopWindowDef } from './types';
 import { useWindowInteractionController } from './useWindowInteractionController';
@@ -42,11 +42,12 @@ function WindowLayerHarness({ initialWindows }: WindowLayerHarnessProps) {
   });
 
   const focusedWindow = windows.find((w) => w.focused);
+  const orderedWindows = useMemo(() => [...windows].sort((a, b) => a.zIndex - b.zIndex), [windows]);
 
   return (
     <div style={{ position: 'absolute', inset: 0, background: '#c0c0c0' }}>
       <WindowLayer
-        windows={windows}
+        windows={orderedWindows}
         onFocusWindow={focusWindow}
         onCloseWindow={closeWindow}
         onWindowDragStart={beginMove}

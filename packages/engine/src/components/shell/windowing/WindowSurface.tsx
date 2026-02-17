@@ -1,4 +1,4 @@
-import type { PointerEvent, ReactNode } from 'react';
+import { memo, type PointerEvent, type ReactNode } from 'react';
 import { PARTS } from '../../../parts';
 import type { DesktopWindowDef } from './types';
 import { WindowResizeHandle } from './WindowResizeHandle';
@@ -13,7 +13,15 @@ export interface WindowSurfaceProps {
   onWindowResizeStart?: (windowId: string, event: PointerEvent<HTMLButtonElement>) => void;
 }
 
-export function WindowSurface({
+interface WindowBodyProps {
+  children?: ReactNode;
+}
+
+const WindowBody = memo(function WindowBody({ children }: WindowBodyProps) {
+  return <div data-part={PARTS.windowingWindowBody}>{children}</div>;
+});
+
+function WindowSurfaceBase({
   window,
   children,
   onFocusWindow,
@@ -36,8 +44,10 @@ export function WindowSurface({
         height: window.height,
         zIndex: window.zIndex,
       }}
-      onMouseDown={() => onFocusWindow?.(window.id)}
-      onFocus={() => onFocusWindow?.(window.id)}
+      onPointerDown={(event) => {
+        if (event.button !== 0) return;
+        onFocusWindow?.(window.id);
+      }}
     >
       <WindowTitleBar
         title={window.title}
@@ -46,10 +56,33 @@ export function WindowSurface({
         onClose={window.isDialog ? undefined : () => onCloseWindow?.(window.id)}
         onPointerDown={window.isDialog ? undefined : (event) => onWindowDragStart?.(window.id, event)}
       />
-      <div data-part={PARTS.windowingWindowBody}>{children}</div>
+      <WindowBody>{children}</WindowBody>
       {window.isResizable !== false && !window.isDialog ? (
         <WindowResizeHandle onPointerDown={(event) => onWindowResizeStart?.(window.id, event)} />
       ) : null}
     </section>
   );
 }
+
+function areWindowSurfacePropsEqual(prev: WindowSurfaceProps, next: WindowSurfaceProps): boolean {
+  return (
+    prev.children === next.children &&
+    prev.onFocusWindow === next.onFocusWindow &&
+    prev.onCloseWindow === next.onCloseWindow &&
+    prev.onWindowDragStart === next.onWindowDragStart &&
+    prev.onWindowResizeStart === next.onWindowResizeStart &&
+    prev.window.id === next.window.id &&
+    prev.window.title === next.window.title &&
+    prev.window.icon === next.window.icon &&
+    prev.window.x === next.window.x &&
+    prev.window.y === next.window.y &&
+    prev.window.width === next.window.width &&
+    prev.window.height === next.window.height &&
+    prev.window.zIndex === next.window.zIndex &&
+    prev.window.focused === next.window.focused &&
+    prev.window.isDialog === next.window.isDialog &&
+    prev.window.isResizable === next.window.isResizable
+  );
+}
+
+export const WindowSurface = memo(WindowSurfaceBase, areWindowSurfacePropsEqual);

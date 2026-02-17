@@ -4,6 +4,7 @@ import type { DesktopWindowDef } from './types';
 import { WindowSurface } from './WindowSurface';
 
 export interface WindowLayerProps {
+  /** Windows should be pre-sorted by z-index (lowest first). */
   windows: DesktopWindowDef[];
   renderWindowBody?: (window: DesktopWindowDef) => ReactNode;
   onFocusWindow?: (windowId: string) => void;
@@ -20,11 +21,9 @@ export function WindowLayer({
   onWindowDragStart,
   onWindowResizeStart,
 }: WindowLayerProps) {
-  const ordered = [...windows].sort((a, b) => a.zIndex - b.zIndex);
-
   return (
     <section data-part={PARTS.windowingWindowLayer} aria-label="Window layer">
-      {ordered.map((window) => (
+      {windows.map((window) => (
         <WindowSurface
           key={window.id}
           window={window}

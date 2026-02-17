@@ -50,6 +50,19 @@ function toWindowDef(win: WindowInstance, focused: boolean): DesktopWindowDef {
   };
 }
 
+function getWindowBodySignature(win: WindowInstance, mode: 'interactive' | 'preview'): string {
+  if (win.content.kind === 'card') {
+    const card = win.content.card;
+    return `card:${card?.stackId ?? ''}:${card?.cardId ?? ''}:${card?.cardSessionId ?? ''}:${card?.param ?? ''}:${mode}`;
+  }
+
+  if (win.content.kind === 'app') {
+    return `app:${win.content.appKey ?? ''}:${win.id}:${mode}`;
+  }
+
+  return `dialog:${win.content.dialogKey ?? ''}:${win.title}:${win.id}:${mode}`;
+}
+
 export interface DesktopShellProps {
   stack: CardStackDefinition;
   mode?: 'interactive' | 'preview';
@@ -88,11 +101,13 @@ export function DesktopShell({
 }: DesktopShellProps) {
   const dispatch = useDispatch();
   const lastOpenedHomeKeyRef = useRef<string | null>(null);
+  const windowBodyCacheRef = useRef<Map<string, { signature: string; body: ReactNode }>>(new Map());
   const windows = useSelector((s: ShellState) => selectWindowsByZ(s));
   const focusedWin = useSelector((s: ShellState) => selectFocusedWindow(s));
   const activeMenuId = useSelector((s: ShellState) => selectActiveMenuId(s));
   const selectedIconId = useSelector((s: ShellState) => selectSelectedIconId(s));
   const toast = useSelector((s: ShellState) => selectToast(s));
+  const focusedWindowId = focusedWin?.id ?? null;
 
   // Generate icons from stack cards if not provided
   const icons = useMemo(() => {
@@ -171,7 +186,25 @@ export function DesktopShell({
     [windows, focusedWin?.id],
   );
 
-  const handleFocus = useCallback((id: string) => dispatch(focusWindow(id)), [dispatch]);
+  const windowDefsById = useMemo(() => {
+    const byId: Record<string, DesktopWindowDef> = {};
+    for (const win of windowDefs) byId[win.id] = win;
+    return byId;
+  }, [windowDefs]);
+
+  const windowsById = useMemo(() => {
+    const byId: Record<string, WindowInstance> = {};
+    for (const win of windows) byId[win.id] = win;
+    return byId;
+  }, [windows]);
+
+  const handleFocus = useCallback(
+    (id: string) => {
+      if (id === focusedWindowId) return;
+      dispatch(focusWindow(id));
+    },
+    [dispatch, focusedWindowId],
+  );
   const handleClose = useCallback((id: string) => dispatch(closeWindow(id)), [dispatch]);
   const handleMove = useCallback(
     (id: string, next: { x: number; y: number }) => dispatch(moveWindow({ id, x: next.x, y: next.y })),
@@ -184,7 +217,7 @@ export function DesktopShell({
   );
 
   const { beginMove, beginResize } = useWindowInteractionController({
-    getWindowById: (id) => windowDefs.find((w) => w.id === id),
+    getWindowById: (id) => windowDefsById[id],
     onMoveWindow: handleMove,
     onResizeWindow: handleResize,
     onFocusWindow: handleFocus,
@@ -259,9 +292,8 @@ export function DesktopShell({
     [dispatch, focusedWin, onCommandProp, openCardWindow, stack.homeCard, windows],
   );
 
-  const renderWindowBody = useCallback(
-    (winDef: DesktopWindowDef) => {
-      const winInstance = windows.find((w) => w.id === winDef.id);
+  const buildWindowBody = useCallback(
+    (winInstance: WindowInstance) => {
       if (!winInstance) return null;
 
       // App windows — delegate to host-provided renderer
@@ -289,7 +321,41 @@ export function DesktopShell({
         </div>
       );
     },
-    [windows, stack, mode, renderAppWindow],
+    [stack, mode, renderAppWindow],
+  );
+
+  useEffect(() => {
+    windowBodyCacheRef.current.clear();
+  }, [buildWindowBody]);
+
+  const windowBodyById = useMemo(() => {
+    const nextCache = new Map<string, { signature: string; body: ReactNode }>();
+    const nextBodies: Record<string, ReactNode> = {};
+
+    for (const win of windows) {
+      const signature = getWindowBodySignature(win, mode);
+      const cached = windowBodyCacheRef.current.get(win.id);
+      if (cached && cached.signature === signature) {
+        nextBodies[win.id] = cached.body;
+        nextCache.set(win.id, cached);
+        continue;
+      }
+
+      const body = buildWindowBody(win);
+      nextBodies[win.id] = body;
+      nextCache.set(win.id, { signature, body });
+    }
+
+    windowBodyCacheRef.current = nextCache;
+    return nextBodies;
+  }, [buildWindowBody, mode, windows]);
+
+  const renderWindowBody = useCallback(
+    (winDef: DesktopWindowDef) => {
+      if (!windowsById[winDef.id]) return null;
+      return windowBodyById[winDef.id] ?? null;
+    },
+    [windowBodyById, windowsById],
   );
 
   return (

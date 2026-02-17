@@ -50,13 +50,13 @@ export function useWindowInteractionController({
     (mode: 'move' | 'resize', windowId: string, event: ReactPointerEvent<HTMLElement>) => {
       event.preventDefault();
       event.stopPropagation();
-      onFocusWindow?.(windowId);
 
       const target = getWindowById(windowId);
       if (!target || typeof window === 'undefined') {
         return;
       }
 
+      onFocusWindow?.(windowId);
       stopInteraction();
       activeRef.current = {
         mode,
