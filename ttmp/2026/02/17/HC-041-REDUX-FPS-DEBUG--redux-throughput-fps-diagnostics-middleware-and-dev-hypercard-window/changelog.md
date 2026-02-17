@@ -48,3 +48,13 @@ Unit tests complete (25 tests, commit 740b435). Docs updated: design doc with de
 
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/__tests__/diagnostics.test.ts — 25 unit tests for diagnostics
 
+
+## 2026-02-17
+
+Sparklines, peak rates, and linger behavior added (tasks 64–70, commit 3763009). Action types now stay visible for 15s after going idle, with a dimmed sparkline showing their recent history. Peak column tracks all-time max rate.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/debug/ReduxPerfWindow.tsx — Sparkline SVG + 4-column table
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/diagnostics/useDiagnosticsSnapshot.ts — accumulateHistory + linger logic
+

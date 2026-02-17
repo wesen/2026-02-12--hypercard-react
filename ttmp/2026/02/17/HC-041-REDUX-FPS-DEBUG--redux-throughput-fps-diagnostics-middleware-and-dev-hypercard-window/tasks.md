@@ -80,3 +80,10 @@
 - [x] Refactor: update diagnostics barrel exports (index.ts) — remove slice/action exports, add hook and plain-buffer API.
 - [x] Refactor: verify all apps still compile after removing reduxPerf reducer from store.
 - [x] Refactor: update unit tests for new non-Redux storage model.
+- [x] Extend ActionRate type with sparkline (number[]) and peakPerSec fields.
+- [x] Track per-action-type rate history in useDiagnosticsSnapshot hook (accumulate across poll ticks, keep last N samples).
+- [x] Retain action types in the table for a configurable linger duration after they stop appearing in the rolling window.
+- [x] Add inline SVG sparkline component for per-action-type rate history.
+- [x] Add Peak column to the action types table showing the all-time max rate.
+- [x] Update ReduxPerfWindow table to render sparklines and peak rate column.
+- [x] Add unit tests for sparkline history accumulation and linger behavior.

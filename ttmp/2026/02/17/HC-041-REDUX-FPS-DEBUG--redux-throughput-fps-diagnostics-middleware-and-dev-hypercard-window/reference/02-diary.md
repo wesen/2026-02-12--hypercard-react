@@ -420,3 +420,56 @@ The ticket should be self-contained for review and handoff. Another developer sh
 ### Code review instructions
 - Review the design doc's "Implementation Deviations" section.
 - Review the reference doc's "How to enable in another app" and "Manual verification runbook" sections.
+
+## Step 8: Sparklines, peak rates, and action linger (Tasks 64–70)
+
+Enhanced the action types table with three features: (1) action types linger for 15 seconds after going inactive so they don't vanish instantly, (2) each row has an inline SVG sparkline showing rate history over the last ~15s of poll ticks, and (3) a Peak column tracks the all-time maximum rate seen for each type. The data model change lives in the hook (UI concern) rather than in the diagnostics store — `accumulateHistory()` merges each poll tick's `ActionRate[]` into a `Map<string, ActionRateHistory>` with sparkline arrays, peak tracking, and linger pruning.
+
+### Prompt Context
+
+**User prompt (verbatim):** "Keep actions around in the debug window for a bit longer, with little sparklines and a top rate column as well. Add tasks to the ticket, then implement, checking off and committing as usual."
+
+**Assistant interpretation:** Add linger behavior, per-action sparklines, and peak rate column to the diagnostics window's action type table.
+
+**Inferred user intent:** Make the action types table more useful by showing historical context (sparklines, peak) and not losing information when action types briefly go idle.
+
+**Commit (code):** 3763009 — "HC-041: Action type sparklines, peak rates, and linger behavior"
+
+### What I did
+- Added `ActionRateHistory` type to `types.ts` with `sparkline: number[]`, `peakPerSec`, `lastSeenTs`.
+- Wrote `accumulateHistory()` (pure function) in `useDiagnosticsSnapshot.ts`: merges current `ActionRate[]` into a `Map<string, ActionRateHistory>`, appending to sparklines, tracking peaks, recording 0 for absent types, pruning after `LINGER_MS` (15s).
+- Updated `useDiagnosticsSnapshot` hook to maintain `historyRef` across poll ticks and return `actionHistory: ActionRateHistory[]` sorted by activity.
+- Created `Sparkline` component: inline SVG polyline (60×16px), auto-scaled to local max, dimmed for inactive rows.
+- Updated `ReduxPerfWindow` table: 4 columns (Action Type, Rate/s, Trend, Peak), `ActionRow` component with per-row dimming for lingering types.
+- Exported `ActionRateHistory` type and `accumulateHistory` from barrel.
+- Added 8 unit tests for `accumulateHistory`: new entries, sparkline append, peak tracking, zero-fill on absence, linger pruning, within-linger retention, sparkline cap, multi-type independence.
+
+### Why
+Action types that fire in bursts (e.g. during a drag, during chat streaming) would previously vanish from the table as soon as they left the rolling window. This made it hard to see what had just happened. Sparklines give temporal context at a glance, and peak rate shows the worst case even after the burst subsides.
+
+### What worked
+- The pure `accumulateHistory` function is trivially testable — just call it with a Map and rates.
+- SVG sparklines are zero-dependency (no charting library) and render as inline elements in table cells.
+- Linger + dimming gives a clear visual distinction between active and recently-active types.
+
+### What didn't work
+- N/A
+
+### What I learned
+- Keeping history accumulation in the hook (not the store) is the right boundary: the store provides instantaneous snapshots, the hook accumulates temporal context for the UI. This keeps the store simple and the hook testable.
+
+### What was tricky to build
+- Sorting: active rows (rate > 0) sort by rate descending, lingering rows (rate = 0) sort by lastSeenTs descending (most recently active first). This gives a natural visual flow where active types are at the top and fading types drift down before disappearing.
+- Sparkline scaling: each sparkline auto-scales to its own local max (not global), so low-rate types still show meaningful shape. Used `Math.max(...data, 0.01)` to avoid division by zero.
+
+### What warrants a second pair of eyes
+- The LINGER_MS (15s) and SPARKLINE_LENGTH (30 samples at 500ms = 15s) are coupled by convention but not enforced. If poll rate changes, the sparkline time coverage changes too. May want to make this explicit.
+- SVG rendering in a table: 30+ SVG elements in a table could theoretically be slow if the table grows very large. The top-N cap (10 active) plus linger pruning bounds this in practice.
+
+### What should be done in the future
+- Consider making linger duration configurable via the UI controls.
+
+### Code review instructions
+- Start at `packages/engine/src/diagnostics/useDiagnosticsSnapshot.ts` — review `accumulateHistory()`.
+- Review `apps/inventory/src/features/debug/ReduxPerfWindow.tsx` — `Sparkline` component and `ActionRow`.
+- Run tests: `npx vitest run packages/engine/src/__tests__/diagnostics.test.ts` (33 tests).
