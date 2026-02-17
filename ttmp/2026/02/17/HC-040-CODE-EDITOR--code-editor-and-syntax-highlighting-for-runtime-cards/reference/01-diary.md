@@ -40,3 +40,55 @@ DocumentType: reference
 - `EventViewerWindow.tsx` — payload → `<SyntaxHighlight language="yaml" variant="dark">` (preserves existing dark theme)
 
 **A.6 — Verification**: TypeScript clean, 153/153 tests pass
+
+## Session 2 — Phase B: CodeMirror switch + Editor
+
+### B.1 — Package swap
+
+Installed: `codemirror`, `@codemirror/lang-javascript`, `@codemirror/lang-yaml`, `@codemirror/theme-one-dark`, `@codemirror/language`, `@codemirror/state`, `@codemirror/view`. Removed `highlight.js`.
+
+### B.2 — Replace SyntaxHighlight internals
+
+Replaced `hljs.highlight()` with a custom `cmHighlight()` function using `@lezer/highlight`:
+- `highlightCode(code, tree, classHighlighter, putText, putBreak)` — lezer's 5-arg API
+- Uses `javascriptLanguage.parser` and `yamlLanguage.parser` from CM lang packages
+- Generates `<span class="tok-*">` tags instead of `<span class="hljs-*">`
+- Updated CSS: 15 light rules + 15 dark rules using `tok-keyword`, `tok-string`, `tok-propertyName`, `tok-punctuation`, etc.
+
+Key discovery: lezer's `highlightCode` takes 5 args (code, tree, highlighter, putText, putBreak) — not the 4-arg form shown in some docs. The `putBreak` callback handles newlines separately.
+
+### B.3 — CodeEditorWindow
+
+Full CodeMirror 6 editor in `CodeEditorWindow.tsx`:
+- Extensions: lineNumbers, history, drawSelection, indentOnInput, bracketMatching, foldGutter, highlightActiveLine, javascript(), syntaxHighlighting(classHighlighter), oneDark
+- Ctrl+S: dispatches custom DOM event `editor-save` → bridge to React callback via ref
+- Save: calls `registerRuntimeCard(cardId, code)` → live injection into all plugin sessions
+- Revert: replaces editor doc with `initialCode`
+- Status bar: green ✓ on save, red ✗ on error, grey hint when idle
+- Header shows cardId, "registered" badge, "● modified" dirty indicator
+
+`editorLaunch.ts` solves the "passing rich data through appKey string" problem:
+- `openCodeEditor(dispatch, cardId, code)` stashes code in a `Map` then dispatches `openWindow`
+- `getEditorInitialCode(cardId)` reads stashed code (consuming it) or falls back to registry lookup
+
+### B.4 — Edit from RuntimeCardDebugWindow
+
+Added ✏️ Edit button on each registered card entry. Clicking calls `openCodeEditor(dispatch, card.cardId, card.code)`. Button is right-aligned via `marginLeft: auto`.
+
+### B.5 — Edit from card timeline widget
+
+Added `onEditCard` callback prop through `ArtifactPanel` → `InventoryCardPanelWidget` → `InventoryChatWindow`. Only shown on card items with `status === 'success'`. Looks up artifact record for `runtimeCardId` + `runtimeCardCode`, then calls `openCodeEditor`.
+
+### B.6 — Storybook stories
+
+**SyntaxHighlight.stories.tsx** (6 stories):
+- JavaScriptLight, JavaScriptDark — full card factory code
+- YamlLight, YamlDark — YAML card payload
+- TruncatedWithExpand — maxLines=5 with expand toggle
+- ShortCodeNoTruncation — short code under maxLines threshold
+
+**CodeEditorWindow.stories.tsx** (4 stories):
+- Empty — minimal boilerplate code
+- PrefilledCode — full inventory browser card
+- AlreadyRegistered — pre-registers card, shows "registered" badge
+- WithSaveCallback — logs save to console

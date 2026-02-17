@@ -68,10 +68,10 @@ Ticket: HC-040-CODE-EDITOR
 - [x] B.5c Open CodeEditorWindow via openCodeEditor
 
 ### B.6 Storybook stories
-- [ ] B.6a SyntaxHighlight stories: JS light, JS dark, YAML light, YAML dark, with maxLines truncation
-- [ ] B.6b CodeEditorWindow stories: empty, pre-filled JS, save callback, error display
+- [x] B.6a SyntaxHighlight stories: JS light, JS dark, YAML light, YAML dark, truncated, short
+- [x] B.6b CodeEditorWindow stories: empty, pre-filled, already-registered, with save callback
 
 ### B.7 Verify
-- [ ] B.7a TypeScript clean
-- [ ] B.7b All tests pass
+- [x] B.7a TypeScript clean
+- [x] B.7b All tests pass (153/153)
 - [ ] B.7c Visual check in browser
