@@ -652,3 +652,90 @@ Workstream E is complete for HC-45 hard-cutover scope:
 - modular packs are in place,
 - all app/storybook imports now use the modular theme entry,
 - ticket metadata and diary/changelog are updated.
+
+## Step 8: Postmortem Pass Across HC-45, HC-47, and HC-48 + reMarkable Upload
+
+I produced a full retrospective document in HC-45 that maps the original implementation plan (Workstreams A-G) to what actually landed in code and in follow-up tickets. The postmortem also calls out deferred cleanup work, residual risks, and practical next-step options.
+
+This step closes the loop requested after implementation: it explains where we are now relative to the original HC-45 analysis and implementation plan, instead of only listing completed commits.
+
+### Prompt Context
+
+**User prompt (verbatim):** "Ok, let's basically do a postmortem, starting with the analysis we did in HC-45, and now checking where we are at, what we all did, and how things line up. Also, anything that could further be done or was skipped in the cleanup. Store the detailed postmortem in HC-45 ticket, and then upload to remarkable."
+
+**Assistant interpretation:** Write a detailed plan-vs-actual retrospective into HC-45 and upload that specific postmortem doc to reMarkable.
+
+**Inferred user intent:** Get a precise execution audit and gap analysis, not another proposal.
+
+### What I did
+
+1. Added new HC-45 design doc:
+   - `design-doc/03-postmortem-hc-45-desktop-framework-execution-and-current-state.md`
+2. Wrote a detailed postmortem with:
+   - timeline of execution commits,
+   - plan-vs-actual matrix for Workstreams A-G,
+   - current architecture snapshot,
+   - deferred/skipped scope,
+   - prioritized cleanup opportunities.
+3. Updated HC-45 metadata docs:
+   - `index.md` (added postmortem and F/G status lines)
+   - `tasks.md` (added/completed postmortem tasks)
+   - `changelog.md` (recorded postmortem addition)
+4. Ran metadata quality check:
+   - `docmgr doctor --ticket HC-45-DESKTOP-FRAMEWORK --stale-after 30`
+5. Uploaded the postmortem to reMarkable:
+   - `remarquee upload md --dry-run ... --remote-dir /ai/2026/02/17/HC-45-DESKTOP-FRAMEWORK`
+   - `remarquee upload md ... --remote-dir /ai/2026/02/17/HC-45-DESKTOP-FRAMEWORK`
+   - `remarquee cloud ls /ai/2026/02/17/HC-45-DESKTOP-FRAMEWORK --long --non-interactive`
+
+### Why
+
+- HC-45 had strong analysis + implementation artifacts, but lacked one consolidated “what landed vs what remains” narrative.
+- A retrospective clarifies ticket closure criteria and prevents re-litigating already-completed workstreams.
+
+### What worked
+
+- The codebase had enough commit and ticket traceability to map all A-G outcomes concretely.
+- reMarkable upload succeeded and remote listing confirmed the new postmortem artifact.
+
+### What didn't work
+
+- First upload attempt used an unsupported flag (`--name`) for this remarquee `upload md` command variant.
+- Fix: reran with supported flags (`--remote-dir`, no `--name`).
+
+### What I learned
+
+- In this CLI version, `upload md` differs from `upload bundle` flag surface and derives filename from source path.
+- The original HC-45 plan's documentation deliverables are mostly represented but not yet consolidated into standalone references.
+
+### What was tricky to build
+
+- The tricky part was reconciling execution spread across three tickets (HC-45, HC-47, HC-48) back into one coherent HC-45 postmortem narrative without losing chronology.
+
+### What warrants a second pair of eyes
+
+- Decision on whether to formally close HC-45 now (A-G delivered) or keep it open for documentation consolidation work.
+- Decision on whether to keep subpath exports as the long-term packaging strategy or split into independent publishable packages.
+
+### What should be done in the future
+
+1. Decide HC-45 closure posture (close vs retain for follow-up docs).
+2. If retained, add dedicated docs for Quickstart/Contribution API/Adapter Guide/Theming Contract/Perf model.
+3. Add repeatable performance baseline playbook with explicit thresholds.
+
+### Code review instructions
+
+- Read postmortem first:
+  - `ttmp/2026/02/17/HC-45-DESKTOP-FRAMEWORK--desktop-shell-and-windowing-reusable-framework-cleanup/design-doc/03-postmortem-hc-45-desktop-framework-execution-and-current-state.md`
+- Verify HC-45 metadata updates:
+  - `ttmp/2026/02/17/HC-45-DESKTOP-FRAMEWORK--desktop-shell-and-windowing-reusable-framework-cleanup/index.md`
+  - `ttmp/2026/02/17/HC-45-DESKTOP-FRAMEWORK--desktop-shell-and-windowing-reusable-framework-cleanup/tasks.md`
+  - `ttmp/2026/02/17/HC-45-DESKTOP-FRAMEWORK--desktop-shell-and-windowing-reusable-framework-cleanup/changelog.md`
+- Verify remote artifact exists:
+  - `/ai/2026/02/17/HC-45-DESKTOP-FRAMEWORK/03-postmortem-hc-45-desktop-framework-execution-and-current-state`
+
+### Technical details
+
+- Upload result: `OK: uploaded 03-postmortem-hc-45-desktop-framework-execution-and-current-state.pdf -> /ai/2026/02/17/HC-45-DESKTOP-FRAMEWORK`
+- Remote verification includes:
+  - `03-postmortem-hc-45-desktop-framework-execution-and-current-state`

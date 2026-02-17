@@ -47,6 +47,7 @@ HC-45 captures the next-stage cleanup from app-specific shell integration toward
 
 - `design-doc/01-desktop-shell-and-windowing-reusability-analysis-for-in-browser-os-framework.md`
 - `design-doc/02-desktop-shell-and-windowing-reusable-framework-implementation-plan.md`
+- `design-doc/03-postmortem-hc-45-desktop-framework-execution-and-current-state.md`
 - `reference/01-diary.md`
 
 ## Current Status
@@ -58,6 +59,9 @@ HC-45 captures the next-stage cleanup from app-specific shell integration toward
 - Workstream C implementation: complete
 - Workstream D implementation: complete
 - Workstream E CSS hard cutover: complete
+- Workstream F implementation (via HC-47): complete
+- Workstream G implementation (via HC-48): complete
+- Postmortem analysis: complete
 - Upload to reMarkable: complete
 
 ## Tasks and Changelog

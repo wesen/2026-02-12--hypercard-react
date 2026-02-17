@@ -35,3 +35,8 @@
 - [x] E2: Replace app + Storybook imports from legacy `theme/base.css` to modular theme entrypoints
 - [x] E3: Remove legacy `theme/base.css` and update theme/index + docs/comments to reflect cutover
 - [x] E4: Validate style/build integrity (`npm run typecheck`, `npm run -w packages/engine test`) and record diary/changelog updates
+
+## Postmortem
+
+- [x] P1: Author HC-45 postmortem documenting plan-vs-implementation across Workstreams A-G (including HC-47/HC-48 follow-through), residual risks, and deferred cleanup scope
+- [x] P2: Upload HC-45 postmortem document to reMarkable and verify remote artifact

@@ -24,3 +24,5 @@
 - Removed legacy `packages/engine/src/theme/base.css` and updated theme/docs comments to new import contract
 - Added `theme/desktop/theme/macos1.css` as dedicated desktop skin layer for explicit theming
 - Revalidated with `npm run typecheck` and `npm run -w packages/engine test`
+- Added postmortem document `design-doc/03-postmortem-hc-45-desktop-framework-execution-and-current-state.md` comparing original HC-45 A-G plan with implemented outcomes across HC-45/HC-47/HC-48 and listing deferred cleanup work
+- Uploaded postmortem PDF to reMarkable path `/ai/2026/02/17/HC-45-DESKTOP-FRAMEWORK/03-postmortem-hc-45-desktop-framework-execution-and-current-state`
