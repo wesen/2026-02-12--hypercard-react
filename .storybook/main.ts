@@ -29,7 +29,7 @@ const config: StorybookConfig = {
     {
       directory: '../packages/engine/src',
       files: '**/*.stories.@(ts|tsx)',
-      titlePrefix: 'Packages/Engine',
+      titlePrefix: 'Engine',
     },
   ],
   addons: [

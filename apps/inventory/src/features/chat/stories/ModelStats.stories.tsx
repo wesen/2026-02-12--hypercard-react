@@ -74,7 +74,7 @@ function StatsFooter({
 }
 
 const meta = {
-  title: 'Apps/Inventory/Features/Chat/ModelStats',
+  title: 'Apps/Inventory/Chat/ModelStats',
   component: StatsFooter,
   parameters: {
     layout: 'centered',

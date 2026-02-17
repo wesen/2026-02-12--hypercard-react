@@ -130,7 +130,7 @@ const allItems: TimelineWidgetItem[] = [
 ];
 
 const meta = {
-  title: 'Apps/Inventory/Features/Chat/InventoryTimelineWidget',
+  title: 'Apps/Inventory/Chat/InventoryTimelineWidget',
   component: InventoryTimelineWidget,
   args: {
     items: allItems,

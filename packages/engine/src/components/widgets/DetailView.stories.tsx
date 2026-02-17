@@ -37,7 +37,7 @@ function DetailDemo() {
 }
 
 const meta = {
-  title: 'Packages/Engine/Components/Widgets/DetailView',
+  title: 'Engine/Components/Widgets/DetailView',
   component: DetailDemo,
 } satisfies Meta<typeof DetailDemo>;
 

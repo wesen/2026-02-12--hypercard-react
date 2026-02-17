@@ -10,7 +10,7 @@ const { storeDecorator, createStory, FullApp } = createStoryHelpers({
 });
 
 const meta = {
-  title: 'Apps/Todo/App/FullApp',
+  title: 'Apps/Todo/FullApp',
   component: FullApp,
   decorators: [storeDecorator],
   parameters: { layout: 'fullscreen' },

@@ -15,7 +15,7 @@ import {
 } from './ChatWindow.stories';
 
 const meta = {
-  title: 'Packages/Engine/Components/Widgets/ChatWindow',
+  title: 'Engine/Components/Widgets/ChatWindow',
   parameters: { layout: 'fullscreen' },
 } satisfies Meta;
 

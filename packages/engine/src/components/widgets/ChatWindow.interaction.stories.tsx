@@ -3,7 +3,7 @@ import { ChatWindow } from './ChatWindow';
 import { StoryFrame, useSimulatedStream } from './ChatWindow.stories';
 
 const meta = {
-  title: 'Packages/Engine/Components/Widgets/ChatWindow',
+  title: 'Engine/Components/Widgets/ChatWindow',
   parameters: { layout: 'fullscreen' },
 } satisfies Meta;
 

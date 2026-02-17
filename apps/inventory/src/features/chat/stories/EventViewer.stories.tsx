@@ -3,7 +3,7 @@ import { EventViewerWindow } from '../EventViewerWindow';
 import type { EventLogEntry } from '../eventBus';
 
 const meta: Meta<typeof EventViewerWindow> = {
-  title: 'Apps/Inventory/Features/Chat/EventViewer',
+  title: 'Apps/Inventory/Chat/EventViewer',
   component: EventViewerWindow,
   parameters: { layout: 'fullscreen' },
   decorators: [

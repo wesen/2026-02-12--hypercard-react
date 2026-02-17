@@ -101,7 +101,7 @@ function InteractionDemo({ constraints, initialWindows }: InteractionDemoProps) 
 // ── Meta ──
 
 const meta = {
-  title: 'Packages/Engine/Components/Shell/Windowing/UseWindowInteractionController',
+  title: 'Engine/Components/Shell/Windowing/UseWindowInteractionController',
   component: InteractionDemo,
   parameters: {
     layout: 'fullscreen',

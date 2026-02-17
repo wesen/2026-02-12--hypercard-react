@@ -23,7 +23,7 @@ const columns: ColumnConfig<SampleRow>[] = [
 ];
 
 const meta = {
-  title: 'Packages/Engine/Components/Widgets/DataTable',
+  title: 'Engine/Components/Widgets/DataTable',
   component: DataTable<SampleRow>,
   args: { items: sampleData, columns, rowKey: 'id' },
 } satisfies Meta<typeof DataTable<SampleRow>>;

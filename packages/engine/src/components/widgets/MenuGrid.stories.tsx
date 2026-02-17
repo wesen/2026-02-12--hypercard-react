@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { MenuGrid } from './MenuGrid';
 
 const meta = {
-  title: 'Packages/Engine/Components/Widgets/MenuGrid',
+  title: 'Engine/Components/Widgets/MenuGrid',
   component: MenuGrid,
   args: {
     icon: '📇',

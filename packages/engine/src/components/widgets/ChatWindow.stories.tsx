@@ -208,7 +208,7 @@ export function defaultWidgetRenderer(widget: InlineWidget): ReactNode {
 }
 
 const meta = {
-  title: 'Packages/Engine/Components/Widgets/ChatWindow',
+  title: 'Engine/Components/Widgets/ChatWindow',
   parameters: { layout: 'fullscreen' },
 } satisfies Meta;
 

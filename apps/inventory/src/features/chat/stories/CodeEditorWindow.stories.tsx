@@ -18,7 +18,7 @@ function Wrapper(props: React.ComponentProps<typeof CodeEditorWindow>) {
 }
 
 const meta = {
-  title: 'Apps/Inventory/Features/Chat/CodeEditorWindow',
+  title: 'Apps/Inventory/Chat/CodeEditorWindow',
   component: Wrapper,
   parameters: { layout: 'centered' },
   decorators: [

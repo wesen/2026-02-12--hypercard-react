@@ -17,7 +17,7 @@ const BIG_DESKTOP_ICONS: DesktopIconDef[] = [
 ];
 
 const meta = {
-  title: 'Packages/Engine/Components/Shell/Windowing/DesktopPrimitives',
+  title: 'Engine/Components/Shell/Windowing/DesktopPrimitives',
   component: DesktopDemo,
   parameters: {
     layout: 'fullscreen',

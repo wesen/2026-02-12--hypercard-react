@@ -12,7 +12,7 @@ function FullAppStoreDecorator(Story: React.ComponentType) {
 }
 
 const meta = {
-  title: 'Apps/Inventory/App/FullApp',
+  title: 'Apps/Inventory/FullApp',
   component: App,
   decorators: [FullAppStoreDecorator],
   parameters: {

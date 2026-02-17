@@ -89,7 +89,7 @@ function ChatSidebarDemo() {
 }
 
 const meta = {
-  title: 'Packages/Engine/Components/Shell/ChatSidebar',
+  title: 'Engine/Components/Shell/ChatSidebar',
   component: ChatSidebarDemo,
   parameters: { layout: 'fullscreen' },
 } satisfies Meta<typeof ChatSidebarDemo>;

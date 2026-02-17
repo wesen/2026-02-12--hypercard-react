@@ -26,7 +26,7 @@ function ChatDemo() {
 }
 
 const meta = {
-  title: 'Packages/Engine/Components/Widgets/ChatView',
+  title: 'Engine/Components/Widgets/ChatView',
   component: ChatDemo,
 } satisfies Meta<typeof ChatDemo>;
 

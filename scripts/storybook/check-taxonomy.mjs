@@ -14,6 +14,7 @@ const APP_PREFIXES = new Map([
 ]);
 
 const FORBIDDEN_TOP_LEVEL = new Set([
+  'Packages',
   'Widgets',
   'Shell',
   'Pages',
@@ -43,7 +44,7 @@ function walk(dir, out) {
 
 function inferExpectedPrefix(relPath) {
   if (relPath.startsWith('packages/engine/')) {
-    return 'Packages/Engine/';
+    return 'Engine/';
   }
   for (const [pathPrefix, titlePrefix] of APP_PREFIXES.entries()) {
     if (relPath.startsWith(pathPrefix)) return titlePrefix;
@@ -53,7 +54,7 @@ function inferExpectedPrefix(relPath) {
 
 function extractCanonicalTitle(source) {
   const matches = [...source.matchAll(/title:\s*'([^']+)'/g)].map((m) => m[1]);
-  return matches.find((t) => t.startsWith('Apps/') || t.startsWith('Packages/')) ?? null;
+  return matches.find((t) => t.startsWith('Apps/') || t.startsWith('Engine/')) ?? null;
 }
 
 function checkPlacement(relPath) {
@@ -89,7 +90,7 @@ for (const file of storyFiles) {
 
   const title = extractCanonicalTitle(source);
   if (!title) {
-    errors.push(`${relPath}: missing canonical meta title (Apps/* or Packages/*)`);
+    errors.push(`${relPath}: missing canonical meta title (Apps/* or Engine/*)`);
     continue;
   }
 

@@ -19,7 +19,7 @@ function ThemedStoreDecorator(Story: React.ComponentType) {
 }
 
 const meta = {
-  title: 'Apps/Inventory/App/Themed',
+  title: 'Apps/Inventory/Themed',
   component: ThemedShell,
   decorators: [ThemedStoreDecorator],
   parameters: { layout: 'fullscreen' },

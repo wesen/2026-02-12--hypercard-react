@@ -27,7 +27,7 @@ function FormDemo() {
 }
 
 const meta = {
-  title: 'Packages/Engine/Components/Widgets/FormView',
+  title: 'Engine/Components/Widgets/FormView',
   component: FormDemo,
 } satisfies Meta<typeof FormDemo>;
 

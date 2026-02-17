@@ -60,7 +60,7 @@ const widgetItems: TimelineWidgetItem[] = [
 ];
 
 const cardMeta = {
-  title: 'Apps/Inventory/Features/Chat/InventoryArtifactPanelWidgets',
+  title: 'Apps/Inventory/Chat/InventoryArtifactPanelWidgets',
   component: InventoryCardPanelWidget,
   args: {
     items: cardItems,

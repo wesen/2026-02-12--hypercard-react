@@ -22,7 +22,7 @@ function ResizeHandleHarness() {
 }
 
 const meta = {
-  title: 'Packages/Engine/Components/Shell/Windowing/WindowResizeHandle',
+  title: 'Engine/Components/Shell/Windowing/WindowResizeHandle',
   component: ResizeHandleHarness,
   parameters: {
     layout: 'centered',

@@ -120,7 +120,7 @@ function MultiRoundDemo({
 }
 
 const meta = {
-  title: 'Apps/Inventory/Features/Chat/PerRoundTimeline',
+  title: 'Apps/Inventory/Chat/PerRoundTimeline',
   component: MultiRoundDemo,
   parameters: {
     layout: 'centered',

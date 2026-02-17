@@ -55,7 +55,7 @@ function WindowSurfaceHarness({ window: initialWindow, content }: WindowSurfaceH
 }
 
 const meta = {
-  title: 'Packages/Engine/Components/Shell/Windowing/WindowSurface',
+  title: 'Engine/Components/Shell/Windowing/WindowSurface',
   component: WindowSurfaceHarness,
   parameters: {
     layout: 'fullscreen',

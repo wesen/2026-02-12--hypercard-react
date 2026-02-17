@@ -17,7 +17,7 @@ Storybook is workspace-global and owned at repo root:
 Top-level Storybook tree must be owner-first:
 
 - `Apps/*`
-- `Packages/*`
+- `Engine/*`
 
 Required app prefixes:
 
@@ -28,7 +28,7 @@ Required app prefixes:
 
 Required package prefix:
 
-- `Packages/Engine/*`
+- `Engine/*`
 
 Legacy top-level groups are not allowed:
 
@@ -54,10 +54,10 @@ Each story module must expose a canonical title matching ownership path.
 
 Examples:
 
-- `Apps/Inventory/App/FullApp`
-- `Apps/Inventory/Features/Chat/EventViewer`
-- `Packages/Engine/Components/Shell/Windowing/DesktopShell`
-- `Packages/Engine/PluginRuntime/RuntimeMutation`
+- `Apps/Inventory/FullApp`
+- `Apps/Inventory/Chat/EventViewer`
+- `Engine/Components/Shell/Windowing/DesktopShell`
+- `Engine/PluginRuntime/RuntimeMutation`
 
 ## Large Story Files
 
@@ -102,7 +102,7 @@ npm run -w packages/engine test
 
 ## PR Checklist
 
-1. Does every new story land under `Apps/*` or `Packages/*`?
+1. Does every new story land under `Apps/*` or `Engine/*`?
 2. Is the story file under an allowed placement path?
 3. Did you avoid introducing a new monolithic story file?
 4. Does `npm run storybook:check` pass?

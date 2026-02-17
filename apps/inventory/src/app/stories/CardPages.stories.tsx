@@ -10,7 +10,7 @@ const { storeDecorator, createStory, FullApp } = createStoryHelpers({
 });
 
 const meta = {
-  title: 'Apps/Inventory/App/CardPages',
+  title: 'Apps/Inventory/CardPages',
   component: FullApp,
   decorators: [storeDecorator],
   parameters: { layout: 'fullscreen' },

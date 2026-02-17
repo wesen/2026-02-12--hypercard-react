@@ -89,7 +89,7 @@ function StreamingChatDemo() {
 }
 
 const meta = {
-  title: 'Packages/Engine/Components/Widgets/StreamingChatView',
+  title: 'Engine/Components/Widgets/StreamingChatView',
   component: StreamingChatDemo,
 } satisfies Meta<typeof StreamingChatDemo>;
 

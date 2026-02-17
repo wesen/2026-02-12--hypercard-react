@@ -88,7 +88,7 @@ When adding stories:
 
 1. Put reusable stories in `packages/engine/src`.
 2. Put app-specific behavior stories in the corresponding app.
-3. Prefer package-aligned title prefixes (`Apps/*`, `Packages/*`) and feature-aligned story placement (`src/app/stories`, `src/features/**/stories`).
+3. Prefer package-aligned title prefixes (`Apps/*`, `Engine/*`) and feature-aligned story placement (`src/app/stories`, `src/features/**/stories`).
 4. Prefer `createStoryHelpers` for card-page app stories.
 
 When changing app boot behavior:

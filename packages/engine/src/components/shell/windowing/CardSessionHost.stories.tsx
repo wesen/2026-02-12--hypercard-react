@@ -126,7 +126,7 @@ function PluginCardSessionHostWrapper(props: PluginCardSessionHostProps) {
 }
 
 const meta = {
-  title: 'Packages/Engine/Components/Shell/Windowing/CardSessionHost',
+  title: 'Engine/Components/Shell/Windowing/CardSessionHost',
   component: PluginCardSessionHostWrapper,
   parameters: {
     layout: 'centered',

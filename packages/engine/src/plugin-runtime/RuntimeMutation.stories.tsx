@@ -232,7 +232,7 @@ function RuntimeMutationDemo() {
 }
 
 const meta = {
-  title: 'Packages/Engine/PluginRuntime/RuntimeMutation',
+  title: 'Engine/PluginRuntime/RuntimeMutation',
   component: RuntimeMutationDemo,
   parameters: {
     layout: 'centered',
