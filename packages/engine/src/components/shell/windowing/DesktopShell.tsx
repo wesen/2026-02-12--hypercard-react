@@ -26,6 +26,7 @@ import { HyperCardTheme } from '../../../theme/HyperCardTheme';
 import { Toast } from '../../widgets/Toast';
 import { DesktopIconLayer } from './DesktopIconLayer';
 import { DesktopMenuBar } from './DesktopMenuBar';
+import { dragOverlayStore, useDragOverlaySnapshot } from './dragOverlayStore';
 import { PluginCardSessionHost } from './PluginCardSessionHost';
 import type { DesktopIconDef, DesktopMenuSection, DesktopWindowDef } from './types';
 import { useWindowInteractionController } from './useWindowInteractionController';
@@ -107,6 +108,7 @@ export function DesktopShell({
   const activeMenuId = useSelector((s: ShellState) => selectActiveMenuId(s));
   const selectedIconId = useSelector((s: ShellState) => selectSelectedIconId(s));
   const toast = useSelector((s: ShellState) => selectToast(s));
+  const dragOverlay = useDragOverlaySnapshot();
   const focusedWindowId = focusedWin?.id ?? null;
 
   // Generate icons from stack cards if not provided
@@ -181,10 +183,19 @@ export function DesktopShell({
     );
   }, [dispatch, homeParam, stack.id, stack.homeCard, stack.cards]);
 
-  const windowDefs = useMemo(
-    () => windows.map((w) => toWindowDef(w, w.id === focusedWin?.id)),
-    [windows, focusedWin?.id],
-  );
+  const windowDefs = useMemo(() => {
+    return windows.map((w) => {
+      const draft = dragOverlay.draftsById[w.id];
+      if (!draft) return toWindowDef(w, w.id === focusedWin?.id);
+      return {
+        ...toWindowDef(w, w.id === focusedWin?.id),
+        x: draft.x,
+        y: draft.y,
+        width: draft.width,
+        height: draft.height,
+      };
+    });
+  }, [dragOverlay.draftsById, focusedWin?.id, windows]);
 
   const windowDefsById = useMemo(() => {
     const byId: Record<string, DesktopWindowDef> = {};
@@ -205,24 +216,74 @@ export function DesktopShell({
     },
     [dispatch, focusedWindowId],
   );
-  const handleClose = useCallback((id: string) => dispatch(closeWindow(id)), [dispatch]);
-  const handleMove = useCallback(
-    (id: string, next: { x: number; y: number }) => dispatch(moveWindow({ id, x: next.x, y: next.y })),
+  const handleClose = useCallback(
+    (id: string) => {
+      dragOverlayStore.clear(id);
+      dispatch(closeWindow(id));
+    },
     [dispatch],
   );
-  const handleResize = useCallback(
-    (id: string, next: { width: number; height: number }) =>
-      dispatch(resizeWindow({ id, w: next.width, h: next.height })),
+  const handlePreviewMove = useCallback((id: string, next: { x: number; y: number }) => {
+    const win = windowDefsById[id];
+    if (!win) return;
+    dragOverlayStore.update(id, { x: next.x, y: next.y, width: win.width, height: win.height });
+  }, [windowDefsById]);
+  const handlePreviewResize = useCallback(
+    (id: string, next: { width: number; height: number }) => {
+      const win = windowDefsById[id];
+      if (!win) return;
+      dragOverlayStore.update(id, {
+        x: win.x,
+        y: win.y,
+        width: next.width,
+        height: next.height,
+      });
+    },
+    [windowDefsById],
+  );
+  const handleCommitMove = useCallback(
+    (id: string, next: { x: number; y: number }) => {
+      dispatch(moveWindow({ id, x: next.x, y: next.y }));
+      dragOverlayStore.clear(id);
+    },
     [dispatch],
+  );
+  const handleCommitResize = useCallback(
+    (id: string, next: { width: number; height: number }) => {
+      dispatch(resizeWindow({ id, w: next.width, h: next.height }));
+      dragOverlayStore.clear(id);
+    },
+    [dispatch],
+  );
+  const handleCancelInteraction = useCallback((id: string) => {
+    dragOverlayStore.clear(id);
+  }, []);
+  const handleBeginInteraction = useCallback(
+    (id: string, mode: 'move' | 'resize', initial: { x: number; y: number; width: number; height: number }) => {
+      dragOverlayStore.begin(id, mode, initial);
+    },
+    [],
   );
 
   const { beginMove, beginResize } = useWindowInteractionController({
     getWindowById: (id) => windowDefsById[id],
-    onMoveWindow: handleMove,
-    onResizeWindow: handleResize,
+    onBeginWindowInteraction: handleBeginInteraction,
+    onMoveWindow: handlePreviewMove,
+    onResizeWindow: handlePreviewResize,
+    onCommitMoveWindow: handleCommitMove,
+    onCommitResizeWindow: handleCommitResize,
+    onCancelWindowInteraction: handleCancelInteraction,
     onFocusWindow: handleFocus,
     constraints: { minX: 0, minY: 0, minWidth: 220, minHeight: 140 },
   });
+
+  useEffect(() => {
+    return () => dragOverlayStore.clearAll();
+  }, []);
+
+  useEffect(() => {
+    dragOverlayStore.pruneMissing(windows.map((w) => w.id));
+  }, [windows]);
 
   const openCardWindow = useCallback(
     (cardId: string) => {
@@ -265,7 +326,7 @@ export function DesktopShell({
         return;
       }
       if (commandId === 'window.close-focused' && focusedWin) {
-        dispatch(closeWindow(focusedWin.id));
+        handleClose(focusedWin.id);
         return;
       }
       if (commandId.startsWith('window.open.card.')) {
@@ -274,6 +335,7 @@ export function DesktopShell({
         return;
       }
       if (commandId === 'window.tile') {
+        dragOverlayStore.clearAll();
         windows.forEach((w, i) => {
           dispatch(moveWindow({ id: w.id, x: 140 + (i % 3) * 300, y: 10 + Math.floor(i / 3) * 260 }));
           dispatch(resizeWindow({ id: w.id, w: 280, h: 240 }));
@@ -281,6 +343,7 @@ export function DesktopShell({
         return;
       }
       if (commandId === 'window.cascade') {
+        dragOverlayStore.clearAll();
         windows.forEach((w, i) => {
           dispatch(moveWindow({ id: w.id, x: 140 + i * 36, y: 20 + i * 28 }));
           dispatch(resizeWindow({ id: w.id, w: 420, h: 340 }));
@@ -289,7 +352,7 @@ export function DesktopShell({
       }
       onCommandProp?.(commandId);
     },
-    [dispatch, focusedWin, onCommandProp, openCardWindow, stack.homeCard, windows],
+    [dispatch, focusedWin, handleClose, onCommandProp, openCardWindow, stack.homeCard, windows],
   );
 
   const buildWindowBody = useCallback(
