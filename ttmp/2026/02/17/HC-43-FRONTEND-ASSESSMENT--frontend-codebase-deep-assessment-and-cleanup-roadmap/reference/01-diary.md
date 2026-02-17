@@ -526,3 +526,69 @@ This kept changes low-risk: mostly pure extraction/reuse of existing helper logi
 ### Technical details
 
 - No API-level behavior changes were introduced; this is an internal deduplication and documentation-only boundary clarification step.
+
+---
+
+## Step 6: Reopen HC-43 for Hard-Cutover Phase 1 Replay
+
+I reopened HC-43 as an in-progress ticket and explicitly reframed Phase 1 as a hard-cutover replay with no backward compatibility shims. This aligns with the current directive to execute the same low-risk tasks in order, while documenting the execution path as a new run.
+
+This step only updates ticket control-plane artifacts (`tasks.md`, `index.md`, `changelog.md`, and this diary) before execution checks begin, so later task-by-task evidence can map cleanly to a strict task list.
+
+### Prompt Context
+
+**User prompt (verbatim):** "once reverted, do the same work: add tasks (no backwards compatibility) for the low risk phase 1 HC-43 work (in the HC-43 ticket), and work on them task by task, comimtting as appropriate, keeping a frequent diary."
+
+**Assistant interpretation:** Re-open HC-43 workflow, add an explicit no-backward-compatibility Phase 1 task block, then execute each task sequentially with commits and diary updates.
+
+**Inferred user intent:** Ensure Phase 1 cleanup is tracked and executed as a strict hard cutover, with high traceability for future developers.
+
+### What I did
+
+- Set ticket status back to in-progress in:
+  - `ttmp/2026/02/17/HC-43-FRONTEND-ASSESSMENT--frontend-codebase-deep-assessment-and-cleanup-roadmap/index.md`
+- Added a dedicated hard-cutover task section in:
+  - `ttmp/2026/02/17/HC-43-FRONTEND-ASSESSMENT--frontend-codebase-deep-assessment-and-cleanup-roadmap/tasks.md`
+- Added kickoff entry in:
+  - `ttmp/2026/02/17/HC-43-FRONTEND-ASSESSMENT--frontend-codebase-deep-assessment-and-cleanup-roadmap/changelog.md`
+
+### Why
+
+- The request was explicit: repeat Phase 1 work in HC-43 with no compatibility/migration buffers.
+- Reopening and re-tasking first keeps execution unambiguous before touching any runtime code.
+
+### What worked
+
+- Existing HC-43 structure cleanly supports replay task tracking.
+- `docmgr task add` + markdown task updates provide a concrete checklist to execute sequentially.
+
+### What didn't work
+
+- N/A in this step.
+
+### What I learned
+
+- A ticket replay benefits from explicitly separating "historical completion" from "current replay pass" to avoid ambiguity.
+
+### What was tricky to build
+
+- Avoiding confusion between previously completed tasks and the replay tasks required adding a clearly named hard-cutover subsection rather than mutating historical records.
+
+### What warrants a second pair of eyes
+
+- Confirm the replay task naming is clear enough that future readers do not confuse it with the original Phase 1 completion block.
+
+### What should be done in the future
+
+- Execute replay tasks 13-16 in strict order with evidence-driven verification and commits.
+
+### Code review instructions
+
+- Review ticket-control changes:
+  - `ttmp/2026/02/17/HC-43-FRONTEND-ASSESSMENT--frontend-codebase-deep-assessment-and-cleanup-roadmap/index.md`
+  - `ttmp/2026/02/17/HC-43-FRONTEND-ASSESSMENT--frontend-codebase-deep-assessment-and-cleanup-roadmap/tasks.md`
+  - `ttmp/2026/02/17/HC-43-FRONTEND-ASSESSMENT--frontend-codebase-deep-assessment-and-cleanup-roadmap/changelog.md`
+
+### Technical details
+
+- Replay mode constraints: hard cutover only; no feature flags, no compatibility wrappers, no migration layers.

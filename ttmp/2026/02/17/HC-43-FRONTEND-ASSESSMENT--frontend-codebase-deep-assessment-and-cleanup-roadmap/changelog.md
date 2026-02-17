@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-02-17 (Phase 1 hard-cutover replay kickoff)
+
+- Re-opened HC-43 execution flow to replay Phase 1 tasks with explicit hard-cutover constraints.
+- Added a new Phase 1 hard-cutover task block in `tasks.md` with direct "no backward compatibility" wording.
+- Set ticket status to `in_progress` while replay verification runs task-by-task.
+
 ## 2026-02-17
 
 - Created HC-43 workspace and initialized ticket document set.
