@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { Provider } from 'react-redux';
 import { createAppStore } from '../../../app/createAppStore';
 import type { CardDefinition, CardStackDefinition } from '../../../cards/types';
-import { openWindow } from '../../../features/windowing/windowingSlice';
+import { openWindow } from '../../../desktop/core/state/windowingSlice';
 import CHAT_PLUGIN_BUNDLE from './CardSessionHost.chat.vm.js?raw';
 import LIST_PLUGIN_BUNDLE from './CardSessionHost.list.vm.js?raw';
 import NAV_PLUGIN_BUNDLE from './CardSessionHost.nav.vm.js?raw';

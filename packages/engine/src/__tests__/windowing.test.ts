@@ -10,8 +10,8 @@ import {
   selectWindowCount,
   selectWindowsByZ,
   selectWindowsInOrder,
-} from '../features/windowing/selectors';
-import type { OpenWindowPayload } from '../features/windowing/types';
+} from '../desktop/core/state/selectors';
+import type { OpenWindowPayload } from '../desktop/core/state/types';
 import {
   clearDesktopTransient,
   closeWindow,
@@ -25,7 +25,7 @@ import {
   setActiveMenu,
   setSelectedIcon,
   windowingReducer,
-} from '../features/windowing/windowingSlice';
+} from '../desktop/core/state/windowingSlice';
 
 // ── Helpers ──
 

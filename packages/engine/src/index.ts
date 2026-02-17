@@ -32,7 +32,7 @@ export {
 export * from './features/notifications/selectors';
 export * from './features/pluginCardRuntime';
 // ── Windowing ──
-export * from './features/windowing';
+export * from './desktop/core/state';
 export * from './parts';
 // ── Theme ──
 export { HyperCardTheme, type HyperCardThemeProps } from './theme/HyperCardTheme';

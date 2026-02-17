@@ -7,8 +7,8 @@ import {
   selectFocusedWindow,
   selectSelectedIconId,
   selectWindowsByZ,
-} from '../../../features/windowing/selectors';
-import type { OpenWindowPayload } from '../../../features/windowing/types';
+} from '../../../desktop/core/state/selectors';
+import type { OpenWindowPayload } from '../../../desktop/core/state/types';
 import {
   clearDesktopTransient,
   closeWindow,
@@ -19,7 +19,7 @@ import {
   setActiveMenu,
   setSelectedIcon,
   windowingReducer,
-} from '../../../features/windowing/windowingSlice';
+} from '../../../desktop/core/state/windowingSlice';
 import { DesktopIconLayer } from './DesktopIconLayer';
 import { DesktopMenuBar } from './DesktopMenuBar';
 import type { DesktopIconDef, DesktopMenuSection, DesktopWindowDef } from './types';

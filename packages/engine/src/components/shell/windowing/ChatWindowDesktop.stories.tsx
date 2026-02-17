@@ -16,7 +16,7 @@ import {
 import { DataTable } from '../../widgets/DataTable';
 import { ReportView } from '../../widgets/ReportView';
 import { DesktopShell } from './DesktopShell';
-import { openWindow } from '../../../features/windowing/windowingSlice';
+import { openWindow } from '../../../desktop/core/state/windowingSlice';
 import type { DesktopIconDef } from './types';
 import DEMO_PLUGIN_BUNDLE from './DesktopShell.demo.vm.js?raw';
 

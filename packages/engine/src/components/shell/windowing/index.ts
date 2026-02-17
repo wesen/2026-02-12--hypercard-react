@@ -1,6 +1,15 @@
 export { DesktopIconLayer, type DesktopIconLayerProps } from './DesktopIconLayer';
 export { DesktopMenuBar, type DesktopMenuBarProps } from './DesktopMenuBar';
 export { DesktopShell, type DesktopShellProps } from './DesktopShell';
+export { DesktopShellView, type DesktopShellViewProps } from './DesktopShellView';
+export {
+  routeDesktopCommand,
+  type DesktopCommandRouteContext,
+} from './desktopCommandRouter';
+export {
+  useDesktopShellController,
+  type DesktopShellControllerResult,
+} from './useDesktopShellController';
 export { PluginCardRenderer, type PluginCardRendererProps } from './PluginCardRenderer';
 export { dispatchRuntimeIntent } from './pluginIntentRouting';
 export { PluginCardSessionHost, type PluginCardSessionHostProps } from './PluginCardSessionHost';

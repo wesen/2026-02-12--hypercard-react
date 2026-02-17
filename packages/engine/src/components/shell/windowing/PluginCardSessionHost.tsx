@@ -10,7 +10,7 @@ import {
   selectRuntimeSessionState,
   setRuntimeSessionStatus,
 } from '../../../features/pluginCardRuntime';
-import { selectFocusedWindowId, selectSessionCurrentNav, selectSessionNavDepth } from '../../../features/windowing';
+import { selectFocusedWindowId, selectSessionCurrentNav, selectSessionNavDepth } from '../../../desktop/core/state';
 import type { RuntimeIntent } from '../../../plugin-runtime/contracts';
 import { hasRuntimeCard, injectPendingCards, onRegistryChange } from '../../../plugin-runtime/runtimeCardRegistry';
 import { QuickJSCardRuntimeService } from '../../../plugin-runtime/runtimeService';

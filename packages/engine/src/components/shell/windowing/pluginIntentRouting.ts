@@ -1,7 +1,7 @@
 import { showToast } from '../../../features/notifications/notificationsSlice';
 import { authorizeDomainIntent, authorizeSystemIntent } from '../../../features/pluginCardRuntime';
 import { ingestRuntimeIntent } from '../../../features/pluginCardRuntime';
-import { closeWindow, sessionNavBack, sessionNavGo } from '../../../features/windowing/windowingSlice';
+import { closeWindow, sessionNavBack, sessionNavGo } from '../../../desktop/core/state/windowingSlice';
 import type { RuntimeIntent, SystemIntent } from '../../../plugin-runtime/contracts';
 import type { CapabilityPolicy } from '../../../features/pluginCardRuntime';
 

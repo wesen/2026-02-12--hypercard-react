@@ -2,8 +2,8 @@ import { configureStore } from '@reduxjs/toolkit';
 import { describe, expect, it } from 'vitest';
 import { notificationsReducer } from '../features/notifications/notificationsSlice';
 import { pluginCardRuntimeReducer, registerRuntimeSession } from '../features/pluginCardRuntime';
-import { windowingReducer } from '../features/windowing/windowingSlice';
-import { openWindow } from '../features/windowing';
+import { windowingReducer } from '../desktop/core/state/windowingSlice';
+import { openWindow } from '../desktop/core/state';
 import { dispatchRuntimeIntent } from '../components/shell/windowing/pluginIntentRouting';
 
 function inventoryReducer(state = { events: [] as unknown[] }, action: { type: string; payload?: unknown }) {

@@ -5,7 +5,7 @@ import { createReduxPerfMiddleware } from '../diagnostics/reduxPerfMiddleware';
 import { startFrameMonitor } from '../diagnostics/frameMonitor';
 import { pluginCardRuntimeReducer } from '../features/pluginCardRuntime/pluginCardRuntimeSlice';
 import { notificationsReducer } from '../features/notifications/notificationsSlice';
-import { windowingReducer } from '../features/windowing/windowingSlice';
+import { windowingReducer } from '../desktop/core/state/windowingSlice';
 
 /** Options for `createAppStore`. */
 export interface CreateAppStoreOptions {
