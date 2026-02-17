@@ -18,12 +18,17 @@ RelatedFiles:
       Note: Primary output documented in diary
     - Path: 2026-02-12--hypercard-react/ttmp/2026/02/17/HC-037-UI-CLEANUP--ui-cleanup-frontend-store-and-windowing-performance/reference/01-diary.md
       Note: Execution log and failure recovery notes
+    - Path: ttmp/2026/02/17/HC-037-UI-CLEANUP--ui-cleanup-frontend-store-and-windowing-performance/design-doc/02-frontend-storybook-state-management-and-css-design-system-cleanup-investigation.md
+      Note: Second investigation deliverable documented in diary
+    - Path: ttmp/2026/02/17/HC-037-UI-CLEANUP--ui-cleanup-frontend-store-and-windowing-performance/reference/01-diary.md
+      Note: Execution log for both investigations
 ExternalSources: []
 Summary: Step-by-step diary of HC-037 execution, including ticket lifecycle actions, analysis workflow, failure recovery, and reMarkable upload.
 LastUpdated: 2026-02-17T08:38:00-05:00
 WhatFor: Detailed implementation log for reproducibility and review.
 WhenToUse: Read when auditing what was done for HC-037 and why.
 ---
+
 
 
 
@@ -380,3 +385,131 @@ This preserves auditability: upload success was confirmed by both upload command
   - `/ai/2026/02/17/HC-037-UI-CLEANUP`
 - Uploaded artifact name:
   - `HC-037 Redux and Windowing Performance Analysis.pdf`
+
+## Step 3: Second Deep Investigation (Frontend Status + Storybook + State + CSS Design System)
+
+After completing the first performance-focused report, I executed a second broad inspection pass focused on frontend cleanliness, structure, and long-term reusability. This step emphasized identifying duplicated/deprecated/problematic code paths and producing a substantially longer design document with explicit cleanup and reorganization recommendations.
+
+A key extension in this step was CSS architecture analysis for a reusable HyperCard design-system path. I used quantitative checks (token/part/style counts) and code-level tracing to ground recommendations in measurable drift, not just subjective style concerns.
+
+### Prompt Context
+
+**User prompt (verbatim):** "Nlow do a second investigation where you investigate the current status of the frontend codebase, storybook structure, state management, with an eye towards duplicated or deprecated or problematic or messy code, and detail a way to reorganize and clean things up and suggestions of what could be removed, and what documentation could be written. Be extremely thorough, write prose paragraphs and bullet points and mention files and APIs and pseudocode and code snippets. 8+ pages. Store in remarkable as well."
+
+**User prompt (verbatim):** "also go over CSS structure and how to make this potentially reusable as a hypercard design system."
+
+**Assistant interpretation:** Produce a second, larger audit report that covers the full frontend architecture quality surface (not only event/drag performance), including Storybook, state topology, duplication/deprecation, cleanup roadmap, removal candidates, documentation plan, and a design-system extraction strategy for CSS.
+
+**Inferred user intent:** Build a practical cleanup blueprint that can guide multiple implementation tickets and reduce technical debt while preserving development velocity and product behavior.
+
+**Commit (code):** N/A — no git commit was created.
+
+### What I did
+
+- Loaded skill guidance and followed the `code-quality-review-cleanup`, `docmgr`, `diary`, and `remarkable-upload` workflows.
+- Enumerated codebase footprint and concentration points:
+  - total files, story distribution, store/slice counts, largest files.
+- Inspected and compared core architecture files:
+  - app bootstraps (`main.tsx`, `store.ts`, `vite.config.ts`, `tsconfig.json`)
+  - engine store creation (`createAppStore`, `createDSLApp`)
+  - Storybook config and helper APIs
+  - inventory chat/event pipeline files
+  - windowing drag and selectors path.
+- Collected concrete duplication evidence and checksums for repeated app scaffolding files.
+- Performed CSS contract checks:
+  - line count and structure of `base.css`/themes
+  - `style={{...}}` usage count and top files
+  - token definitions vs token usage drift
+  - `data-part` usage vs `PARTS` registry drift.
+- Used `docmgr doc add` to create:
+  - `design-doc/02-frontend-storybook-state-management-and-css-design-system-cleanup-investigation.md`
+- Wrote a full 8+ page equivalent report (3724 words; 964 lines) including:
+  - prose analysis
+  - issue lists
+  - file references
+  - pseudocode and implementation sketches
+  - phased cleanup roadmap
+  - removal/deprecation recommendations
+  - documentation plan.
+
+### Why
+
+- The second investigation required wider architectural coverage than the first performance report.
+- Quantitative evidence (counts/diffs/contracts) was necessary to prioritize and de-risk cleanup decisions.
+- Design-system reuse depends on explicit contract verification (tokens + parts), so CSS analysis had to be first-class.
+
+### What worked
+
+- Existing repo structure allowed fast pattern comparison across apps and engine.
+- Quantitative shell checks quickly surfaced high-value findings:
+  - duplicate bootstrap/config files
+  - inline style volume
+  - missing token definitions
+  - part registry drift.
+- `docmgr doc add` created the second document with correct ticket metadata and path.
+
+### What didn't work
+
+- A few command invocations initially failed due command/flag mismatches and path assumptions:
+  - `docmgr ticket show HC-037 --json` failed (`unknown flag: --json`).
+  - `docmgr doc list --ticket HC-037` returned no docs because ticket ID needed full identifier (`HC-037-UI-CLEANUP`).
+  - `docmgr changelog list --ticket ...` failed because this subcommand does not exist in this `docmgr` build.
+  - `sed` path assumptions failed for files that did not exist (`packages/engine/src/app/providers.tsx`, `packages/engine/src/storybook/createStoryHelpers.tsx`).
+  - `rg` pattern beginning with `--` needed explicit `-e` usage.
+- All failures were corrected immediately with `docmgr help ...`, `rg --files`, and explicit ticket/path checks.
+
+### What I learned
+
+- Ticket IDs in this workspace are full identifiers (e.g., `HC-037-UI-CLEANUP`) for some `docmgr` filters.
+- The design-system contract is partially present (`PARTS`, tokens), but enforcement is missing; drift can be detected cheaply with simple shell checks.
+- Cleanup leverage is strongest at scaffolding and contract layers, not only component-level refactors.
+
+### What was tricky to build
+
+- The hardest part was balancing breadth and specificity while still producing an actionable 8+ page report. Many valid observations exist, but only some are high leverage.
+- I approached this by forcing each recommendation to have one or more of:
+  - measurable evidence,
+  - concrete file location,
+  - migration sketch/pseudocode,
+  - rollout phase placement.
+- Another tricky point was separating “present but strategic” modules from “dead/legacy” modules. I marked uncertain candidates as deprecations rather than immediate removals.
+
+### What warrants a second pair of eyes
+
+- Confirm product intent for engine generic chat APIs vs inventory-specific chat architecture.
+- Confirm whether debug reducer should become opt-in by default.
+- Validate deprecation/removal candidates (`createDSLApp`, CRM `streamingChat`, shell debug/sidebar paths) against roadmap expectations.
+- Review design-system package boundary proposal before migration work starts.
+
+### What should be done in the future
+
+- Execute phased cleanup plan in small PRs with contract tests added first.
+- Add CI checks for token/part drift and runtime hardcoded color literals.
+- Track progress against acceptance metrics listed in `design-doc/02`.
+
+### Code review instructions
+
+- Read new report first:
+  - `ttmp/2026/02/17/HC-037-UI-CLEANUP--ui-cleanup-frontend-store-and-windowing-performance/design-doc/02-frontend-storybook-state-management-and-css-design-system-cleanup-investigation.md`
+- Validate key evidence anchors:
+  - `apps/inventory/.storybook/main.ts`
+  - `packages/engine/src/app/createAppStore.ts`
+  - `apps/inventory/src/features/chat/InventoryChatWindow.tsx`
+  - `packages/engine/src/components/shell/windowing/useWindowInteractionController.ts`
+  - `packages/engine/src/components/shell/windowing/DesktopShell.tsx`
+  - `packages/engine/src/theme/base.css`
+  - `packages/engine/src/parts.ts`
+- Re-run key metrics if needed:
+  - `rg -n "style=\{\{" apps packages | wc -l`
+  - token drift diff (defined vs used `--hc-*`)
+  - data-part drift diff (JSX vs `PARTS`).
+
+### Technical details
+
+- Document created via:
+  - `docmgr doc add --ticket HC-037-UI-CLEANUP --doc-type design-doc --title "Frontend, Storybook, State Management, and CSS Design-System Cleanup Investigation"`
+- Final second-analysis doc path:
+  - `ttmp/2026/02/17/HC-037-UI-CLEANUP--ui-cleanup-frontend-store-and-windowing-performance/design-doc/02-frontend-storybook-state-management-and-css-design-system-cleanup-investigation.md`
+- File size checks:
+  - `wc -w` => 3724 words
+  - `wc -l` => 964 lines

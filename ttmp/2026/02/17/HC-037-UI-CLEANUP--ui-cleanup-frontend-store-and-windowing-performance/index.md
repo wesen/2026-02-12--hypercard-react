@@ -11,13 +11,20 @@ Topics:
 DocType: index
 Intent: long-term
 Owners: []
-RelatedFiles: []
+RelatedFiles:
+    - Path: ttmp/2026/02/17/HC-037-UI-CLEANUP--ui-cleanup-frontend-store-and-windowing-performance/design-doc/01-redux-event-pipeline-and-window-dragging-performance-analysis.md
+      Note: First investigation report (event pipeline + dragging)
+    - Path: ttmp/2026/02/17/HC-037-UI-CLEANUP--ui-cleanup-frontend-store-and-windowing-performance/design-doc/02-frontend-storybook-state-management-and-css-design-system-cleanup-investigation.md
+      Note: Second investigation report (frontend status + Storybook + state + CSS DS)
+    - Path: ttmp/2026/02/17/HC-037-UI-CLEANUP--ui-cleanup-frontend-store-and-windowing-performance/reference/01-diary.md
+      Note: Detailed execution diary across both investigations
 ExternalSources: []
 Summary: ""
 LastUpdated: 2026-02-17T07:40:49.801772261-05:00
 WhatFor: ""
 WhenToUse: ""
 ---
+
 
 # UI Cleanup: Frontend Store and Windowing Performance
 

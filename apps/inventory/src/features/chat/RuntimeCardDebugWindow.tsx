@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { getPendingRuntimeCards, onRegistryChange, type RuntimeCardDefinition } from '@hypercard/engine';
+import { useDispatch } from 'react-redux';
 import { STACK } from '../../domain/stack';
 import type { ArtifactRecord } from './artifactsSlice';
+import { openCodeEditor } from './editorLaunch';
 import { SyntaxHighlight } from './utils/SyntaxHighlight';
 
 interface StoreSlice {
@@ -50,6 +52,7 @@ function Badge({ text, color }: { text: string; color: string }) {
 }
 
 export function RuntimeCardDebugWindow() {
+  const dispatch = useDispatch();
   const [registryCards, setRegistryCards] = useState<RuntimeCardDefinition[]>(getPendingRuntimeCards());
 
   useEffect(() => {
@@ -100,12 +103,22 @@ export function RuntimeCardDebugWindow() {
         ) : (
           registryCards.map(card => (
             <div key={card.cardId} style={{ marginBottom: 12, border: '1px solid #ccc', borderRadius: 4, padding: 8 }}>
-              <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <code style={{ fontWeight: 700 }}>{card.cardId}</code>
                 <Badge text="registered" color="#2d6a4f" />
-                <span style={{ fontSize: 10, color: '#555', marginLeft: 8 }}>
+                <span style={{ fontSize: 10, color: '#555' }}>
                   {new Date(card.registeredAt).toLocaleTimeString()}
                 </span>
+                <button
+                  onClick={() => openCodeEditor(dispatch, card.cardId, card.code)}
+                  style={{
+                    fontSize: 10, padding: '1px 6px', borderRadius: 3,
+                    border: '1px solid #999', background: '#f0f0f0', cursor: 'pointer',
+                    marginLeft: 'auto',
+                  }}
+                >
+                  ✏️ Edit
+                </button>
               </div>
               <div style={{ fontSize: 10, color: '#555', marginTop: 2 }}>
                 code: {card.code.length} chars, {card.code.split('\n').length} lines

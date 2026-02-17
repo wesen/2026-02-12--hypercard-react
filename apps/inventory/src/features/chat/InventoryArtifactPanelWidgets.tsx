@@ -118,10 +118,11 @@ interface ArtifactPanelProps {
   emptyText: string;
   panelPart: string;
   onOpenArtifact?: (item: TimelineWidgetItem) => void;
+  onEditCard?: (item: TimelineWidgetItem) => void;
   debug?: boolean;
 }
 
-function ArtifactPanel({ items, emptyText, panelPart, onOpenArtifact, debug }: ArtifactPanelProps) {
+function ArtifactPanel({ items, emptyText, panelPart, onOpenArtifact, onEditCard, debug }: ArtifactPanelProps) {
   if (items.length === 0) {
     return (
       <div data-part={`${panelPart}-empty`} style={{ fontSize: 11, opacity: 0.75 }}>
@@ -160,6 +161,16 @@ function ArtifactPanel({ items, emptyText, panelPart, onOpenArtifact, debug }: A
                     Open
                   </button>
                 )}
+                {item.kind === 'card' && item.status === 'success' && onEditCard && (
+                  <button
+                    type="button"
+                    data-part={`${panelPart}-edit`}
+                    onClick={() => onEditCard(item)}
+                    style={{ ...openBtnStyle, background: 'transparent', border: '1px solid #999' }}
+                  >
+                    ✏️ Edit
+                  </button>
+                )}
               </div>
 
               {/* Artifact ID */}
@@ -187,16 +198,18 @@ function ArtifactPanel({ items, emptyText, panelPart, onOpenArtifact, debug }: A
 export interface InventoryCardPanelWidgetProps {
   items: TimelineWidgetItem[];
   onOpenArtifact?: (item: TimelineWidgetItem) => void;
+  onEditCard?: (item: TimelineWidgetItem) => void;
   debug?: boolean;
 }
 
-export function InventoryCardPanelWidget({ items, onOpenArtifact, debug }: InventoryCardPanelWidgetProps) {
+export function InventoryCardPanelWidget({ items, onOpenArtifact, onEditCard, debug }: InventoryCardPanelWidgetProps) {
   return (
     <ArtifactPanel
       items={items}
       emptyText="No card proposals yet."
       panelPart="inventory-card-panel-widget"
       onOpenArtifact={onOpenArtifact}
+      onEditCard={onEditCard}
       debug={debug}
     />
   );

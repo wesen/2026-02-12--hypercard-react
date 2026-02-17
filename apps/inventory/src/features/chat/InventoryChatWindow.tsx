@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import { buildArtifactOpenWindowPayload, extractArtifactUpsertFromSem } from './artifactRuntime';
 import { upsertArtifact } from './artifactsSlice';
+import { openCodeEditor } from './editorLaunch';
 import { emitConversationEvent } from './eventBus';
 import {
   applyLLMDelta,
@@ -714,9 +715,18 @@ export function InventoryChatWindow({ conversationId }: InventoryChatWindowProps
       console.log('[HC-036] openWindow cardId:', payload.content?.card?.cardId);
       dispatch(openWindow(payload));
     };
+    const editCard = (item: TimelineWidgetItem) => {
+      const artifactId = item.artifactId?.trim();
+      if (!artifactId) return;
+      const storeState = store.getState() as { artifacts?: { byId: Record<string, { runtimeCardId?: string; runtimeCardCode?: string }> } };
+      const rec = storeState.artifacts?.byId?.[artifactId];
+      if (rec?.runtimeCardId && rec?.runtimeCardCode) {
+        openCodeEditor(dispatch, rec.runtimeCardId, rec.runtimeCardCode);
+      }
+    };
     if (widget.type !== 'inventory.timeline') {
       if (widget.type === 'inventory.cards') {
-        return <InventoryCardPanelWidget items={items} onOpenArtifact={openArtifact} debug={debugMode} />;
+        return <InventoryCardPanelWidget items={items} onOpenArtifact={openArtifact} onEditCard={editCard} debug={debugMode} />;
       }
       if (widget.type === 'inventory.widgets') {
         return <InventoryGeneratedWidgetPanel items={items} onOpenArtifact={openArtifact} debug={debugMode} />;

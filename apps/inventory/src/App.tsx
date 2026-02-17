@@ -5,6 +5,8 @@ import { useDispatch } from 'react-redux';
 import { STACK } from './domain/stack';
 import { EventViewerWindow } from './features/chat/EventViewerWindow';
 import { InventoryChatWindow } from './features/chat/InventoryChatWindow';
+import { CodeEditorWindow } from './features/chat/CodeEditorWindow';
+import { getEditorInitialCode } from './features/chat/editorLaunch';
 import { RuntimeCardDebugWindow } from './features/chat/RuntimeCardDebugWindow';
 
 const CHAT_APP_KEY = 'inventory-chat';
@@ -77,6 +79,10 @@ export function App() {
     }
     if (appKey === 'runtime-card-debug') {
       return <RuntimeCardDebugWindow />;
+    }
+    if (appKey.startsWith('code-editor:')) {
+      const cardId = appKey.slice('code-editor:'.length);
+      return <CodeEditorWindow cardId={cardId} initialCode={getEditorInitialCode(cardId)} />;
     }
     return null;
   }, []);

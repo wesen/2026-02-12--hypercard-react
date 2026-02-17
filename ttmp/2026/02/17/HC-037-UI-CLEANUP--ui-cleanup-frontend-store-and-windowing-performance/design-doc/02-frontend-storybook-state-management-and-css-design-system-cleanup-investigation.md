@@ -14,10 +14,10 @@ Owners: []
 RelatedFiles:
     - Path: 2026-02-12--hypercard-react/apps/inventory/.storybook/main.ts
       Note: Unified Storybook configuration currently hosted in inventory app
-    - Path: 2026-02-12--hypercard-react/apps/inventory/src/features/chat/InventoryChatWindow.tsx
-      Note: High-complexity chat integration and high-frequency dispatch fan-out
     - Path: 2026-02-12--hypercard-react/apps/inventory/src/features/chat/EventViewerWindow.tsx
       Note: Non-Redux event debugging UI with local retention and inline styling
+    - Path: 2026-02-12--hypercard-react/apps/inventory/src/features/chat/InventoryChatWindow.tsx
+      Note: High-complexity chat integration and high-frequency dispatch fan-out
     - Path: 2026-02-12--hypercard-react/apps/inventory/src/features/chat/eventBus.ts
       Note: Raw event bus architecture used by debugging window
     - Path: 2026-02-12--hypercard-react/packages/engine/src/app/createAppStore.ts
@@ -32,6 +32,20 @@ RelatedFiles:
       Note: Existing part-name registry for theming/design-system contracts
     - Path: 2026-02-12--hypercard-react/packages/engine/src/theme/base.css
       Note: Monolithic theme/token/style layer and current CSS architecture
+    - Path: apps/inventory/.storybook/main.ts
+      Note: Storybook topology and cross-app config host
+    - Path: apps/inventory/src/features/chat/InventoryChatWindow.tsx
+      Note: Primary chat dispatch fan-out and complexity hotspot
+    - Path: packages/engine/src/app/createAppStore.ts
+      Note: Store composition and always-on reducers
+    - Path: packages/engine/src/components/shell/windowing/DesktopShell.tsx
+      Note: Windowing orchestration and drag wiring
+    - Path: packages/engine/src/components/shell/windowing/useWindowInteractionController.ts
+      Note: Pointermove interaction dispatch path
+    - Path: packages/engine/src/parts.ts
+      Note: Parts registry contract and drift analysis
+    - Path: packages/engine/src/theme/base.css
+      Note: Monolithic CSS architecture and token layer
 ExternalSources: []
 Summary: |
     End-to-end audit of frontend architecture quality across app bootstrap, Storybook organization, Redux/state-management shape, duplication/deprecation hotspots, and CSS/theming structure. Proposes a staged cleanup/reorganization plan with explicit removal targets, API adjustments, migration pseudocode, and a design-system extraction strategy for reusable HyperCard UI foundations.
@@ -40,6 +54,7 @@ WhatFor: |
     Guide the second HC-037 investigation and provide a concrete cleanup blueprint for engineering implementation and documentation work.
 WhenToUse: Use when planning frontend cleanup, Storybook restructuring, Redux simplification, or CSS design-system extraction.
 ---
+
 
 # Frontend, Storybook, State Management, and CSS Design-System Cleanup Investigation
 

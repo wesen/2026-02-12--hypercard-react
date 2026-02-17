@@ -50,20 +50,22 @@ Ticket: HC-040-CODE-EDITOR
 - [x] B.2d Verify all 5 existing surfaces still work (153 tests pass, TS clean)
 
 ### B.3 Create CodeEditorWindow component
-- [ ] B.3a Create `CodeEditorWindow.tsx` with full CM EditorView
-- [ ] B.3b Accept `cardId` and `initialCode` props
-- [ ] B.3c "Save & Inject" button → registerRuntimeCard + update artifact state
-- [ ] B.3d Error display area for eval failures
-- [ ] B.3e Register as app window in App.tsx (`code-editor:{cardId}`)
+- [x] B.3a Create `CodeEditorWindow.tsx` with full CM EditorView
+- [x] B.3b Accept `cardId` and `initialCode` props
+- [x] B.3c "Save & Inject" button → registerRuntimeCard
+- [x] B.3d Status bar: saved/error/idle + Ctrl+S keybinding
+- [x] B.3e Revert button to restore initial code
+- [x] B.3f Register as app window in App.tsx (`code-editor:{cardId}`)
+- [x] B.3g `editorLaunch.ts` — stash/retrieve initial code for window-based editor open
 
 ### B.4 Wire "Edit" button from RuntimeCardDebugWindow
-- [ ] B.4a Add ✏️ Edit button on each registry card entry
-- [ ] B.4b Clicking opens CodeEditorWindow with card code
+- [x] B.4a Add ✏️ Edit button on each registry card entry
+- [x] B.4b Clicking calls openCodeEditor(dispatch, cardId, code)
 
 ### B.5 Wire "Edit" button from card timeline widget
-- [ ] B.5a Add ✏️ Edit button on card items with status=success in InventoryArtifactPanelWidgets
-- [ ] B.5b Look up artifact record for runtimeCardId + runtimeCardCode
-- [ ] B.5c Open CodeEditorWindow with card code
+- [x] B.5a Add ✏️ Edit button on card items with status=success in ArtifactPanel
+- [x] B.5b onEditCard callback: look up artifact record for runtimeCardId + runtimeCardCode
+- [x] B.5c Open CodeEditorWindow via openCodeEditor
 
 ### B.6 Storybook stories
 - [ ] B.6a SyntaxHighlight stories: JS light, JS dark, YAML light, YAML dark, with maxLines truncation
