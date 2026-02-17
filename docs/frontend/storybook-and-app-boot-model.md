@@ -99,3 +99,20 @@ When changing app boot behavior:
 ## Future Improvement (Tracked)
 
 A future cleanup may move Storybook config to repo root (`/.storybook`) for clearer ownership. Until then, treat `apps/inventory/.storybook` as the canonical shared Storybook entrypoint.
+
+## Verification Snapshot (2026-02-17)
+
+This document was re-verified during HC-43 Phase 1 hard-cutover replay against current sources:
+
+- Storybook config:
+  - `apps/inventory/.storybook/main.ts`
+  - `apps/inventory/.storybook/preview.ts`
+- Root Storybook script:
+  - `package.json` (`storybook` delegates to `apps/inventory`)
+- App boot entrypoints:
+  - `apps/inventory/src/main.tsx`
+  - `apps/todo/src/main.tsx`
+  - `apps/crm/src/main.tsx`
+  - `apps/book-tracker-debug/src/main.tsx`
+- Vite app bootstrap helper:
+  - `tooling/vite/createHypercardViteConfig.ts`

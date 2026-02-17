@@ -24,4 +24,4 @@
 - [x] Hard-cutover verify dead-file removals and archive evidence are current (no stubs/re-exports left)
 - [x] Hard-cutover verify SEM helper consolidation with single shared helper module and no duplicated local parsers
 - [x] Hard-cutover verify centralized Vite app bootstrapping config helper usage across all app vite configs
-- [ ] Hard-cutover verify Storybook/app-boot boundary documentation is present and aligned with current source
+- [x] Hard-cutover verify Storybook/app-boot boundary documentation is present and aligned with current source

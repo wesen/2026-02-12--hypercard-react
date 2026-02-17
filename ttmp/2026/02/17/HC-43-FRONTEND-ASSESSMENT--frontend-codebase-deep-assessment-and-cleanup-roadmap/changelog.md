@@ -17,6 +17,9 @@
   - confirmed all app `vite.config.ts` files use `createHypercardViteConfig`
   - confirmed shared alias/bootstrap ownership remains in `tooling/vite/createHypercardViteConfig.ts`
   - passed repo typecheck (`npm run typecheck`)
+- Completed replay verification for Storybook/app-boot boundary docs (Task 17):
+  - validated `docs/frontend/storybook-and-app-boot-model.md` against current Storybook config and app boot files
+  - added dated verification snapshot section with source paths
 
 ## 2026-02-17
 
@@ -66,3 +69,8 @@ Completed deep frontend assessment + diary and uploaded bundled PDF to reMarkabl
   - `npx vitest run apps/inventory/src/features/chat/chatSlice.test.ts apps/inventory/src/features/chat/artifactRuntime.test.ts apps/inventory/src/features/chat/InventoryChatWindow.timeline.test.ts`
 - Commit:
   - `cf09373` refactor(inventory-chat): centralize shared sem parsing helpers
+
+## 2026-02-17
+
+HC-43 Phase 1 hard-cutover replay completed task-by-task; all replay tasks closed
+

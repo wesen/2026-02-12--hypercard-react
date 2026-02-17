@@ -815,3 +815,141 @@ A repo typecheck run also passed after this verification pass.
 - Typecheck output summary:
   - `> typecheck`
   - `> tsc --build`
+
+---
+
+## Step 10: Task-by-Task Hard-Cutover Verification - Storybook/App-Boot Boundary Docs
+
+I verified that the Storybook/app-boot boundary doc still matches current code and added a dated verification snapshot section with source pointers. This closes the final replay task and keeps the doc auditable without introducing compatibility/migration language.
+
+After this step, the hard-cutover replay task list is fully complete.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 6)
+
+**Assistant interpretation:** Complete the final Phase 1 replay task by validating and tightening Storybook/app-boot ownership docs.
+
+**Inferred user intent:** Keep architectural docs reliable so low-risk cleanup decisions stay easy to validate.
+
+### What I did
+
+- Audited Storybook config and scripts:
+  - `apps/inventory/.storybook/main.ts`
+  - `apps/inventory/.storybook/preview.ts`
+  - `package.json`
+- Audited app boot entrypoints:
+  - `apps/inventory/src/main.tsx`
+  - `apps/todo/src/main.tsx`
+  - `apps/crm/src/main.tsx`
+  - `apps/book-tracker-debug/src/main.tsx`
+- Updated documentation with replay verification snapshot:
+  - `docs/frontend/storybook-and-app-boot-model.md`
+
+### Why
+
+- The final Phase 1 replay item is documentation correctness under hard-cutover assumptions.
+
+### What worked
+
+- Existing doc content was materially correct; only verification metadata was added.
+
+### What didn't work
+
+- N/A in this step.
+
+### What I learned
+
+- Storybook remains hosted under inventory but intentionally serves workspace-wide stories, so the ownership note remains important.
+
+### What was tricky to build
+
+- The main risk was hidden drift between docs and config location assumptions; validating both config files and root scripts removed that ambiguity.
+
+### What warrants a second pair of eyes
+
+- Confirm any future Storybook config relocation updates this document and HC-43 references in lockstep.
+
+### What should be done in the future
+
+- Keep this document updated when Storybook/addon config changes or app boot contract changes.
+
+### Code review instructions
+
+- Review updated document:
+  - `docs/frontend/storybook-and-app-boot-model.md`
+- Cross-check source-of-truth files:
+  - `apps/inventory/.storybook/main.ts`
+  - `apps/inventory/.storybook/preview.ts`
+  - `apps/inventory/src/main.tsx`
+  - `apps/todo/src/main.tsx`
+  - `apps/crm/src/main.tsx`
+  - `apps/book-tracker-debug/src/main.tsx`
+  - `package.json`
+
+### Technical details
+
+- Verification focused on path ownership and boot wiring consistency, not runtime behavior changes.
+
+---
+
+## Step 11: Close HC-43 After Hard-Cutover Replay Completion
+
+With replay tasks 12-17 complete, I closed the HC-43 ticket and aligned index status text back to complete. This finalizes the requested "do the same work" replay in a task-by-task audited sequence.
+
+All replay tasks were completed without adding backward-compatibility shims, feature flags, or migration layers.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 6)
+
+**Assistant interpretation:** Finish execution, keep diary updated, and complete the ticket lifecycle once all replay tasks are done.
+
+**Inferred user intent:** Have a cleanly closed, traceable HC-43 Phase 1 replay that future developers can trust.
+
+### What I did
+
+- Closed ticket via:
+  - `docmgr ticket close --ticket HC-43-FRONTEND-ASSESSMENT --changelog-entry "HC-43 Phase 1 hard-cutover replay completed task-by-task; all replay tasks closed"`
+- Updated status prose in:
+  - `ttmp/2026/02/17/HC-43-FRONTEND-ASSESSMENT--frontend-codebase-deep-assessment-and-cleanup-roadmap/index.md`
+
+### Why
+
+- Ticket metadata and human-readable status block should agree after closure.
+
+### What worked
+
+- `docmgr ticket close` updated frontmatter status and changelog entry successfully.
+- Task list now shows `17/17` complete.
+
+### What didn't work
+
+- `docmgr ticket close` does not rewrite the prose status line in `index.md`; manual edit was needed.
+
+### What I learned
+
+- For ticket closure hygiene, always verify both frontmatter status and body status text.
+
+### What was tricky to build
+
+- Preventing drift between machine-managed status fields and manually written prose status sections required a final explicit consistency pass.
+
+### What warrants a second pair of eyes
+
+- Confirm there are no downstream automation assumptions tied to the previous in-progress status text.
+
+### What should be done in the future
+
+- N/A
+
+### Code review instructions
+
+- Verify closure artifacts:
+  - `ttmp/2026/02/17/HC-43-FRONTEND-ASSESSMENT--frontend-codebase-deep-assessment-and-cleanup-roadmap/index.md`
+  - `ttmp/2026/02/17/HC-43-FRONTEND-ASSESSMENT--frontend-codebase-deep-assessment-and-cleanup-roadmap/tasks.md`
+  - `ttmp/2026/02/17/HC-43-FRONTEND-ASSESSMENT--frontend-codebase-deep-assessment-and-cleanup-roadmap/changelog.md`
+
+### Technical details
+
+- Final task state: all replay tasks complete (`[12]` through `[17]` all checked).
