@@ -181,10 +181,19 @@ export function useWindowInteractionController({
     ],
   );
 
+  const beginMove = useCallback(
+    (windowId: string, event: ReactPointerEvent<HTMLElement>) => beginInteraction('move', windowId, event),
+    [beginInteraction],
+  );
+
+  const beginResize = useCallback(
+    (windowId: string, event: ReactPointerEvent<HTMLElement>) => beginInteraction('resize', windowId, event),
+    [beginInteraction],
+  );
+
   return {
-    beginMove: (windowId: string, event: ReactPointerEvent<HTMLElement>) => beginInteraction('move', windowId, event),
-    beginResize: (windowId: string, event: ReactPointerEvent<HTMLElement>) =>
-      beginInteraction('resize', windowId, event),
+    beginMove,
+    beginResize,
     stopInteraction,
   };
 }

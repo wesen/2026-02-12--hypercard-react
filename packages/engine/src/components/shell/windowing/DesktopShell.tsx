@@ -12,6 +12,10 @@ import {
 } from '../../../features/windowing/selectors';
 import type { WindowInstance } from '../../../features/windowing/types';
 import {
+  beginWindowInteraction,
+  cancelWindowInteraction,
+  clearWindowInteraction,
+  commitWindowInteraction,
   clearDesktopTransient,
   closeWindow,
   focusWindow,
@@ -20,13 +24,13 @@ import {
   resizeWindow,
   setActiveMenu,
   setSelectedIcon,
+  updateWindowInteractionDraft,
 } from '../../../features/windowing/windowingSlice';
 import { PARTS } from '../../../parts';
 import { HyperCardTheme } from '../../../theme/HyperCardTheme';
 import { Toast } from '../../widgets/Toast';
 import { DesktopIconLayer } from './DesktopIconLayer';
 import { DesktopMenuBar } from './DesktopMenuBar';
-import { dragOverlayStore, useDragOverlaySnapshot } from './dragOverlayStore';
 import { PluginCardSessionHost } from './PluginCardSessionHost';
 import type { DesktopIconDef, DesktopMenuSection, DesktopWindowDef } from './types';
 import { useWindowInteractionController } from './useWindowInteractionController';
@@ -108,7 +112,7 @@ export function DesktopShell({
   const activeMenuId = useSelector((s: ShellState) => selectActiveMenuId(s));
   const selectedIconId = useSelector((s: ShellState) => selectSelectedIconId(s));
   const toast = useSelector((s: ShellState) => selectToast(s));
-  const dragOverlay = useDragOverlaySnapshot();
+  const interactionDraftsById = useSelector((s: ShellState) => s.windowing.interaction.draftsById);
   const focusedWindowId = focusedWin?.id ?? null;
 
   // Generate icons from stack cards if not provided
@@ -185,23 +189,27 @@ export function DesktopShell({
 
   const windowDefs = useMemo(() => {
     return windows.map((w) => {
-      const draft = dragOverlay.draftsById[w.id];
+      const draft = interactionDraftsById[w.id];
       if (!draft) return toWindowDef(w, w.id === focusedWin?.id);
       return {
         ...toWindowDef(w, w.id === focusedWin?.id),
         x: draft.x,
         y: draft.y,
-        width: draft.width,
-        height: draft.height,
+        width: draft.w,
+        height: draft.h,
       };
     });
-  }, [dragOverlay.draftsById, focusedWin?.id, windows]);
+  }, [focusedWin?.id, interactionDraftsById, windows]);
 
   const windowDefsById = useMemo(() => {
     const byId: Record<string, DesktopWindowDef> = {};
     for (const win of windowDefs) byId[win.id] = win;
     return byId;
   }, [windowDefs]);
+  const windowDefsByIdRef = useRef(windowDefsById);
+  useEffect(() => {
+    windowDefsByIdRef.current = windowDefsById;
+  }, [windowDefsById]);
 
   const windowsById = useMemo(() => {
     const byId: Record<string, WindowInstance> = {};
@@ -218,55 +226,63 @@ export function DesktopShell({
   );
   const handleClose = useCallback(
     (id: string) => {
-      dragOverlayStore.clear(id);
       dispatch(closeWindow(id));
     },
     [dispatch],
   );
   const handlePreviewMove = useCallback((id: string, next: { x: number; y: number }) => {
-    const win = windowDefsById[id];
+    const win = windowDefsByIdRef.current[id];
     if (!win) return;
-    dragOverlayStore.update(id, { x: next.x, y: next.y, width: win.width, height: win.height });
-  }, [windowDefsById]);
+    dispatch(
+      updateWindowInteractionDraft({
+        id,
+        bounds: { x: next.x, y: next.y, w: win.width, h: win.height },
+      }),
+    );
+  }, [dispatch]);
   const handlePreviewResize = useCallback(
     (id: string, next: { width: number; height: number }) => {
-      const win = windowDefsById[id];
+      const win = windowDefsByIdRef.current[id];
       if (!win) return;
-      dragOverlayStore.update(id, {
-        x: win.x,
-        y: win.y,
-        width: next.width,
-        height: next.height,
-      });
+      dispatch(
+        updateWindowInteractionDraft({
+          id,
+          bounds: {
+            x: win.x,
+            y: win.y,
+            w: next.width,
+            h: next.height,
+          },
+        }),
+      );
     },
-    [windowDefsById],
+    [dispatch],
   );
   const handleCommitMove = useCallback(
-    (id: string, next: { x: number; y: number }) => {
-      dispatch(moveWindow({ id, x: next.x, y: next.y }));
-      dragOverlayStore.clear(id);
+    (id: string) => {
+      dispatch(commitWindowInteraction({ id }));
     },
     [dispatch],
   );
   const handleCommitResize = useCallback(
-    (id: string, next: { width: number; height: number }) => {
-      dispatch(resizeWindow({ id, w: next.width, h: next.height }));
-      dragOverlayStore.clear(id);
+    (id: string) => {
+      dispatch(commitWindowInteraction({ id }));
     },
     [dispatch],
   );
   const handleCancelInteraction = useCallback((id: string) => {
-    dragOverlayStore.clear(id);
-  }, []);
+    dispatch(cancelWindowInteraction({ id }));
+  }, [dispatch]);
   const handleBeginInteraction = useCallback(
     (id: string, mode: 'move' | 'resize', initial: { x: number; y: number; width: number; height: number }) => {
-      dragOverlayStore.begin(id, mode, initial);
+      dispatch(beginWindowInteraction({ id, mode, bounds: { x: initial.x, y: initial.y, w: initial.width, h: initial.height } }));
     },
-    [],
+    [dispatch],
   );
+  const getWindowDefById = useCallback((id: string) => windowDefsByIdRef.current[id], []);
 
   const { beginMove, beginResize } = useWindowInteractionController({
-    getWindowById: (id) => windowDefsById[id],
+    getWindowById: getWindowDefById,
     onBeginWindowInteraction: handleBeginInteraction,
     onMoveWindow: handlePreviewMove,
     onResizeWindow: handlePreviewResize,
@@ -278,12 +294,10 @@ export function DesktopShell({
   });
 
   useEffect(() => {
-    return () => dragOverlayStore.clearAll();
-  }, []);
-
-  useEffect(() => {
-    dragOverlayStore.pruneMissing(windows.map((w) => w.id));
-  }, [windows]);
+    return () => {
+      dispatch(clearWindowInteraction());
+    };
+  }, [dispatch]);
 
   const openCardWindow = useCallback(
     (cardId: string) => {
@@ -335,7 +349,7 @@ export function DesktopShell({
         return;
       }
       if (commandId === 'window.tile') {
-        dragOverlayStore.clearAll();
+        dispatch(clearWindowInteraction());
         windows.forEach((w, i) => {
           dispatch(moveWindow({ id: w.id, x: 140 + (i % 3) * 300, y: 10 + Math.floor(i / 3) * 260 }));
           dispatch(resizeWindow({ id: w.id, w: 280, h: 240 }));
@@ -343,7 +357,7 @@ export function DesktopShell({
         return;
       }
       if (commandId === 'window.cascade') {
-        dragOverlayStore.clearAll();
+        dispatch(clearWindowInteraction());
         windows.forEach((w, i) => {
           dispatch(moveWindow({ id: w.id, x: 140 + i * 36, y: 20 + i * 28 }));
           dispatch(resizeWindow({ id: w.id, w: 420, h: 340 }));
@@ -447,8 +461,8 @@ export function DesktopShell({
           windows={windowDefs}
           onFocusWindow={handleFocus}
           onCloseWindow={handleClose}
-          onWindowDragStart={(id, event) => beginMove(id, event)}
-          onWindowResizeStart={(id, event) => beginResize(id, event)}
+          onWindowDragStart={beginMove}
+          onWindowResizeStart={beginResize}
           renderWindowBody={renderWindowBody}
         />
         {toast && <Toast message={toast} onDone={() => dispatch(clearToast())} />}

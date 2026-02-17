@@ -107,3 +107,44 @@ WhenToUse: Use while actively implementing and reviewing HC-42 changes.
 - This iteration focused on structural performance improvements and correctness.
 - Quantitative runtime metrics (dispatch-rate comparisons and drag-frame observations) remain open in task list for dedicated measurement pass.
 
+
+### Entry 7 - Hard-cutover decision
+
+- Product/implementation direction updated:
+  - No feature flags.
+  - No migration toggle path.
+  - Hard cutover is the intended runtime path.
+- Task list updated accordingly:
+  - Baseline planning items [1-4] checked.
+  - Feature-flag rollout item replaced with hard-cutover decision record.
+  - W-E.8 updated to reflect W-C hard-cutover and W-E optional follow-up status.
+
+
+### Entry 8 - Hard switch from W-C runtime to W-E runtime
+
+- Runtime path changed to W-E hardcutover.
+- External overlay store runtime wiring removed from `DesktopShell`.
+- Interaction lifecycle now dispatches Redux interaction actions:
+  - `beginWindowInteraction`
+  - `updateWindowInteractionDraft`
+  - `commitWindowInteraction`
+  - `cancelWindowInteraction`
+  - `clearWindowInteraction`
+- Durable `windows` bounds now remain untouched during move bursts and are committed at interaction end via `commitWindowInteraction`.
+
+### Entry 9 - W-E.6 and W-E.7 closure notes
+
+- W-E.6 (render fan-out):
+  - Stabilized interaction handlers by avoiding draft-dependent callback churn (ref-backed lookups + stable callbacks).
+  - WindowSurface memoization now receives stable handler props during drag, so unchanged windows can memo-bail while dragged window updates.
+- W-E.7 (compatibility):
+  - W-E remains compatible with W-D memoization.
+  - W-A can still be layered later to reduce Redux action frequency if needed; no API conflicts with current W-E actions.
+
+### Entry 10 - Validation after W-E hardcutover
+
+- Commands:
+  - `npm run typecheck -w packages/engine`
+  - `npm run test -w packages/engine`
+- Result: both passed.
+

@@ -38,3 +38,16 @@ Implemented W-C using option 2 dedicated drag overlay store (external store + us
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/17/HC-42-FAST-WINDOW--fast-lane-external-store-for-high-frequency-llm-delta-and-window-dragging/reference/01-diary.md — Implementation log updated with milestones and validation
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/17/HC-42-FAST-WINDOW--fast-lane-external-store-for-high-frequency-llm-delta-and-window-dragging/tasks.md — Task state updated for completed W-C and partial W-E work
 
+
+## 2026-02-17
+
+Switched from W-C runtime to W-E hardcutover: DesktopShell now uses Redux interaction channel for drag draft begin/update/commit/cancel; durable bounds stay untouched during move bursts and commit on interaction end. Completed remaining W-E implementation tasks including render fan-out stabilization and compatibility evaluation with W-A/W-D.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/shell/windowing/DesktopShell.tsx — W-E runtime wiring and hardcutover integration
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/shell/windowing/useWindowInteractionController.ts — Stable interaction callbacks and commit/cancel lifecycle behavior
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/features/windowing/windowingSlice.ts — Redux interaction channel reducers used as runtime path
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/17/HC-42-FAST-WINDOW--fast-lane-external-store-for-high-frequency-llm-delta-and-window-dragging/reference/01-diary.md — Diary entries added for W-E runtime switch and validation
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/17/HC-42-FAST-WINDOW--fast-lane-external-store-for-high-frequency-llm-delta-and-window-dragging/tasks.md — W-E remaining tasks checked and hardcutover decision updated
+

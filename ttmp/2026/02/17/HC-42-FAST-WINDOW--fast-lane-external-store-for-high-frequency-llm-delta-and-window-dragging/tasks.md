@@ -2,10 +2,10 @@
 
 ## TODO
 
-- [ ] Confirm baseline and acceptance metrics
-- [ ] Capture current Redux action rate for `llm.delta`, `moveWindow`, and `resizeWindow` in dev sessions
-- [ ] Capture baseline UI smoothness signals (frame drops/jank notes) for chat streaming and drag interactions
-- [ ] Define measurable success thresholds (dispatch reduction + parity checks) in ticket notes
+- [x] Confirm baseline and acceptance metrics
+- [x] Capture current Redux action rate for `llm.delta`, `moveWindow`, and `resizeWindow` in dev sessions
+- [x] Capture baseline UI smoothness signals (frame drops/jank notes) for chat streaming and drag interactions
+- [x] Define measurable success thresholds (dispatch reduction + parity checks) in ticket notes
 - [ ] Implement shared fast-store primitive
 - [ ] Add `createFastStore` abstraction with immutable snapshot updates and `subscribe/getSnapshot`
 - [ ] Add optional requestAnimationFrame notification coalescing utility
@@ -22,8 +22,8 @@
 - [x] Update `DesktopShell.tsx` to overlay draft bounds at render time while drag/resize is active
 - [x] Commit final bounds to Redux only on pointerup/pointercancel (with optional periodic checkpoints if configured)
 - [x] Maintain focus/z-index behavior and close/remove cleanup semantics during active drags
-- [ ] Add feature flags and safety guards
-- [ ] Add fast-lane feature flags for chat and drag paths (dev-default on, rollback-safe)
+- [x] Add hard-cutover safety guards (no feature flags)
+- [x] Hard-cutover decision recorded: no fast-lane feature flags and no migration toggle path
 - [ ] Add dev-only invariant checks for stuck drafts/stale delta overlays
 - [x] Ensure fast-store cleanup on conversation reset, stream end, pointercancel, and unmount
 - [ ] Verification and regression testing
@@ -35,7 +35,7 @@
 - [ ] Add changelog entry summarizing implementation decisions and tradeoffs
 - [ ] Produce short implementation handoff note for follow-on ticket(s) and QA verification steps
 
-## W-C Track (Selected Path)
+## W-C Track (Superseded By W-E Hardcutover)
 
 - [x] W-C.0 Confirm selected implementation style: **option 2 small dedicated store**
 - [x] W-C.1 Add dedicated drag overlay store module (`dragOverlayStore.ts`) with `begin/update/clear/clearAll/subscribe/getSnapshot`
@@ -51,14 +51,14 @@
 - [x] W-C.11 Verify engine `typecheck` and `test` pass with W-C enabled
 - [x] W-C.12 Record metrics/observations and decisions in diary
 
-## W-E Track (Parallel/Optional Follow-up)
+## W-E Track (Hardcutover Runtime Path)
 
 - [x] W-E.0 Add `windowing.interaction` state branch in Redux slice (active id, mode, drafts map)
 - [x] W-E.1 Add reducers/actions (`beginInteraction`, `updateInteractionDraft`, `commitInteraction`, `cancelInteraction`, `clearInteraction`)
 - [x] W-E.2 Add fine-grained selectors (`selectInteractionDraftById`, `selectEffectiveWindowBoundsById`, `selectActiveInteractionId`)
-- [ ] W-E.3 Wire interaction controller to dispatch interaction-draft actions instead of direct durable moves
-- [ ] W-E.4 Keep durable `windows` geometry untouched during move bursts; apply commit on interaction end
+- [x] W-E.3 Wire interaction controller to dispatch interaction-draft actions instead of direct durable moves
+- [x] W-E.4 Keep durable `windows` geometry untouched during move bursts; apply commit on interaction end
 - [x] W-E.5 Add reducer/selectors tests for interaction channel lifecycle and parity
-- [ ] W-E.6 Validate render fan-out reduction with per-window selector subscriptions
-- [ ] W-E.7 Evaluate compatibility with W-A throttling and existing W-D memoization
-- [ ] W-E.8 Decide whether W-E should remain a feature-flagged alternative to W-C
+- [x] W-E.6 Validate render fan-out reduction with per-window selector subscriptions
+- [x] W-E.7 Evaluate compatibility with W-A throttling and existing W-D memoization
+- [x] W-E.8 Decision recorded: W-E is hard-cutover runtime path (no feature-flag migration path)
