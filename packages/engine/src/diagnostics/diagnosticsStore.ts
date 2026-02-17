@@ -136,3 +136,26 @@ function computeTopActionRates(
     .sort((a, b) => b.perSec - a.perSec)
     .slice(0, topN);
 }
+
+/**
+ * Compute per-action-type rates over a short interval (for sparkline samples).
+ *
+ * Unlike `computeSnapshot().topActionRates` which uses the full rolling window,
+ * this counts only events in the last `intervalMs` to produce instantaneous rates
+ * without overlap-smoothing between consecutive poll ticks.
+ */
+export function computeInstantRates(intervalMs: number): ActionRate[] {
+  const now = Date.now();
+  const sinceTs = now - intervalMs;
+  const intervalSec = intervalMs / 1000;
+  const windowEvents = ringWindowSince<ReduxPerfEvent>(events, sinceTs);
+
+  const counts = new Map<string, number>();
+  for (const e of windowEvents) {
+    if (e.type.startsWith(DIAGNOSTICS_PREFIX)) continue;
+    counts.set(e.type, (counts.get(e.type) ?? 0) + 1);
+  }
+  return Array.from(counts.entries())
+    .map(([type, count]) => ({ type, perSec: count / intervalSec }))
+    .sort((a, b) => b.perSec - a.perSec);
+}

@@ -20,6 +20,7 @@ export {
 } from './ringBuffer';
 
 export {
+  computeInstantRates,
   computeP95,
   computeSnapshot,
   getDiagnosticsConfig,

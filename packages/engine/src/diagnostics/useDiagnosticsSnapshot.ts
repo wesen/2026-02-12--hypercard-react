@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  computeInstantRates,
   computeSnapshot,
   getDiagnosticsConfig,
   isDiagnosticsPaused,
@@ -128,10 +129,15 @@ export function useDiagnosticsSnapshot(pollMs = DEFAULT_POLL_MS): {
         const snap = computeSnapshot();
         setSnapshot(snap);
 
+        // Use instant rates (events in last pollMs only) for sparkline data
+        // instead of snap.topActionRates which uses the full rolling window
+        // and causes overlap-smoothing between consecutive ticks.
+        const instantRates = computeInstantRates(pollMs);
+
         const now = Date.now();
         historyRef.current = accumulateHistory(
           historyRef.current,
-          snap.topActionRates,
+          instantRates,
           now,
           SPARKLINE_LENGTH,
           LINGER_MS,

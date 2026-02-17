@@ -8,6 +8,7 @@ import {
   ringToArray,
 } from '../diagnostics/ringBuffer';
 import {
+  computeInstantRates,
   computeP95,
   computeSnapshot,
   initDiagnostics,
@@ -197,6 +198,24 @@ describe('diagnosticsStore', () => {
     expect(isDiagnosticsPaused()).toBe(true);
     toggleDiagnosticsPause();
     expect(isDiagnosticsPaused()).toBe(false);
+  });
+
+  it('computeInstantRates counts only events within the given interval', () => {
+    const now = Date.now();
+    // Events spread across time
+    pushPerfEvent({ ts: now - 2000, type: 'old/action', durationMs: 1, changed: true });
+    pushPerfEvent({ ts: now - 200, type: 'recent/action', durationMs: 1, changed: true });
+    pushPerfEvent({ ts: now - 100, type: 'recent/action', durationMs: 1, changed: true });
+    pushPerfEvent({ ts: now - 50, type: 'recent/action', durationMs: 1, changed: true });
+
+    // 500ms window: should only see the 3 recent events
+    const rates = computeInstantRates(500);
+    const recentRate = rates.find((r) => r.type === 'recent/action');
+    const oldRate = rates.find((r) => r.type === 'old/action');
+
+    expect(recentRate).toBeDefined();
+    expect(recentRate!.perSec).toBeCloseTo(3 / 0.5, 0); // 6/sec
+    expect(oldRate).toBeUndefined(); // outside the 500ms window
   });
 });
 
