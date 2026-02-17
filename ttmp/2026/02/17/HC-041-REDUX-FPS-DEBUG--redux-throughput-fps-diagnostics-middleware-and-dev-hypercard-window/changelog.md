@@ -29,3 +29,22 @@ Phase 1: Created diagnostics module with types, ring buffer, middleware, frame m
 
 Design review: identified that storing diagnostics data in Redux (reduxPerfSlice, recordPerfEvent/recordFrameEvent actions) causes ~120 dispatches/sec overhead from frame monitoring alone, pollutes top-action-rates, and invalidates all useSelector calls app-wide. Added 12 refactor tasks (52–63) to move all diagnostics state to module-level plain ring buffers with a polling hook.
 
+
+## 2026-02-17
+
+Refactor complete (tasks 52–63, commit 02d5496): moved all diagnostics out of Redux. Deleted reduxPerfSlice.ts + selectors.ts. Added diagnosticsStore.ts (module-level ring buffers) + useDiagnosticsSnapshot.ts (polling hook). Middleware and frame monitor no longer dispatch. Zero Redux overhead from diagnostics.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/diagnostics/diagnosticsStore.ts — New module-level diagnostics storage (replaces reduxPerfSlice)
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/diagnostics/useDiagnosticsSnapshot.ts — New polling hook (replaces useSelector)
+
+
+## 2026-02-17
+
+Unit tests complete (25 tests, commit 740b435). Docs updated: design doc with deviations, reference doc with final file map, enablement guide, and manual verification runbook.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/__tests__/diagnostics.test.ts — 25 unit tests for diagnostics
+

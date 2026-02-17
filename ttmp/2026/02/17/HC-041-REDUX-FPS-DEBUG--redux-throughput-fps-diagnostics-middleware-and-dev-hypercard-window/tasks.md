@@ -3,9 +3,9 @@
 ## TODO
 
 ### Phase 0: Baseline and acceptance criteria
-- [ ] Confirm target apps for initial rollout (inventory first, others opt-in later).
-- [ ] Confirm exact metrics contract (`actions/sec`, `stateChanges/sec`, `avg/p95 reducer ms`, `fps`, `longFrames/sec`).
-- [ ] Confirm dev-only policy and production behavior (disabled by default).
+- [x] Confirm target apps for initial rollout (inventory first, others opt-in later).
+- [x] Confirm exact metrics contract (`actions/sec`, `stateChanges/sec`, `avg/p95 reducer ms`, `fps`, `longFrames/sec`).
+- [x] Confirm dev-only policy and production behavior (disabled by default).
 - [ ] Capture baseline manual profile notes before implementation (chat stream + drag).
 
 ### Phase 1: Engine diagnostics core
@@ -47,36 +47,36 @@
 - [x] Ensure diagnostics UI does not create runaway render overhead.
 
 ### Phase 5: Testing
-- [ ] Unit test: rolling throughput math.
-- [ ] Unit test: p95 calculation.
-- [ ] Unit test: long-frame aggregation.
-- [ ] Unit test: diagnostics middleware state-change detection.
-- [ ] Unit test: diagnostics disabled path in store factory.
-- [ ] Unit test: diagnostics enabled path in store factory.
+- [x] Unit test: rolling throughput math.
+- [x] Unit test: p95 calculation.
+- [x] Unit test: long-frame aggregation.
+- [x] Unit test: diagnostics middleware state-change detection.
+- [x] Unit test: diagnostics disabled path in store factory.
+- [x] Unit test: diagnostics enabled path in store factory.
 - [ ] Integration test: inventory dev startup opens diagnostics window (guarded).
 - [ ] Integration test: diagnostics window reopen behavior via menu/icon command.
 
 ### Phase 6: Documentation and handoff
-- [ ] Update HC-041 changelog with implementation outcome.
-- [ ] Update HC-041 design doc with final implementation notes and deviations.
-- [ ] Update HC-041 reference doc with final file paths and API signatures.
-- [ ] Add quick “how to enable in another app” section.
-- [ ] Record manual verification runbook and expected metric ranges.
+- [x] Update HC-041 changelog with implementation outcome.
+- [x] Update HC-041 design doc with final implementation notes and deviations.
+- [x] Update HC-041 reference doc with final file paths and API signatures.
+- [x] Add quick “how to enable in another app” section.
+- [x] Record manual verification runbook and expected metric ranges.
 
 ### Stretch follow-ups (not required for first merge)
 - [ ] Add optional sampling mode for very high action rates.
 - [ ] Add export/download snapshot button for diagnostics report sharing.
 - [ ] Add compact widget mode for always-on low-footprint diagnostics.
 - [ ] Add cross-app toggle in engine so non-inventory apps can enable via env flag.
-- [ ] Refactor: remove reduxPerfSlice.ts — move all diagnostics state out of Redux into module-level plain ring buffers.
-- [ ] Refactor: remove recordPerfEvent/recordFrameEvent actions — middleware writes directly to external ring buffer, no dispatch.
-- [ ] Refactor: frameMonitor writes to plain module-level ring buffer instead of dispatching recordFrameEvent.
-- [ ] Refactor: reduxPerfMiddleware writes to plain module-level ring buffer instead of dispatching recordPerfEvent.
-- [ ] Refactor: remove reduxPerf reducer registration from createAppStore (no diagnostics reducer in store).
-- [ ] Refactor: create useDiagnosticsSnapshot hook — polls plain buffers on setInterval (~2Hz), computes snapshot, returns local state.
-- [ ] Refactor: convert pause/reset/setWindowMs from Redux actions to plain module-level function calls on external storage.
-- [ ] Refactor: update ReduxPerfWindow to use useDiagnosticsSnapshot hook instead of useSelector.
-- [ ] Refactor: filter diagnostics-internal action types (reduxPerf/*) from top-action-rates table.
-- [ ] Refactor: update diagnostics barrel exports (index.ts) — remove slice/action exports, add hook and plain-buffer API.
-- [ ] Refactor: verify all apps still compile after removing reduxPerf reducer from store.
-- [ ] Refactor: update unit tests for new non-Redux storage model.
+- [x] Refactor: remove reduxPerfSlice.ts — move all diagnostics state out of Redux into module-level plain ring buffers.
+- [x] Refactor: remove recordPerfEvent/recordFrameEvent actions — middleware writes directly to external ring buffer, no dispatch.
+- [x] Refactor: frameMonitor writes to plain module-level ring buffer instead of dispatching recordFrameEvent.
+- [x] Refactor: reduxPerfMiddleware writes to plain module-level ring buffer instead of dispatching recordPerfEvent.
+- [x] Refactor: remove reduxPerf reducer registration from createAppStore (no diagnostics reducer in store).
+- [x] Refactor: create useDiagnosticsSnapshot hook — polls plain buffers on setInterval (~2Hz), computes snapshot, returns local state.
+- [x] Refactor: convert pause/reset/setWindowMs from Redux actions to plain module-level function calls on external storage.
+- [x] Refactor: update ReduxPerfWindow to use useDiagnosticsSnapshot hook instead of useSelector.
+- [x] Refactor: filter diagnostics-internal action types (reduxPerf/*) from top-action-rates table.
+- [x] Refactor: update diagnostics barrel exports (index.ts) — remove slice/action exports, add hook and plain-buffer API.
+- [x] Refactor: verify all apps still compile after removing reduxPerf reducer from store.
+- [x] Refactor: update unit tests for new non-Redux storage model.

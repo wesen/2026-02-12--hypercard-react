@@ -11,13 +11,28 @@ Topics:
 DocType: reference
 Intent: long-term
 Owners: []
-RelatedFiles: []
+RelatedFiles:
+    - Path: 2026-02-12--hypercard-react/apps/inventory/src/features/debug/ReduxPerfWindow.tsx
+      Note: Live diagnostics panel UI
+    - Path: 2026-02-12--hypercard-react/packages/engine/src/__tests__/diagnostics.test.ts
+      Note: 25 unit tests
+    - Path: 2026-02-12--hypercard-react/packages/engine/src/app/createAppStore.ts
+      Note: Store factory with diagnostics wiring
+    - Path: 2026-02-12--hypercard-react/packages/engine/src/diagnostics/diagnosticsStore.ts
+      Note: Module-level diagnostics storage (core of the refactor)
+    - Path: 2026-02-12--hypercard-react/packages/engine/src/diagnostics/frameMonitor.ts
+      Note: rAF frame monitor (writes to external store)
+    - Path: 2026-02-12--hypercard-react/packages/engine/src/diagnostics/reduxPerfMiddleware.ts
+      Note: Timing middleware (writes to external store)
+    - Path: 2026-02-12--hypercard-react/packages/engine/src/diagnostics/useDiagnosticsSnapshot.ts
+      Note: React polling hook
 ExternalSources: []
-Summary: "Step-by-step implementation diary for HC-041: Redux throughput/FPS diagnostics middleware and dev HyperCard window."
+Summary: 'Step-by-step implementation diary for HC-041: Redux throughput/FPS diagnostics middleware and dev HyperCard window.'
 LastUpdated: 2026-02-17T08:41:40.019504409-05:00
-WhatFor: "Track implementation progress, decisions, issues, and review instructions for HC-041."
-WhenToUse: "Use when reviewing, continuing, or onboarding on HC-041 diagnostics work."
+WhatFor: Track implementation progress, decisions, issues, and review instructions for HC-041.
+WhenToUse: Use when reviewing, continuing, or onboarding on HC-041 diagnostics work.
 ---
+
 
 # Diary
 
@@ -248,3 +263,160 @@ Diagnostics telemetry is write-heavy, single-consumer, observation-only data. Re
 ### Code review instructions
 - Review tasks 52–63 in `tasks.md` for completeness.
 - No code changes to review in this step.
+
+## Step 5: Refactor — move diagnostics out of Redux (Tasks 52–63)
+
+Executed the refactor planned in Step 4. Deleted `reduxPerfSlice.ts` and `selectors.ts`. Created `diagnosticsStore.ts` (module-level ring buffers with write/control/snapshot APIs) and `useDiagnosticsSnapshot.ts` (polling hook at ~2Hz). Rewrote middleware and frame monitor to write directly to plain buffers — zero Redux dispatches from diagnostics. Updated `createAppStore` to remove reducer registration. Simplified `ReduxPerfWindow` to use the hook instead of `useSelector`/`useDispatch`.
+
+### Prompt Context
+
+**User prompt (verbatim):** "go ahead"
+
+(Preceded by: "commit at opportune intervals")
+
+**Assistant interpretation:** Implement the refactor tasks 52–63 that were planned in Step 4, committing at natural boundaries.
+
+**Inferred user intent:** Complete the architectural fix so diagnostics don't pollute the Redux store they're measuring.
+
+**Commit (code):** 02d5496 — "HC-041: Refactor — move diagnostics out of Redux into module-level store"
+
+### What I did
+- Deleted `reduxPerfSlice.ts` (Redux slice, actions, reducer).
+- Deleted `selectors.ts` (Redux selectors with createSelector).
+- Created `diagnosticsStore.ts`: module-level `RingBufferState` instances for events and frames, write functions (`pushPerfEvent`, `pushFrameEvent`), control functions (`resetDiagnostics`, `toggleDiagnosticsPause`, `setDiagnosticsWindowMs`), `computeSnapshot()` with all rolling-window math moved here, `computeTopActionRates` now filters `reduxPerf/*` prefix.
+- Created `useDiagnosticsSnapshot.ts`: React hook using `setInterval` at configurable poll rate, returns `{ snapshot, paused, windowMs }` as local state. No `useSelector`.
+- Rewrote `reduxPerfMiddleware.ts`: removed import of `recordPerfEvent`, calls `pushPerfEvent()` directly. No self-dispatch guard needed (no dispatches at all).
+- Rewrote `frameMonitor.ts`: removed `Dispatch` parameter, calls `pushFrameEvent()` directly. Signature changed from `startFrameMonitor(dispatch)` to `startFrameMonitor()`.
+- Updated `createAppStore.ts`: removed `reduxPerfReducer` import and conditional spread, calls `initDiagnostics()` when enabled, `startFrameMonitor()` takes no args.
+- Updated `ReduxPerfWindow.tsx`: imports from `@hypercard/engine` changed to `useDiagnosticsSnapshot`, `resetDiagnostics`, `toggleDiagnosticsPause`, `setDiagnosticsWindowMs`. Removed `useDispatch` and `useSelector`. Component is simpler.
+- Updated `diagnostics/index.ts` barrel: removed slice/action/selector exports, added store/hook exports.
+- Verified all 4 apps compile cleanly.
+
+### Why
+Diagnostics telemetry is write-heavy (~60 frame events/sec + N perf events/sec), single-consumer (one UI panel), observation-only data. Storing it in Redux caused: ~120 dispatches/sec from frame monitoring alone, invalidation of all `useSelector` equality checks app-wide, useless `createSelector` memoization (input changed every dispatch), and pollution of the metrics it was trying to measure (observer effect).
+
+### What worked
+- Clean separation: the middleware is still a Redux middleware (it needs to wrap `next(action)` to time reducers), but it writes to an external buffer instead of dispatching.
+- The polling hook is simple and predictable: `setInterval` → `computeSnapshot()` → `setState`. No subscription cascade.
+- Net diff: +250/-240 lines — roughly same code volume, completely different architecture.
+
+### What didn't work
+- N/A — clean implementation of the planned refactor.
+
+### What I learned
+- Module-level mutable state is fine for single-writer, single-reader telemetry. The "everything in Redux" instinct is counterproductive for observation data.
+- The ring buffer helper (`ringBuffer.ts`) works equally well outside Redux — it was already plain-object-based, just happened to be stored in Immer state before. No changes needed to the ring buffer itself.
+
+### What was tricky to build
+- `frameMonitor` signature change: it previously took `dispatch: Dispatch` and now takes no arguments. Had to update `createAppStore` to match. Simple but easy to miss.
+- `useDiagnosticsSnapshot` needs to return `paused` and `windowMs` as React state so the UI can react to control changes. These are read from the module-level store on each poll tick.
+
+### What warrants a second pair of eyes
+- Module-level mutable state means diagnostics is a singleton. If two stores are created (e.g. Storybook), they share the same diagnostics buffers. This is fine for dev tooling but worth documenting.
+- The `initDiagnostics()` call in `createAppStore` resets buffers. If `createStore()` factory is called multiple times (Storybook), `initDiagnostics` runs once (at module scope in `createAppStore`), but `startFrameMonitor()` runs per call. Multiple frame monitors could accumulate. Low risk since diagnostics are off in Storybook by default.
+
+### What should be done in the future
+- Add unit tests for the new `diagnosticsStore` functions and `computeSnapshot` (adapting the test plan from the original tasks 35–40).
+
+### Code review instructions
+- Start at `packages/engine/src/diagnostics/diagnosticsStore.ts` — this is the new core.
+- Compare with deleted `reduxPerfSlice.ts` and `selectors.ts` to verify all math migrated correctly.
+- Review `reduxPerfMiddleware.ts` — confirm no dispatches.
+- Review `frameMonitor.ts` — confirm no dispatches, no Dispatch param.
+- Review `useDiagnosticsSnapshot.ts` — confirm polling pattern.
+- Review `createAppStore.ts` — confirm no reducer registration, `initDiagnostics` call.
+- Validate: `for app in inventory crm todo book-tracker-debug; do npx tsc --noEmit -p apps/$app/tsconfig.json; done`
+
+## Step 6: Unit tests (Tasks 35–40)
+
+Added 25 unit tests covering ring buffer operations, p95 calculation, rolling throughput math, frame monitoring aggregation, middleware state-change detection, and store factory enable/disable paths. All pass.
+
+### Prompt Context
+
+**User prompt (verbatim):** (same as Step 5 — "go ahead" / "commit at opportune intervals")
+
+**Assistant interpretation:** Continue implementing remaining tasks, including unit tests.
+
+**Inferred user intent:** Complete the test suite as specified in the task list.
+
+**Commit (code):** 740b435 — "HC-041: Unit tests for diagnostics (ring buffer, p95, throughput, frames, middleware, store factory)"
+
+### What I did
+- Created `packages/engine/src/__tests__/diagnostics.test.ts` with 25 tests in 6 describe blocks.
+- Ring buffer: push, wrap/evict, windowSince, clear, toArray.
+- p95: empty, single, sorted, unsorted inputs.
+- Diagnostics store: empty snapshot, actions/sec, state changes vs non-changes, avg/p95 latency, top action rates, reduxPerf/* filtering, window expiry, reset, windowMs config, pause toggle.
+- Frame monitoring: FPS computation, long-frame counting, edge cases.
+- Middleware: state-change detection with a real configureStore, action type recording.
+- Store factory paths: disabled (no diagnostics), enabled (middleware records without reducer).
+
+### Why
+Validates the core math and behavior that the diagnostics UI depends on.
+
+### What worked
+- All 25 tests pass in 9ms. The module-level store pattern is easy to test — just call `initDiagnostics()` in `beforeEach` and use the write/read functions directly.
+
+### What didn't work
+- N/A
+
+### What I learned
+- Testing module-level mutable state requires `beforeEach` reset via `initDiagnostics()`. Without it, tests leak state between runs.
+
+### What was tricky to build
+- N/A — straightforward test implementation.
+
+### What warrants a second pair of eyes
+- The middleware test uses a real `configureStore` with a toy reducer. If RTK changes its default middleware behavior, these tests could break on upgrade.
+
+### What should be done in the future
+- Integration tests for the React component and window lifecycle (Tasks 41–42) would complete coverage but require a React test renderer setup.
+
+### Code review instructions
+- Read `packages/engine/src/__tests__/diagnostics.test.ts`.
+- Run: `npx vitest run packages/engine/src/__tests__/diagnostics.test.ts`
+
+## Step 7: Documentation updates (Tasks 43–47)
+
+Updated all ticket documentation: design doc with implementation deviations (major: Redux→module-level store), reference doc with final file map and API snippets, "how to enable in another app" guide, and manual verification runbook with expected metric ranges.
+
+### Prompt Context
+
+**User prompt (verbatim):** (same as Step 5)
+
+**Assistant interpretation:** Complete remaining documentation tasks.
+
+**Inferred user intent:** Leave the ticket in a state where another developer can review, validate, and extend the work.
+
+**Commit (code):** (included in docs commit below)
+
+### What I did
+- Updated design doc: resolved all open questions, added "Implementation Deviations" section documenting the Redux→module-level store change, updated Definition of Done with checkmarks.
+- Updated reference doc: corrected file map to reflect final implementation (no reduxPerfSlice/selectors, added diagnosticsStore/useDiagnosticsSnapshot), updated createAppStore snippet, removed outdated reducer references.
+- Added "How to enable in another app" section with 3-step guide.
+- Added manual verification runbook with 9 test scenarios and expected metric ranges table.
+- Updated changelog with test and docs completion.
+
+### Why
+The ticket should be self-contained for review and handoff. Another developer should be able to pick it up, validate it, and enable diagnostics in their own app by reading the reference doc alone.
+
+### What worked
+- The docs now accurately reflect the final architecture (module-level store, no Redux involvement for diagnostics data).
+
+### What didn't work
+- N/A
+
+### What I learned
+- N/A
+
+### What was tricky to build
+- N/A — documentation step.
+
+### What warrants a second pair of eyes
+- The expected metric ranges in the runbook are estimates. They should be validated against actual measurements during manual testing.
+
+### What should be done in the future
+- Tasks 48–51 remain open as future enhancements (sampling mode, export button, compact widget, cross-app toggle).
+
+### Code review instructions
+- Review the design doc's "Implementation Deviations" section.
+- Review the reference doc's "How to enable in another app" and "Manual verification runbook" sections.

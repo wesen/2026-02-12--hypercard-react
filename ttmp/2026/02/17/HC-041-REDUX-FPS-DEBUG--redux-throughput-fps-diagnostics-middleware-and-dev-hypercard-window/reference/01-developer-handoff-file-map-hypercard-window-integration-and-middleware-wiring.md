@@ -78,12 +78,12 @@ This is the intended gate for startup auto-open and diagnostics enablement.
 ### Store and middleware wiring
 
 1. `packages/engine/src/app/createAppStore.ts`
-- Add optional diagnostics enable flag.
-- Attach diagnostics middleware when enabled.
-- Add diagnostics reducer slice when enabled.
+- Accepts optional `CreateAppStoreOptions` with `enableReduxDiagnostics` flag.
+- When enabled: initialises module-level diagnostics store, appends timing middleware, starts frame monitor.
+- **No diagnostics reducer in Redux** — data lives in module-level ring buffers.
 
 2. `apps/inventory/src/app/store.ts`
-- Pass diagnostics enable option from `import.meta.env.DEV`.
+- Passes `enableReduxDiagnostics: import.meta.env.DEV`.
 
 ### Dev diagnostics window integration
 
@@ -99,55 +99,34 @@ This is the intended gate for startup auto-open and diagnostics enablement.
 3. `packages/engine/src/features/windowing/types.ts`
 - No change required; already supports `content.kind = 'app'` and `appKey`.
 
-### Suggested new files for this ticket
+### Final file map (implemented)
 
-1. `packages/engine/src/diagnostics/reduxPerfMiddleware.ts`
-2. `packages/engine/src/diagnostics/frameMonitor.ts`
-3. `packages/engine/src/diagnostics/reduxPerfSlice.ts`
-4. `packages/engine/src/diagnostics/selectors.ts`
-5. `packages/engine/src/diagnostics/types.ts`
-6. `packages/engine/src/diagnostics/index.ts`
-7. `apps/inventory/src/features/debug/ReduxPerfWindow.tsx`
+1. `packages/engine/src/diagnostics/types.ts` — ReduxPerfEvent, ReduxPerfSnapshot, FrameEvent, DiagnosticsConfig
+2. `packages/engine/src/diagnostics/ringBuffer.ts` — Bounded ring-buffer helper
+3. `packages/engine/src/diagnostics/diagnosticsStore.ts` — Module-level mutable storage, write/control/snapshot APIs
+4. `packages/engine/src/diagnostics/reduxPerfMiddleware.ts` — Redux middleware (times dispatches, writes to diagnosticsStore)
+5. `packages/engine/src/diagnostics/frameMonitor.ts` — rAF loop (writes to diagnosticsStore)
+6. `packages/engine/src/diagnostics/useDiagnosticsSnapshot.ts` — React hook (polls at ~2Hz)
+7. `packages/engine/src/diagnostics/index.ts` — Barrel exports
+8. `apps/inventory/src/features/debug/ReduxPerfWindow.tsx` — Live diagnostics panel UI
+9. `packages/engine/src/__tests__/diagnostics.test.ts` — 25 unit tests
 
 ## Copy/paste integration snippets
 
-### 1) Extend `createAppStore` options
+### 1) `createAppStore` options (final)
 
 ```ts
 interface CreateAppStoreOptions {
   enableReduxDiagnostics?: boolean;
   diagnosticsWindowMs?: number;
 }
-
-export function createAppStore<T extends Record<string, Reducer>>(
-  domainReducers: T,
-  options: CreateAppStoreOptions = {},
-) {
-  const reducer = {
-    pluginCardRuntime: pluginCardRuntimeReducer,
-    windowing: windowingReducer,
-    notifications: notificationsReducer,
-    debug: debugReducer,
-    ...(options.enableReduxDiagnostics ? { reduxPerf: reduxPerfReducer } : {}),
-    ...domainReducers,
-  };
-
-  function createStore() {
-    const perfMiddleware = options.enableReduxDiagnostics
-      ? createReduxPerfMiddleware({ windowMs: options.diagnosticsWindowMs ?? 5000 })
-      : null;
-
-    return configureStore({
-      reducer,
-      middleware: (getDefault) =>
-        perfMiddleware ? getDefault().concat(perfMiddleware) : getDefault(),
-    });
-  }
-
-  const store = createStore();
-  return { store, createStore } as ...;
-}
 ```
+
+When `enableReduxDiagnostics` is true, `createAppStore`:
+- Calls `initDiagnostics({ windowMs })` to set up module-level ring buffers.
+- Appends the timing middleware (writes to external store, no Redux dispatch).
+- Starts `startFrameMonitor()` (writes to external store, no Redux dispatch).
+- **Does NOT add any reducer** — diagnostics data lives outside Redux.
 
 ### 2) Enable in inventory store (dev only)
 
@@ -254,14 +233,62 @@ Add menu command and icon in `App.tsx`:
 
 On command/icon open same `openWindow` payload with dedupe key.
 
-## Acceptance Checklist (for implementer)
+## How to enable diagnostics in another app
 
-1. Diagnostics disabled in prod by default.
-2. Diagnostics enabled in inventory dev mode.
-3. Dev window opens once at startup and can be reopened.
-4. Metrics update continuously and remain bounded in memory.
-5. Tests cover rolling-window math and slice behavior.
-6. Docs (`design-doc` + `tasks`) updated after implementation.
+1. In the app's `store.ts`, pass the diagnostics option:
+
+```ts
+const { store } = createAppStore(
+  { /* your reducers */ },
+  { enableReduxDiagnostics: import.meta.env.DEV },
+);
+```
+
+2. Create a diagnostics window component (or copy `ReduxPerfWindow.tsx`):
+
+```tsx
+import { useDiagnosticsSnapshot, resetDiagnostics, toggleDiagnosticsPause, setDiagnosticsWindowMs } from '@hypercard/engine';
+
+export function MyPerfWindow() {
+  const { snapshot, paused, windowMs } = useDiagnosticsSnapshot(500);
+  // render snapshot...
+}
+```
+
+3. Add appKey route in your `renderAppWindow` and auto-open in dev mode.
+
+That's it — no reducer registration, no Redux wiring beyond the middleware.
+
+## Manual verification runbook
+
+1. **Start dev server:** `npm run dev -w apps/inventory`
+2. **Verify auto-open:** diagnostics window should appear at startup titled "📈 Redux Perf".
+3. **Idle metrics:** actions/sec should be low (~0-2), FPS should be ~60.
+4. **Chat streaming:** start a chat, observe actions/sec rise (chat/appendDelta, etc.).
+5. **Window dragging:** drag windows, observe `windowing/moveWindow` in top action types.
+6. **Controls:** click Pause → metrics freeze; click Resume → metrics update; click Reset → all zeroes.
+7. **Window selector:** change window to 1s/10s, verify metric rates adjust.
+8. **Close & reopen:** close the diagnostics window, reopen via Debug menu or 📈 icon.
+9. **Production build:** `npm run build -w apps/inventory` → run preview → verify no diagnostics window opens and no diagnostics overhead.
+
+### Expected metric ranges
+
+| Scenario | Actions/sec | FPS | Avg reducer |
+|----------|-------------|-----|-------------|
+| Idle | 0–5 | 58–60 | <1ms |
+| Chat streaming | 20–100+ | 50–60 | <2ms |
+| Window dragging | 30–60 | 40–60 | <1ms |
+| Heavy combined | 50–200+ | 30–55 | 1–5ms |
+
+## Acceptance Checklist (final)
+
+1. ✅ Diagnostics disabled in prod by default.
+2. ✅ Diagnostics enabled in inventory dev mode.
+3. ✅ Dev window opens once at startup and can be reopened.
+4. ✅ Metrics update continuously and remain bounded in memory.
+5. ✅ Tests cover rolling-window math and store behavior (25 tests).
+6. ✅ Diagnostics data stored outside Redux (zero dispatch overhead).
+7. ✅ Docs updated with final file paths and API signatures.
 
 ## Related
 

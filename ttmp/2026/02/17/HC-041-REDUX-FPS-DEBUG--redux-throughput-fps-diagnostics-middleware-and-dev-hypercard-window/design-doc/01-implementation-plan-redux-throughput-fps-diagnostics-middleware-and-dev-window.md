@@ -337,28 +337,55 @@ Rejected: insufficient for sustained debugging, difficult to compare rolling met
 3. Document how other apps can enable locally.
 4. Ensure no diagnostics code path runs in prod unless deliberately configured.
 
-## Open Questions
+## Open Questions (Resolved)
 
-1. Should diagnostics collection continue if the diagnostics window is closed?
-2. Should we sample every action or support sampling rate (for very high throughput)?
-3. Do we want global hotkey/menu command to toggle diagnostics window?
-4. Should frame monitor thresholds be configurable per app?
+1. **Should diagnostics collection continue if the diagnostics window is closed?**
+   → Yes. Collection is module-level and independent of the UI. The polling hook only runs when the component is mounted, but the middleware and frame monitor continue writing to the buffers.
 
-## Definition of Done
+2. **Should we sample every action or support sampling rate?**
+   → Every action for now. Sampling mode deferred to Task 48.
 
-1. Generic middleware and frame monitor implemented in engine diagnostics module.
-2. Inventory dev mode shows a working HyperCard diagnostics window at startup.
-3. Metrics include throughput + reducer timing + FPS.
-4. Documentation and task checklist updated for handoff.
-5. Tests and manual verification steps included.
+3. **Do we want global hotkey/menu command to toggle diagnostics window?**
+   → Yes. Added Debug menu with "📈 Redux Perf" entry and desktop icon, both DEV-only.
+
+4. **Should frame monitor thresholds be configurable per app?**
+   → Yes, via `DiagnosticsConfig.longFrameThresholdMs` passed through `initDiagnostics()`. Default 33.34ms.
+
+## Implementation Deviations from Original Plan
+
+### Major deviation: diagnostics data moved out of Redux
+
+The original plan specified a `reduxPerfSlice.ts` with Redux state, actions (`recordPerfEvent`, `recordFrameEvent`), and selectors. This was implemented in Phase 1 but caused a fundamental observer-effect problem:
+
+- The frame monitor dispatched `recordFrameEvent` on every rAF tick (~60/sec)
+- The perf middleware dispatched `recordPerfEvent` for each (including frame events)
+- Result: ~120 Redux dispatches/sec from diagnostics alone
+- This invalidated all `useSelector` equality checks app-wide and dominated the "top action types" table
+
+**Resolution:** All diagnostics data was moved to a module-level mutable store (`diagnosticsStore.ts`) with plain ring buffers. The middleware and frame monitor write directly to these buffers — zero Redux dispatches. The UI reads via a `useDiagnosticsSnapshot` polling hook at ~2Hz. The `reduxPerfSlice.ts` and `selectors.ts` files were deleted.
+
+### Minor deviations
+
+- Added `vite-env.d.ts` to inventory app (was missing Vite client types for `import.meta.env`).
+- Added Debug menu section (not originally planned, added for discoverability alongside the icon).
+
+## Definition of Done (✅ Complete)
+
+1. ✅ Generic middleware and frame monitor implemented in engine diagnostics module.
+2. ✅ Inventory dev mode shows a working HyperCard diagnostics window at startup.
+3. ✅ Metrics include throughput + reducer timing + FPS.
+4. ✅ Documentation and task checklist updated for handoff.
+5. ✅ Tests and manual verification steps included (25 unit tests).
+6. ✅ Zero Redux overhead from diagnostics (module-level store).
 
 ## References
 
-- `apps/inventory/src/App.tsx`
-- `apps/inventory/src/app/store.ts`
-- `packages/engine/src/app/createAppStore.ts`
-- `packages/engine/src/features/windowing/windowingSlice.ts`
-- `packages/engine/src/features/windowing/types.ts`
-- `packages/engine/src/components/shell/windowing/DesktopShell.tsx`
-- `packages/engine/src/debug/debugSlice.ts`
-- `packages/engine/src/components/shell/RuntimeDebugPane.tsx`
+- `packages/engine/src/diagnostics/diagnosticsStore.ts` — Core diagnostics storage
+- `packages/engine/src/diagnostics/useDiagnosticsSnapshot.ts` — React polling hook
+- `packages/engine/src/diagnostics/reduxPerfMiddleware.ts` — Timing middleware
+- `packages/engine/src/diagnostics/frameMonitor.ts` — rAF frame monitor
+- `packages/engine/src/__tests__/diagnostics.test.ts` — Unit tests
+- `apps/inventory/src/features/debug/ReduxPerfWindow.tsx` — Diagnostics UI
+- `apps/inventory/src/App.tsx` — Window routing and auto-open
+- `apps/inventory/src/app/store.ts` — Diagnostics enablement
+- `packages/engine/src/app/createAppStore.ts` — Store factory integration
