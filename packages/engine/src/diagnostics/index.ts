@@ -2,6 +2,7 @@
 
 export type {
   ActionRate,
+  ActionRateHistory,
   DiagnosticsConfig,
   FrameEvent,
   ReduxPerfEvent,
@@ -38,4 +39,4 @@ export {
 
 export { startFrameMonitor } from './frameMonitor';
 
-export { useDiagnosticsSnapshot } from './useDiagnosticsSnapshot';
+export { accumulateHistory, useDiagnosticsSnapshot } from './useDiagnosticsSnapshot';

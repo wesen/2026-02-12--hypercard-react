@@ -32,10 +32,23 @@ export interface ReduxPerfSnapshot {
   topActionRates: ActionRate[];
 }
 
-/** Per-action-type throughput entry. */
+/** Per-action-type throughput entry (single snapshot). */
 export interface ActionRate {
   type: string;
   perSec: number;
+}
+
+/** Per-action-type throughput with history, for the UI table. */
+export interface ActionRateHistory {
+  type: string;
+  /** Current rate in the rolling window. */
+  perSec: number;
+  /** Recent rate samples (oldest first), one per poll tick. */
+  sparkline: number[];
+  /** All-time peak rate observed. */
+  peakPerSec: number;
+  /** Timestamp of last non-zero observation. Used for linger logic. */
+  lastSeenTs: number;
 }
 
 /** A single frame timing sample from the rAF monitor. */

@@ -3,6 +3,7 @@ import {
   setDiagnosticsWindowMs,
   toggleDiagnosticsPause,
   useDiagnosticsSnapshot,
+  type ActionRateHistory,
 } from '@hypercard/engine';
 import { useCallback } from 'react';
 
@@ -20,14 +21,51 @@ function latencyColor(ms: number): string {
   return 'inherit';
 }
 
+// ── Sparkline ──
+
+const SPARK_W = 60;
+const SPARK_H = 16;
+
+/**
+ * Tiny inline SVG sparkline.
+ * Renders a polyline of rate values scaled to the local max.
+ */
+function Sparkline({ data, dimmed }: { data: number[]; dimmed?: boolean }) {
+  if (data.length < 2) return <span style={{ display: 'inline-block', width: SPARK_W }} />;
+
+  const max = Math.max(...data, 0.01); // avoid div-by-zero
+  const step = SPARK_W / (data.length - 1);
+  const points = data
+    .map((v, i) => `${(i * step).toFixed(1)},${(SPARK_H - (v / max) * SPARK_H).toFixed(1)}`)
+    .join(' ');
+
+  return (
+    <svg
+      width={SPARK_W}
+      height={SPARK_H}
+      viewBox={`0 0 ${SPARK_W} ${SPARK_H}`}
+      style={{ verticalAlign: 'middle', opacity: dimmed ? 0.35 : 1 }}
+    >
+      <polyline
+        points={points}
+        fill="none"
+        stroke="var(--hc-color-accent, #3498db)"
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 /**
  * Live Redux throughput & FPS diagnostics panel.
  *
  * Reads from the module-level diagnostics store via `useDiagnosticsSnapshot`
  * which polls at ~2Hz. No Redux selectors, no store subscriptions.
+ * Action types linger in the table for ~15s after they stop firing.
  */
 export function ReduxPerfWindow() {
-  const { snapshot: snap, paused, windowMs } = useDiagnosticsSnapshot(500);
+  const { snapshot: snap, paused, windowMs, actionHistory } = useDiagnosticsSnapshot(500);
 
   const handleReset = useCallback(() => resetDiagnostics(), []);
   const handleTogglePause = useCallback(() => toggleDiagnosticsPause(), []);
@@ -80,29 +118,26 @@ export function ReduxPerfWindow() {
 
       {/* Top action types */}
       <div style={styles.section}>
-        <div style={styles.sectionTitle}>Top Action Types</div>
+        <div style={styles.sectionTitle}>Action Types</div>
         <table style={styles.table}>
           <thead>
             <tr>
               <th style={styles.th}>Action Type</th>
-              <th style={{ ...styles.th, textAlign: 'right' }}>Rate/s</th>
+              <th style={styles.thRight}>Rate/s</th>
+              <th style={styles.thCenter}>Trend</th>
+              <th style={styles.thRight}>Peak</th>
             </tr>
           </thead>
           <tbody>
-            {snap.topActionRates.length === 0 && (
+            {actionHistory.length === 0 && (
               <tr>
-                <td colSpan={2} style={styles.td}>
+                <td colSpan={4} style={styles.td}>
                   <em>No actions yet</em>
                 </td>
               </tr>
             )}
-            {snap.topActionRates.map((rate) => (
-              <tr key={rate.type}>
-                <td style={styles.td}>
-                  <code style={styles.code}>{rate.type}</code>
-                </td>
-                <td style={{ ...styles.td, textAlign: 'right' }}>{fmt(rate.perSec, 1)}</td>
-              </tr>
+            {actionHistory.map((entry) => (
+              <ActionRow key={entry.type} entry={entry} />
             ))}
           </tbody>
         </table>
@@ -112,9 +147,26 @@ export function ReduxPerfWindow() {
       <div style={styles.legend}>
         <strong>Legend:</strong> Actions/sec = dispatches per second • State Δ/sec = dispatches
         that changed state • Avg/p95 reducer = reducer execution time • FPS = render frame rate
-        • Long frames = frames &gt;33ms
+        • Long frames = frames &gt;33ms • Trend = rate over last ~15s • Peak = highest rate seen
       </div>
     </div>
+  );
+}
+
+function ActionRow({ entry }: { entry: ActionRateHistory }) {
+  const inactive = entry.perSec === 0;
+  const rowStyle: React.CSSProperties = inactive ? { opacity: 0.45 } : {};
+  return (
+    <tr style={rowStyle}>
+      <td style={styles.td}>
+        <code style={styles.code}>{entry.type}</code>
+      </td>
+      <td style={styles.tdRight}>{inactive ? '–' : fmt(entry.perSec, 1)}</td>
+      <td style={styles.tdCenter}>
+        <Sparkline data={entry.sparkline} dimmed={inactive} />
+      </td>
+      <td style={styles.tdRight}>{fmt(entry.peakPerSec, 1)}</td>
+    </tr>
   );
 }
 
@@ -219,9 +271,35 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '10px',
     textTransform: 'uppercase' as const,
   },
+  thRight: {
+    textAlign: 'right' as const,
+    padding: '2px 4px',
+    borderBottom: '1px solid var(--hc-color-border, #ccc)',
+    fontWeight: 600,
+    fontSize: '10px',
+    textTransform: 'uppercase' as const,
+  },
+  thCenter: {
+    textAlign: 'center' as const,
+    padding: '2px 4px',
+    borderBottom: '1px solid var(--hc-color-border, #ccc)',
+    fontWeight: 600,
+    fontSize: '10px',
+    textTransform: 'uppercase' as const,
+  },
   td: {
     padding: '2px 4px',
     borderBottom: '1px solid var(--hc-color-border-light, #eee)',
+  },
+  tdRight: {
+    padding: '2px 4px',
+    borderBottom: '1px solid var(--hc-color-border-light, #eee)',
+    textAlign: 'right' as const,
+  },
+  tdCenter: {
+    padding: '2px 4px',
+    borderBottom: '1px solid var(--hc-color-border-light, #eee)',
+    textAlign: 'center' as const,
   },
   code: {
     fontSize: '10px',

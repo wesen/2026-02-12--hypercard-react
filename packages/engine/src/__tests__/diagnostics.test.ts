@@ -19,8 +19,9 @@ import {
   isDiagnosticsPaused,
   getDiagnosticsConfig,
 } from '../diagnostics/diagnosticsStore';
+import { accumulateHistory } from '../diagnostics/useDiagnosticsSnapshot';
 import { createReduxPerfMiddleware } from '../diagnostics/reduxPerfMiddleware';
-import type { ReduxPerfEvent, FrameEvent } from '../diagnostics/types';
+import type { ReduxPerfEvent, FrameEvent, ActionRateHistory } from '../diagnostics/types';
 
 // ── Ring buffer tests ──
 
@@ -309,5 +310,105 @@ describe('createAppStore diagnostics paths', () => {
     expect(snap.actionsPerSec).toBeGreaterThan(0);
     // No reduxPerf reducer in the store
     expect((store.getState() as Record<string, unknown>).reduxPerf).toBeUndefined();
+  });
+});
+
+// ── Sparkline history accumulation and linger ──
+
+describe('accumulateHistory', () => {
+  const now = 100_000;
+
+  it('creates new entries for previously unseen action types', () => {
+    const prev = new Map<string, ActionRateHistory>();
+    const rates = [{ type: 'a/foo', perSec: 5 }];
+
+    const result = accumulateHistory(prev, rates, now);
+    expect(result.size).toBe(1);
+    const entry = result.get('a/foo')!;
+    expect(entry.perSec).toBe(5);
+    expect(entry.sparkline).toEqual([5]);
+    expect(entry.peakPerSec).toBe(5);
+    expect(entry.lastSeenTs).toBe(now);
+  });
+
+  it('appends to sparkline on subsequent ticks', () => {
+    let history = new Map<string, ActionRateHistory>();
+    history = accumulateHistory(history, [{ type: 'x', perSec: 10 }], now);
+    history = accumulateHistory(history, [{ type: 'x', perSec: 20 }], now + 500);
+    history = accumulateHistory(history, [{ type: 'x', perSec: 5 }], now + 1000);
+
+    const entry = history.get('x')!;
+    expect(entry.sparkline).toEqual([10, 20, 5]);
+    expect(entry.perSec).toBe(5);
+  });
+
+  it('tracks peak across ticks', () => {
+    let history = new Map<string, ActionRateHistory>();
+    history = accumulateHistory(history, [{ type: 'x', perSec: 10 }], now);
+    history = accumulateHistory(history, [{ type: 'x', perSec: 50 }], now + 500);
+    history = accumulateHistory(history, [{ type: 'x', perSec: 3 }], now + 1000);
+
+    expect(history.get('x')!.peakPerSec).toBe(50);
+  });
+
+  it('records 0 in sparkline when type disappears from current rates', () => {
+    let history = new Map<string, ActionRateHistory>();
+    history = accumulateHistory(history, [{ type: 'x', perSec: 10 }], now);
+    // x not in current rates — should get 0
+    history = accumulateHistory(history, [], now + 500);
+
+    const entry = history.get('x')!;
+    expect(entry.sparkline).toEqual([10, 0]);
+    expect(entry.perSec).toBe(0);
+    // lastSeenTs should not have updated
+    expect(entry.lastSeenTs).toBe(now);
+  });
+
+  it('prunes entries that have lingered beyond the threshold', () => {
+    let history = new Map<string, ActionRateHistory>();
+    history = accumulateHistory(history, [{ type: 'old', perSec: 5 }], now, 30, 1000);
+    // 1500ms later, still no activity — beyond 1000ms linger
+    history = accumulateHistory(history, [], now + 1500, 30, 1000);
+
+    expect(history.has('old')).toBe(false);
+  });
+
+  it('does NOT prune entries within the linger window', () => {
+    let history = new Map<string, ActionRateHistory>();
+    history = accumulateHistory(history, [{ type: 'recent', perSec: 5 }], now, 30, 5000);
+    // 2s later, no activity — within 5000ms linger
+    history = accumulateHistory(history, [], now + 2000, 30, 5000);
+
+    expect(history.has('recent')).toBe(true);
+    expect(history.get('recent')!.perSec).toBe(0);
+  });
+
+  it('caps sparkline to the configured length', () => {
+    let history = new Map<string, ActionRateHistory>();
+    for (let i = 0; i < 10; i++) {
+      history = accumulateHistory(history, [{ type: 'x', perSec: i }], now + i * 500, 5);
+    }
+
+    const entry = history.get('x')!;
+    expect(entry.sparkline.length).toBe(5);
+    // Should have the last 5 values: 5,6,7,8,9
+    expect(entry.sparkline).toEqual([5, 6, 7, 8, 9]);
+  });
+
+  it('handles multiple action types independently', () => {
+    let history = new Map<string, ActionRateHistory>();
+    history = accumulateHistory(history, [
+      { type: 'a', perSec: 10 },
+      { type: 'b', perSec: 20 },
+    ], now);
+    history = accumulateHistory(history, [
+      { type: 'a', perSec: 15 },
+      // b disappears
+    ], now + 500);
+
+    expect(history.get('a')!.sparkline).toEqual([10, 15]);
+    expect(history.get('b')!.sparkline).toEqual([20, 0]);
+    expect(history.get('a')!.peakPerSec).toBe(15);
+    expect(history.get('b')!.peakPerSec).toBe(20);
   });
 });
