@@ -51,3 +51,14 @@ Switched from W-C runtime to W-E hardcutover: DesktopShell now uses Redux intera
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/17/HC-42-FAST-WINDOW--fast-lane-external-store-for-high-frequency-llm-delta-and-window-dragging/reference/01-diary.md — Diary entries added for W-E runtime switch and validation
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/17/HC-42-FAST-WINDOW--fast-lane-external-store-for-high-frequency-llm-delta-and-window-dragging/tasks.md — W-E remaining tasks checked and hardcutover decision updated
 
+
+## 2026-02-17
+
+Adjusted runtime direction to use both channels concurrently: W-C drag overlay was restored and DesktopShell now mirrors interaction begin/update/commit/cancel into W-E Redux interaction state while rendering with overlay-first effective bounds. This keeps fast-lane overlay behavior and preserves Redux interaction visibility.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/shell/windowing/DesktopShell.tsx — Dual-lane runtime wiring (overlay + interaction channel)
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/shell/windowing/dragOverlayStore.ts — Restored W-C external overlay store
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/shell/windowing/dragOverlayStore.test.ts — Overlay store behavior tests
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/17/HC-42-FAST-WINDOW--fast-lane-external-store-for-high-frequency-llm-delta-and-window-dragging/tasks.md — W-C/W-E task wording updated to reflect coexistence

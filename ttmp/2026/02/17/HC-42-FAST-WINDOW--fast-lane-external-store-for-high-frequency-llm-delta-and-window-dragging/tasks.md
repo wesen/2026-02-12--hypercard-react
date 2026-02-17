@@ -35,7 +35,7 @@
 - [ ] Add changelog entry summarizing implementation decisions and tradeoffs
 - [ ] Produce short implementation handoff note for follow-on ticket(s) and QA verification steps
 
-## W-C Track (Superseded By W-E Hardcutover)
+## W-C Track (Active Runtime Lane)
 
 - [x] W-C.0 Confirm selected implementation style: **option 2 small dedicated store**
 - [x] W-C.1 Add dedicated drag overlay store module (`dragOverlayStore.ts`) with `begin/update/clear/clearAll/subscribe/getSnapshot`
@@ -51,7 +51,7 @@
 - [x] W-C.11 Verify engine `typecheck` and `test` pass with W-C enabled
 - [x] W-C.12 Record metrics/observations and decisions in diary
 
-## W-E Track (Hardcutover Runtime Path)
+## W-E Track (Active Redux Interaction Lane)
 
 - [x] W-E.0 Add `windowing.interaction` state branch in Redux slice (active id, mode, drafts map)
 - [x] W-E.1 Add reducers/actions (`beginInteraction`, `updateInteractionDraft`, `commitInteraction`, `cancelInteraction`, `clearInteraction`)
@@ -61,4 +61,4 @@
 - [x] W-E.5 Add reducer/selectors tests for interaction channel lifecycle and parity
 - [x] W-E.6 Validate render fan-out reduction with per-window selector subscriptions
 - [x] W-E.7 Evaluate compatibility with W-A throttling and existing W-D memoization
-- [x] W-E.8 Decision recorded: W-E is hard-cutover runtime path (no feature-flag migration path)
+- [x] W-E.8 Decision recorded: W-C and W-E run together in runtime (overlay-first render, mirrored Redux interaction channel)

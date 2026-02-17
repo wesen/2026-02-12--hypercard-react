@@ -29,7 +29,7 @@ RelatedFiles:
 ExternalSources: []
 Summary: |
     Running implementation diary for HC-42. Captures incremental decisions, commits, validation commands, and observed tradeoffs while implementing fast-lane window interaction changes.
-LastUpdated: 2026-02-17T14:28:00-05:00
+LastUpdated: 2026-02-17T14:45:00-05:00
 WhatFor: |
     Provide high-fidelity execution history so another developer can reconstruct what was changed, why, and how it was validated.
 WhenToUse: Use while actively implementing and reviewing HC-42 changes.
@@ -148,3 +148,16 @@ WhenToUse: Use while actively implementing and reviewing HC-42 changes.
   - `npm run test -w packages/engine`
 - Result: both passed.
 
+### Entry 11 - Rewind to dual-lane runtime (W-C + W-E together)
+
+- Direction adjusted: keep both W-C and W-E active concurrently.
+- Code changes:
+  - Restored `dragOverlayStore.ts` and `dragOverlayStore.test.ts`.
+  - Updated `DesktopShell.tsx` to mirror interaction lifecycle to both channels:
+    - W-C overlay lane (`dragOverlayStore.begin/update/clear`)
+    - W-E Redux interaction lane (`beginWindowInteraction/updateWindowInteractionDraft/commitWindowInteraction/cancelWindowInteraction`)
+  - Effective bounds now resolve as `overlayDraft ?? interactionDraft ?? durableBounds`.
+  - Added cleanup alignment: overlay is cleared on close, tile/cascade actions, window pruning, and unmount alongside `clearWindowInteraction`.
+- Validation:
+  - `npm run typecheck -w packages/engine` passed.
+  - `npm run test -w packages/engine` passed.
