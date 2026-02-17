@@ -87,3 +87,7 @@
 - [x] Add Peak column to the action types table showing the all-time max rate.
 - [x] Update ReduxPerfWindow table to render sparklines and peak rate column.
 - [x] Add unit tests for sparkline history accumulation and linger behavior.
+- [x] Add pin/unpin toggle per action type row in the diagnostics window.
+- [x] Pinned action types survive linger pruning indefinitely.
+- [x] Visual indicator (pin icon) for pinned rows, sorted: pinned first, then active, then lingering.
+- [x] Unit tests for pin behavior in accumulateHistory (pinned survives pruning, unpin allows pruning).

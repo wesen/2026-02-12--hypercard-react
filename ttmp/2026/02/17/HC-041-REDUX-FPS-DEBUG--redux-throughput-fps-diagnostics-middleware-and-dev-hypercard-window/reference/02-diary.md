@@ -473,3 +473,88 @@ Action types that fire in bursts (e.g. during a drag, during chat streaming) wou
 - Start at `packages/engine/src/diagnostics/useDiagnosticsSnapshot.ts` — review `accumulateHistory()`.
 - Review `apps/inventory/src/features/debug/ReduxPerfWindow.tsx` — `Sparkline` component and `ActionRow`.
 - Run tests: `npx vitest run packages/engine/src/__tests__/diagnostics.test.ts` (33 tests).
+
+## Step 9: Rename sparkline column from "Trend" to "⌁"
+
+User pointed out "Trend" implies smoothing — the sparkline shows the raw instantaneous rate at each poll tick, not a smoothed trend line. Renamed the column header to "⌁" (sparkline symbol) and updated the legend.
+
+### Prompt Context
+
+**User prompt (verbatim):** "the trend shouldn't be smoothed, though, it should represent the actual fps at that time. It shouldn be called trend ether"
+
+**Assistant interpretation:** The column name "Trend" is misleading — the data is already raw rates, just the label implies smoothing. Rename.
+
+**Inferred user intent:** Accurate labelling of what the sparkline shows.
+
+**Commit (code):** 9d87af7 — "HC-041: rename sparkline column from 'Trend' to '⌁' — it shows raw rate, not smoothed"
+
+### What I did
+- Renamed column header from "Trend" to "⌁".
+- Updated legend from "Trend = rate over last ~15s" to "⌁ = rate/s each sample".
+
+### Why
+The sparkline was already showing raw `perSec` values per poll tick with no smoothing. The label was the only thing wrong.
+
+### What was tricky to build
+- N/A — two-line change.
+
+### What warrants a second pair of eyes
+- N/A
+
+### What should be done in the future
+- N/A
+
+### Code review instructions
+- Glance at `ReduxPerfWindow.tsx` header and legend text.
+
+## Step 10: Pin action types in diagnostics window (Tasks 71–74)
+
+Added the ability to pin specific action types in the diagnostics table. Pinned types are immune to linger pruning — they stay visible indefinitely with their sparkline and peak rate, even when inactive. This is useful for watching a specific action type (e.g. `windowing/moveWindow`) across different interactions without it disappearing between bursts.
+
+### Prompt Context
+
+**User prompt (verbatim):** "allow pinning a certain event in the redux perf window."
+
+(Followed by: "keep your diary up to date, backfill if needed.")
+
+**Assistant interpretation:** Add a per-row pin/unpin toggle so individual action types can be kept visible in the table permanently.
+
+**Inferred user intent:** Be able to track specific action types across interaction sessions without losing them to linger pruning.
+
+**Commit (code):** 5df2884 — "HC-041: Pin action types in diagnostics window"
+
+### What I did
+- Added `pinned: boolean` to `ActionRateHistory` type.
+- Extended `accumulateHistory()` with a `pinnedTypes: ReadonlySet<string>` parameter. Pinned types skip the linger prune check. The `pinned` field on each entry reflects current pin state.
+- Added `togglePin(type: string)` callback to `useDiagnosticsSnapshot` hook, backed by a `useRef<Set<string>>` to avoid re-render on pin toggle (next poll tick picks it up).
+- Updated sort order: pinned first → active by rate desc → lingering by recency.
+- Added pin column to table: `📌` for pinned, `∘` for unpinned, click to toggle.
+- Pinned-but-inactive rows stay full opacity (only non-pinned inactive rows are dimmed).
+- Added 4 unit tests: pinned survives pruning, unpinned gets pruned, new entry inherits pin, pin flag updates when set changes.
+
+### Why
+Burst-pattern action types (drag, chat stream deltas) appear and vanish quickly. Without pinning, you have to watch the table in the exact moment the burst happens. Pinning lets you "bookmark" the types you care about.
+
+### What worked
+- Using `ReadonlySet<string>` as parameter to `accumulateHistory` keeps the function pure and testable.
+- Using `useRef` for the pin set means toggling a pin doesn't cause a React render — the change is picked up on the next poll tick (500ms max delay), which feels instant in practice.
+
+### What didn't work
+- N/A
+
+### What I learned
+- N/A — clean extension of the existing pattern.
+
+### What was tricky to build
+- The dimming logic: before pinning, `inactive = perSec === 0` was sufficient. Now it's `inactive = perSec === 0 && !pinned` — a pinned type with rate 0 should look attentive (full opacity), not faded.
+
+### What warrants a second pair of eyes
+- Pin state lives in a `useRef` — it's lost on component unmount (window close). If the user reopens the diagnostics window, all pins are gone. This is probably fine for dev tooling but worth noting.
+
+### What should be done in the future
+- Could persist pin set to localStorage if desired.
+
+### Code review instructions
+- Review `accumulateHistory()` in `useDiagnosticsSnapshot.ts` — the `pinnedTypes` parameter and prune guard.
+- Review `ActionRow` in `ReduxPerfWindow.tsx` — pin button and dimming logic.
+- Run tests: `npx vitest run packages/engine/src/__tests__/diagnostics.test.ts` (37 tests).

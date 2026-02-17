@@ -58,3 +58,8 @@ Sparklines, peak rates, and linger behavior added (tasks 64–70, commit 3763009
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/debug/ReduxPerfWindow.tsx — Sparkline SVG + 4-column table
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/diagnostics/useDiagnosticsSnapshot.ts — accumulateHistory + linger logic
 
+
+## 2026-02-17
+
+Action type pinning added (tasks 71–74, commit 5df2884). Pinned types survive linger pruning, sort to the top, and stay visible indefinitely until unpinned.
+
