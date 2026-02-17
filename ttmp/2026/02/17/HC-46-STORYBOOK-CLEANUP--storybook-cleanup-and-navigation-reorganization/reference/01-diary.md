@@ -264,3 +264,68 @@ This step closes the drift-prevention part of the ticket: once merged, invalid s
 - Validation commands:
   - `npm run storybook:check`
   - `npm run -w packages/engine test`
+
+---
+
+## Step 4: Task Closure and Ticket Finalization
+
+I finalized ticket bookkeeping after implementation: all HC-46 execution tasks are marked complete, implementation outcomes were summarized in changelog/index, and source relationships were refreshed for traceability.
+
+This step is the handoff point for future follow-up work; Storybook cleanup scope in HC-46 is fully delivered.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 1)
+
+**Assistant interpretation:** Finish the ticket end-to-end with proper task/changelog/diary hygiene.
+
+**Inferred user intent:** Leave a clean, auditable ticket state that another developer can continue from immediately.
+
+### What I did
+
+- Checked off HC-46 tasks `5-12` in `tasks.md`.
+- Updated ticket overview and changelog to reflect implemented results.
+- Refreshed related-file links on the design doc to include implementation artifacts.
+
+### Why
+
+- Task closure and traceability are part of the deliverable, not optional documentation overhead.
+
+### What worked
+
+- `docmgr` task state now reflects full completion across planning + execution tasks.
+- Changelog now contains both assessment and implementation phases with commit anchors.
+
+### What didn't work
+
+- `docmgr task list` output briefly lagged after task-check command; source `tasks.md` content was correct and showed all checks applied.
+
+### What I learned
+
+- For ticket closure confidence, always trust the source markdown files and verify with `docmgr doctor` before final close.
+
+### What was tricky to build
+
+- Balancing code delivery and docmgr lifecycle updates required careful staging to avoid mixing unrelated workspace dirt.
+
+### What warrants a second pair of eyes
+
+- Confirm Storybook UI tree in the browser matches expected canonical grouping after all split files are loaded.
+
+### What should be done in the future
+
+- N/A
+
+### Code review instructions
+
+- Start from ticket artifacts:
+  - `ttmp/2026/02/17/HC-46-STORYBOOK-CLEANUP--storybook-cleanup-and-navigation-reorganization/tasks.md`
+  - `ttmp/2026/02/17/HC-46-STORYBOOK-CLEANUP--storybook-cleanup-and-navigation-reorganization/changelog.md`
+  - `ttmp/2026/02/17/HC-46-STORYBOOK-CLEANUP--storybook-cleanup-and-navigation-reorganization/index.md`
+
+### Technical details
+
+- Implementation commit chain:
+  - `4f8005d`
+  - `e8e40d1`
+  - `5fcedf3`
