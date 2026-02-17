@@ -1,10 +1,7 @@
 export {
   selectActiveMenuId,
-  selectActiveInteractionId,
-  selectEffectiveWindowBoundsById,
   selectFocusedWindow,
   selectFocusedWindowId,
-  selectInteractionDraftById,
   selectSelectedIconId,
   selectSessionCurrentNav,
   selectSessionNavDepth,
@@ -23,18 +20,12 @@ export type {
   WindowBounds,
   WindowContent,
   WindowContentKind,
-  WindowInteractionMode,
-  WindowInteractionState,
   WindowInstance,
   WindowingState,
 } from './types';
 export {
-  beginWindowInteraction,
-  cancelWindowInteraction,
-  clearWindowInteraction,
   clearDesktopTransient,
   closeWindow,
-  commitWindowInteraction,
   focusWindow,
   moveWindow,
   openWindow,
@@ -44,6 +35,5 @@ export {
   sessionNavHome,
   setActiveMenu,
   setSelectedIcon,
-  updateWindowInteractionDraft,
   windowingReducer,
 } from './windowingSlice';
