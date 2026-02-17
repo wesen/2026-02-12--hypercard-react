@@ -1,16 +1,18 @@
 import type { Middleware } from '@reduxjs/toolkit';
-import { recordPerfEvent } from './reduxPerfSlice';
+import { pushPerfEvent } from './diagnosticsStore';
 import type { ReduxPerfEvent } from './types';
-import { DEFAULT_DIAGNOSTICS_CONFIG } from './types';
 
 export interface ReduxPerfMiddlewareOptions {
-  /** Rolling window in ms. Default 5000. */
+  /** Rolling window in ms (reserved for future sampling logic). Default 5000. */
   windowMs?: number;
 }
 
 /**
- * Redux middleware that times every dispatch and records a `ReduxPerfEvent`
- * into the `reduxPerf` slice.
+ * Redux middleware that times every dispatch and writes a `ReduxPerfEvent`
+ * into the module-level diagnostics store.
+ *
+ * **Does not dispatch any Redux actions** — avoids the observer effect
+ * of polluting the store it's trying to measure.
  *
  * Captures:
  * - action type
@@ -18,11 +20,8 @@ export interface ReduxPerfMiddlewareOptions {
  * - whether root state reference changed (state-change detection)
  */
 export function createReduxPerfMiddleware(
-  opts: ReduxPerfMiddlewareOptions = {},
+  _opts: ReduxPerfMiddlewareOptions = {},
 ): Middleware {
-  const _windowMs = opts.windowMs ?? DEFAULT_DIAGNOSTICS_CONFIG.windowMs;
-  void _windowMs; // reserved for future sampling logic
-
   const middleware: Middleware = (storeApi) => (next) => (action) => {
     const prevState = storeApi.getState();
     const start = performance.now();
@@ -30,15 +29,10 @@ export function createReduxPerfMiddleware(
     const end = performance.now();
     const nextState = storeApi.getState();
 
-    // Don't record our own bookkeeping action to avoid infinite loop
     const actionType =
       action && typeof action === 'object' && 'type' in action
         ? (action as { type: string }).type
         : 'unknown';
-
-    if (actionType === recordPerfEvent.type) {
-      return result;
-    }
 
     const event: ReduxPerfEvent = {
       ts: Date.now(),
@@ -47,7 +41,7 @@ export function createReduxPerfMiddleware(
       changed: prevState !== nextState,
     };
 
-    storeApi.dispatch(recordPerfEvent(event));
+    pushPerfEvent(event);
 
     return result;
   };

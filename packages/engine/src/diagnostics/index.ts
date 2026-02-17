@@ -19,24 +19,17 @@ export {
 } from './ringBuffer';
 
 export {
-  recordFrameEvent,
-  recordPerfEvent,
-  reduxPerfReducer,
-  reduxPerfSlice,
-  resetMetrics,
-  setWindowMs,
-  togglePause,
-  type ReduxPerfState,
-} from './reduxPerfSlice';
-
-export {
   computeP95,
-  type ReduxPerfStateSlice,
-  selectReduxPerf,
-  selectReduxPerfConfig,
-  selectReduxPerfPaused,
-  selectReduxPerfSnapshot,
-} from './selectors';
+  computeSnapshot,
+  getDiagnosticsConfig,
+  initDiagnostics,
+  isDiagnosticsPaused,
+  pushFrameEvent,
+  pushPerfEvent,
+  resetDiagnostics,
+  setDiagnosticsWindowMs,
+  toggleDiagnosticsPause,
+} from './diagnosticsStore';
 
 export {
   createReduxPerfMiddleware,
@@ -44,3 +37,5 @@ export {
 } from './reduxPerfMiddleware';
 
 export { startFrameMonitor } from './frameMonitor';
+
+export { useDiagnosticsSnapshot } from './useDiagnosticsSnapshot';

@@ -1,16 +1,12 @@
 import {
-  resetMetrics,
-  selectReduxPerfPaused,
-  selectReduxPerfSnapshot,
-  setWindowMs,
-  togglePause,
-  type ReduxPerfSnapshot,
+  resetDiagnostics,
+  setDiagnosticsWindowMs,
+  toggleDiagnosticsPause,
+  useDiagnosticsSnapshot,
 } from '@hypercard/engine';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useCallback } from 'react';
 
 const WINDOW_OPTIONS = [1000, 3000, 5000, 10000];
-const UPDATE_INTERVAL_MS = 500;
 
 /** Format a number to N decimal places. */
 function fmt(n: number, decimals = 1): string {
@@ -27,37 +23,20 @@ function latencyColor(ms: number): string {
 /**
  * Live Redux throughput & FPS diagnostics panel.
  *
- * Reads from the `reduxPerf` slice and throttles UI updates to
- * `UPDATE_INTERVAL_MS` to avoid self-induced render pressure.
+ * Reads from the module-level diagnostics store via `useDiagnosticsSnapshot`
+ * which polls at ~2Hz. No Redux selectors, no store subscriptions.
  */
 export function ReduxPerfWindow() {
-  const dispatch = useDispatch();
-  const paused = useSelector(selectReduxPerfPaused);
-  const liveSnapshot = useSelector(selectReduxPerfSnapshot);
+  const { snapshot: snap, paused, windowMs } = useDiagnosticsSnapshot(500);
 
-  // Throttle UI updates: only repaint every UPDATE_INTERVAL_MS
-  const [displaySnapshot, setDisplaySnapshot] = useState<ReduxPerfSnapshot>(liveSnapshot);
-  const snapshotRef = useRef(liveSnapshot);
-  snapshotRef.current = liveSnapshot;
-
-  useEffect(() => {
-    if (paused) return;
-    const id = setInterval(() => {
-      setDisplaySnapshot(snapshotRef.current);
-    }, UPDATE_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, [paused]);
-
-  const handleReset = useCallback(() => dispatch(resetMetrics()), [dispatch]);
-  const handleTogglePause = useCallback(() => dispatch(togglePause()), [dispatch]);
+  const handleReset = useCallback(() => resetDiagnostics(), []);
+  const handleTogglePause = useCallback(() => toggleDiagnosticsPause(), []);
   const handleWindowChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
-      dispatch(setWindowMs(Number(e.target.value)));
+      setDiagnosticsWindowMs(Number(e.target.value));
     },
-    [dispatch],
+    [],
   );
-
-  const snap = displaySnapshot;
 
   return (
     <div style={styles.container}>
@@ -71,7 +50,7 @@ export function ReduxPerfWindow() {
         </button>
         <label style={styles.label}>
           Window:{' '}
-          <select value={snap.windowMs} onChange={handleWindowChange} style={styles.select}>
+          <select value={windowMs} onChange={handleWindowChange} style={styles.select}>
             {WINDOW_OPTIONS.map((ms) => (
               <option key={ms} value={ms}>
                 {ms / 1000}s

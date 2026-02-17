@@ -1,7 +1,7 @@
 import { configureStore, type Reducer } from '@reduxjs/toolkit';
 import { debugReducer } from '../debug/debugSlice';
+import { initDiagnostics } from '../diagnostics/diagnosticsStore';
 import { createReduxPerfMiddleware } from '../diagnostics/reduxPerfMiddleware';
-import { reduxPerfReducer } from '../diagnostics/reduxPerfSlice';
 import { startFrameMonitor } from '../diagnostics/frameMonitor';
 import { pluginCardRuntimeReducer } from '../features/pluginCardRuntime/pluginCardRuntimeSlice';
 import { notificationsReducer } from '../features/notifications/notificationsSlice';
@@ -9,7 +9,7 @@ import { windowingReducer } from '../features/windowing/windowingSlice';
 
 /** Options for `createAppStore`. */
 export interface CreateAppStoreOptions {
-  /** Enable Redux throughput/FPS diagnostics middleware and slice. Default: false. */
+  /** Enable Redux throughput/FPS diagnostics middleware. Default: false. */
   enableReduxDiagnostics?: boolean;
   /** Rolling window duration in ms for diagnostics aggregation. Default: 5000. */
   diagnosticsWindowMs?: number;
@@ -21,6 +21,8 @@ export interface CreateAppStoreOptions {
  *
  * Optionally enables Redux throughput/FPS diagnostics when
  * `options.enableReduxDiagnostics` is true (intended for dev-mode only).
+ * Diagnostics data is stored outside of Redux in a module-level store
+ * to avoid polluting the dispatch/render cycle it measures.
  *
  * Returns both a singleton store and a createStore() factory for Storybook.
  *
@@ -52,9 +54,13 @@ export function createAppStore<T extends Record<string, Reducer>>(
     windowing: windowingReducer,
     notifications: notificationsReducer,
     debug: debugReducer,
-    ...(enableDiag ? { reduxPerf: reduxPerfReducer } : {}),
     ...domainReducers,
   };
+
+  // Initialise module-level diagnostics storage when enabled
+  if (enableDiag) {
+    initDiagnostics({ windowMs: options.diagnosticsWindowMs ?? 5000 });
+  }
 
   const perfMiddleware = enableDiag
     ? createReduxPerfMiddleware({ windowMs: options.diagnosticsWindowMs ?? 5000 })
@@ -69,7 +75,7 @@ export function createAppStore<T extends Record<string, Reducer>>(
 
     // Start frame monitor when diagnostics are enabled
     if (enableDiag && typeof requestAnimationFrame !== 'undefined') {
-      startFrameMonitor(store.dispatch);
+      startFrameMonitor();
     }
 
     return store;
