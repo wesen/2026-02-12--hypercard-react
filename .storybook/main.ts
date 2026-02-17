@@ -9,27 +9,22 @@ const config: StorybookConfig = {
     {
       directory: '../apps/inventory/src',
       files: '**/*.stories.@(ts|tsx)',
-      titlePrefix: 'Apps/Inventory',
     },
     {
       directory: '../apps/todo/src',
       files: '**/*.stories.@(ts|tsx)',
-      titlePrefix: 'Apps/Todo',
     },
     {
       directory: '../apps/crm/src',
       files: '**/*.stories.@(ts|tsx)',
-      titlePrefix: 'Apps/Crm',
     },
     {
       directory: '../apps/book-tracker-debug/src',
       files: '**/*.stories.@(ts|tsx)',
-      titlePrefix: 'Apps/BookTrackerDebug',
     },
     {
       directory: '../packages/engine/src',
       files: '**/*.stories.@(ts|tsx)',
-      titlePrefix: 'Engine',
     },
   ],
   addons: [
