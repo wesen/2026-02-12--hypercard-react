@@ -667,3 +667,77 @@ This step is evidence-only and intentionally does not introduce compatibility wr
   - `ABSENT:apps/inventory/src/stories/decorators.tsx`
   - `ABSENT:packages/engine/src/plugin-runtime/worker/sandboxClient.ts`
   - `ABSENT:packages/engine/src/plugin-runtime/worker/runtime.worker.ts`
+
+---
+
+## Step 8: Task-by-Task Hard-Cutover Verification - SEM Helper Consolidation
+
+I verified that SEM parsing/normalization helpers remain consolidated in a single shared module and that call sites consistently import from that module. The replay objective here is to ensure no local duplicate parsers were reintroduced.
+
+I also ran targeted chat tests to confirm the consolidation remains behavior-stable.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 6)
+
+**Assistant interpretation:** Execute the SEM helper Phase 1 task in HC-43 and verify hard-cutover deduplication invariants still hold.
+
+**Inferred user intent:** Keep parsing behavior consistent across chat projection/runtime paths by maintaining one source of truth.
+
+### What I did
+
+- Verified helper function definitions exist only in:
+  - `apps/inventory/src/features/chat/semHelpers.ts`
+- Verified core chat modules import from shared helper:
+  - `apps/inventory/src/features/chat/chatSlice.ts`
+  - `apps/inventory/src/features/chat/InventoryChatWindow.tsx`
+  - `apps/inventory/src/features/chat/timelineProjection.ts`
+  - `apps/inventory/src/features/chat/artifactRuntime.ts`
+- Ran targeted tests:
+  - `npx vitest run apps/inventory/src/features/chat/chatSlice.test.ts apps/inventory/src/features/chat/artifactRuntime.test.ts apps/inventory/src/features/chat/InventoryChatWindow.timeline.test.ts`
+
+### Why
+
+- This is the Phase 1 deduplication item; hard cutover means no fallback duplicate helpers should remain in module-local code.
+
+### What worked
+
+- Regex checks found helper definitions only in `semHelpers.ts`.
+- All targeted tests passed (`24/24`).
+
+### What didn't work
+
+- N/A in this step.
+
+### What I learned
+
+- The centralized helper surface remains clean and is actively consumed by the intended modules.
+
+### What was tricky to build
+
+- The primary verification risk is false positives/negatives from text search; validating both definitions and import graph reduced ambiguity.
+
+### What warrants a second pair of eyes
+
+- Confirm there are no SEM-like helper duplicates outside `apps/inventory/src/features/chat/` that should also be centralized.
+
+### What should be done in the future
+
+- Proceed to Task 16 and Task 17 replay verification (Vite centralization and Storybook/app-boot documentation alignment).
+
+### Code review instructions
+
+- Inspect helper and imports:
+  - `apps/inventory/src/features/chat/semHelpers.ts`
+  - `apps/inventory/src/features/chat/chatSlice.ts`
+  - `apps/inventory/src/features/chat/InventoryChatWindow.tsx`
+  - `apps/inventory/src/features/chat/timelineProjection.ts`
+  - `apps/inventory/src/features/chat/artifactRuntime.ts`
+- Re-run tests:
+  - `npx vitest run apps/inventory/src/features/chat/chatSlice.test.ts apps/inventory/src/features/chat/artifactRuntime.test.ts apps/inventory/src/features/chat/InventoryChatWindow.timeline.test.ts`
+
+### Technical details
+
+- Test result summary:
+  - `Test Files 3 passed (3)`
+  - `Tests 24 passed (24)`

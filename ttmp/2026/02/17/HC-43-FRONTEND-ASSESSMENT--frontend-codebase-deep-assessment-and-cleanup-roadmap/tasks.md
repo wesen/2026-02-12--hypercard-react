@@ -22,6 +22,6 @@
 - [x] Enforce explicit hard-cutover scope in HC-43 ticket docs (no compatibility shims, no migration layers)
 - [x] HC-43 Phase 1 hard-cutover replay kickoff: set explicit no-backward-compatibility execution notes and reopen status
 - [x] Hard-cutover verify dead-file removals and archive evidence are current (no stubs/re-exports left)
-- [ ] Hard-cutover verify SEM helper consolidation with single shared helper module and no duplicated local parsers
+- [x] Hard-cutover verify SEM helper consolidation with single shared helper module and no duplicated local parsers
 - [ ] Hard-cutover verify centralized Vite app bootstrapping config helper usage across all app vite configs
 - [ ] Hard-cutover verify Storybook/app-boot boundary documentation is present and aligned with current source

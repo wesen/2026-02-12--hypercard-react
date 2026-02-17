@@ -9,6 +9,10 @@
   - confirmed removed files remain absent in active source
   - confirmed no references to removed paths/symbols in `apps/` and `packages/`
   - confirmed dead-file archive evidence remains intact
+- Completed replay verification for SEM helper consolidation (Task 15):
+  - confirmed helper definitions are centralized in `apps/inventory/src/features/chat/semHelpers.ts`
+  - confirmed core chat modules import from shared helper
+  - passed targeted chat tests (`24/24`)
 
 ## 2026-02-17
 
