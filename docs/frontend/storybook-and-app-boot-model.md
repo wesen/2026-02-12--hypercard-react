@@ -17,19 +17,19 @@ The engine contains shared UI/runtime/store primitives. Apps compose domain redu
 
 ## Runtime location
 
-Storybook is launched from inventory package scripts:
+Storybook is launched from root and delegated to inventory's Storybook runtime:
 
 - root script: `npm run storybook`
-- delegated script: `npm run -w apps/inventory storybook -- --config-dir .storybook`
+- delegated script: `npm run storybook -w apps/inventory`
 
 Config source:
 
-- `apps/inventory/.storybook/main.ts`
-- `apps/inventory/.storybook/preview.ts`
+- `.storybook/main.ts`
+- `.storybook/preview.ts`
 
 ## Scope
 
-Despite location under `apps/inventory`, Storybook is **workspace-global**.
+Despite runtime dependencies being hosted in `apps/inventory`, Storybook config is **workspace-global**.
 
 The configured story globs include:
 
@@ -45,7 +45,7 @@ Because of this, Storybook should be treated as a shared frontend platform artif
 
 `@hypercard/engine` aliasing for Storybook is configured in:
 
-- `apps/inventory/.storybook/main.ts`
+- `.storybook/main.ts`
 
 Application dev/build aliasing is configured by Vite helper:
 
@@ -78,7 +78,7 @@ To keep cleanup work low-risk and understandable:
 
 1. Engine package owns shared primitives and generic infrastructure.
 2. App packages own domain reducers, stack data, and app window behavior.
-3. Storybook config is globally scoped, even while physically hosted in inventory.
+3. Storybook config is globally scoped and owned at repo root.
 4. Changes to shared boot/store contracts should be done in engine first, then app adapters.
 5. App-specific experiments should not leak into engine exports without explicit API intent.
 
@@ -88,7 +88,8 @@ When adding stories:
 
 1. Put reusable stories in `packages/engine/src`.
 2. Put app-specific behavior stories in the corresponding app.
-3. Prefer `createStoryHelpers` for card-page app stories.
+3. Prefer package-aligned title prefixes (`Apps/*`, `Packages/*`) and feature-aligned story placement (`src/app/stories`, `src/features/**/stories`).
+4. Prefer `createStoryHelpers` for card-page app stories.
 
 When changing app boot behavior:
 
@@ -96,19 +97,21 @@ When changing app boot behavior:
 2. Keep `store.ts` responsible for reducer composition.
 3. Keep `App.tsx` focused on shell wiring and app window registration.
 
-## Future Improvement (Tracked)
+## Storybook Policy
 
-A future cleanup may move Storybook config to repo root (`/.storybook`) for clearer ownership. Until then, treat `apps/inventory/.storybook` as the canonical shared Storybook entrypoint.
+For detailed contribution and taxonomy rules, see:
 
-## Verification Snapshot (2026-02-17)
+- `docs/frontend/storybook.md`
+
+## Verification Snapshot (2026-02-17, HC-46)
 
 This document was re-verified during HC-43 Phase 1 hard-cutover replay against current sources:
 
 - Storybook config:
-  - `apps/inventory/.storybook/main.ts`
-  - `apps/inventory/.storybook/preview.ts`
+  - `.storybook/main.ts`
+  - `.storybook/preview.ts`
 - Root Storybook script:
-  - `package.json` (`storybook` delegates to `apps/inventory`)
+  - `package.json` (`storybook` delegates to `apps/inventory` script)
 - App boot entrypoints:
   - `apps/inventory/src/main.tsx`
   - `apps/todo/src/main.tsx`

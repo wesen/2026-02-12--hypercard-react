@@ -187,3 +187,80 @@ This step targets task 8 directly and keeps all stories under the same canonical
 ### Technical details
 
 - Split strategy keeps identical title namespace, avoiding navigation regressions while reducing per-file complexity.
+
+---
+
+## Step 3: Add Taxonomy/Placement Guardrails and Maintainer Documentation
+
+I implemented the enforcement layer for HC-46 by adding an explicit Storybook taxonomy checker script and wiring it into test execution, then documented contribution/maintenance rules in frontend docs.
+
+This step closes the drift-prevention part of the ticket: once merged, invalid story titles or app story placement regressions should fail quickly.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 1)
+
+**Assistant interpretation:** Continue task-by-task implementation with commits, including governance/validation and maintainer docs.
+
+**Inferred user intent:** Ensure cleanup is durable and enforceable, not just a one-off refactor.
+
+### What I did
+
+- Added Storybook taxonomy + placement check script:
+  - `scripts/storybook/check-taxonomy.mjs`
+- Wired checks into scripts:
+  - root `package.json`: added `storybook:check`, prefixed `test`
+  - `packages/engine/package.json`: prefixed `test` and `test:watch` with taxonomy check
+- Added maintainer guide:
+  - `docs/frontend/storybook.md`
+- Updated ownership/boundary doc after root config cutover:
+  - `docs/frontend/storybook-and-app-boot-model.md`
+- Fixed theme import paths after inventory story moves:
+  - `apps/inventory/src/app/stories/Themed.stories.tsx`
+
+### Why
+
+- Task 11 requires validation scripts/CI-style checks for taxonomy and placement drift.
+- Task 12 requires maintainer documentation for adding and organizing stories.
+
+### What worked
+
+- `npm run storybook:check` passes (`45 story files`).
+- `npm run -w packages/engine test` passes with taxonomy check integrated.
+
+### What didn't work
+
+- A moved story import (`Themed.stories.tsx`) initially used one fewer `../` segment for theme CSS paths and had to be corrected.
+
+### What I learned
+
+- Title checks should parse canonical title candidates rather than first `title:` occurrences, because fixture payloads often include unrelated `title` fields.
+
+### What was tricky to build
+
+- Placement checks must balance strictness (blocking flat `src/stories`) with flexibility (allowing nested `src/features/**/stories`).
+
+### What warrants a second pair of eyes
+
+- Confirm policy scope is strict enough for future additions but not so strict it blocks legitimate story module structures.
+
+### What should be done in the future
+
+- Optionally add a dedicated CI workflow invocation for `npm run storybook:check` if this repo introduces centralized CI workflows later.
+
+### Code review instructions
+
+- Review policy script:
+  - `scripts/storybook/check-taxonomy.mjs`
+- Review script wiring:
+  - `package.json`
+  - `packages/engine/package.json`
+- Review docs:
+  - `docs/frontend/storybook.md`
+  - `docs/frontend/storybook-and-app-boot-model.md`
+
+### Technical details
+
+- Validation commands:
+  - `npm run storybook:check`
+  - `npm run -w packages/engine test`

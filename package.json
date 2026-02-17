@@ -12,8 +12,9 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "typecheck": "tsc --build",
-    "test": "npm run test -w packages/engine",
-    "build-storybook": "npm run build-storybook -w apps/inventory"
+    "test": "npm run storybook:check && npm run test -w packages/engine",
+    "build-storybook": "npm run build-storybook -w apps/inventory",
+    "storybook:check": "node scripts/storybook/check-taxonomy.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.15",

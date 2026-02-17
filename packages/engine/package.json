@@ -8,8 +8,8 @@
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc -b",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "node ../../scripts/storybook/check-taxonomy.mjs && vitest run",
+    "test:watch": "node ../../scripts/storybook/check-taxonomy.mjs && vitest"
   },
   "dependencies": {
     "@jitl/quickjs-singlefile-mjs-release-sync": "^0.31.0",
