@@ -606,6 +606,83 @@ Proceed with Design A: create a reusable `chat-runtime` package with explicit co
 
 The key extraction line is architectural, not visual: move orchestration and event interpretation out of `InventoryChatWindow` and into a composable runtime layer. Once that is done, chat UI and event inspector become naturally reusable across HyperCard apps.
 
+## 11. Implementation Plan Update (Artifact/Card/Editor Hard Cutover)
+
+This update refines execution around the user-selected direction: treat HyperCard artifact/card/editor behavior as its own reusable subsystem in `@hypercard/engine`, with chat integrating it through explicit contracts instead of owning implementation details.
+
+### 11.1 Target module split in engine
+
+Create a new engine subsystem folder:
+
+```text
+packages/engine/src/hypercard-chat/
+  artifacts/
+    artifactsSlice.ts
+    artifactsSelectors.ts
+    artifactRuntime.ts
+    timelineProjection.ts
+  widgets/
+    TimelineWidget.tsx
+    ArtifactPanelWidgets.tsx
+  event-viewer/
+    eventBus.ts
+    EventViewerWindow.tsx
+  runtime-card-tools/
+    CodeEditorWindow.tsx
+    editorLaunch.ts
+    RuntimeCardDebugWindow.tsx
+  utils/
+    syntaxHighlight.tsx
+    yamlFormat.ts
+  windowAdapters.ts
+  index.ts
+```
+
+### 11.2 Window adapter contract update
+
+Instead of a single chat-owned adapter with artifact/editor responsibilities, split capability contracts:
+
+```ts
+interface WindowHost {
+  open(payload: OpenWindowPayload): void;
+}
+
+interface ChatWindowAdapter {
+  openEventInspector(convId: string): void;
+}
+
+interface ArtifactWindowAdapter {
+  openArtifact(input: OpenArtifactInput): void;
+}
+
+interface RuntimeCardToolsAdapter {
+  openCodeEditor(cardId: string, code?: string): void;
+  openRuntimeCardDebug(): void;
+}
+```
+
+Effect:
+- Chat remains reusable without mandatory artifact/editor dependencies.
+- Artifact and editor integrations become opt-in capabilities.
+- Inventory supplies app-specific glue (for example stack binding) while core implementation lives in engine.
+
+### 11.3 Inventory cutover strategy
+
+Hard cutover for moved implementation ownership:
+1. Move implementation logic to engine subsystem files.
+2. Switch Inventory to import from engine for moved modules.
+3. Keep only Inventory-specific wiring (stack config, menu/desktop commands).
+4. Remove duplicated logic from Inventory feature folder (or reduce to thin glue where needed).
+
+### 11.4 Validation gates
+
+Before considering this phase complete:
+- `timelineProjection` behavior parity tests pass.
+- Artifact reducer tests pass in new module location.
+- Event bus/viewer behavior still isolates per-conversation and remains bounded.
+- Runtime card editor/debug windows open and operate from Inventory using engine-hosted components.
+- Engine and Inventory typecheck/build pass for touched packages.
+
 ## References
 
 - Inventory chat system:

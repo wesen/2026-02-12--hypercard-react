@@ -350,3 +350,60 @@ The focus here was publication hygiene so the document is discoverable and usabl
 
 - Design doc:
   - `2026-02-12--hypercard-react/ttmp/2026/02/17/HC-50-CHAT-COMPONENT--extract-inventory-chat-stack-into-reusable-hypercard-component/design-doc/01-inventory-chat-architecture-and-reusable-component-extraction-analysis.md`
+
+## Step 5: Implementation Plan Update and Task Execution Kickoff
+
+The ticket initially contained architecture analysis and proposal content, but not an execution-grade task graph for the concrete refactor direction chosen after alignment. This step converts that design intent into a hard-cutover implementation plan and actionable tasks.
+
+This phase establishes the workstream sequence before code changes: plan update, subsystem extraction in engine, inventory cutover, testing, and diary/changelog closure.
+
+### Prompt Context
+
+**User prompt (verbatim):** "cool, update the implementation plan, then create a detailed list of tasks, and then get to work, task by task, committing at appropriate points, and keeping a detailed diary."
+
+**Assistant interpretation:** Update HC-50 design doc with a concrete implementation plan for the agreed subsystem split, add detailed task checklist to the ticket, then begin implementation in incremental commits with diary updates.
+
+**Inferred user intent:** Move from analysis to execution with clear checkpoints so refactor progress is visible, auditable, and easy to review.
+
+**Commit (code):** N/A (planning/docs phase before implementation commits)
+
+### What I did
+- Updated `tasks.md` with detailed execution tasks grouped by plan/workstream stages.
+- Updated `design-doc/01...` with a new implementation update section:
+  - target engine module layout
+  - updated window adapter contract split
+  - inventory hard-cutover strategy
+  - validation gates
+- Prepared implementation sequence to commit in focused chunks.
+
+### Why
+- The existing plan was architecture-level; the user explicitly requested task-by-task execution readiness.
+- A detailed task list is needed to track progress and check off items as commits land.
+
+### What worked
+- Existing analysis already contained enough architectural detail to derive a concrete implementation sequence quickly.
+
+### What didn't work
+- N/A.
+
+### What I learned
+- The adapter contract split (`chat` vs `artifacts` vs `runtime-card-tools`) is the most important boundary because it defines long-term subsystem ownership.
+
+### What was tricky to build
+- Translating broad design into a hard-cutover sequence without introducing migration overhead.
+- Symptoms: temptation to add transition shims.
+- Resolution: define explicit target module ownership and immediate cutover tasks.
+
+### What warrants a second pair of eyes
+- Exact API naming in the new engine subsystem to avoid future churn before other apps adopt it.
+
+### What should be done in the future
+- After implementation lands, write a concise “adopt in new app” playbook for `@hypercard/engine` hypercard-chat subsystem.
+
+### Code review instructions
+- Review plan/task changes first:
+  - `2026-02-12--hypercard-react/ttmp/2026/02/17/HC-50-CHAT-COMPONENT--extract-inventory-chat-stack-into-reusable-hypercard-component/design-doc/01-inventory-chat-architecture-and-reusable-component-extraction-analysis.md`
+  - `2026-02-12--hypercard-react/ttmp/2026/02/17/HC-50-CHAT-COMPONENT--extract-inventory-chat-stack-into-reusable-hypercard-component/tasks.md`
+
+### Technical details
+- No runtime behavior changes in this step; this is planning/task-structure groundwork for the upcoming code commits.
