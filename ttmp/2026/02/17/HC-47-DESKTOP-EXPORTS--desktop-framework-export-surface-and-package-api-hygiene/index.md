@@ -1,7 +1,7 @@
 ---
 Title: Desktop Framework Export Surface and Package API Hygiene
 Ticket: HC-47-DESKTOP-EXPORTS
-Status: active
+Status: complete
 Topics:
     - frontend
     - architecture
@@ -26,10 +26,11 @@ RelatedFiles:
       Note: Root barrel now excludes desktop/windowing exports after hard cutover
 ExternalSources: []
 Summary: Hard-cutover desktop API exports to explicit package subpaths and removed root-barrel desktop/windowing exports.
-LastUpdated: 2026-02-17T16:44:44.640544116-05:00
+LastUpdated: 2026-02-17T16:58:37.484525176-05:00
 WhatFor: ""
 WhenToUse: ""
 ---
+
 
 
 # Desktop Framework Export Surface and Package API Hygiene
