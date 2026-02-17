@@ -8,8 +8,10 @@ import { InventoryChatWindow } from './features/chat/InventoryChatWindow';
 import { CodeEditorWindow } from './features/chat/CodeEditorWindow';
 import { getEditorInitialCode } from './features/chat/editorLaunch';
 import { RuntimeCardDebugWindow } from './features/chat/RuntimeCardDebugWindow';
+import { ReduxPerfWindow } from './features/debug/ReduxPerfWindow';
 
 const CHAT_APP_KEY = 'inventory-chat';
+const REDUX_PERF_APP_KEY = 'redux-perf-debug';
 
 function newConversationId(): string {
   return typeof window.crypto?.randomUUID === 'function'
@@ -43,9 +45,22 @@ function openNewChatWindow(dispatch: ReturnType<typeof useDispatch>) {
 export function App() {
   const dispatch = useDispatch();
 
-  // Open initial chat window on mount
+  // Open initial chat window on mount, plus diagnostics window in dev mode
   useEffect(() => {
     openNewChatWindow(dispatch);
+
+    if (import.meta.env.DEV) {
+      dispatch(
+        openWindow({
+          id: 'window:redux-perf:dev',
+          title: '📈 Redux Perf',
+          icon: '📈',
+          bounds: { x: 900, y: 40, w: 420, h: 320 },
+          content: { kind: 'app', appKey: REDUX_PERF_APP_KEY },
+          dedupeKey: REDUX_PERF_APP_KEY,
+        }),
+      );
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -64,11 +79,24 @@ export function App() {
           dedupeKey: 'runtime-card-debug',
         }));
       }
+      if (commandId === 'debug.redux-perf' || commandId === 'icon.open.redux-perf') {
+        dispatch(openWindow({
+          id: 'window:redux-perf:dev',
+          title: '📈 Redux Perf',
+          icon: '📈',
+          bounds: { x: 900, y: 40, w: 420, h: 320 },
+          content: { kind: 'app', appKey: REDUX_PERF_APP_KEY },
+          dedupeKey: REDUX_PERF_APP_KEY,
+        }));
+      }
     },
     [dispatch],
   );
 
   const renderAppWindow = useCallback((appKey: string): ReactNode => {
+    if (appKey === REDUX_PERF_APP_KEY) {
+      return <ReduxPerfWindow />;
+    }
     if (appKey.startsWith(`${CHAT_APP_KEY}:`)) {
       const convId = appKey.slice(CHAT_APP_KEY.length + 1);
       return <InventoryChatWindow conversationId={convId} />;
@@ -94,9 +122,15 @@ export function App() {
       label: STACK.cards[cardId].title ?? cardId,
       icon: STACK.cards[cardId].icon ?? '📄',
     }));
+    const debugIcons: DesktopIconDef[] = [
+      { id: 'runtime-debug', label: 'Stacks & Cards', icon: '🔧' },
+    ];
+    if (import.meta.env.DEV) {
+      debugIcons.push({ id: 'redux-perf', label: 'Redux Perf', icon: '📈' });
+    }
     return [
       { id: 'new-chat', label: 'New Chat', icon: '💬' },
-      { id: 'runtime-debug', label: 'Stacks & Cards', icon: '🔧' },
+      ...debugIcons,
       ...cardIcons,
     ];
   }, []);
@@ -134,6 +168,18 @@ export function App() {
           { id: 'cascade', label: 'Cascade Windows', commandId: 'window.cascade' },
         ],
       },
+      ...(import.meta.env.DEV
+        ? [
+            {
+              id: 'debug',
+              label: 'Debug',
+              items: [
+                { id: 'redux-perf', label: '📈 Redux Perf', commandId: 'debug.redux-perf' },
+                { id: 'stacks-cards', label: '🔧 Stacks & Cards', commandId: 'debug.stacks' },
+              ],
+            },
+          ]
+        : []),
     ];
   }, []);
 
