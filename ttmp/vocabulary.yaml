@@ -25,6 +25,14 @@ topics:
       description: User experience improvements and polish
     - slug: storybook
       description: Storybook stories and component previews
+    - slug: cleanup
+      description: Code cleanup and simplification work
+    - slug: css
+      description: Styling, theming, and CSS architecture
+    - slug: state-management
+      description: State architecture and management patterns
+    - slug: vite
+      description: Vite build tooling and configuration
 docTypes:
     - slug: design-doc
       description: Structured rationale and architecture notes

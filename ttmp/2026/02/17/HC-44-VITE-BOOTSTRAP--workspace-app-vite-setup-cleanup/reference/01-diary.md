@@ -9,13 +9,20 @@ Topics:
 DocType: reference
 Intent: long-term
 Owners: []
-RelatedFiles: []
+RelatedFiles:
+    - Path: tooling/vite/createHypercardViteConfig.ts
+      Note: Main code artifact tracked by diary
+    - Path: ttmp/2026/02/17/HC-44-VITE-BOOTSTRAP--workspace-app-vite-setup-cleanup/design-doc/01-proposal-a-implementation-workspace-app-bootstrapping-and-vite-cleanup.md
+      Note: Implementation and validation record
+    - Path: ttmp/2026/02/17/HC-44-VITE-BOOTSTRAP--workspace-app-vite-setup-cleanup/tasks.md
+      Note: Task progression log
 ExternalSources: []
-Summary: "Implementation diary for Proposal A Vite/workspace bootstrapping cleanup."
+Summary: Implementation diary for Proposal A Vite/workspace bootstrapping cleanup.
 LastUpdated: 2026-02-17T14:24:00-05:00
-WhatFor: "Track task-by-task implementation progress, validation, and closure for HC-44."
-WhenToUse: "Use when reviewing implementation sequence or continuing HC-44 work."
+WhatFor: Track task-by-task implementation progress, validation, and closure for HC-44.
+WhenToUse: Use when reviewing implementation sequence or continuing HC-44 work.
 ---
+
 
 # Diary
 
@@ -93,7 +100,7 @@ After code changes, I validated via `tsc --build` and dev-server smoke checks. P
 
 **Inferred user intent:** Complete the actual refactor, not only planning docs.
 
-**Commit (code):** pending
+**Commit (code):** `5264a8f` — "refactor(vite): centralize app config defaults via shared helper"
 
 ### What I did
 
@@ -168,3 +175,66 @@ npm run typecheck
 - `apps/todo/vite.config.ts`
 - `apps/crm/vite.config.ts`
 - `apps/book-tracker-debug/vite.config.ts`
+
+## Step 3: Ticket bookkeeping, closure, and handoff
+
+I linked implementation files to the design doc/diary, appended changelog entries, and closed the ticket via `docmgr ticket close`. Because A6 was still open at closure time, docmgr emitted a warning and closed anyway; I then marked A6 complete in `tasks.md` to keep ticket state consistent.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 1)
+
+**Assistant interpretation:** Fully close the ticket after finishing implementation tasks.
+
+**Inferred user intent:** End with a clean, complete ticket including tasks/changelog/diary.
+
+**Commit (code):** N/A (ticket-closure bookkeeping step)
+
+### What I did
+
+- Added related-file links to the design doc and diary.
+- Added changelog entry summarizing implementation.
+- Ran `docmgr ticket close --ticket HC-44-VITE-BOOTSTRAP ...`.
+- Updated tasks to mark A6 complete.
+
+### Why
+
+- Required for formal ticket closure and traceable documentation.
+
+### What worked
+
+- Ticket status switched `active -> complete`.
+- Changelog updated automatically by close command.
+
+### What didn't work
+
+- Close command warned about one open task at execution time:
+
+```text
+Warning: Not all tasks are done (1 open, 6 done). Closing anyway.
+```
+
+I resolved this by updating `tasks.md` immediately after closure.
+
+### What I learned
+
+- `docmgr ticket close` does not enforce all tasks complete; it warns but proceeds.
+
+### What was tricky to build
+
+- Ordering needed care: either mark final task done before close, or close then immediately reconcile task list. I used the latter to avoid ambiguity about whether closure command itself had run.
+
+### What warrants a second pair of eyes
+
+- None; closure state and task state are now aligned.
+
+### What should be done in the future
+
+- Standardize a closure sequence in team docs: check final task first, then close.
+
+### Code review instructions
+
+- Confirm status and closure artifacts:
+- `ttmp/2026/02/17/HC-44-VITE-BOOTSTRAP--workspace-app-vite-setup-cleanup/index.md`
+- `ttmp/2026/02/17/HC-44-VITE-BOOTSTRAP--workspace-app-vite-setup-cleanup/tasks.md`
+- `ttmp/2026/02/17/HC-44-VITE-BOOTSTRAP--workspace-app-vite-setup-cleanup/changelog.md`

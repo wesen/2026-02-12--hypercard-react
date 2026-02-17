@@ -9,13 +9,24 @@ Topics:
 DocType: design-doc
 Intent: long-term
 Owners: []
-RelatedFiles: []
+RelatedFiles:
+    - Path: apps/book-tracker-debug/vite.config.ts
+      Note: Book tracker app now uses shared helper defaults
+    - Path: apps/crm/vite.config.ts
+      Note: CRM app now uses shared helper defaults
+    - Path: apps/inventory/vite.config.ts
+      Note: Inventory app now opts into shared helper with chat proxy
+    - Path: apps/todo/vite.config.ts
+      Note: Todo app now uses shared helper defaults
+    - Path: tooling/vite/createHypercardViteConfig.ts
+      Note: Shared Vite defaults and optional inventory proxy implementation
 ExternalSources: []
-Summary: "Implementation and validation record for consolidating duplicated app-level Vite setup into a shared helper with optional inventory proxy support."
+Summary: Implementation and validation record for consolidating duplicated app-level Vite setup into a shared helper with optional inventory proxy support.
 LastUpdated: 2026-02-17T14:23:00-05:00
-WhatFor: "Capture final design decisions and completed implementation details for Proposal A."
-WhenToUse: "Use when reviewing or extending shared Vite setup in the HyperCard workspace."
+WhatFor: Capture final design decisions and completed implementation details for Proposal A.
+WhenToUse: Use when reviewing or extending shared Vite setup in the HyperCard workspace.
 ---
+
 
 # Proposal A Implementation: Workspace/App Bootstrapping and Vite Cleanup
 
