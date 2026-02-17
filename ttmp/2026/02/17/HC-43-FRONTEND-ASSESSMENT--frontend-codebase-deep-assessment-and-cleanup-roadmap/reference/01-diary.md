@@ -1,0 +1,450 @@
+---
+Title: Diary
+Ticket: HC-43-FRONTEND-ASSESSMENT
+Status: active
+Topics:
+    - frontend
+    - architecture
+    - cleanup
+    - storybook
+    - state-management
+    - css
+DocType: reference
+Intent: long-term
+Owners: []
+RelatedFiles:
+    - Path: apps/inventory/src/features/chat/InventoryChatWindow.tsx
+      Note: Central investigation target for chat subsystem analysis
+    - Path: packages/engine/src/components/shell/windowing/DesktopShell.tsx
+      Note: Central investigation target for shell/windowing analysis
+    - Path: packages/engine/src/plugin-runtime/index.ts
+      Note: Removed dead sandbox worker export path during HC-43 Phase 1
+    - Path: packages/engine/src/theme/base.css
+      Note: Central investigation target for CSS/design-system analysis
+    - Path: ttmp/2026/02/17/HC-43-FRONTEND-ASSESSMENT--frontend-codebase-deep-assessment-and-cleanup-roadmap/archive/dead-files/01-dead-file-archive-log.md
+      Note: Dead file archive provenance for HC-43 Phase 1
+    - Path: ttmp/2026/02/17/HC-43-FRONTEND-ASSESSMENT--frontend-codebase-deep-assessment-and-cleanup-roadmap/design-doc/01-frontend-current-state-and-subsystem-cleanup-assessment.md
+      Note: Primary deliverable documented by diary
+ExternalSources: []
+Summary: Investigation diary for HC-43 capturing repository reconnaissance, architecture evidence gathering, report authoring, and upload steps.
+LastUpdated: 2026-02-17T16:25:00-05:00
+WhatFor: Record exact analysis workflow, commands, findings, and review instructions for future continuation.
+WhenToUse: Use when continuing HC-43, validating evidence sources, or auditing assessment provenance.
+---
+
+
+
+# Diary
+
+## Goal
+
+Capture the end-to-end investigation process for HC-43: what was examined, what evidence was collected, what failed, and how the final assessment was produced and delivered.
+
+## Step 1: Ticket Setup and Context Recovery
+
+I started by verifying whether the requested ticket workspace already existed and where it was located. There was an initial path mismatch between workspace-root assumptions and the actual repo-root `ttmp` location, so I corrected to the repository path and continued from there.
+
+This step established the execution baseline: existing HC-43 docs were template placeholders, and pre-existing unrelated dirty changes under HC-037 had to be left untouched.
+
+### Prompt Context
+
+**User prompt (verbatim):** "Ok, let's create a new ticket to continue the cleanup, this time make a full assessment of the frontend codebase, how the different subsystems work and are built, things that are duplicated or deprecated, things that could be reorgnized, things that are problematic. Make a really detailed assessment, first a 5+ page section on the currenstate of affair, then for each subsystem you examined, a full review + assessment and proposals for improvement. 
+
+Keep a detailed textbook style with prose paragraphs, code snippets, pseudocode, symbols and file references, diagrams, bullet point lists. Everything for a developer to really get into it even if the ydon't know the codebase. 
+
+Store the document in the ticket and upload tor emarkable. Keep a diary as you investigate."
+
+**Assistant interpretation:** Create/continue an HC-43 ticket document set, perform a deep architecture/code quality audit of the frontend, write an extensive report with concrete technical artifacts, keep a procedural diary, and upload the result to reMarkable.
+
+**Inferred user intent:** Build a durable, onboarding-grade engineering reference that can drive cleanup execution by a new developer without prior context.
+
+**Commit (code):** N/A (documentation and analysis only in this step)
+
+### What I did
+
+- Checked git status in repo root.
+- Confirmed HC-43 ticket directory exists under repo-local `ttmp/2026/02/17/HC-43-FRONTEND-ASSESSMENT--frontend-codebase-deep-assessment-and-cleanup-roadmap`.
+- Loaded existing `design-doc/01-...assessment.md` and `reference/01-diary.md` to confirm they were still boilerplate templates.
+
+### Why
+
+- Needed to avoid duplicate ticket creation and ensure work lands in the correct workspace.
+- Needed to start from actual draft state, not assumptions.
+
+### What worked
+
+- Ticket workspace and required docs already existed and were writable.
+- Existing investigation artifacts from earlier exploration were still valid context.
+
+### What didn't work
+
+- Initial path assumption failed:
+
+```bash
+ls: cannot access '/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/ttmp/2026/02/17/HC-43-FRONTEND-ASSESSMENT--frontend-codebase-deep-assessment-and-cleanup-roadmap': No such file or directory
+```
+
+- Resolution: switched to repo-root path:
+`/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/...`
+
+### What I learned
+
+- The active working repository is nested (`.../hypercard-add-webchat/2026-02-12--hypercard-react`), so ticket paths should always be resolved from repo root.
+
+### What was tricky to build
+
+- Context continuity was non-trivial because multiple prior ticket operations existed in the same day and there were unrelated modified files in HC-037. The invariant was: do not touch or revert unrelated changes.
+
+### What warrants a second pair of eyes
+
+- Ticket path conventions across workspace vs repo root should be standardized in team documentation to avoid repeat path errors.
+
+### What should be done in the future
+
+- Add a one-line repo-local helper note in ticket docs indicating canonical root path for `ttmp` operations.
+
+### Code review instructions
+
+- Review ticket existence and current state:
+- `ttmp/2026/02/17/HC-43-FRONTEND-ASSESSMENT--frontend-codebase-deep-assessment-and-cleanup-roadmap/index.md`
+- `ttmp/2026/02/17/HC-43-FRONTEND-ASSESSMENT--frontend-codebase-deep-assessment-and-cleanup-roadmap/design-doc/01-frontend-current-state-and-subsystem-cleanup-assessment.md`
+- `ttmp/2026/02/17/HC-43-FRONTEND-ASSESSMENT--frontend-codebase-deep-assessment-and-cleanup-roadmap/reference/01-diary.md`
+
+### Technical details
+
+- Core verification command:
+
+```bash
+git status --short
+```
+
+---
+
+## Step 2: Architecture and Quality Evidence Collection
+
+I performed a broad but targeted evidence sweep, focusing on subsystem boundaries, large hotspots, duplication signals, state flows, and style system structure. The goal was to anchor every major claim in concrete files and line-level snippets.
+
+I intentionally sampled both topology-level files (scripts/config/indexes) and runtime-critical implementation files (shell, chat, windowing, runtime host, diagnostics).
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 1)
+
+**Assistant interpretation:** Build an evidence-backed assessment with enough precision (APIs, files, snippets) for actionable cleanup design.
+
+**Inferred user intent:** Avoid vague audit commentary; provide concrete, developer-usable technical findings.
+
+**Commit (code):** N/A (analysis-only)
+
+### What I did
+
+- Enumerated workspace/apps/stories and line-count hotspots.
+- Loaded Storybook config and app Vite configs.
+- Loaded store factory and diagnostics implementation.
+- Loaded windowing slice/selectors + shell + drag overlay + interaction controller.
+- Loaded chat transport/projection/orchestration/reducer/event bus files.
+- Loaded plugin runtime host and worker client exports.
+- Loaded theming CSS and part constants.
+- Queried duplicate patterns (`JSON.parse(JSON.stringify`, repeated stack metadata builders, repeated parsing helpers, inline style usage).
+
+### Why
+
+- Needed both architectural map and code-quality problem map to satisfy “full assessment + subsystem proposals”.
+
+### What worked
+
+- `rg` + `nl -ba` + targeted `sed` provided high-fidelity evidence quickly.
+- Quantitative inventory identified actual complexity centers.
+- Existing tests and diagnostics code were easy to map and reference.
+
+### What didn't work
+
+- Two path assumptions failed for windowing files due package structure drift:
+
+```bash
+nl: packages/engine/src/features/windowing/dragOverlayStore.ts: No such file or directory
+nl: packages/engine/src/features/windowing/useWindowInteraction.ts: No such file or directory
+nl: packages/engine/src/features/windowing/windowingSelectors.ts: No such file or directory
+```
+
+- Resolution: discovered drag/interaction files live under shell path:
+`packages/engine/src/components/shell/windowing/*`
+
+### What I learned
+
+- Windowing durable state is in `features/windowing`, while fast interaction lane is now in `components/shell/windowing/dragOverlayStore.ts`.
+- Storybook is globally scoped but physically inventory-hosted.
+- `createDSLApp` and worker sandbox export are ambiguous in current usage.
+
+### What was tricky to build
+
+- Distinguishing “unused” from “library export for future use” required conservative framing. I documented candidates as ambiguity/deprecation-review targets rather than declaring hard dead code.
+
+### What warrants a second pair of eyes
+
+- Export surface decisions (`createDSLApp`, worker sandbox client) should be confirmed by maintainers before deprecation/removal.
+
+### What should be done in the future
+
+- Add API status annotations (`@public`, `@experimental`, `@deprecated`) for ambiguous exports.
+
+### Code review instructions
+
+- Start with these anchors:
+- `packages/engine/src/app/createAppStore.ts`
+- `packages/engine/src/components/shell/windowing/DesktopShell.tsx`
+- `packages/engine/src/components/shell/windowing/dragOverlayStore.ts`
+- `apps/inventory/src/features/chat/InventoryChatWindow.tsx`
+- `apps/inventory/src/features/chat/chatSlice.ts`
+- `packages/engine/src/theme/base.css`
+- `apps/inventory/.storybook/main.ts`
+
+### Technical details
+
+- Representative commands:
+
+```bash
+rg --files apps packages
+wc -l $(rg --files packages/engine/src apps/inventory/src ... -g '*.ts' -g '*.tsx') | sort -nr | head -n 30
+rg -n "style=\{\{" apps/inventory/src packages/engine/src
+rg -n "createDSLApp\(" -S packages apps
+```
+
+---
+
+## Step 3: Authoring the Deep Assessment Document
+
+I replaced the template design doc with a full long-form report containing: a broad current-state baseline, subsystem-by-subsystem findings, proposals, pseudocode, diagrams, and a prioritized cleanup roadmap.
+
+The structure was designed for a new developer to onboard quickly: general architecture first, then subsystem deep dives, then implementation prioritization and documentation recommendations.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 1)
+
+**Assistant interpretation:** Produce textbook-style prose with concrete engineering evidence and improvement designs.
+
+**Inferred user intent:** Create a durable reference document that can directly drive cleanup execution.
+
+**Commit (code):** N/A (doc authoring in ticket workspace)
+
+### What I did
+
+- Updated:
+- `ttmp/2026/02/17/HC-43-FRONTEND-ASSESSMENT--frontend-codebase-deep-assessment-and-cleanup-roadmap/design-doc/01-frontend-current-state-and-subsystem-cleanup-assessment.md`
+- Added sections:
+- current state baseline (detailed)
+- per-subsystem assessments
+- proposals with pseudocode
+- cleanup roadmap by phase
+- docs-to-write list
+- open questions
+- concrete references list
+
+### Why
+
+- User requested depth, pedagogical style, and practical implementation guidance.
+
+### What worked
+
+- Existing file-level evidence mapped cleanly into subsystem sections.
+- Pseudocode patterns were straightforward to express for decomposition proposals.
+
+### What didn't work
+
+- N/A (no blocking authoring issues).
+
+### What I learned
+
+- The codebase is architecturally coherent; cleanup leverage is primarily decomposition and standardization, not foundational redesign.
+
+### What was tricky to build
+
+- Balancing breadth (all subsystems) with actionable specificity required strict section discipline. I used repeated structure: baseline -> evidence -> risk -> proposal -> tasks.
+
+### What warrants a second pair of eyes
+
+- Prioritization order for chat decomposition vs shell decomposition should be validated against current product roadmap.
+
+### What should be done in the future
+
+- Convert roadmap phases into explicit ticket tasks with ownership and acceptance criteria.
+
+### Code review instructions
+
+- Read in this order:
+1. `.../design-doc/01-frontend-current-state-and-subsystem-cleanup-assessment.md` (Executive Summary + Current State)
+2. Same file (subsystem sections B-L)
+3. Same file (Cleanup Roadmap + Docs-to-Write)
+
+### Technical details
+
+- Report includes flow diagrams and pseudocode for:
+- shell decomposition
+- chat parse/project pipeline
+- CSS design-system restructuring
+
+---
+
+## Step 4: Ticket Bookkeeping and Delivery Prep
+
+I prepared the final packaging phase: diary completion, task/changelog updates, file relations, and upload plan to reMarkable.
+
+This step ensures the document is not only written, but operationally discoverable and linked to implementation context.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 1)
+
+**Assistant interpretation:** Ensure all requested deliverables are complete: ticket doc + diary + upload.
+
+**Inferred user intent:** Receive a finished, auditable handoff artifact.
+
+**Commit (code):** N/A
+
+### What I did
+
+- Finalized this diary with command-level provenance.
+- Planned docmgr relation updates for key code anchors.
+- Planned upload path: `/ai/2026/02/17/HC-43-FRONTEND-ASSESSMENT/`.
+
+### Why
+
+- Without linkage and upload, the report would remain local and less discoverable.
+
+### What worked
+
+- Ticket structure already included required directories and docs.
+
+### What didn't work
+
+- N/A.
+
+### What I learned
+
+- The best continuation experience for future developers requires both deep prose and explicit file relations.
+
+### What was tricky to build
+
+- Ensuring diary remains useful rather than verbose required focusing on decision-relevant events and command evidence.
+
+### What warrants a second pair of eyes
+
+- Verify that related-file linking remains concise (avoid overlinking noise).
+
+### What should be done in the future
+
+- Add a small ticket automation script for:
+- `doc relate`
+- `tasks/changelog`
+- optional `remarquee upload bundle`
+
+### Code review instructions
+
+- Verify diary completeness:
+- `ttmp/2026/02/17/HC-43-FRONTEND-ASSESSMENT--frontend-codebase-deep-assessment-and-cleanup-roadmap/reference/01-diary.md`
+
+### Technical details
+
+- Planned upload command pattern:
+
+```bash
+remarquee upload bundle \
+  <design-doc.md> <diary.md> \
+  --name "HC-43 Frontend Assessment" \
+  --remote-dir "/ai/2026/02/17/HC-43-FRONTEND-ASSESSMENT" \
+  --toc-depth 2
+```
+
+---
+
+## Related
+
+- `ttmp/2026/02/17/HC-43-FRONTEND-ASSESSMENT--frontend-codebase-deep-assessment-and-cleanup-roadmap/design-doc/01-frontend-current-state-and-subsystem-cleanup-assessment.md`
+
+
+---
+
+## Step 4: HC-43 Phase 1 Low-Risk Cleanup Kickoff (Dead Marker + Dead File Archive/Removal)
+
+I paused the attempted HC-46 namespace-cutover path and explicitly reverted it to return to the requested HC-43 Phase 1 scope. The first executed low-risk item from the HC-43 roadmap was to remove legacy dead-file markers and archive/remove actual dead files.
+
+I validated file deadness by reference search, archived snapshots under the HC-43 ticket, removed active-source files, and revalidated with full typecheck and engine tests.
+
+### Prompt Context
+
+**User prompt (verbatim):** "ok hold on, what are the tasks you have lined up. I was talking about \"remove legacy dead-file markers and archive actual dead files and all that\" from our original HC-43 document."
+
+**Assistant interpretation:** Drop the temporary HC-46 direction and execute the HC-43 Phase 1 low-risk dead-file cleanup item first.
+
+**Inferred user intent:** Build momentum with safe cleanup tasks that reduce noise and future migration complexity before larger refactors.
+
+**Commit (code):** `d92e426` — "cleanup(hc-43): archive and remove dead legacy marker files"
+
+### What I did
+
+- Reverted in-progress HC-46 direction:
+  - restored uncommitted cutover edits,
+  - created revert commits for committed HC-46 namespace work.
+- Confirmed deadness candidates from HC-43:
+  - `apps/inventory/src/stories/decorators.tsx`
+  - `packages/engine/src/plugin-runtime/worker/sandboxClient.ts`
+  - `packages/engine/src/plugin-runtime/worker/runtime.worker.ts`
+- Archived snapshots into:
+  - `ttmp/2026/02/17/HC-43-FRONTEND-ASSESSMENT--frontend-codebase-deep-assessment-and-cleanup-roadmap/archive/dead-files/`
+- Removed files from active code and removed dead barrel export in:
+  - `packages/engine/src/plugin-runtime/index.ts`
+- Ran validation:
+  - `npm run typecheck`
+  - `npm run -w packages/engine test`
+
+### Why
+
+- This is the explicit first item in HC-43 Phase 1 (low risk, high clarity).
+- It reduces codebase ambiguity and removes a known source of worker-side effects through dead exports.
+
+### What worked
+
+- Deadness verification was straightforward (`rg` found no active references).
+- All tests/typecheck passed after removal.
+- Archive-first approach preserved auditability/history.
+
+### What didn't work
+
+- Cleanup commands like `rm -rf` and `git clean` were blocked by environment policy.
+- Resolution: used file-level `apply_patch` deletions and explicit staging.
+
+### What I learned
+
+- The dead worker export path was not only unused but also risked non-browser import side effects (Worker global assumptions).
+
+### What was tricky to build
+
+- Keeping rollback safe while preserving unrelated dirty workspace changes required strict path-level restores and targeted revert commits.
+
+### What warrants a second pair of eyes
+
+- Confirm there are no external consumers relying on `plugin-runtime/worker/sandboxClient` barrel export.
+
+### What should be done in the future
+
+- Continue HC-43 Phase 1 with the remaining low-risk tasks:
+  - SEM helper consolidation
+  - Storybook/app boot ownership docs
+
+### Code review instructions
+
+- Review code deletion/export cleanup:
+  - `packages/engine/src/plugin-runtime/index.ts`
+  - `ttmp/2026/02/17/HC-43-FRONTEND-ASSESSMENT--frontend-codebase-deep-assessment-and-cleanup-roadmap/archive/dead-files/apps-inventory-src-stories-decorators.tsx`
+  - `ttmp/2026/02/17/HC-43-FRONTEND-ASSESSMENT--frontend-codebase-deep-assessment-and-cleanup-roadmap/archive/dead-files/packages-engine-src-plugin-runtime-worker-sandboxClient.ts`
+  - `ttmp/2026/02/17/HC-43-FRONTEND-ASSESSMENT--frontend-codebase-deep-assessment-and-cleanup-roadmap/archive/dead-files/packages-engine-src-plugin-runtime-worker-runtime.worker.ts`
+- Validate commands:
+  - `npm run typecheck`
+  - `npm run -w packages/engine test`
+
+### Technical details
+
+- Revert commits created before resuming HC-43 scope:
+  - `1fa1070` Revert "test(engine): add desktop namespace export parity coverage"
+  - `5daf495` Revert "refactor(engine): add desktop namespace compatibility barrels"

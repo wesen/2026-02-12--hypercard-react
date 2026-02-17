@@ -1,4 +1,22 @@
-# Dead File Archive (HC-43 Phase 1)
+---
+Title: Dead File Archive Log
+Ticket: HC-43-FRONTEND-ASSESSMENT
+Status: active
+Topics:
+    - frontend
+    - cleanup
+DocType: reference
+Intent: long-term
+Owners: []
+RelatedFiles: []
+ExternalSources: []
+Summary: Archive log for HC-43 Phase 1 dead-file snapshots removed from active source paths.
+LastUpdated: 2026-02-17T14:50:00-05:00
+WhatFor: Track provenance for archived dead files before deletion.
+WhenToUse: Use when auditing HC-43 Phase 1 dead-file cleanup decisions.
+---
+
+# Dead File Archive Log (HC-43 Phase 1)
 
 Date: 2026-02-17
 
