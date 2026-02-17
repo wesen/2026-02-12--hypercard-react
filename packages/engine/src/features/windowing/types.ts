@@ -54,6 +54,15 @@ export interface DesktopState {
   zCounter: number;
 }
 
+export type WindowInteractionMode = 'move' | 'resize';
+
+export interface WindowInteractionState {
+  activeWindowId: string | null;
+  mode: WindowInteractionMode | null;
+  draftsById: Record<string, WindowBounds>;
+  startedAtMs: number | null;
+}
+
 export interface WindowingState {
   desktop: DesktopState;
   windows: Record<string, WindowInstance>;
@@ -61,6 +70,8 @@ export interface WindowingState {
   order: string[];
   /** Per-card-session navigation stacks, keyed by cardSessionId */
   sessions: Record<string, SessionNav>;
+  /** High-frequency interaction drafts (W-E track), separate from durable window bounds. */
+  interaction: WindowInteractionState;
 }
 
 /** Payload for opening a new window */

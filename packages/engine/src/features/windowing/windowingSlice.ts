@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { OpenWindowPayload, WindowingState } from './types';
+import type { OpenWindowPayload, WindowBounds, WindowInteractionMode, WindowingState } from './types';
 
 const initialState: WindowingState = {
   desktop: {
@@ -11,6 +11,12 @@ const initialState: WindowingState = {
   windows: {},
   order: [],
   sessions: {},
+  interaction: {
+    activeWindowId: null,
+    mode: null,
+    draftsById: {},
+    startedAtMs: null,
+  },
 };
 
 const windowingSlice = createSlice({
@@ -95,6 +101,12 @@ const windowingSlice = createSlice({
 
       delete state.windows[action.payload];
       state.order = state.order.filter((id) => id !== action.payload);
+      delete state.interaction.draftsById[action.payload];
+      if (state.interaction.activeWindowId === action.payload) {
+        state.interaction.activeWindowId = null;
+        state.interaction.mode = null;
+        state.interaction.startedAtMs = null;
+      }
 
       // Focus fallback: highest z among remaining
       if (state.desktop.focusedWindowId === action.payload) {
@@ -127,6 +139,56 @@ const windowingSlice = createSlice({
 
       win.bounds.w = Math.max(win.minW, action.payload.w);
       win.bounds.h = Math.max(win.minH, action.payload.h);
+    },
+
+    // ── W-E interaction geometry channel ──
+
+    beginWindowInteraction(
+      state,
+      action: PayloadAction<{ id: string; mode: WindowInteractionMode; bounds: WindowBounds; startedAtMs?: number }>,
+    ) {
+      const win = state.windows[action.payload.id];
+      if (!win) return;
+
+      state.interaction.activeWindowId = action.payload.id;
+      state.interaction.mode = action.payload.mode;
+      state.interaction.startedAtMs = action.payload.startedAtMs ?? Date.now();
+      state.interaction.draftsById[action.payload.id] = action.payload.bounds;
+    },
+
+    updateWindowInteractionDraft(state, action: PayloadAction<{ id: string; bounds: WindowBounds }>) {
+      if (state.interaction.activeWindowId !== action.payload.id) return;
+      state.interaction.draftsById[action.payload.id] = action.payload.bounds;
+    },
+
+    commitWindowInteraction(state, action: PayloadAction<{ id: string }>) {
+      const draft = state.interaction.draftsById[action.payload.id];
+      const win = state.windows[action.payload.id];
+      if (!draft || !win) return;
+
+      win.bounds = draft;
+      delete state.interaction.draftsById[action.payload.id];
+      if (state.interaction.activeWindowId === action.payload.id) {
+        state.interaction.activeWindowId = null;
+        state.interaction.mode = null;
+        state.interaction.startedAtMs = null;
+      }
+    },
+
+    cancelWindowInteraction(state, action: PayloadAction<{ id: string }>) {
+      delete state.interaction.draftsById[action.payload.id];
+      if (state.interaction.activeWindowId === action.payload.id) {
+        state.interaction.activeWindowId = null;
+        state.interaction.mode = null;
+        state.interaction.startedAtMs = null;
+      }
+    },
+
+    clearWindowInteraction(state) {
+      state.interaction.activeWindowId = null;
+      state.interaction.mode = null;
+      state.interaction.startedAtMs = null;
+      state.interaction.draftsById = {};
     },
 
     // ── Desktop UI state ──
@@ -179,6 +241,11 @@ export const {
   closeWindow,
   moveWindow,
   resizeWindow,
+  beginWindowInteraction,
+  updateWindowInteractionDraft,
+  commitWindowInteraction,
+  cancelWindowInteraction,
+  clearWindowInteraction,
   setActiveMenu,
   setSelectedIcon,
   clearDesktopTransient,

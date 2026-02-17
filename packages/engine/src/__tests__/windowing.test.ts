@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   selectActiveMenuId,
+  selectActiveInteractionId,
+  selectEffectiveWindowBoundsById,
   selectFocusedWindow,
   selectFocusedWindowId,
+  selectInteractionDraftById,
   selectSelectedIconId,
   selectSessionCurrentNav,
   selectSessionNavDepth,
@@ -13,8 +16,12 @@ import {
 } from '../features/windowing/selectors';
 import type { OpenWindowPayload } from '../features/windowing/types';
 import {
+  beginWindowInteraction,
+  cancelWindowInteraction,
+  clearWindowInteraction,
   clearDesktopTransient,
   closeWindow,
+  commitWindowInteraction,
   focusWindow,
   moveWindow,
   openWindow,
@@ -24,6 +31,7 @@ import {
   sessionNavHome,
   setActiveMenu,
   setSelectedIcon,
+  updateWindowInteractionDraft,
   windowingReducer,
 } from '../features/windowing/windowingSlice';
 
@@ -78,6 +86,12 @@ describe('windowingReducer', () => {
     expect(defaultState.windows).toEqual({});
     expect(defaultState.order).toEqual([]);
     expect(defaultState.sessions).toEqual({});
+    expect(defaultState.interaction).toEqual({
+      activeWindowId: null,
+      mode: null,
+      draftsById: {},
+      startedAtMs: null,
+    });
   });
 
   // ── openWindow ──
@@ -329,6 +343,96 @@ describe('windowingReducer', () => {
     });
   });
 
+  // ── W-E interaction geometry channel ──
+
+  describe('interaction channel', () => {
+    it('beginWindowInteraction stores active metadata and draft', () => {
+      const state = reduce(
+        openWindow(cardWindow('w1', 'browse')),
+        beginWindowInteraction({
+          id: 'w1',
+          mode: 'move',
+          bounds: { x: 120, y: 130, w: 300, h: 200 },
+          startedAtMs: 1000,
+        }),
+      );
+
+      expect(state.interaction.activeWindowId).toBe('w1');
+      expect(state.interaction.mode).toBe('move');
+      expect(state.interaction.startedAtMs).toBe(1000);
+      expect(state.interaction.draftsById.w1).toEqual({ x: 120, y: 130, w: 300, h: 200 });
+    });
+
+    it('updateWindowInteractionDraft updates only active interaction window', () => {
+      const state = reduce(
+        openWindow(cardWindow('w1', 'browse')),
+        beginWindowInteraction({
+          id: 'w1',
+          mode: 'resize',
+          bounds: { x: 100, y: 100, w: 300, h: 200 },
+        }),
+        updateWindowInteractionDraft({ id: 'w1', bounds: { x: 100, y: 100, w: 360, h: 260 } }),
+        updateWindowInteractionDraft({ id: 'w2', bounds: { x: 0, y: 0, w: 1, h: 1 } }),
+      );
+
+      expect(state.interaction.draftsById.w1).toEqual({ x: 100, y: 100, w: 360, h: 260 });
+      expect(state.interaction.draftsById.w2).toBeUndefined();
+    });
+
+    it('commitWindowInteraction applies draft to durable bounds and clears interaction', () => {
+      const state = reduce(
+        openWindow(cardWindow('w1', 'browse')),
+        beginWindowInteraction({
+          id: 'w1',
+          mode: 'move',
+          bounds: { x: 200, y: 210, w: 300, h: 200 },
+        }),
+        commitWindowInteraction({ id: 'w1' }),
+      );
+
+      expect(state.windows.w1.bounds).toEqual({ x: 200, y: 210, w: 300, h: 200 });
+      expect(state.interaction.activeWindowId).toBeNull();
+      expect(state.interaction.mode).toBeNull();
+      expect(state.interaction.startedAtMs).toBeNull();
+      expect(state.interaction.draftsById.w1).toBeUndefined();
+    });
+
+    it('cancelWindowInteraction clears draft without mutating durable bounds', () => {
+      const state = reduce(
+        openWindow(cardWindow('w1', 'browse')),
+        beginWindowInteraction({
+          id: 'w1',
+          mode: 'move',
+          bounds: { x: 180, y: 190, w: 300, h: 200 },
+        }),
+        cancelWindowInteraction({ id: 'w1' }),
+      );
+
+      expect(state.windows.w1.bounds).toEqual({ x: 100, y: 100, w: 300, h: 200 });
+      expect(state.interaction.activeWindowId).toBeNull();
+      expect(state.interaction.draftsById.w1).toBeUndefined();
+    });
+
+    it('clearWindowInteraction resets channel state', () => {
+      const state = reduce(
+        openWindow(cardWindow('w1', 'browse')),
+        beginWindowInteraction({
+          id: 'w1',
+          mode: 'resize',
+          bounds: { x: 100, y: 100, w: 320, h: 220 },
+        }),
+        clearWindowInteraction(),
+      );
+
+      expect(state.interaction).toEqual({
+        activeWindowId: null,
+        mode: null,
+        draftsById: {},
+        startedAtMs: null,
+      });
+    });
+  });
+
   // ── Desktop UI state ──
 
   describe('desktop state', () => {
@@ -492,6 +596,40 @@ describe('windowing selectors', () => {
     it('counts open windows', () => {
       const s = buildState(openWindow(cardWindow('w1', 'browse')), openWindow(cardWindow('w2', 'detail')));
       expect(selectWindowCount(s)).toBe(2);
+    });
+  });
+
+  describe('interaction selectors', () => {
+    it('returns active interaction id and draft bounds', () => {
+      const s = buildState(
+        openWindow(cardWindow('w1', 'browse')),
+        beginWindowInteraction({
+          id: 'w1',
+          mode: 'move',
+          bounds: { x: 140, y: 150, w: 300, h: 200 },
+        }),
+      );
+
+      expect(selectActiveInteractionId(s)).toBe('w1');
+      expect(selectInteractionDraftById(s, 'w1')).toEqual({ x: 140, y: 150, w: 300, h: 200 });
+    });
+
+    it('selectEffectiveWindowBoundsById prefers draft over durable', () => {
+      const s = buildState(
+        openWindow(cardWindow('w1', 'browse')),
+        beginWindowInteraction({
+          id: 'w1',
+          mode: 'move',
+          bounds: { x: 220, y: 230, w: 300, h: 200 },
+        }),
+      );
+
+      expect(selectEffectiveWindowBoundsById(s, 'w1')).toEqual({ x: 220, y: 230, w: 300, h: 200 });
+    });
+
+    it('selectEffectiveWindowBoundsById falls back to durable when no draft', () => {
+      const s = buildState(openWindow(cardWindow('w1', 'browse')));
+      expect(selectEffectiveWindowBoundsById(s, 'w1')).toEqual({ x: 100, y: 100, w: 300, h: 200 });
     });
   });
 

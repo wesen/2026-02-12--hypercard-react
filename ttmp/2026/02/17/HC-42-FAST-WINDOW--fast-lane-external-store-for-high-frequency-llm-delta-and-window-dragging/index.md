@@ -14,16 +14,22 @@ Owners: []
 RelatedFiles:
     - Path: 2026-02-12--hypercard-react/apps/inventory/src/features/chat/InventoryChatWindow.tsx
       Note: Chat event ingestion entrypoint for llm delta fast-lane integration
+    - Path: 2026-02-12--hypercard-react/packages/engine/src/__tests__/windowing.test.ts
+      Note: W-E reducer/selector lifecycle test coverage
     - Path: 2026-02-12--hypercard-react/packages/engine/src/components/shell/windowing/DesktopShell.tsx
       Note: |-
         Window composition layer where transient drag drafts are projected
         Primary runtime integration target for W-C drag overlay
+    - Path: 2026-02-12--hypercard-react/packages/engine/src/components/shell/windowing/dragOverlayStore.ts
+      Note: Implemented selected W-C option 2 drag overlay store
     - Path: 2026-02-12--hypercard-react/packages/engine/src/components/shell/windowing/useWindowInteractionController.ts
       Note: |-
         Drag/resize interaction entrypoint currently dispatching high-frequency Redux updates
         Primary runtime integration target for W-C interaction lifecycle
     - Path: 2026-02-12--hypercard-react/packages/engine/src/features/windowing/windowingSlice.ts
-      Note: Durable window state reducer kept canonical after fast-lane changes
+      Note: |-
+        Durable window state reducer kept canonical after fast-lane changes
+        Added W-E redux interaction channel groundwork
     - Path: 2026-02-12--hypercard-react/ttmp/2026/02/17/HC-42-FAST-WINDOW--fast-lane-external-store-for-high-frequency-llm-delta-and-window-dragging/design-doc/01-implementation-blueprint-external-fast-store-for-llm-delta-and-window-dragging.md
       Note: Primary implementation blueprint for onboarding and execution
     - Path: 2026-02-12--hypercard-react/ttmp/2026/02/17/HC-42-FAST-WINDOW--fast-lane-external-store-for-high-frequency-llm-delta-and-window-dragging/reference/01-diary.md
@@ -36,6 +42,7 @@ LastUpdated: 2026-02-17T08:43:01.093705269-05:00
 WhatFor: ""
 WhenToUse: ""
 ---
+
 
 
 

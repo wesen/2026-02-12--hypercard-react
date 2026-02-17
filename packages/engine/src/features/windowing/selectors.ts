@@ -1,5 +1,5 @@
 import { createSelector } from '@reduxjs/toolkit';
-import type { NavEntry, WindowInstance, WindowingState } from './types';
+import type { NavEntry, WindowBounds, WindowInstance, WindowingState } from './types';
 
 /** Store shape for selectors — just needs the windowing slice. */
 export interface WindowingStateSlice {
@@ -11,6 +11,8 @@ const selectWindowingState = (state: WindowingStateSlice): WindowingState => sta
 const selectWindowOrder = (state: WindowingStateSlice) => selectWindowingState(state).order;
 
 const selectWindowMap = (state: WindowingStateSlice) => selectWindowingState(state).windows;
+
+const selectWindowInteraction = (state: WindowingStateSlice) => selectWindowingState(state).interaction;
 
 // ── Desktop state ──
 
@@ -45,6 +47,26 @@ export const selectWindowById = (state: WindowingStateSlice, windowId: string): 
 
 /** Number of open windows. */
 export const selectWindowCount = (state: WindowingStateSlice): number => state.windowing.order.length;
+
+/** Active interaction window id for W-E channel, if any. */
+export const selectActiveInteractionId = (state: WindowingStateSlice): string | null =>
+  selectWindowInteraction(state).activeWindowId;
+
+/** Get draft bounds by window id from W-E interaction channel. */
+export const selectInteractionDraftById = (
+  state: WindowingStateSlice,
+  windowId: string,
+): WindowBounds | undefined => selectWindowInteraction(state).draftsById[windowId];
+
+/** Effective bounds for rendering: interaction draft (if present) else durable bounds. */
+export const selectEffectiveWindowBoundsById = (
+  state: WindowingStateSlice,
+  windowId: string,
+): WindowBounds | undefined => {
+  const draft = selectInteractionDraftById(state, windowId);
+  if (draft) return draft;
+  return selectWindowById(state, windowId)?.bounds;
+};
 
 // ── Session navigation ──
 

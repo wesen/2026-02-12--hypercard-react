@@ -62,3 +62,48 @@ WhenToUse: Use while actively implementing and reviewing HC-42 changes.
   - Keep existing windowing semantics intact.
   - Keep W-E as planned parallel/optional track in ticket tasks.
 
+
+### Entry 3 - W-C implementation (option 2 dedicated store)
+
+- Runtime files implemented:
+  - `packages/engine/src/components/shell/windowing/dragOverlayStore.ts`
+  - `packages/engine/src/components/shell/windowing/useWindowInteractionController.ts`
+  - `packages/engine/src/components/shell/windowing/DesktopShell.tsx`
+  - `packages/engine/src/components/shell/windowing/dragOverlayStore.test.ts`
+- Core behavior now in code:
+  - Added dedicated overlay store with `begin/update/clear/clearAll/pruneMissing` and `useSyncExternalStore` subscription.
+  - Interaction controller now tracks begin/move/commit/cancel lifecycle:
+    - pointerup => commit callbacks
+    - pointercancel/blur/unmount/restart => cancel callbacks
+  - DesktopShell now renders `effectiveBounds = overlayDraft ?? durableReduxBounds`.
+  - Durable Redux `moveWindow/resizeWindow` now commit once per interaction end (instead of every move) in W-C path.
+  - Added close/unmount cleanup hooks for stale overlay prevention.
+
+### Entry 4 - W-E groundwork scaffolding in Redux
+
+- Files updated for W-E channel scaffolding:
+  - `packages/engine/src/features/windowing/types.ts`
+  - `packages/engine/src/features/windowing/windowingSlice.ts`
+  - `packages/engine/src/features/windowing/selectors.ts`
+  - `packages/engine/src/features/windowing/index.ts`
+  - `packages/engine/src/__tests__/windowing.test.ts`
+- Added without switching runtime path away from W-C:
+  - New `windowing.interaction` branch in state shape.
+  - New actions/reducers: begin/update/commit/cancel/clear interaction draft lifecycle.
+  - New selectors for active interaction id, per-window draft, and effective bounds.
+  - Reducer + selector test coverage added for W-E behavior.
+
+### Entry 5 - Validation
+
+- Commands run:
+  - `npm run typecheck -w packages/engine`
+  - `npm run test -w packages/engine`
+- Result:
+  - Typecheck passed.
+  - Tests passed (all engine tests green, including new drag overlay and W-E channel tests).
+
+### Entry 6 - Metrics note (qualitative)
+
+- This iteration focused on structural performance improvements and correctness.
+- Quantitative runtime metrics (dispatch-rate comparisons and drag-frame observations) remain open in task list for dedicated measurement pass.
+

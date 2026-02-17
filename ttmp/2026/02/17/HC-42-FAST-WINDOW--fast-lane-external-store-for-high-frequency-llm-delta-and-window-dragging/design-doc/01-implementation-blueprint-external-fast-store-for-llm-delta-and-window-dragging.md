@@ -28,10 +28,14 @@ RelatedFiles:
       Note: |-
         Dispatch wiring for move/resize and window rendering
         Window render composition point where draft bounds overlay should be applied
+        W-C effective bounds overlay composition and cleanup hooks
+    - Path: 2026-02-12--hypercard-react/packages/engine/src/components/shell/windowing/dragOverlayStore.ts
+      Note: W-C option 2 dedicated drag overlay store implementation
     - Path: 2026-02-12--hypercard-react/packages/engine/src/components/shell/windowing/useWindowInteractionController.ts
       Note: |-
         Pointermove path currently dispatching every movement
         Pointermove dispatch hotspot for drag and resize
+        W-C lifecycle implementation for begin/move/commit/cancel
     - Path: 2026-02-12--hypercard-react/packages/engine/src/components/widgets/ChatWindow.tsx
       Note: |-
         Message list rendering and current full-list re-render behavior
@@ -40,10 +44,12 @@ RelatedFiles:
       Note: |-
         Window selectors used by DesktopShell and downstream renderers
         Window selector dependency graph to validate after fast-lane integration
+        W-E narrow interaction selectors and effective bounds selector
     - Path: 2026-02-12--hypercard-react/packages/engine/src/features/windowing/windowingSlice.ts
       Note: |-
         Canonical window state reducers for durable bounds/focus
         Durable window reducers receiving final move/resize commits
+        W-E interaction state and reducers scaffold
 ExternalSources: []
 Summary: |
     Detailed implementation blueprint for introducing an external fast store lane (via useSyncExternalStore) in HC-37-style performance work: move high-frequency LLM delta and drag updates off Redux hot paths while preserving durable Redux semantics, debug behavior, and UX correctness. Includes integration map, pseudocode, sequencing diagrams, rollout phases, and implementation tasks for new developers.
@@ -52,6 +58,7 @@ WhatFor: |
     Give a new developer complete context and a concrete plan to implement dual-lane state handling (fast external store + durable Redux commits) for chat streaming and window dragging.
 WhenToUse: Use before implementing fast-lane architecture changes for LLM delta and dragging in HC-37 related work.
 ---
+
 
 
 # Implementation Blueprint: External Fast Store for LLM Delta and Window Dragging
