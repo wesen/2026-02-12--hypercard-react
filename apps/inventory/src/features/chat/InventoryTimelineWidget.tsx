@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { InlineWidget } from '@hypercard/engine';
 import type { TimelineItemStatus, TimelineWidgetItem } from './chatSlice';
+import { SyntaxHighlight } from './utils/SyntaxHighlight';
 import { toYaml } from './utils/yamlFormat';
 
 export function timelineItemsFromInlineWidget(widget: InlineWidget): TimelineWidgetItem[] {
@@ -106,24 +107,11 @@ function MetadataTable({ item, showRawData }: MetadataTableProps) {
         </tbody>
       </table>
       {showRawData && item.rawData && Object.keys(item.rawData).length > 0 && (
-        <pre
-          data-part="meta-rawdata"
-          style={{
-            margin: '4px 0 0',
-            padding: 6,
-            background: 'rgba(0, 0, 0, 0.04)',
-            borderRadius: 4,
-            fontSize: 10,
-            lineHeight: 1.5,
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
-            maxHeight: 240,
-            overflow: 'auto',
-            color: '#666',
-          }}
-        >
-          {toYaml(item.rawData)}
-        </pre>
+        <SyntaxHighlight
+          code={toYaml(item.rawData)}
+          language="yaml"
+          style={{ margin: '4px 0 0', fontSize: 10, maxHeight: 240 }}
+        />
       )}
     </div>
   );
@@ -261,18 +249,11 @@ export function InventoryTimelineWidget({ items, debug }: InventoryTimelineWidge
 
               {/* Expanded YAML */}
               {expanded && item.rawData && (
-                <pre
-                  data-part="inventory-timeline-yaml"
-                  style={{
-                    margin: '4px 0 0', padding: 6,
-                    background: 'rgba(0, 0, 0, 0.04)',
-                    borderRadius: 4, fontSize: 10, lineHeight: 1.5,
-                    whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-                    maxHeight: 240, overflow: 'auto',
-                  }}
-                >
-                  {toYaml(item.rawData)}
-                </pre>
+                <SyntaxHighlight
+                  code={toYaml(item.rawData)}
+                  language="yaml"
+                  style={{ margin: '4px 0 0', fontSize: 10, maxHeight: 240 }}
+                />
               )}
 
               {/* Metadata table (debug mode or error) */}

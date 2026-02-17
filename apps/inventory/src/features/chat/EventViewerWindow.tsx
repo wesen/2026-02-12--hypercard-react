@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useLayoutEffect } from 'react';
 import type { EventLogEntry } from './eventBus';
 import { subscribeConversationEvents } from './eventBus';
+import { SyntaxHighlight } from './utils/SyntaxHighlight';
 import { toYaml } from './utils/yamlFormat';
 
 const MAX_ENTRIES = 500;
@@ -188,25 +189,14 @@ export function EventViewerWindow({ conversationId, initialEntries }: EventViewe
               </span>
             </div>
             {expandedIds.has(entry.id) && (
-              <pre
-                data-part="event-viewer-detail"
-                style={{
-                  margin: '0 8px 4px 86px',
-                  padding: '6px 8px',
-                  background: '#0d0d1a',
-                  borderRadius: '4px',
-                  color: '#aaa',
-                  fontSize: '11px',
-                  lineHeight: 1.4,
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                  maxHeight: '300px',
-                  overflow: 'auto',
-                  userSelect: 'text',
-                }}
-              >
-                {toYaml(entry.rawPayload as Record<string, unknown>)}
-              </pre>
+              <div style={{ margin: '0 8px 4px 86px' }}>
+                <SyntaxHighlight
+                  code={toYaml(entry.rawPayload as Record<string, unknown>)}
+                  language="yaml"
+                  variant="dark"
+                  style={{ fontSize: 11, maxHeight: 300, userSelect: 'text' }}
+                />
+              </div>
             )}
           </div>
         ))}

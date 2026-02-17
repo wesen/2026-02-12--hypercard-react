@@ -1,7 +1,7 @@
 ---
 Title: Chat UI Polish and Developer Experience Improvements
 Ticket: HC-034-BETTER-UI
-Status: active
+Status: complete
 Topics:
     - chat
     - frontend
@@ -33,11 +33,12 @@ RelatedFiles:
 ExternalSources: []
 Summary: |
     Seven UI and developer experience improvements to the inventory webchat built in HC-032/HC-033: per-round widgets, collapsed tool calls, multi-window conversations, model/token stats, copy-paste support, debug mode, and streaming event viewer.
-LastUpdated: 2026-02-16T15:58:00-05:00
+LastUpdated: 2026-02-17T07:40:37.492695143-05:00
 WhatFor: |
     Coordinate and track UI polish and developer tooling improvements for the inventory webchat runtime.
 WhenToUse: Entry point for all HC-034 work. Read the analysis document first, then implement features in the recommended dependency order.
 ---
+
 
 
 # HC-034-BETTER-UI — Chat UI Polish and Developer Experience Improvements

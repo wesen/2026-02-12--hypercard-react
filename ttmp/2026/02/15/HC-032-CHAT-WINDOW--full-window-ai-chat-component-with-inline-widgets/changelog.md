@@ -43,3 +43,8 @@ Step 5 (revised): ChatWindow renders inside a desktop window via renderAppWindow
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/shell/windowing/ChatWindowDesktop.stories.tsx — Chat Desktop story using renderAppWindow
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/shell/windowing/DesktopShell.tsx — Added renderAppWindow prop
 
+
+## 2026-02-17
+
+Bulk close through HC-034 per cleanup reset
+

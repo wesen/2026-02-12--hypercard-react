@@ -1,7 +1,7 @@
 ---
 Title: Docs and API Truth Alignment
 Ticket: HC-024-DOCS-API-TRUTH
-Status: active
+Status: complete
 Topics:
     - architecture
     - code-quality
@@ -22,10 +22,11 @@ RelatedFiles:
       Note: Source findings (1 and 2)
 ExternalSources: []
 Summary: Aligns README and JS API reference with currently implemented exports, contracts, and architecture.
-LastUpdated: 2026-02-13T16:44:00-05:00
+LastUpdated: 2026-02-17T07:40:35.675463265-05:00
 WhatFor: Remove onboarding and implementation confusion caused by stale docs
 WhenToUse: Use while rewriting docs from code truth
 ---
+
 
 # Docs and API Truth Alignment
 

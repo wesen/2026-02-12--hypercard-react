@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import type { TimelineWidgetItem } from './chatSlice';
 import { statusColor, statusGlyph } from './InventoryTimelineWidget';
+import { SyntaxHighlight } from './utils/SyntaxHighlight';
 import { toYaml } from './utils/yamlFormat';
 
 /* ── Shared styles ───────────────────────────────────────────────────── */
@@ -94,24 +95,11 @@ function MetadataTable({ item }: { item: TimelineWidgetItem }) {
         </tbody>
       </table>
       {item.rawData && Object.keys(item.rawData).length > 0 && (
-        <pre
-          data-part="meta-rawdata"
-          style={{
-            margin: '4px 0 0',
-            padding: 6,
-            background: 'rgba(0, 0, 0, 0.04)',
-            borderRadius: 4,
-            fontSize: 10,
-            lineHeight: 1.5,
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
-            maxHeight: 240,
-            overflow: 'auto',
-            color: '#666',
-          }}
-        >
-          {toYaml(item.rawData)}
-        </pre>
+        <SyntaxHighlight
+          code={toYaml(item.rawData)}
+          language="yaml"
+          style={{ margin: '4px 0 0', fontSize: 10, maxHeight: 240 }}
+        />
       )}
     </div>
   );

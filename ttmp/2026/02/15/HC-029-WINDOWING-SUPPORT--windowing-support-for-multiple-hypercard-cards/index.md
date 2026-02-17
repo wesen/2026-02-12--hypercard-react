@@ -1,7 +1,7 @@
 ---
 Title: Windowing support for multiple HyperCard cards
 Ticket: HC-029-WINDOWING-SUPPORT
-Status: active
+Status: complete
 Topics:
     - frontend
     - ux
@@ -17,10 +17,11 @@ RelatedFiles:
 ExternalSources:
     - local:mac1-windowing.jsx
 Summary: ""
-LastUpdated: 2026-02-15T09:06:48.679931909-05:00
+LastUpdated: 2026-02-17T07:40:36.673765637-05:00
 WhatFor: ""
 WhenToUse: ""
 ---
+
 
 
 

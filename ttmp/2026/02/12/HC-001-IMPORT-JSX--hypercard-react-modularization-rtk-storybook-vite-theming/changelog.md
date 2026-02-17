@@ -67,3 +67,8 @@ Uploaded canonical V3 merged design/implementation plan to reMarkable as a separ
 
 - /home/manuel/code/wesen/2026-02-12--hypercard-react/ttmp/2026/02/12/HC-001-IMPORT-JSX--hypercard-react-modularization-rtk-storybook-vite-theming/design/04-v3-unified-modularization-design-and-implementation-plan.md — Uploaded canonical V3 plan to /ai/2026/02/12/HC-001-IMPORT-JSX
 
+
+## 2026-02-17
+
+Bulk close through HC-034 per cleanup reset
+

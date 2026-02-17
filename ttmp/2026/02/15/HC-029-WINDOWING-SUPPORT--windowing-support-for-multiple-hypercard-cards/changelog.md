@@ -150,3 +150,8 @@ Published design-doc 04 implementation review and uploaded bundled review+diary 
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/15/HC-029-WINDOWING-SUPPORT--windowing-support-for-multiple-hypercard-cards/design-doc/04-implementation-code-review-hc-029-windowing-support.md — Final review document
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/15/HC-029-WINDOWING-SUPPORT--windowing-support-for-multiple-hypercard-cards/reference/01-diary.md — Step 19-21 diary for review and upload workflow
 
+
+## 2026-02-17
+
+Bulk close through HC-034 per cleanup reset
+

@@ -255,3 +255,8 @@ Fix B3.8: patched pinocchio turn-store migration to handle legacy turns payload 
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/pinocchio/pkg/persistence/chatstore/turn_store_sqlite.go — Core migration fix
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/pinocchio/pkg/persistence/chatstore/turn_store_sqlite_test.go — Regression tests
 
+
+## 2026-02-17
+
+Bulk close through HC-034 per cleanup reset
+

@@ -868,6 +868,35 @@
   margin-top: 4px;
 }
 
+/* ─── Syntax Highlighting (highlight.js tokens) ── */
+[data-part="syntax-highlight"] .hljs-keyword  { color: #cf222e; }
+[data-part="syntax-highlight"] .hljs-built_in { color: #8250df; }
+[data-part="syntax-highlight"] .hljs-string   { color: #0a3069; }
+[data-part="syntax-highlight"] .hljs-number   { color: #0550ae; }
+[data-part="syntax-highlight"] .hljs-attr     { color: #116329; }
+[data-part="syntax-highlight"] .hljs-literal  { color: #0550ae; }
+[data-part="syntax-highlight"] .hljs-comment  { color: #6e7781; font-style: italic; }
+[data-part="syntax-highlight"] .hljs-title    { color: #8250df; }
+[data-part="syntax-highlight"] .hljs-params   { color: #24292f; }
+[data-part="syntax-highlight"] .hljs-property { color: #0550ae; }
+[data-part="syntax-highlight"] .hljs-punctuation { color: #24292f; }
+[data-part="syntax-highlight"] .hljs-section  { color: #116329; font-weight: 700; }
+[data-part="syntax-highlight"] .hljs-bullet   { color: #0550ae; }
+
+/* Dark variant */
+[data-part="syntax-highlight"][data-variant="dark"] .hljs-keyword  { color: #ff7b72; }
+[data-part="syntax-highlight"][data-variant="dark"] .hljs-built_in { color: #d2a8ff; }
+[data-part="syntax-highlight"][data-variant="dark"] .hljs-string   { color: #a5d6ff; }
+[data-part="syntax-highlight"][data-variant="dark"] .hljs-number   { color: #79c0ff; }
+[data-part="syntax-highlight"][data-variant="dark"] .hljs-attr     { color: #7ee787; }
+[data-part="syntax-highlight"][data-variant="dark"] .hljs-literal  { color: #79c0ff; }
+[data-part="syntax-highlight"][data-variant="dark"] .hljs-comment  { color: #8b949e; font-style: italic; }
+[data-part="syntax-highlight"][data-variant="dark"] .hljs-title    { color: #d2a8ff; }
+[data-part="syntax-highlight"][data-variant="dark"] .hljs-params   { color: #c9d1d9; }
+[data-part="syntax-highlight"][data-variant="dark"] .hljs-property { color: #79c0ff; }
+[data-part="syntax-highlight"][data-variant="dark"] .hljs-section  { color: #7ee787; font-weight: 700; }
+[data-part="syntax-highlight"][data-variant="dark"] .hljs-bullet   { color: #79c0ff; }
+
 /* ─── Animations ── */
 @keyframes hc-fade-in {
   from { opacity: 0; transform: translateX(-50%) translateY(10px); }

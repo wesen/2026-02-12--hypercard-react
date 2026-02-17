@@ -374,3 +374,8 @@ Completed HC-031 final publication pass (`G5`): updated design-doc outcomes, syn
 - `docmgr task check --ticket HC-031-VM-PLUGIN-DSL --id 65,66,67,68` — success; all tasks complete
 - `remarquee upload bundle ... --name "HC-031-VM-PLUGIN-DSL-Analysis-Updated" --remote-dir "/ai/2026/02/15/HC-031-VM-PLUGIN-DSL" --non-interactive` — upload success
 - `remarquee cloud ls /ai/2026/02/15/HC-031-VM-PLUGIN-DSL --long --non-interactive` — both original and updated documents present
+
+## 2026-02-17
+
+Bulk close through HC-034 per cleanup reset
+

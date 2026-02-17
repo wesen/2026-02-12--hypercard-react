@@ -64,3 +64,8 @@ Completed V1-V6 validation and closeout: tests/typecheck/build passed; lint fail
 
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/15/HC-030-DESKTOP-CUTOVER--desktop-shell-hard-cutover-and-legacy-removal/tasks.md — Validation checklist completed
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/15/HC-030-DESKTOP-CUTOVER--desktop-shell-hard-cutover-and-legacy-removal/reference/01-diary.md — Step 6 validation evidence and migration summary
+
+## 2026-02-17
+
+Bulk close through HC-034 per cleanup reset
+

@@ -1,7 +1,7 @@
 ---
 Title: DSL Query and Transform Blocks for List and Report Cards
 Ticket: HC-012-DSL-QUERY-TRANSFORM
-Status: active
+Status: complete
 Topics:
     - react
     - rtk-toolkit
@@ -12,10 +12,11 @@ Owners: []
 RelatedFiles: []
 ExternalSources: []
 Summary: ""
-LastUpdated: 2026-02-12T15:38:47.652090911-05:00
+LastUpdated: 2026-02-17T07:40:33.523001208-05:00
 WhatFor: ""
 WhenToUse: ""
 ---
+
 
 # DSL Query and Transform Blocks for List and Report Cards
 

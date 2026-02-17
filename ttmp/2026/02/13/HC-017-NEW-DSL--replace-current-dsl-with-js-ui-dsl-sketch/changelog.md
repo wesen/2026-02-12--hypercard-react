@@ -115,3 +115,8 @@ Added and committed a textbook-style CardDefinition DSL implementation guide/dev
 - /home/manuel/code/wesen/2026-02-12--hypercard-react/ttmp/2026/02/13/HC-017-NEW-DSL--replace-current-dsl-with-js-ui-dsl-sketch/design/03-carddefinition-dsl-implementation-guide-and-developer-reference.md — Primary deliverable document for DSL implementation/usage reference.
 - /home/manuel/code/wesen/2026-02-12--hypercard-react/ttmp/2026/02/13/HC-017-NEW-DSL--replace-current-dsl-with-js-ui-dsl-sketch/reference/01-diary.md — Step 17 records authoring + upload workflow and verification.
 
+
+## 2026-02-17
+
+Bulk close through HC-034 per cleanup reset
+

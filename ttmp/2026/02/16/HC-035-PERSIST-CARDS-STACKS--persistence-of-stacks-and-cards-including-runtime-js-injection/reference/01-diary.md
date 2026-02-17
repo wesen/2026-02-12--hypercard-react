@@ -17,15 +17,22 @@ RelatedFiles:
     - Path: packages/engine/src/components/shell/windowing/ChatWindowDesktop.stories.tsx
       Note: Runtime injection demo path analyzed in diary
     - Path: ttmp/2026/02/16/HC-035-PERSIST-CARDS-STACKS--persistence-of-stacks-and-cards-including-runtime-js-injection/changelog.md
-      Note: Step completion log for documentation work
+      Note: |-
+        Step completion log for documentation work
+        Step 7 ticket change tracking
     - Path: ttmp/2026/02/16/HC-035-PERSIST-CARDS-STACKS--persistence-of-stacks-and-cards-including-runtime-js-injection/design-doc/01-stacks-and-cards-persistence-architecture-analysis.md
       Note: Primary output authored during diary steps
+    - Path: ttmp/2026/02/16/HC-035-PERSIST-CARDS-STACKS--persistence-of-stacks-and-cards-including-runtime-js-injection/design-doc/02-persistence-and-management-strategies-for-cards-and-stacks.md
+      Note: Step 6 authored persistence strategy deliverable
+    - Path: ttmp/2026/02/16/HC-035-PERSIST-CARDS-STACKS--persistence-of-stacks-and-cards-including-runtime-js-injection/reference/02-hypercard-card-and-stack-mechanism-textbook.md
+      Note: Step 6 authored textbook deliverable
 ExternalSources: []
-Summary: Detailed working diary for HC-035 covering ticket setup, architecture deep-dive, persistence/hydration/versioning analysis, and deliverable preparation.
-LastUpdated: 2026-02-16T22:38:00-05:00
+Summary: Detailed working diary for HC-035 covering ticket setup, architecture deep-dive, persistence/hydration/versioning analysis, two additional 6+ page deliverables, and reMarkable publication.
+LastUpdated: 2026-02-17T08:01:00-05:00
 WhatFor: Preserve an implementation-grade trace of analysis decisions, command output, and design tradeoffs.
 WhenToUse: Use when reviewing how conclusions were reached and what follow-up implementation steps are implied.
 ---
+
 
 
 # Diary
@@ -419,3 +426,227 @@ This step closed the delivery loop so the document exists both in ticket docs an
 
 - Uploaded name: `HC-035 Persistence Analysis`
 - Remote path: `/ai/2026/02/16/HC-035-PERSIST-CARDS-STACKS`
+
+## Step 6: Deep Re-Analysis and Authoring of Two 6+ Page Documents
+
+I performed a fresh end-to-end architecture pass across frontend engine, inventory app, and backend Pinocchio/inventory integration to produce two new long-form documents requested for onboarding and persistence strategy design. I intentionally re-walked runtime/session/code paths instead of relying only on prior HC-035 outputs so the new docs reflect the latest code state and include the specific topics requested (runtime JS management, session state handling, LLM-generated cards, and UI management strategy).
+
+This step produced two new documents in the ticket: a mechanism textbook for new engineers and a separate strategy design with multiple persistence approaches and an explicit recommendation.
+
+### Prompt Context
+
+**User prompt (verbatim):** "work on docmgr ticket HC-035-PERSIST-CARDS-STACKS and keep a frequent detailed diary.
+
+Analyze the current codebase eand how cards and stacks are organized, how the JS code is manazed, how the state of different running sessions is managed, and work out how we can best persist both the plugins and code and also the state to a DB on the backend and reload them, and how to manage them in a UI as well.
+
+Be really thorough, write a 6+ pages textbook on how the card/stack mechanism works, with prose paragraphs, callouts for the fundamental concepts, pseudocode, real code, diagrams, bullet point lists, as a document to hand to new people in the codebase just stasrting to understand this complex piece. Cover how new cards are created from LLM conversations as well. Store this document in the ticket and upload to remarkable.
+
+Then do a second 6+ pages document where you map out the ways to persist and manage these cards and stacks, in detail, with different approaches if possible. Store in the ticket and upload to remarkable as well."
+
+**Assistant interpretation:** Re-open HC-035, perform a full architecture analysis pass, create two separate 6+ page docs (runtime textbook + persistence strategy alternatives), maintain detailed diary entries, store all docs in ticket, and upload both docs to reMarkable.
+
+**Inferred user intent:** Deliver onboarding-grade and implementation-grade documentation artifacts that can directly guide new contributors and upcoming persistence implementation work.
+
+**Commit (code):** N/A (documentation and ticket artifacts only)
+
+### What I did
+
+- Loaded required skills and followed them in sequence:
+  - `docmgr`
+  - `diary`
+  - `remarkable-upload`
+- Re-inspected key frontend runtime paths:
+  - `packages/engine/src/cards/types.ts`
+  - `packages/engine/src/components/shell/windowing/DesktopShell.tsx`
+  - `packages/engine/src/components/shell/windowing/PluginCardSessionHost.tsx`
+  - `packages/engine/src/features/windowing/windowingSlice.ts`
+  - `packages/engine/src/features/pluginCardRuntime/pluginCardRuntimeSlice.ts`
+  - `packages/engine/src/plugin-runtime/runtimeService.ts`
+  - `packages/engine/src/plugin-runtime/stack-bootstrap.vm.js`
+  - `packages/engine/src/plugin-runtime/runtimeCardRegistry.ts`
+- Re-inspected inventory app integration paths:
+  - `apps/inventory/src/features/chat/InventoryChatWindow.tsx`
+  - `apps/inventory/src/features/chat/artifactRuntime.ts`
+  - `apps/inventory/src/domain/stack.ts`
+  - `apps/inventory/src/domain/pluginBundle.vm.js`
+  - `apps/inventory/src/features/chat/RuntimeCardDebugWindow.tsx`
+- Re-inspected backend extraction and persistence foundations:
+  - `go-inventory-chat/internal/pinoweb/hypercard_extractors.go`
+  - `go-inventory-chat/internal/pinoweb/hypercard_events.go`
+  - `go-inventory-chat/cmd/hypercard-inventory-server/main.go`
+  - `pinocchio/pkg/webchat/router.go`
+  - `pinocchio/pkg/webchat/http/api.go`
+  - `pinocchio/pkg/persistence/chatstore/timeline_store_sqlite.go`
+  - `pinocchio/pkg/persistence/chatstore/turn_store_sqlite.go`
+- Added two new documents to the ticket:
+  - `reference/02-hypercard-card-and-stack-mechanism-textbook.md`
+  - `design-doc/02-persistence-and-management-strategies-for-cards-and-stacks.md`
+- Authored both documents with:
+  - prose explanations
+  - concept callouts
+  - diagrams (Mermaid)
+  - pseudocode
+  - real code snippets
+  - actionable bullet lists
+- Verified both are 6+ page scale via word count:
+  - textbook: 3300 words
+  - strategy doc: 3459 words
+
+### Why
+
+- The request explicitly required two separate, highly thorough documents with different audiences and purposes.
+- Re-analyzing source files ensured references and recommendations align with present code, not stale assumptions.
+
+### What worked
+
+- Ticket already had clean structure and allowed adding additional docs without vocabulary changes.
+- Existing runtime and backend files provided strong concrete anchors for both onboarding and strategy narratives.
+- Word-count validation confirmed both docs exceed typical 6-page threshold.
+
+### What didn't work
+
+- Mistyped/unsupported docmgr listing flags while checking ticket details:
+  - Command: `docmgr ticket list --ticket HC-035-PERSIST-CARDS-STACKS --show-tasks --show-docs`
+  - Error: `Error: unknown flag: --show-tasks`
+  - Resolution: used supported commands (`docmgr ticket list`, `docmgr doc list`, `docmgr task list`) separately.
+- Initial Pinocchio path assumptions were wrong from app subdirectory:
+  - Command: `sed -n '1,320p' pinocchio/pkg/webchat/router.go`
+  - Error: `sed: can't read pinocchio/pkg/webchat/router.go: No such file or directory`
+  - Resolution: switched to workspace-level `cd pinocchio` and re-ran targeted file reads.
+- Attempted non-existent file:
+  - Command: `sed -n '1,320p' pkg/webchat/http/timeline_handler.go`
+  - Error: `sed: can't read pkg/webchat/http/timeline_handler.go: No such file or directory`
+  - Resolution: used `pkg/webchat/http/api.go` which contains `NewTimelineHandler`.
+
+### What I learned
+
+- Current codebase already has all primitives needed for durable persistence architecture, but they are split across slices/services and not yet connected by a durable workspace model.
+- LLM-generated card flow is now concrete enough to treat runtime JS persistence as a first-class feature rather than an experiment.
+
+### What was tricky to build
+
+- The most difficult part was balancing two documentation goals simultaneously:
+  - textbook clarity for onboarding
+  - implementation specificity for persistence design
+- Symptom: technical depth can make onboarding docs unreadable, while readability can make implementation docs vague.
+- Approach: split outputs by purpose and keep both grounded in exact file/symbol references.
+
+### What warrants a second pair of eyes
+
+- The proposed merge/conflict rules for checkpoint concurrency should be reviewed by whoever will own multi-tab behavior and operational support.
+
+### What should be done in the future
+
+- Convert design-doc/02 phases into executable ticket tasks once implementation begins.
+
+### Code review instructions
+
+- Review new textbook:
+  - `ttmp/2026/02/16/HC-035-PERSIST-CARDS-STACKS--persistence-of-stacks-and-cards-including-runtime-js-injection/reference/02-hypercard-card-and-stack-mechanism-textbook.md`
+- Review new strategy doc:
+  - `ttmp/2026/02/16/HC-035-PERSIST-CARDS-STACKS--persistence-of-stacks-and-cards-including-runtime-js-injection/design-doc/02-persistence-and-management-strategies-for-cards-and-stacks.md`
+- Verify file relations:
+  - run `docmgr doc list --ticket HC-035-PERSIST-CARDS-STACKS` and inspect related files in both new docs.
+
+### Technical details
+
+- New doc files created and populated:
+  - `reference/02-hypercard-card-and-stack-mechanism-textbook.md`
+  - `design-doc/02-persistence-and-management-strategies-for-cards-and-stacks.md`
+- Measured word counts:
+  - `wc -w ...reference/02...` -> 3300
+  - `wc -w ...design-doc/02...` -> 3459
+
+## Step 7: Ticket Linking, Changelog, and reMarkable Delivery of Both New Docs
+
+After authoring the two documents, I updated ticket-level doc relationships and prepared delivery steps for reMarkable upload. This ensures the docs are not just present in filesystem paths but discoverable through ticket metadata and operationally distributed as requested.
+
+This step focused on packaging and publication quality: relations updated, changelog ready, and upload workflow execution/verification.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 6)
+
+**Assistant interpretation:** Finalize ticket bookkeeping and deliver both documents to reMarkable.
+
+**Inferred user intent:** End with complete artifact management, not just local markdown creation.
+
+**Commit (code):** N/A (documentation and operational workflow)
+
+### What I did
+
+- Updated related-file mappings for both new docs using `docmgr doc relate`.
+- Validated frontmatter for both new docs and the diary:
+  - `docmgr validate frontmatter --doc ... --suggest-fixes`
+- Updated ticket changelog with the two new deliverables and publication summary:
+  - `docmgr changelog update --ticket HC-035-PERSIST-CARDS-STACKS --entry \"Added two 6+ page HC-035 docs ...\" ...`
+- Ran reMarkable upload workflow for both docs:
+  - dry runs:
+    - `remarquee upload bundle --dry-run .../reference/02-hypercard-card-and-stack-mechanism-textbook.md --name "HC-035 Textbook" --remote-dir "/ai/2026/02/17/HC-035-PERSIST-CARDS-STACKS" --toc-depth 2`
+    - `remarquee upload bundle --dry-run .../design-doc/02-persistence-and-management-strategies-for-cards-and-stacks.md --name "HC-035 Persistence Strategies" --remote-dir "/ai/2026/02/17/HC-035-PERSIST-CARDS-STACKS" --toc-depth 2`
+  - live uploads:
+    - `OK: uploaded HC-035 Textbook.pdf -> /ai/2026/02/17/HC-035-PERSIST-CARDS-STACKS`
+    - `OK: uploaded HC-035 Persistence Strategies.pdf -> /ai/2026/02/17/HC-035-PERSIST-CARDS-STACKS`
+- Verified cloud presence with recursive find:
+  - `remarquee cloud find /ai/2026/02/17 "HC-035" --non-interactive`
+  - matched:
+    - `[f] /ai/2026/02/17/HC-035-PERSIST-CARDS-STACKS/HC-035 Textbook`
+    - `[f] /ai/2026/02/17/HC-035-PERSIST-CARDS-STACKS/HC-035 Persistence Strategies`
+
+### Why
+
+- Ticket-quality documentation requires relation metadata for future discoverability.
+- User requested explicit reMarkable upload delivery for both documents.
+
+### What worked
+
+- `docmgr doc relate` updated relation sets for both docs successfully.
+- Ticket now contains four active docs with coherent structure and references.
+- Both reMarkable uploads completed successfully with explicit `OK: uploaded ...` confirmations.
+- Recursive cloud find confirmed both uploaded document names.
+
+### What didn't work
+
+- Initial frontmatter validation used ticket-relative paths incorrectly:
+  - Error: `.../ttmp/ttmp/... no such file or directory`
+  - Resolution: re-ran validation with absolute paths.
+- `remarquee cloud ls` showed duplicate same-name directories for the ticket folder:
+  - `[d] HC-035-PERSIST-CARDS-STACKS` (twice)
+  - Resolution: used `remarquee cloud find` by pattern to verify actual file entries.
+
+### What I learned
+
+- Doc relation updates are useful even when frontmatter already includes RelatedFiles, because CLI relation flows keep ticket indexing consistent.
+- Upload verification for this folder layout is more reliable via `cloud find` than a single-depth `cloud ls`.
+
+### What was tricky to build
+
+- Ensuring publication workflow captures both docs independently while verification output remains unambiguous.
+- Symptom: parallel uploads created a duplicated same-name directory listing view, which looked like a failed upload at first glance.
+- Approach: verified by recursive pattern search to confirm both files were present by name.
+
+### What warrants a second pair of eyes
+
+- Whether we should enforce sequential uploads (instead of parallel) to avoid duplicate-folder display artifacts in cloud listing.
+
+### What should be done in the future
+
+- Optionally add a short `playbook` doc describing the repeatable “ticket docs -> reMarkable upload” workflow.
+
+### Code review instructions
+
+- Verify both docs exist in ticket:
+  - `docmgr doc list --ticket HC-035-PERSIST-CARDS-STACKS`
+- Verify related files updated:
+  - inspect frontmatter in both new docs.
+- Verify reMarkable artifacts:
+  - `remarquee cloud find /ai/2026/02/17 "HC-035" --non-interactive`
+
+### Technical details
+
+- Relationship updates reported:
+  - textbook doc: 5 relations updated
+  - strategy doc: 5 relations updated (3 updated, 2 added)
+- Upload targets:
+  - `/ai/2026/02/17/HC-035-PERSIST-CARDS-STACKS/HC-035 Textbook`
+  - `/ai/2026/02/17/HC-035-PERSIST-CARDS-STACKS/HC-035 Persistence Strategies`

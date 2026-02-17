@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { getPendingRuntimeCards, onRegistryChange, type RuntimeCardDefinition } from '@hypercard/engine';
 import { STACK } from '../../domain/stack';
 import type { ArtifactRecord } from './artifactsSlice';
+import { SyntaxHighlight } from './utils/SyntaxHighlight';
 
 interface StoreSlice {
   artifacts?: { byId: Record<string, ArtifactRecord> };
@@ -28,36 +29,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function CodePreview({ code, maxLines = 8 }: { code: string; maxLines?: number }) {
-  const [expanded, setExpanded] = useState(false);
-  const lines = code.split('\n');
-  const truncated = !expanded && lines.length > maxLines;
-  const display = truncated ? lines.slice(0, maxLines).join('\n') + '\n…' : code;
-  return (
-    <div>
-      <pre style={{
-        fontSize: 11,
-        background: '#f4f4f8',
-        color: '#1a1a2e',
-        padding: '6px 8px',
-        borderRadius: 4,
-        overflow: 'auto',
-        maxHeight: expanded ? 400 : 160,
-        margin: '4px 0',
-        whiteSpace: 'pre-wrap',
-        wordBreak: 'break-all',
-      }}>
-        {display}
-      </pre>
-      {lines.length > maxLines && (
-        <button
-          onClick={() => setExpanded(!expanded)}
-          style={{ fontSize: 11, background: 'none', border: 'none', color: '#1a6dcc', cursor: 'pointer', padding: 0 }}
-        >
-          {expanded ? '▲ collapse' : `▼ show all ${lines.length} lines`}
-        </button>
-      )}
-    </div>
-  );
+  return <SyntaxHighlight code={code} language="javascript" maxLines={maxLines} />;
 }
 
 function Badge({ text, color }: { text: string; color: string }) {

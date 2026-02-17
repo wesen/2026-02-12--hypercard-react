@@ -28,3 +28,8 @@
 ### Verification
 - Full typecheck clean
 - 82 total Storybook stories (9 chat + 14 CRM + 59 existing)
+
+## 2026-02-17
+
+Bulk close through HC-034 per cleanup reset
+

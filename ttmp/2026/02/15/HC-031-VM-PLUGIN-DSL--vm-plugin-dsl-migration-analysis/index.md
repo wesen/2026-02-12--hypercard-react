@@ -1,7 +1,7 @@
 ---
 Title: VM Plugin DSL Migration Analysis
 Ticket: HC-031-VM-PLUGIN-DSL
-Status: active
+Status: complete
 Topics:
     - architecture
     - dsl
@@ -13,10 +13,11 @@ RelatedFiles: []
 ExternalSources:
     - local:plugin-hypercard-dsl.md
 Summary: Hard-cut migration analysis for replacing HyperCard Act/Ev/Sel DSL with VM plugin DSL runtime model and Storybook integration.
-LastUpdated: 2026-02-15T17:24:00-05:00
+LastUpdated: 2026-02-17T07:40:36.962716716-05:00
 WhatFor: Provide architecture-level and implementation-level guidance for HC-031 migration planning and execution.
 WhenToUse: Use when designing or reviewing the replacement of current card runtime DSL/execution path.
 ---
+
 
 
 # VM Plugin DSL Migration Analysis
