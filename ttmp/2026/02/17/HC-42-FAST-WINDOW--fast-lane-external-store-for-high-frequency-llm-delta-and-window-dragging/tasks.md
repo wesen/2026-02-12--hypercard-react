@@ -1,0 +1,64 @@
+# Tasks
+
+## TODO
+
+- [ ] Confirm baseline and acceptance metrics
+- [ ] Capture current Redux action rate for `llm.delta`, `moveWindow`, and `resizeWindow` in dev sessions
+- [ ] Capture baseline UI smoothness signals (frame drops/jank notes) for chat streaming and drag interactions
+- [ ] Define measurable success thresholds (dispatch reduction + parity checks) in ticket notes
+- [ ] Implement shared fast-store primitive
+- [ ] Add `createFastStore` abstraction with immutable snapshot updates and `subscribe/getSnapshot`
+- [ ] Add optional requestAnimationFrame notification coalescing utility
+- [ ] Add unit tests for subscribe/unsubscribe, update propagation, and coalesced notification behavior
+- [ ] Integrate chat fast lane (`llm.delta`)
+- [ ] Add `fastDeltaStore.ts` under inventory chat feature
+- [ ] Reroute `llm.delta` handling in `InventoryChatWindow.tsx` from per-event Redux dispatch to fast-store updates
+- [ ] Keep durable Redux transitions for `llm.start`, `llm.final`, and error/reset events
+- [ ] Implement chat overlay merge selector/hook to combine Redux messages + transient fast deltas for rendering
+- [ ] Ensure debug/event viewer keeps visibility into stream events (either mirrored diagnostics lane or dedicated debug feed)
+- [ ] Integrate window drag/resize fast lane
+- [ ] Add `dragFastStore.ts` under windowing shell
+- [ ] Update `useWindowInteractionController.ts` pointermove logic to write transient draft bounds into fast store
+- [ ] Update `DesktopShell.tsx` to overlay draft bounds at render time while drag/resize is active
+- [ ] Commit final bounds to Redux only on pointerup/pointercancel (with optional periodic checkpoints if configured)
+- [ ] Maintain focus/z-index behavior and close/remove cleanup semantics during active drags
+- [ ] Add feature flags and safety guards
+- [ ] Add fast-lane feature flags for chat and drag paths (dev-default on, rollback-safe)
+- [ ] Add dev-only invariant checks for stuck drafts/stale delta overlays
+- [ ] Ensure fast-store cleanup on conversation reset, stream end, pointercancel, and unmount
+- [ ] Verification and regression testing
+- [ ] Add/update tests that assert durable Redux state parity before/after fast-lane integration
+- [ ] Add integration checks for long stream sessions, rapid drag interactions, and mixed workloads
+- [ ] Re-capture dispatch/jank metrics and compare against baseline
+- [ ] Update docs and handoff assets
+- [ ] Update design-doc references with final file paths and deviations from pseudocode
+- [ ] Add changelog entry summarizing implementation decisions and tradeoffs
+- [ ] Produce short implementation handoff note for follow-on ticket(s) and QA verification steps
+
+## W-C Track (Selected Path)
+
+- [ ] W-C.0 Confirm selected implementation style: **option 2 small dedicated store**
+- [ ] W-C.1 Add dedicated drag overlay store module (`dragOverlayStore.ts`) with `begin/update/clear/clearAll/subscribe/getSnapshot`
+- [ ] W-C.2 Add `useSyncExternalStore` hook wrapper for drag overlay snapshots
+- [ ] W-C.3 Extend interaction controller with commit/cancel lifecycle callbacks (pointerup commit, pointercancel cancel)
+- [ ] W-C.4 Route pointermove geometry into overlay store (no durable Redux geometry dispatch on move)
+- [ ] W-C.5 Commit final bounds to Redux once on pointerup (move or resize)
+- [ ] W-C.6 Cancel path clears overlay and performs no durable commit
+- [ ] W-C.7 Apply `effectiveBounds = overlay ?? reduxBounds` in DesktopShell window definitions
+- [ ] W-C.8 Add cleanup on window close and shell unmount to avoid stale drafts
+- [ ] W-C.9 Add focused-window guard so interaction start does not churn duplicate focus actions
+- [ ] W-C.10 Add targeted unit tests for drag overlay store semantics
+- [ ] W-C.11 Verify engine `typecheck` and `test` pass with W-C enabled
+- [ ] W-C.12 Record metrics/observations and decisions in diary
+
+## W-E Track (Parallel/Optional Follow-up)
+
+- [ ] W-E.0 Add `windowing.interaction` state branch in Redux slice (active id, mode, drafts map)
+- [ ] W-E.1 Add reducers/actions (`beginInteraction`, `updateInteractionDraft`, `commitInteraction`, `cancelInteraction`, `clearInteraction`)
+- [ ] W-E.2 Add fine-grained selectors (`selectInteractionDraftById`, `selectEffectiveWindowBoundsById`, `selectActiveInteractionId`)
+- [ ] W-E.3 Wire interaction controller to dispatch interaction-draft actions instead of direct durable moves
+- [ ] W-E.4 Keep durable `windows` geometry untouched during move bursts; apply commit on interaction end
+- [ ] W-E.5 Add reducer/selectors tests for interaction channel lifecycle and parity
+- [ ] W-E.6 Validate render fan-out reduction with per-window selector subscriptions
+- [ ] W-E.7 Evaluate compatibility with W-A throttling and existing W-D memoization
+- [ ] W-E.8 Decide whether W-E should remain a feature-flagged alternative to W-C
