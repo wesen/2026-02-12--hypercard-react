@@ -30,6 +30,7 @@ import {
   createHypercardCardContentAdapter,
 } from './defaultWindowContentAdapters';
 import { dragOverlayStore, useDragOverlaySnapshot } from './dragOverlayStore';
+import { openDesktopIcon } from './iconOpen';
 import { routeDesktopCommand } from './desktopCommandRouter';
 import type { DesktopShellProps } from './desktopShellTypes';
 import type { DesktopIconDef, DesktopMenuSection, DesktopWindowDef } from './types';
@@ -342,18 +343,6 @@ export function useDesktopShellController({
     [dispatch, stack.id, stack.cards],
   );
 
-  const handleOpenIcon = useCallback(
-    (iconId: string) => {
-      dispatch(setSelectedIcon(iconId));
-      if (stack.cards[iconId]) {
-        openCardWindow(iconId);
-      } else {
-        onCommandProp?.(`icon.open.${iconId}`);
-      }
-    },
-    [dispatch, onCommandProp, openCardWindow, stack.cards],
-  );
-
   const handleCommand = useCallback(
     (commandId: string) => {
       const contributionHandled = routeContributionCommand(
@@ -403,6 +392,19 @@ export function useDesktopShellController({
       store,
       windows,
     ],
+  );
+
+  const handleOpenIcon = useCallback(
+    (iconId: string) => {
+      openDesktopIcon({
+        iconId,
+        isCardIcon: (id) => Boolean(stack.cards[id]),
+        selectIcon: (id) => dispatch(setSelectedIcon(id)),
+        openCardWindow,
+        routeCommand: handleCommand,
+      });
+    },
+    [dispatch, handleCommand, openCardWindow, stack.cards],
   );
 
   const defaultAdapters = useMemo<WindowContentAdapter[]>(
