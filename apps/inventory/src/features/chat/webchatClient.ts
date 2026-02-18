@@ -4,6 +4,9 @@ export interface SemEventEnvelope {
     type?: string;
     id?: string;
     data?: Record<string, unknown>;
+    metadata?: Record<string, unknown>;
+    seq?: number | string;
+    stream_id?: string;
   };
 }
 
@@ -23,9 +26,15 @@ export interface TimelineSnapshot {
 }
 
 export interface InventoryWebChatClientHandlers {
+  onRawEnvelope?: (envelope: SemEventEnvelope) => void;
   onEnvelope: (envelope: SemEventEnvelope) => void;
+  onSnapshot?: (snapshot: TimelineSnapshot) => void;
   onStatus?: (status: 'connecting' | 'connected' | 'closed' | 'error') => void;
   onError?: (error: string) => void;
+}
+
+export interface InventoryWebChatClientOptions {
+  hydrate?: boolean;
 }
 
 const CONVERSATION_STORAGE_KEY = 'inventory.webchat.conv_id';
@@ -84,14 +93,85 @@ function websocketUrlForConversation(conversationId: string): string {
   return `${protocol}://${window.location.host}/ws?conv_id=${encoded}`;
 }
 
+function eventSeq(envelope: SemEventEnvelope): bigint | undefined {
+  const raw = envelope.event?.seq;
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    return BigInt(Math.trunc(raw));
+  }
+  if (typeof raw === 'string' && raw.trim()) {
+    try {
+      return BigInt(raw);
+    } catch {
+      return undefined;
+    }
+  }
+  return undefined;
+}
+
+function eventStreamId(envelope: SemEventEnvelope): string | undefined {
+  const streamId = envelope.event?.stream_id;
+  return typeof streamId === 'string' && streamId.trim() ? streamId : undefined;
+}
+
+function compareBufferedOrder(a: SemEventEnvelope, b: SemEventEnvelope): number {
+  const as = eventStreamId(a);
+  const bs = eventStreamId(b);
+  if (as && bs) {
+    if (as < bs) return -1;
+    if (as > bs) return 1;
+  }
+
+  const aq = eventSeq(a);
+  const bq = eventSeq(b);
+  if (aq !== undefined && bq !== undefined) {
+    if (aq < bq) return -1;
+    if (aq > bq) return 1;
+  }
+  if (aq !== undefined && bq === undefined) return -1;
+  if (aq === undefined && bq !== undefined) return 1;
+  return 0;
+}
+
+export function sortBufferedEnvelopes(envelopes: SemEventEnvelope[]): SemEventEnvelope[] {
+  return [...envelopes].sort(compareBufferedOrder);
+}
+
+function normalizeEnvelope(raw: unknown): SemEventEnvelope {
+  const envelope = normalizeRecord(raw) as SemEventEnvelope;
+  const event = normalizeRecord(envelope.event);
+  const seq = event.seq;
+  const streamId = event.stream_id;
+
+  envelope.event = {
+    type: typeof event.type === 'string' ? event.type : undefined,
+    id: typeof event.id === 'string' ? event.id : undefined,
+    data: normalizeRecord(event.data),
+    metadata: normalizeRecord(event.metadata),
+    seq: typeof seq === 'number' || typeof seq === 'string' ? seq : undefined,
+    stream_id: typeof streamId === 'string' ? streamId : undefined,
+  };
+
+  return envelope;
+}
+
 export class InventoryWebChatClient {
   private readonly conversationId: string;
   private readonly handlers: InventoryWebChatClientHandlers;
+  private readonly options: InventoryWebChatClientOptions;
   private ws: WebSocket | null = null;
+  private hydrated: boolean;
+  private hydrationStarted = false;
+  private buffered: SemEventEnvelope[] = [];
 
-  constructor(conversationId: string, handlers: InventoryWebChatClientHandlers) {
+  constructor(
+    conversationId: string,
+    handlers: InventoryWebChatClientHandlers,
+    options: InventoryWebChatClientOptions = {},
+  ) {
     this.conversationId = conversationId;
     this.handlers = handlers;
+    this.options = options;
+    this.hydrated = options.hydrate === false;
   }
 
   connect() {
@@ -106,6 +186,9 @@ export class InventoryWebChatClient {
 
     ws.onopen = () => {
       this.handlers.onStatus?.('connected');
+      if (!this.hydrated) {
+        void this.hydrateAndReplay();
+      }
     };
 
     ws.onclose = () => {
@@ -120,21 +203,42 @@ export class InventoryWebChatClient {
 
     ws.onmessage = (event) => {
       try {
-        const parsed = JSON.parse(String(event.data));
-        const envelope = normalizeRecord(parsed) as SemEventEnvelope;
-        if (envelope.event) {
-          envelope.event = normalizeRecord(envelope.event) as {
-            type?: string;
-            id?: string;
-            data?: Record<string, unknown>;
-          };
-          envelope.event.data = normalizeRecord(envelope.event.data);
+        const envelope = normalizeEnvelope(JSON.parse(String(event.data)));
+        this.handlers.onRawEnvelope?.(envelope);
+
+        if (!this.hydrated) {
+          this.buffered.push(envelope);
+          return;
         }
+
         this.handlers.onEnvelope(envelope);
       } catch {
         this.handlers.onError?.('malformed websocket frame');
       }
     };
+  }
+
+  private async hydrateAndReplay(): Promise<void> {
+    if (this.hydrationStarted) {
+      return;
+    }
+    this.hydrationStarted = true;
+
+    try {
+      const snapshot = await fetchTimelineSnapshot(this.conversationId);
+      this.handlers.onSnapshot?.(snapshot);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'timeline bootstrap failed';
+      this.handlers.onError?.(message);
+    }
+
+    this.hydrated = true;
+
+    const replay = sortBufferedEnvelopes(this.buffered);
+    this.buffered = [];
+    for (const envelope of replay) {
+      this.handlers.onEnvelope(envelope);
+    }
   }
 
   close() {

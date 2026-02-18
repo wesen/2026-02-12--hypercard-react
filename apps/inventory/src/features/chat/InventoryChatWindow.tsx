@@ -47,7 +47,6 @@ import {
   selectSuggestions,
 } from './selectors';
 import {
-  fetchTimelineSnapshot,
   InventoryWebChatClient,
   type InventoryWebChatClientHandlers,
   type SemEventEnvelope,
@@ -577,50 +576,28 @@ export function InventoryChatWindow({ conversationId }: InventoryChatWindowProps
 
   useEffect(() => {
     const handlers: InventoryWebChatClientHandlers = {
-      onEnvelope: (envelope) => {
+      onRawEnvelope: (envelope) => {
+        // Raw ingress stream for EventViewer/debug tooling; do not gate on projection.
         emitConversationEvent(conversationId, envelope);
+      },
+      onSnapshot: (snapshot) => {
+        hydrateFromTimelineSnapshot(snapshot, dispatch, conversationId);
+      },
+      onEnvelope: (envelope) => {
         onSemEnvelope(envelope, dispatch, conversationId);
       },
       onStatus: (status) => dispatch(setConnectionStatus({ conversationId, status })),
       onError: (error) => dispatch(setStreamError({ conversationId, message: error })),
     };
 
-    let cancelled = false;
-    let client: InventoryWebChatClient | null = null;
-
-    const bootstrap = async () => {
-      try {
-        const snapshot = await fetchTimelineSnapshot(conversationId);
-        if (!cancelled) {
-          hydrateFromTimelineSnapshot(snapshot, dispatch, conversationId);
-        }
-      } catch (error) {
-        if (!cancelled) {
-          dispatch(
-            upsertTimelineItem({
-              conversationId,
-              id: `timeline:bootstrap:${conversationId}`,
-              title: 'Timeline bootstrap',
-              status: 'error',
-              detail: shortText(error instanceof Error ? error.message : 'timeline bootstrap failed'),
-              kind: 'timeline',
-            }),
-          );
-        }
-      }
-      if (cancelled) {
-        return;
-      }
-      client = new InventoryWebChatClient(conversationId, handlers);
-      clientRef.current = client;
-      client.connect();
-    };
-
-    void bootstrap();
+    const client = new InventoryWebChatClient(conversationId, handlers, {
+      hydrate: true,
+    });
+    clientRef.current = client;
+    client.connect();
 
     return () => {
-      cancelled = true;
-      client?.close();
+      client.close();
       if (client && clientRef.current === client) {
         clientRef.current = null;
       }
