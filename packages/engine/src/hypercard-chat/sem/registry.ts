@@ -1,3 +1,4 @@
+import type { Dispatch, UnknownAction } from '@reduxjs/toolkit';
 import {
   addEntity,
   clearConversation,
@@ -240,7 +241,7 @@ export function createSemRegistry(): SemRegistry {
 }
 
 export function applySemTimelineOps(
-  dispatch: (action: unknown) => void,
+  dispatch: Dispatch<UnknownAction>,
   convId: string,
   ops: SemTimelineOp[],
 ): void {

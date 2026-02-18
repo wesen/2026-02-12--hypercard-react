@@ -1,6 +1,9 @@
-import type { ChatWindowMessage } from '@hypercard/engine';
 import type { TimelineState } from '@hypercard/engine';
-import type { ChatConnectionStatus, ConversationState, TurnStats, DEFAULT_CHAT_SUGGESTIONS } from './chatSlice';
+import type {
+  ChatConnectionStatus,
+  ConversationState,
+  TurnStats,
+} from './chatSlice';
 
 export interface ChatStateSlice {
   chat: {
@@ -9,7 +12,6 @@ export interface ChatStateSlice {
   timeline?: TimelineState;
 }
 
-const EMPTY_MESSAGES: ChatWindowMessage[] = [];
 const EMPTY_SUGGESTIONS: string[] = [];
 
 function getConv(state: ChatStateSlice, convId: string): ConversationState | undefined {
@@ -18,12 +20,6 @@ function getConv(state: ChatStateSlice, convId: string): ConversationState | und
 
 export const selectConnectionStatus = (state: ChatStateSlice, convId: string): ChatConnectionStatus =>
   getConv(state, convId)?.connectionStatus ?? 'idle';
-
-export const selectIsStreaming = (state: ChatStateSlice, convId: string): boolean =>
-  getConv(state, convId)?.isStreaming ?? false;
-
-export const selectMessages = (state: ChatStateSlice, convId: string): ChatWindowMessage[] =>
-  getConv(state, convId)?.messages ?? EMPTY_MESSAGES;
 
 export const selectSuggestions = (state: ChatStateSlice, convId: string): string[] =>
   getConv(state, convId)?.suggestions ?? EMPTY_SUGGESTIONS;

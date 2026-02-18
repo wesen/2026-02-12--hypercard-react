@@ -50,6 +50,7 @@ import {
   stringField,
   stripTrailingWhitespace,
 } from './semHelpers';
+import type { Dispatch, UnknownAction } from '@reduxjs/toolkit';
 
 function extractMetadata(envelope: SemEventEnvelope): Record<string, unknown> | undefined {
   const meta = (envelope as Record<string, unknown>).event;
@@ -155,7 +156,7 @@ function mapTimelineEntityToMessage(entity: TimelineEntity): ChatWindowMessage {
 
 function hydrateFromTimelineSnapshot(
   snapshot: TimelineSnapshot,
-  dispatch: ReturnType<typeof useDispatch>,
+  dispatch: Dispatch<UnknownAction>,
   conversationId: string,
   semRegistry: SemRegistry,
 ): void {
@@ -188,7 +189,7 @@ function hydrateFromTimelineSnapshot(
 
 function onSemEnvelope(
   envelope: SemEventEnvelope,
-  dispatch: ReturnType<typeof useDispatch>,
+  dispatch: Dispatch<UnknownAction>,
   conversationId: string,
   semRegistry: SemRegistry,
 ): void {
