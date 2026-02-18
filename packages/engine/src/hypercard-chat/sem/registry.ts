@@ -134,6 +134,21 @@ function llmFinalHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResu
   });
 }
 
+function llmThinkingSummaryHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResult {
+  const data = asRecord(envelope.event?.data);
+  return upsert({
+    id: eventId(envelope.event, 'llm-thinking-summary'),
+    kind: 'message',
+    createdAt: ctx.now(),
+    updatedAt: ctx.now(),
+    props: {
+      role: 'thinking',
+      content: stringField(data, 'text') ?? stringField(data, 'cumulative') ?? stringField(data, 'delta') ?? '',
+      streaming: false,
+    },
+  });
+}
+
 function toolStartHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResult {
   const data = asRecord(envelope.event?.data);
   return add({
@@ -376,6 +391,7 @@ export function registerDefaultSemHandlers(
   registry.register('llm.thinking.start', llmStartHandler);
   registry.register('llm.thinking.delta', llmDeltaHandler);
   registry.register('llm.thinking.final', llmFinalHandler);
+  registry.register('llm.thinking.summary', llmThinkingSummaryHandler);
 
   registry.register('tool.start', toolStartHandler);
   registry.register('tool.delta', toolDeltaHandler);

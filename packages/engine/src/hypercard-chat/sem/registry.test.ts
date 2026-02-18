@@ -71,6 +71,30 @@ describe('SemRegistry default handlers', () => {
     }
   });
 
+  it('projects llm.thinking.summary as non-streaming update', () => {
+    const registry = createSemRegistry();
+
+    const summary = registry.handle(
+      {
+        sem: true,
+        event: {
+          type: 'llm.thinking.summary',
+          id: 'think-1',
+          data: { text: 'condensed reasoning summary' },
+        },
+      },
+      { convId: 'c1', now: () => 1236 },
+    );
+
+    expect(summary.ops[0].type).toBe('upsertEntity');
+    if (summary.ops[0].type === 'upsertEntity') {
+      expect(summary.ops[0].entity.id).toBe('think-1');
+      expect(summary.ops[0].entity.props.role).toBe('thinking');
+      expect(summary.ops[0].entity.props.streaming).toBe(false);
+      expect(summary.ops[0].entity.props.content).toBe('condensed reasoning summary');
+    }
+  });
+
   it('projects hypercard.widget.update as status and hypercard.widget.v1 as summarized result', () => {
     const registry = createSemRegistry({ enableTimelineUpsert: false });
 
