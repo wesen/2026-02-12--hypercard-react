@@ -18,6 +18,9 @@ export interface SemEventEnvelope {
     type?: string;
     id?: string;
     data?: Record<string, unknown>;
+    metadata?: Record<string, unknown>;
+    seq?: number | string;
+    stream_id?: string;
   };
 }
 
