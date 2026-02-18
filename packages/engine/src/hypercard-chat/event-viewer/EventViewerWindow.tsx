@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { subscribeConversationEvents, type EventLogEntry } from './eventBus';
+import { buildEventLogYamlExport, buildEventLogYamlFilename, exportEventLogYaml } from './exportYaml';
 import { SyntaxHighlight } from '../utils/syntaxHighlight';
 import { toYaml } from '../utils/yamlFormat';
 
@@ -98,6 +99,12 @@ export function EventViewerWindow({
     setExpandedIds(new Set());
   }, []);
 
+  const exportYaml = useCallback(() => {
+    const now = Date.now();
+    const payload = buildEventLogYamlExport(conversationId, visible, filters, now);
+    exportEventLogYaml(payload, buildEventLogYamlFilename(conversationId, now));
+  }, [conversationId, visible, filters]);
+
   return (
     <div
       data-part="event-viewer"
@@ -149,6 +156,9 @@ export function EventViewerWindow({
         </button>
         <button onClick={clearLog} style={controlBtnStyle}>
           🗑 Clear
+        </button>
+        <button onClick={exportYaml} style={controlBtnStyle}>
+          ⬇ YAML
         </button>
         <button
           onClick={() => setAutoScroll((prev) => !prev)}
