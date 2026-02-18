@@ -1,9 +1,62 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  InventoryWebChatClient,
   routeIncomingEnvelope,
   sortBufferedEnvelopes,
   type SemEventEnvelope,
 } from './webchatClient';
+
+class FakeWebSocket {
+  static instances: FakeWebSocket[] = [];
+  static reset(): void {
+    FakeWebSocket.instances = [];
+  }
+
+  readonly url: string;
+  onopen: ((event: Event) => void) | null = null;
+  onclose: ((event: CloseEvent) => void) | null = null;
+  onerror: ((event: Event) => void) | null = null;
+  onmessage: ((event: MessageEvent) => void) | null = null;
+
+  constructor(url: string) {
+    this.url = url;
+    FakeWebSocket.instances.push(this);
+  }
+
+  close(): void {
+    // no-op for unit test fake
+  }
+}
+
+const OriginalWebSocket = globalThis.WebSocket;
+const OriginalWindow = (globalThis as { window?: Window }).window;
+
+beforeEach(() => {
+  FakeWebSocket.reset();
+  vi.useFakeTimers();
+  (globalThis as { WebSocket: typeof WebSocket }).WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+  Object.defineProperty(globalThis, 'window', {
+    value: {
+      location: { protocol: 'http:', host: 'localhost:5173' },
+    },
+    configurable: true,
+    writable: true,
+  });
+});
+
+afterEach(() => {
+  (globalThis as { WebSocket: typeof WebSocket }).WebSocket = OriginalWebSocket;
+  if (OriginalWindow) {
+    Object.defineProperty(globalThis, 'window', {
+      value: OriginalWindow,
+      configurable: true,
+      writable: true,
+    });
+  } else {
+    Reflect.deleteProperty(globalThis, 'window');
+  }
+  vi.useRealTimers();
+});
 
 describe('sortBufferedEnvelopes', () => {
   it('orders by stream_id when present', () => {
@@ -64,5 +117,57 @@ describe('routeIncomingEnvelope', () => {
     expect(raw).toEqual(['f1']);
     expect(projected).toEqual(['f1']);
     expect(state.buffered).toEqual([]);
+  });
+});
+
+describe('InventoryWebChatClient connection status', () => {
+  it('ignores stale socket callbacks after reconnect', () => {
+    const statuses: string[] = [];
+    const client = new InventoryWebChatClient(
+      'conv-1',
+      {
+        onEnvelope: () => {},
+        onStatus: (status) => statuses.push(status),
+      },
+      { hydrate: false },
+    );
+
+    client.connect();
+    const ws1 = FakeWebSocket.instances[0];
+    ws1.onopen?.(new Event('open'));
+    client.close();
+
+    client.connect();
+    const ws2 = FakeWebSocket.instances[1];
+    ws1.onclose?.({} as CloseEvent);
+    ws2.onopen?.(new Event('open'));
+
+    expect(statuses).toEqual(['connecting', 'connected', 'connecting', 'connected']);
+  });
+
+  it('re-emits connected heartbeat while messages are flowing', () => {
+    const statuses: string[] = [];
+    const client = new InventoryWebChatClient(
+      'conv-2',
+      {
+        onEnvelope: () => {},
+        onStatus: (status) => statuses.push(status),
+      },
+      { hydrate: false },
+    );
+
+    client.connect();
+    const ws = FakeWebSocket.instances[0];
+    ws.onopen?.(new Event('open'));
+
+    ws.onmessage?.({
+      data: JSON.stringify({ sem: true, event: { type: 'llm.delta', data: { delta: 'a' } } }),
+    } as MessageEvent);
+    vi.advanceTimersByTime(1100);
+    ws.onmessage?.({
+      data: JSON.stringify({ sem: true, event: { type: 'llm.delta', data: { delta: 'b' } } }),
+    } as MessageEvent);
+
+    expect(statuses).toEqual(['connecting', 'connected', 'connected']);
   });
 });

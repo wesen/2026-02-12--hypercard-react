@@ -184,6 +184,8 @@ export class InventoryWebChatClient {
   private readonly handlers: InventoryWebChatClientHandlers;
   private readonly options: InventoryWebChatClientOptions;
   private ws: WebSocket | null = null;
+  private status: 'connecting' | 'connected' | 'closed' | 'error' | null = null;
+  private lastConnectedHeartbeatAt = 0;
   private hydrated: boolean;
   private hydrationStarted = false;
   private buffered: SemEventEnvelope[] = [];
@@ -204,29 +206,45 @@ export class InventoryWebChatClient {
       return;
     }
 
-    this.handlers.onStatus?.('connecting');
+    this.emitStatus('connecting');
 
     const ws = new WebSocket(websocketUrlForConversation(this.conversationId));
     this.ws = ws;
 
     ws.onopen = () => {
-      this.handlers.onStatus?.('connected');
+      if (this.ws !== ws) {
+        return;
+      }
+      this.emitStatus('connected');
       if (!this.hydrated) {
         void this.hydrateAndReplay();
       }
     };
 
     ws.onclose = () => {
-      this.handlers.onStatus?.('closed');
+      if (this.ws !== ws) {
+        return;
+      }
+      this.emitStatus('closed');
       this.ws = null;
     };
 
     ws.onerror = () => {
-      this.handlers.onStatus?.('error');
+      if (this.ws !== ws) {
+        return;
+      }
+      this.emitStatus('error');
       this.handlers.onError?.('websocket error');
     };
 
     ws.onmessage = (event) => {
+      if (this.ws !== ws) {
+        return;
+      }
+      // If frames are still arriving, the active socket is alive.
+      // Emit at most once per second while already connected to avoid
+      // high-frequency status churn.
+      this.emitConnectedHeartbeat();
       try {
         const envelope = normalizeEnvelope(JSON.parse(String(event.data)));
         routeIncomingEnvelope(
@@ -276,6 +294,27 @@ export class InventoryWebChatClient {
     } catch {
       // Ignore close failures.
     }
+  }
+
+  private emitStatus(next: 'connecting' | 'connected' | 'closed' | 'error'): void {
+    if (this.status === next) {
+      return;
+    }
+    this.status = next;
+    if (next === 'connected') {
+      this.lastConnectedHeartbeatAt = Date.now();
+    }
+    this.handlers.onStatus?.(next);
+  }
+
+  private emitConnectedHeartbeat(): void {
+    const now = Date.now();
+    if (this.status === 'connected' && now - this.lastConnectedHeartbeatAt < 1000) {
+      return;
+    }
+    this.status = 'connected';
+    this.lastConnectedHeartbeatAt = now;
+    this.handlers.onStatus?.('connected');
   }
 }
 
