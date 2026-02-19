@@ -853,7 +853,8 @@ I rewrote the implementation playbook and synchronized the ticket task list/inde
 
 ### What didn't work
 
-- N/A. No tooling or command errors occurred during this docs synchronization step.
+- Initial `docmgr validate frontmatter` attempt used `ttmp/...` relative paths and failed because docmgr resolved them under an extra `ttmp/` prefix (`.../ttmp/ttmp/... no such file or directory`).
+- I reran validation with absolute paths for each updated doc and all validations passed.
 
 ### What I learned
 
