@@ -14,5 +14,5 @@
 - [x] Write suggestions behavior-spec document for future rebuild
 - [x] Run tests/typecheck for inventory and engine surfaces impacted by HC-59
 - [x] Remove suggestion props/rendering from engine runtime and chat widgets
-- [ ] Update diary/changelog throughout and commit each implementation phase
+- [x] Update diary/changelog throughout and commit each implementation phase
 - [x] Clean up suggestion references in stories/docs/theme/event viewer

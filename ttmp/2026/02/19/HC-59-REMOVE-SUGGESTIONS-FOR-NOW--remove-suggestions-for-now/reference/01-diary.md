@@ -46,7 +46,7 @@ Then I mapped where suggestions currently live in code by scanning inventory and
 
 **Inferred user intent:** Reduce moving parts during runtime refactor by deleting suggestion behavior now and reintroducing it later with cleaner runtime architecture.
 
-**Commit (code):** Pending (recorded after staging/commit step)
+**Commit (code):** 9b94664 — "docs(HC-58,HC-59): remove-suggestions planning and publication"
 
 ### What I did
 - Created ticket:
@@ -110,7 +110,7 @@ This step completes the publication requirement and captures one verification hi
 
 **Inferred user intent:** Make the plan immediately reviewable on the reMarkable workflow used for architecture review.
 
-**Commit (code):** Pending (recorded after staging/commit step)
+**Commit (code):** 9b94664 — "docs(HC-58,HC-59): remove-suggestions planning and publication"
 
 ### What I did
 - Verified CLI health:
@@ -177,7 +177,7 @@ First, write the feature wise document, then create tasks detailed in the ticket
 
 **Inferred user intent:** Preserve product behavior knowledge while aggressively simplifying code now, so suggestions can be reintroduced deliberately after runtime cleanup.
 
-**Commit (code):** Pending (recorded after staging/commit step)
+**Commit (code):** 8931fae — "docs(HC-59): add suggestions behavior spec and detailed task plan"
 
 ### What I did
 - Created new design doc:
@@ -245,7 +245,7 @@ This phase intentionally keeps behavior coherent: suggestion reducers/selectors/
 
 **Inferred user intent:** Reduce complexity immediately in active inventory chat runtime path.
 
-**Commit (code):** Pending (recorded after staging/commit step)
+**Commit (code):** 928c187 — "refactor(HC-59): remove suggestions from inventory chat state and adapters"
 
 ### What I did
 - Removed suggestion state and reducers from:
@@ -314,7 +314,7 @@ This keeps HC-59 aligned with the hard-cut simplification direction and ensures 
 
 **Inferred user intent:** Ensure suggestions are gone across shared chat surfaces, not only app-local inventory code.
 
-**Commit (code):** Pending (recorded after staging/commit step)
+**Commit (code):** 2928057 — "refactor(HC-59): drop suggestions from runtime and chat widgets"
 
 ### What I did
 - Removed suggestion props/rendering from:
@@ -427,7 +427,7 @@ I also ran typecheck and focused test suites to verify the changes across engine
 
 **Inferred user intent:** Ensure suggestions are fully removed, not just from runtime logic, and leave a clean baseline.
 
-**Commit (code):** Pending (recorded after staging/commit step)
+**Commit (code):** 63f9d91 — "chore(HC-59): purge remaining suggestion refs and validate"
 
 ### What I did
 - Story cleanup:
