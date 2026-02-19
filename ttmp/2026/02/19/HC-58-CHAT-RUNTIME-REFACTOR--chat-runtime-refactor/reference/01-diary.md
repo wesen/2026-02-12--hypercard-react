@@ -258,7 +258,7 @@ This step intentionally happened after content authoring, because it is easier t
 
 **Inferred user intent:** Ensure the final HC-58 workspace is maintainable and passes docmgr validation with no blocking errors.
 
-**Commit (code):** N/A — documentation hygiene pass, committed in follow-up checkpoint.
+**Commit (code):** 7a8635c — "docs(HC-58): fix docmgr hygiene and validation findings"
 
 ### What I did
 - Ran `docmgr doctor --ticket HC-58-CHAT-RUNTIME-REFACTOR --stale-after 30`.
