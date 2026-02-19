@@ -20,7 +20,7 @@ RelatedFiles:
       Note: Shared TimelineEntity formatting parity helper
 ExternalSources: []
 Summary: HC-53 restores rich inline chat timeline widgets/tool-card rendering under timeline-first SEM projection architecture.
-LastUpdated: 2026-02-19T13:30:00-05:00
+LastUpdated: 2026-02-19T13:45:00-05:00
 WhatFor: Ticket hub for regression analysis, implementation diary, and delivery artifacts
 WhenToUse: Use when reviewing HC-53 implementation, validating behavior, or extending timeline projection UX
 ---
@@ -46,7 +46,7 @@ HC-53 restores the rich chat timeline experience that regressed during extractio
 
 ## Status
 
-Current status: **active** (extended docs iteration prepared; docs-only commit + upload pending)
+Current status: **active** (extended docs iteration committed and uploaded)
 
 ## Topics
 

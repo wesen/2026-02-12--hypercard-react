@@ -36,7 +36,7 @@ RelatedFiles:
       Note: Step 8 records this extended architecture analysis
 ExternalSources: []
 Summary: Detailed implementation diary for HC-53 rich chat widget regression analysis and restoration
-LastUpdated: 2026-02-19T13:30:00-05:00
+LastUpdated: 2026-02-19T13:45:00-05:00
 WhatFor: Preserve exact implementation and debugging journey for HC-53
 WhenToUse: Use when reviewing HC-53 history, verifying behavior, or extending projection architecture
 ---
@@ -629,3 +629,86 @@ This step is intentionally docs-only. I did not modify application/runtime code;
   - `sed -n ... pinocchio/pkg/doc/topics/webchat-*.md`
 - Constraint honored from follow-up user instruction:
   - no product code changes, document-only output.
+
+## Step 9: Docs-only commit and reMarkable upload for the extended analysis
+
+After completing the extended architecture write-up, I finalized delivery by committing only ticket documentation changes and uploading the new analysis bundle to reMarkable under the existing HC-53 folder.
+
+This step closed the operational part of the request and synchronized ticket bookkeeping (`tasks`, `changelog`, `index`) with the actual commit and upload outcomes.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 8)
+
+**Assistant interpretation:** Commit documentation updates, then publish the updated long-form analysis to reMarkable.
+
+**Inferred user intent:** Ensure the design exploration is both versioned in git and accessible on device as a reading artifact.
+
+**Commit (code):** `e659bdb` — "docs(hc-53): analyze reusable chat runtime with pinocchio/protobuf"
+
+### What I did
+
+- Created docs-only commit:
+  - `git add ttmp/2026/02/19/HC-53-RESTORE-CHAT-WIDGETS--restore-rich-chat-timeline-widgets-tool-call-cards-in-shared-runtime`
+  - `git commit -m "docs(hc-53): analyze reusable chat runtime with pinocchio/protobuf"`
+- Ran reMarkable bundle upload workflow:
+  - `remarquee status`
+  - `remarquee upload bundle --dry-run ... --name "HC-53 Reusable Chat Runtime and Protobuf Analysis" --remote-dir "/ai/2026/02/19/HC-53-RESTORE-CHAT-WIDGETS" --toc-depth 2`
+  - `remarquee upload bundle ... --name "HC-53 Reusable Chat Runtime and Protobuf Analysis" --remote-dir "/ai/2026/02/19/HC-53-RESTORE-CHAT-WIDGETS" --toc-depth 2`
+- Updated ticket bookkeeping files to reflect completion:
+  - `tasks.md`
+  - `changelog.md`
+  - `index.md`
+
+### Why
+
+- User requested the document to be committed and uploaded as final deliverable.
+- Ticket metadata should mirror actual delivery state for later reviewers.
+
+### What worked
+
+- Docs-only commit succeeded with hash `e659bdb`.
+- Upload succeeded:
+  - `OK: uploaded HC-53 Reusable Chat Runtime and Protobuf Analysis.pdf -> /ai/2026/02/19/HC-53-RESTORE-CHAT-WIDGETS`
+
+### What didn't work
+
+- First non-escalated commit attempt failed due workspace git lock permission:
+  - `fatal: Unable to create .../index.lock: Permission denied`
+- Resolved by rerunning commit with elevated sandbox permission.
+
+### What I learned
+
+- In this workspace, docs-only commit finalization still needs escalated permission when `.git/worktrees` lives outside writable sandbox roots.
+
+### What was tricky to build
+
+- Ordering had to remain strict: commit first, upload second, then final bookkeeping updates to avoid claiming publication state before the upload actually succeeded.
+
+### What warrants a second pair of eyes
+
+- Optional on-device confirmation that the new PDF appears alongside the earlier HC-53 upload in the same folder.
+
+### What should be done in the future
+
+- Consider adding a tiny ticket helper script that automates commit hash capture and post-upload bookkeeping edits for documentation-heavy tickets.
+
+### Code review instructions
+
+- Confirm commit:
+  - `git show --stat e659bdb`
+- Confirm upload target and name from command logs:
+  - `/ai/2026/02/19/HC-53-RESTORE-CHAT-WIDGETS`
+  - `HC-53 Reusable Chat Runtime and Protobuf Analysis.pdf`
+- Review updated ticket docs:
+  - `design-doc/02-generic-chatwindow-and-hypercard-renderer-pack-architecture.md`
+  - `reference/01-diary.md`
+  - `tasks.md`
+  - `changelog.md`
+
+### Technical details
+
+- Commit was created before upload, matching requested sequencing.
+- Bundle inputs were:
+  - `design-doc/02-generic-chatwindow-and-hypercard-renderer-pack-architecture.md`
+  - `reference/01-diary.md`

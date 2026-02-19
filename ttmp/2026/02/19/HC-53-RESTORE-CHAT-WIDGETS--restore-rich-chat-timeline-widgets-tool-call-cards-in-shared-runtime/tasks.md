@@ -2,7 +2,7 @@
 
 ## TODO
 
-- [ ] Publish updated design-doc 02 bundle to reMarkable after docs-only commit
+- [ ] N/A
 
 ## Done
 
@@ -14,3 +14,5 @@
 - [x] Commit HC-53 code + documentation changes (`b091a8c`)
 - [x] Upload HC-53 analysis bundle to reMarkable (`HC-53 Restore Chat Widgets Analysis.pdf`)
 - [x] Produce extended architecture analysis covering pinocchio pkg/webchat reuse and protobuf custom-event approach
+- [x] Commit docs-only extension for reusable chat/protobuf architecture (`e659bdb`)
+- [x] Upload updated HC-53 bundle to reMarkable (`HC-53 Reusable Chat Runtime and Protobuf Analysis.pdf`)
