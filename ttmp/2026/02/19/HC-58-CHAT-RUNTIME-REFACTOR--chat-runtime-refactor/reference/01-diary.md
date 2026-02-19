@@ -625,7 +625,7 @@ This closes the current HC-58 execution slice with verified runtime behavior and
 
 **Inferred user intent:** Keep each HC-58 phase shippable and reviewable, not just code-complete.
 
-**Commit (code):** Pending (recorded after staging/commit step)
+**Commit (code):** 500c73b — "docs(HC-58): record validation and phase commit trace"
 
 ### What I did
 - Ran:
