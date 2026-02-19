@@ -1,5 +1,6 @@
 import type { TimelineEntity } from '../timeline/types';
 import { normalizeVersion } from '../timeline/version';
+import { normalizeTimelineProps } from './timelinePropsRegistry';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -72,45 +73,50 @@ function propsFromEntity(kind: string, entity: Record<string, unknown>): Record<
   const payload = snap.payload;
 
   if (kind === 'message' && payload) {
-    return {
+    return normalizeTimelineProps(kind, {
       role: stringField(payload, 'role') ?? 'assistant',
       content: stringField(payload, 'content') ?? '',
       streaming: booleanField(payload, 'streaming') ?? false,
-    };
+    });
   }
 
   if (kind === 'tool_call' && payload) {
-    return {
+    return normalizeTimelineProps(kind, {
       name: stringField(payload, 'name') ?? 'tool',
       input: payload.input,
       status: stringField(payload, 'status'),
       progress: numberField(payload, 'progress'),
       done: booleanField(payload, 'done') ?? false,
       output: payload.output,
-    };
+    });
   }
 
   if (kind === 'tool_result' && payload) {
     const resultRaw = payload.resultRaw ?? payload.result_raw;
     const result = typeof resultRaw !== 'undefined' ? resultRaw : payload.result;
-    return {
+    return normalizeTimelineProps(kind, {
       toolCallId: stringField(payload, 'toolCallId') ?? stringField(payload, 'tool_call_id'),
       customKind: stringField(payload, 'customKind') ?? stringField(payload, 'custom_kind') ?? '',
       result,
       resultText: stringFromUnknown(result),
-    };
+    });
   }
 
   if (kind === 'status' && payload) {
-    return {
+    return normalizeTimelineProps(kind, {
       text: stringField(payload, 'text') ?? '',
       type: stringField(payload, 'type') ?? 'info',
-    };
+    });
   }
 
-  return {
+  const props = asRecord(entity.props);
+  if (props) {
+    return normalizeTimelineProps(kind, { ...props });
+  }
+
+  return normalizeTimelineProps(kind, {
     raw: entity,
-  };
+  });
 }
 
 export function mapTimelineEntityFromUpsert(

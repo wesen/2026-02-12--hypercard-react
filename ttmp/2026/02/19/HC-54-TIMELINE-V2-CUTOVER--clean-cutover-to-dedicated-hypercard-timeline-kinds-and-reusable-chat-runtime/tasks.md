@@ -9,7 +9,7 @@
   - add app-owned protobuf messages and generated Go bindings for widget/card lifecycle payload extraction
   - switch translator/projector decode helpers to protobuf extraction (`protojson`) instead of ad-hoc map decoding
   - remove legacy map-decoding helpers once protobuf extraction is wired and tested
-- [ ] 3) Introduce generic frontend registration seams (kind normalizers + kind renderer registry) in shared/runtime layer:
+- [x] 3) Introduce generic frontend registration seams (kind normalizers + kind renderer registry) in shared/runtime layer:
   - add explicit bootstrap registration API used by apps (no `init` side effects)
   - remove legacy manual per-app widget/card routing helpers that become obsolete once registry dispatch exists
 - [ ] 4) Cut over backend projection to dedicated timeline kinds:
@@ -41,3 +41,4 @@
 - [x] Create ticket workspace for clean TimelineEntityV2 cutover and populate 1-9 execution task plan
 - [x] Start implementation diary and complete Step 1 contract freeze + no-legacy baseline
 - [x] Step 2 backend protobuf extraction landed with generated bindings and decode/props tests
+- [x] Step 3 frontend registry seams landed (timeline kind normalizers + inline widget renderer registry + explicit inventory bootstrap)

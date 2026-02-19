@@ -19,7 +19,7 @@ RelatedFiles:
       Note: Authoritative implementation plan used during execution
 ExternalSources: []
 Summary: Execution diary for HC-54 task-by-task implementation and commit trail.
-LastUpdated: 2026-02-19T19:32:00-05:00
+LastUpdated: 2026-02-19T20:05:00-05:00
 WhatFor: Capture exact implementation steps, decisions, failures, and validations as HC-54 progresses.
 WhenToUse: Use when reviewing ongoing progress or resuming work from the last completed step.
 ---
@@ -194,3 +194,98 @@ This step implemented app-owned protobuf payload extraction for Hypercard widget
 1. Widget lifecycle events now project through `decodeWidgetLifecyclePayload` and upsert one entity per item id: `<itemId>:widget`.
 2. Card lifecycle events now project through `decodeCardLifecyclePayload` and upsert one entity per item id: `<itemId>:card`.
 3. Props payload includes `schemaVersion: 1` and normalized lifecycle fields for frontend registration dispatch.
+
+## Step 3: Frontend registry seams (kind normalizers + inline widget renderer registry)
+
+This step introduced shared frontend extension seams in engine runtime and removed Inventory’s manual widget-type switch from `InventoryChatWindow` in favor of explicit bootstrap + registry dispatch.
+
+### Prompt Context
+
+**User prompt (verbatim):** `Go ahead and work on it, task by task, commit at appropriate intervals, update your diary as you go.`
+
+**Assistant interpretation:** Continue HC-54 implementation sequence with a committed Step 3 checkpoint, including tests and diary updates.
+
+**Inferred user intent:** Make extension points explicit and reusable so feature modules can register behavior without editing core dispatch code.
+
+### What I did
+
+1. Added shared timeline kind normalizer registry:
+   - `packages/engine/src/hypercard-chat/sem/timelinePropsRegistry.ts`
+2. Updated timeline upsert mapping to consume registry normalizers and to prefer `entity.props` for unknown kinds:
+   - `packages/engine/src/hypercard-chat/sem/timelineMapper.ts`
+3. Added shared inline widget renderer registry:
+   - `packages/engine/src/hypercard-chat/widgets/inlineWidgetRegistry.ts`
+4. Exported new registry APIs from engine barrel:
+   - `packages/engine/src/hypercard-chat/index.ts`
+5. Added explicit Inventory bootstrap for widget renderer registration:
+   - `apps/inventory/src/features/chat/runtime/widgetRendererRegistry.tsx`
+6. Replaced manual widget type dispatch in `InventoryChatWindow` with:
+   - one-time bootstrap call
+   - registry-based `renderInlineWidget` dispatch
+   - host callbacks passed via typed render context
+
+### Why
+
+1. Step 3 requires modular registration seams instead of hardcoded case dispatch.
+2. Unknown/dedicated timeline kinds (like `hypercard_widget`, `hypercard_card`) need a stable frontend normalization seam.
+3. Explicit bootstrap ensures extension registration is discoverable and avoids hidden side effects.
+
+### Commands run
+
+1. Engine test suite:
+   - `npm run test -w packages/engine`
+2. Workspace typecheck:
+   - `npm run typecheck`
+
+### What worked
+
+1. New registry tests pass:
+   - `timelinePropsRegistry.test.ts`
+   - `timelineMapper.test.ts`
+   - `inlineWidgetRegistry.test.ts`
+2. Existing engine tests remained green after replacing manual widget dispatch.
+3. TypeScript build succeeded across the workspace.
+
+### What didn't work
+
+1. No blocking failures in this step; only expected noisy stderr from an existing plugin-runtime test that intentionally exercises error logging.
+
+### What I learned
+
+1. `timelineMapper` needed `entity.props` fallback to correctly hydrate dedicated V2 kinds from canonical timeline upserts.
+2. Inline widget registry works cleanly when app-specific host actions are injected through render context rather than captured globally.
+
+### What was tricky to build
+
+1. Preserving Inventory host-specific artifact open/edit behavior while removing the local hardcoded widget dispatch switch.
+2. Keeping API generic enough for future packs while maintaining current widget signatures.
+
+### What warrants a second pair of eyes
+
+1. Confirm inline widget registry context shape should remain open (`Record<string, unknown>`) versus a stricter typed contract in later steps.
+2. Confirm `tool_result` builtin normalizer behavior remains desired during Step 5 removal of widget/card customKind paths.
+
+### What should be done in the future
+
+1. Execute Step 5 cutover so frontend no longer depends on `tool_result.customKind` for widget/card lifecycle.
+2. Move Inventory bootstrap registrations into reusable Hypercard renderer pack during Step 6/8 extraction.
+
+### Code review instructions
+
+1. Review registry primitives:
+   - `packages/engine/src/hypercard-chat/sem/timelinePropsRegistry.ts`
+   - `packages/engine/src/hypercard-chat/widgets/inlineWidgetRegistry.ts`
+2. Review integration points:
+   - `packages/engine/src/hypercard-chat/sem/timelineMapper.ts`
+   - `apps/inventory/src/features/chat/runtime/widgetRendererRegistry.tsx`
+   - `apps/inventory/src/features/chat/InventoryChatWindow.tsx`
+3. Review tests:
+   - `packages/engine/src/hypercard-chat/sem/timelinePropsRegistry.test.ts`
+   - `packages/engine/src/hypercard-chat/sem/timelineMapper.test.ts`
+   - `packages/engine/src/hypercard-chat/widgets/inlineWidgetRegistry.test.ts`
+
+### Technical details
+
+1. Normalizer resolution order is extension normalizer first, then built-in, then passthrough.
+2. Inline widget resolution order is per-call overrides first, then registered extension renderer.
+3. `InventoryChatWindow` now delegates all widget-type component dispatch to registry resolution and only provides host actions/context.

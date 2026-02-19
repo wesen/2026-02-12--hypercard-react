@@ -5,16 +5,13 @@ import {
   createSemRegistry,
   emitConversationEvent,
   type InlineWidget,
-  HypercardCardPanelWidget as InventoryCardPanelWidget,
-  HypercardGeneratedWidgetPanel as InventoryGeneratedWidgetPanel,
-  HypercardTimelineWidget as InventoryTimelineWidget,
   openRuntimeCardCodeEditor as openCodeEditor,
   type ProjectionPipelineAdapter,
   projectSemEnvelope,
+  renderInlineWidget,
   type SemRegistry,
   selectTimelineEntities as selectTimelineEntitiesForConversation,
   type TimelineWidgetItem,
-  timelineItemsFromInlineWidget,
 } from '@hypercard/engine';
 import { openWindow } from '@hypercard/engine/desktop-core';
 import type { Dispatch, UnknownAction } from '@reduxjs/toolkit';
@@ -36,6 +33,10 @@ import {
   selectSuggestions,
 } from './selectors';
 import { stripTrailingWhitespace } from './semHelpers';
+import {
+  bootstrapInventoryInlineWidgetRenderers,
+  type InventoryInlineWidgetRenderContext,
+} from './runtime/widgetRendererRegistry';
 import { InventoryWebChatClient, type InventoryWebChatClientHandlers, submitPrompt } from './webchatClient';
 
 function formatNumber(n: number): string {
@@ -128,6 +129,10 @@ export function InventoryChatWindow({ conversationId }: InventoryChatWindowProps
   ]);
 
   useEffect(() => {
+    bootstrapInventoryInlineWidgetRenderers();
+  }, []);
+
+  useEffect(() => {
     const handlers: InventoryWebChatClientHandlers = {
       onRawEnvelope: (envelope) => {
         // Raw ingress stream for EventViewer/debug tooling; do not gate on projection.
@@ -195,68 +200,61 @@ export function InventoryChatWindow({ conversationId }: InventoryChatWindowProps
     [timelineEntities, debugMode],
   );
 
-  const renderWidget = useCallback(
-    (widget: InlineWidget) => {
-      const items = timelineItemsFromInlineWidget(widget);
-      const openArtifact = (item: TimelineWidgetItem) => {
-        const artifactId = item.artifactId?.trim();
-        if (!artifactId) {
-          return;
-        }
-        const storeState = store.getState() as {
-          artifacts?: { byId: Record<string, { runtimeCardId?: string }> };
-        };
-        const artifactRecord = storeState.artifacts?.byId?.[artifactId];
-        const payload = buildArtifactOpenWindowPayload({
-          artifactId,
-          template: item.template,
-          title: item.title,
-          runtimeCardId: artifactRecord?.runtimeCardId,
-        });
-        if (!payload) {
-          return;
-        }
-        dispatch(openWindow(payload));
+  const openArtifact = useCallback(
+    (item: TimelineWidgetItem) => {
+      const artifactId = item.artifactId?.trim();
+      if (!artifactId) {
+        return;
+      }
+      const storeState = store.getState() as {
+        artifacts?: { byId: Record<string, { runtimeCardId?: string }> };
       };
-
-      const editCard = (item: TimelineWidgetItem) => {
-        const artifactId = item.artifactId?.trim();
-        if (!artifactId) {
-          return;
-        }
-        const storeState = store.getState() as {
-          artifacts?: {
-            byId: Record<string, { runtimeCardId?: string; runtimeCardCode?: string }>;
-          };
-        };
-        const record = storeState.artifacts?.byId?.[artifactId];
-        if (record?.runtimeCardId && record.runtimeCardCode) {
-          openCodeEditor(dispatch, record.runtimeCardId, record.runtimeCardCode);
-        }
-      };
-
-      if (widget.type === 'inventory.cards') {
-        return (
-          <InventoryCardPanelWidget
-            items={items}
-            onOpenArtifact={openArtifact}
-            onEditCard={editCard}
-            debug={debugMode}
-          />
-        );
+      const artifactRecord = storeState.artifacts?.byId?.[artifactId];
+      const payload = buildArtifactOpenWindowPayload({
+        artifactId,
+        template: item.template,
+        title: item.title,
+        runtimeCardId: artifactRecord?.runtimeCardId,
+      });
+      if (!payload) {
+        return;
       }
-
-      if (widget.type === 'inventory.widgets') {
-        return <InventoryGeneratedWidgetPanel items={items} onOpenArtifact={openArtifact} debug={debugMode} />;
-      }
-
-      if (widget.type === 'inventory.timeline') {
-        return <InventoryTimelineWidget items={items} debug={debugMode} />;
-      }
-
-      return null;
+      dispatch(openWindow(payload));
     },
-    [dispatch, debugMode, store],
+    [dispatch, store],
+  );
+
+  const editCard = useCallback(
+    (item: TimelineWidgetItem) => {
+      const artifactId = item.artifactId?.trim();
+      if (!artifactId) {
+        return;
+      }
+      const storeState = store.getState() as {
+        artifacts?: {
+          byId: Record<string, { runtimeCardId?: string; runtimeCardCode?: string }>;
+        };
+      };
+      const record = storeState.artifacts?.byId?.[artifactId];
+      if (record?.runtimeCardId && record.runtimeCardCode) {
+        openCodeEditor(dispatch, record.runtimeCardId, record.runtimeCardCode);
+      }
+    },
+    [dispatch, store],
+  );
+
+  const widgetRenderContext = useMemo<InventoryInlineWidgetRenderContext>(
+    () => ({
+      debug: debugMode,
+      onOpenArtifact: openArtifact,
+      onEditCard: editCard,
+    }),
+    [debugMode, editCard, openArtifact],
+  );
+
+  const renderWidget = useCallback(
+    (widget: InlineWidget) => renderInlineWidget(widget, widgetRenderContext),
+    [widgetRenderContext],
   );
 
   const handleSend = useCallback(

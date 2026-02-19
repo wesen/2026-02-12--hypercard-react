@@ -15,6 +15,7 @@ export * from './runtime/projectionPipeline';
 
 export * from './sem/registry';
 export * from './sem/timelineMapper';
+export * from './sem/timelinePropsRegistry';
 export * from './sem/types';
 
 export * from './timeline/selectors';
@@ -23,6 +24,7 @@ export * from './timeline/types';
 export * from './timeline/version';
 
 export * from './widgets/ArtifactPanelWidgets';
+export * from './widgets/inlineWidgetRegistry';
 export * from './widgets/TimelineWidget';
 
 export * from './utils/syntaxHighlight';

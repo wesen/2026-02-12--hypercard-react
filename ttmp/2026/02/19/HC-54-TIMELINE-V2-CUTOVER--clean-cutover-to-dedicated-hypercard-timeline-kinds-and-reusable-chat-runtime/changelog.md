@@ -46,3 +46,18 @@ Completed HC-54 Step 2 by introducing app-owned protobuf extraction for Hypercar
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/internal/pinoweb/hypercard_events.go — Backend timeline handler cutover to dedicated kinds and deterministic IDs
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/internal/pinoweb/hypercard_payload_proto_test.go — Decode/props unit coverage
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/internal/pinoweb/hypercard_events_timeline_test.go — Projection tests asserting dedicated kind snapshots
+
+## 2026-02-19
+
+Completed HC-54 Step 3 by adding shared frontend registry seams for timeline-kind props normalization and inline-widget renderer dispatch, and rewired Inventory chat rendering to explicit bootstrap + registry-based widget dispatch.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/sem/timelinePropsRegistry.ts — New shared kind normalizer registry API
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/sem/timelineMapper.ts — Normalizer integration and unknown-kind `entity.props` fallback
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/widgets/inlineWidgetRegistry.ts — New shared inline widget renderer registry API
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/runtime/widgetRendererRegistry.tsx — Explicit Inventory bootstrap for widget registrations
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/InventoryChatWindow.tsx — Manual widget switch removed in favor of registry dispatch
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/sem/timelinePropsRegistry.test.ts — Kind normalizer registry tests
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/sem/timelineMapper.test.ts — Timeline mapper custom-kind props normalization tests
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/widgets/inlineWidgetRegistry.test.ts — Inline widget renderer registry tests
