@@ -11,7 +11,7 @@
 - [x] Add concrete inventory chatSlice extraction details and remove-suggestions policy
 - [x] Remove projectionMode/timeline-upsert-only gating from runtime and callers
 - [x] Create detailed HC-58 implementation task breakdown for code phase
-- [ ] Simplify projected connection hook path after projectionMode removal
+- [x] Simplify projected connection hook path after projectionMode removal
 - [ ] Run typecheck/tests for HC-58 touched surfaces
 - [x] Update runtime stories and inventory integration for no-gating path
 - [ ] Update HC-58 diary/changelog and commit each phase

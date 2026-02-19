@@ -555,3 +555,59 @@ This is the first direct cutover from analysis into runtime behavior changes and
 - Validation search:
   - `rg -n "projectionMode|TimelineProjectionMode|timeline-upsert-only" packages/engine/src apps/inventory/src`
   - no matches.
+
+## Step 9: Remove Remaining Envelope-Skip Hook Path
+After removing `projectionMode`, the runtime still had a secondary skip branch via `shouldProjectEnvelope` in `useProjectedChatConnection`. I removed that branch so all envelopes entering projected chat connections follow one projection path.
+
+This finalizes the HC-58 “no event-drop correctness toggles” direction at the hook level.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 7)
+
+**Assistant interpretation:** Continue HC-58 runtime cutover by simplifying projection flow and removing residual gating behavior.
+
+**Inferred user intent:** Keep runtime behavior deterministic and reduce API complexity by deleting optional drop paths.
+
+**Commit (code):** Pending (recorded after staging/commit step)
+
+### What I did
+- Removed `shouldProjectEnvelope` from runtime window API:
+  - `packages/engine/src/hypercard-chat/runtime/timelineChatRuntime.tsx`
+- Removed `shouldProjectEnvelope` from projected connection hook:
+  - `packages/engine/src/hypercard-chat/runtime/useProjectedChatConnection.ts`
+- Deleted hook-time skip branch that called adapters with empty projection when skipped.
+- Simplified imports and callback state in hook accordingly.
+
+### Why
+- Keeping a secondary filter switch after `projectionMode` removal would preserve the same class of correctness footgun under a different name.
+
+### What worked
+- Search confirms no remaining `shouldProjectEnvelope` references across engine/inventory source.
+- Connection hook now has a single envelope handling path (`projectSemEnvelope`).
+
+### What didn't work
+- None in this step.
+
+### What I learned
+- Projection pipeline logic becomes substantially easier to reason about when all envelopes always project through the same path.
+
+### What was tricky to build
+- Ensuring no hidden caller depended on skip behavior.
+- I mitigated this by searching all engine/inventory references before and after the change.
+
+### What warrants a second pair of eyes
+- If external downstream consumers used `shouldProjectEnvelope` out of tree, they will need adjustment.
+
+### What should be done in the future
+- Run full HC-58 touched-surface validation (typecheck + chat runtime tests/stories path checks) as the next step.
+
+### Code review instructions
+- Review hook/runtime simplification:
+  - `packages/engine/src/hypercard-chat/runtime/timelineChatRuntime.tsx`
+  - `packages/engine/src/hypercard-chat/runtime/useProjectedChatConnection.ts`
+
+### Technical details
+- Validation search:
+  - `rg -n "shouldProjectEnvelope" packages/engine/src apps/inventory/src`
+  - no matches.

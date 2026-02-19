@@ -35,7 +35,6 @@ export interface TimelineChatRuntimeWindowProps
   createClient: ProjectedChatClientFactory;
   adapters?: ProjectionPipelineAdapter[];
   hostActions?: TimelineChatRuntimeHostActions;
-  shouldProjectEnvelope?: (envelope: SemEnvelope) => boolean;
   widgetNamespace?: string;
   debug?: boolean;
 }
@@ -56,7 +55,6 @@ export function TimelineChatRuntimeWindow({
   createClient,
   adapters = [],
   hostActions,
-  shouldProjectEnvelope,
   widgetNamespace,
   debug = false,
   onSend,
@@ -76,15 +74,6 @@ export function TimelineChatRuntimeWindow({
     };
   }, [namespace]);
 
-  const effectiveShouldProjectEnvelope = useMemo(() => {
-    return (envelope: SemEnvelope): boolean => {
-      if (shouldProjectEnvelope) {
-        return shouldProjectEnvelope(envelope);
-      }
-      return true;
-    };
-  }, [shouldProjectEnvelope]);
-
   useProjectedChatConnection({
     conversationId,
     dispatch,
@@ -94,7 +83,6 @@ export function TimelineChatRuntimeWindow({
     onRawEnvelope: hostActions?.onEmitRawEnvelope,
     onStatus: hostActions?.onConnectionStatus,
     onError: hostActions?.onConnectionError,
-    shouldProjectEnvelope: effectiveShouldProjectEnvelope,
   });
 
   const isStreaming = useMemo(
