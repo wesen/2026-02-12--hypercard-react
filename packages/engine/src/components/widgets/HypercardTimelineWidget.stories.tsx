@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import {
-  HypercardTimelineWidget as InventoryTimelineWidget,
-  type TimelineWidgetItem,
-} from '@hypercard/engine';
+  HypercardTimelineWidget,
+} from '../../hypercard-chat/widgets/HypercardTimelinePanel';
+import type { TimelineWidgetItem } from '../../hypercard-chat/types';
 
 function at(msAgo: number): number {
   return Date.now() - msAgo;
@@ -132,8 +132,8 @@ const allItems: TimelineWidgetItem[] = [
 ];
 
 const meta = {
-  title: 'Apps/Inventory/Chat/InventoryTimelineWidget',
-  component: InventoryTimelineWidget,
+  title: 'Engine/Widgets/HypercardTimelineWidget',
+  component: HypercardTimelineWidget,
   args: {
     items: allItems,
   },
@@ -147,7 +147,7 @@ const meta = {
       </div>
     ),
   ],
-} satisfies Meta<typeof InventoryTimelineWidget>;
+} satisfies Meta<typeof HypercardTimelineWidget>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

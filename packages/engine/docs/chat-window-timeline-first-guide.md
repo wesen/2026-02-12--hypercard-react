@@ -11,13 +11,13 @@ It is written for developers who need to:
 
 The examples below are based on the current implementation in:
 
+- `packages/engine/src/hypercard-chat/runtime/timelineChatRuntime.tsx`
 - `packages/engine/src/hypercard-chat/runtime/projectionPipeline.ts`
 - `packages/engine/src/hypercard-chat/sem/registry.ts`
 - `packages/engine/src/hypercard-chat/timeline/timelineSlice.ts`
 - `packages/engine/src/components/widgets/ChatWindow.tsx`
 - `apps/inventory/src/features/chat/InventoryChatWindow.tsx`
 - `apps/inventory/src/features/chat/runtime/projectionAdapters.ts`
-- `apps/inventory/src/features/chat/runtime/timelineEntityRenderer.ts`
 - `apps/inventory/src/features/chat/webchatClient.ts`
 
 ---
@@ -267,12 +267,10 @@ Inventory chat wiring in `InventoryChatWindow.tsx` follows this pattern:
 2. define adapters:
 - `createChatMetaProjectionAdapter()`
 - `createInventoryArtifactProjectionAdapter()`
-3. wire transport handlers:
-- `onRawEnvelope` -> `emitConversationEvent`
-- `onSnapshot` -> `hydrateTimelineSnapshot`
-- `onEnvelope` -> `projectSemEnvelope`
-4. render:
-- `timelineEntities` -> `mapTimelineEntityToMessage` -> `ChatWindow`
+3. create a host websocket client factory (`InventoryWebChatClient`) and bind host callbacks (`emitConversationEvent`, connection state/error updates, artifact/card actions)
+4. render via reusable runtime:
+- `TimelineChatRuntimeWindow` handles connection + projection and composes `TimelineChatWindow`
+- app host passes `timelineEntities`, host actions, and UX props (title/subtitle/footer)
 
 Important design choice: rendering is derived entirely from timeline entities.
 
@@ -549,22 +547,21 @@ Use this as a concrete checklist.
 
 4. Build transport client handlers:
 - `onRawEnvelope` -> event bus emit,
-- `onSnapshot` -> `hydrateTimelineSnapshot(...)`,
-- `onEnvelope` -> `projectSemEnvelope(...)`.
+- `onEnvelope` -> runtime projection path (`TimelineChatRuntimeWindow` / `useProjectedChatConnection`).
 
-5. Build renderer:
+5. Build runtime host:
 - `selectTimelineEntities(...)`,
-- map entities to `ChatWindowMessage`,
-- use `content` blocks for widget messages.
+- pass entities + host callbacks to `TimelineChatRuntimeWindow`,
+- keep app concerns in host callbacks (artifact open/edit, status, debug feed).
 
 6. Build widget renderer:
-- switch on `InlineWidget.type`,
-- render React widget components.
+- register a widget pack namespace explicitly via `registerHypercardWidgetPack` (runtime helper does this for you),
+- provide host callbacks through `widgetRenderContext`.
 
 7. Validate with tests:
 - projection pipeline test,
 - ingress routing test,
-- entity renderer tests,
+- timeline display synthesis tests,
 - widget renderer stories/tests.
 
 ---
@@ -645,8 +642,8 @@ Fix:
 
 Fix:
 
-- all live envelopes go through `projectSemEnvelope`.
-- all hydration entities go through `hydrateTimelineSnapshot`.
+- all projection flows should pass through one runtime seam (`TimelineChatRuntimeWindow` or `useProjectedChatConnection` wrapper).
+- avoid app-owned direct projection calls once runtime boundary is adopted.
 
 ### Pitfall: debug tools depending on projected state
 
@@ -674,28 +671,23 @@ const adapters = [
   createMyAppProjectionAdapter(),
 ];
 
-const client = new InventoryWebChatClient(convId, {
-  onRawEnvelope: (env) => emitConversationEvent(convId, env),
-  onSnapshot: (snapshot) => hydrateTimelineSnapshot({
-    conversationId: convId,
-    dispatch,
-    semRegistry,
-    snapshot,
-    adapters,
-  }),
-  onEnvelope: (env) => projectSemEnvelope({
-    conversationId: convId,
-    dispatch,
-    semRegistry,
-    envelope: env,
-    adapters,
-  }),
-});
-
 const entities = selectTimelineEntities(state, convId);
-const messages = entities.map(mapTimelineEntityToMessage);
 
-return <ChatWindow messages={messages} renderWidget={renderWidget} ... />;
+return (
+  <TimelineChatRuntimeWindow
+    conversationId={convId}
+    dispatch={dispatch}
+    semRegistry={semRegistry}
+    adapters={adapters}
+    createClient={(handlers) => new InventoryWebChatClient(convId, handlers, { hydrate: false })}
+    hostActions={{
+      onEmitRawEnvelope: (env) => emitConversationEvent(convId, env),
+    }}
+    timelineEntities={entities}
+    onSend={handleSend}
+    widgetNamespace="inventory"
+  />
+);
 ```
 
 ---
@@ -705,6 +697,8 @@ return <ChatWindow messages={messages} renderWidget={renderWidget} ... />;
 Engine exports you will use most:
 
 - `createSemRegistry`
+- `TimelineChatRuntimeWindow`
+- `useProjectedChatConnection`
 - `projectSemEnvelope`
 - `hydrateTimelineSnapshot`
 - `selectTimelineEntities`
@@ -716,8 +710,8 @@ Key app-side extension points:
 
 - custom SEM handlers (`registry.register`)
 - projection adapters (`ProjectionPipelineAdapter`)
-- timeline entity renderer (`TimelineEntity -> ChatWindowMessage`)
-- widget renderer (`InlineWidget -> ReactNode`)
+- host action callbacks (`onOpenArtifact`, `onEditCard`, `onEmitRawEnvelope`)
+- widget namespace registration (`registerHypercardWidgetPack`)
 
 ---
 

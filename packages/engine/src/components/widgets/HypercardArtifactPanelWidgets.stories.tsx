@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import {
-  HypercardCardPanelWidget as InventoryCardPanelWidget,
-  HypercardGeneratedWidgetPanel as InventoryGeneratedWidgetPanel,
-  type TimelineWidgetItem,
-} from '@hypercard/engine';
+  HypercardCardPanelWidget,
+  HypercardGeneratedWidgetPanel,
+} from '../../hypercard-chat/widgets/HypercardArtifactPanels';
+import type { TimelineWidgetItem } from '../../hypercard-chat/types';
 
 function at(msAgo: number): number {
   return Date.now() - msAgo;
@@ -60,8 +60,8 @@ const widgetItems: TimelineWidgetItem[] = [
 ];
 
 const cardMeta = {
-  title: 'Apps/Inventory/Chat/InventoryArtifactPanelWidgets',
-  component: InventoryCardPanelWidget,
+  title: 'Engine/Widgets/HypercardArtifactPanelWidgets',
+  component: HypercardCardPanelWidget,
   args: {
     items: cardItems,
   },
@@ -75,7 +75,7 @@ const cardMeta = {
       </div>
     ),
   ],
-} satisfies Meta<typeof InventoryCardPanelWidget>;
+} satisfies Meta<typeof HypercardCardPanelWidget>;
 
 export default cardMeta;
 type Story = StoryObj<typeof cardMeta>;
@@ -88,8 +88,8 @@ export const CardsEmpty: Story = {
 
 export const WidgetsPanel: Story = {
   render: () => (
-    <div style={{ width: 560, maxWidth: '95vw' }}>
-      <InventoryGeneratedWidgetPanel items={widgetItems} />
+      <div style={{ width: 560, maxWidth: '95vw' }}>
+      <HypercardGeneratedWidgetPanel items={widgetItems} />
     </div>
   ),
 };
@@ -103,7 +103,7 @@ export const CardsDebugMode: Story = {
 export const WidgetsDebugMode: Story = {
   render: () => (
     <div style={{ width: 560, maxWidth: '95vw' }}>
-      <InventoryGeneratedWidgetPanel items={widgetItems} debug />
+      <HypercardGeneratedWidgetPanel items={widgetItems} debug />
     </div>
   ),
 };
@@ -112,7 +112,7 @@ export const WidgetsDebugMode: Story = {
 export const ErrorAutoShowsMeta: Story = {
   render: () => (
     <div style={{ width: 560, maxWidth: '95vw' }}>
-      <InventoryGeneratedWidgetPanel items={widgetItems} />
+      <HypercardGeneratedWidgetPanel items={widgetItems} />
     </div>
   ),
 };

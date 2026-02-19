@@ -1,12 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import type { TimelineEntity } from '../../hypercard-chat/timeline/types';
+import type { TimelineWidgetItem } from '../../hypercard-chat/types';
 import {
-  registerHypercardWidgetPack,
-  TimelineChatWindow,
   type HypercardWidgetPackRenderContext,
-  type TimelineEntity,
-  type TimelineWidgetItem,
-} from '@hypercard/engine';
+  registerHypercardWidgetPack,
+} from '../../hypercard-chat/widgets/hypercardWidgetPack';
+import { TimelineChatWindow } from '../../hypercard-chat/runtime/TimelineChatWindow';
 
+// Story-level bootstrap mirrors runtime behavior where hosts register widget packs explicitly.
 registerHypercardWidgetPack({ namespace: 'inventory' });
 
 function at(msAgo: number): number {
@@ -81,7 +82,7 @@ const widgetContext: HypercardWidgetPackRenderContext = {
 };
 
 const meta = {
-  title: 'Apps/Inventory/Chat/TimelineChatWindow',
+  title: 'Engine/Widgets/TimelineChatWindow',
   component: TimelineChatWindow,
   args: {
     timelineEntities,
@@ -118,6 +119,22 @@ export const DebugMode: Story = {
   },
 };
 
+export const HostCallbacksWired: Story = {
+  args: {
+    widgetRenderContext: {
+      ...widgetContext,
+      debug: true,
+    },
+  },
+};
+
+export const UnknownWidgetFallback: Story = {
+  args: {
+    widgetNamespace: 'inventory-missing',
+    widgetRenderContext: {},
+  },
+};
+
 export const Streaming: Story = {
   args: {
     isStreaming: true,
@@ -127,7 +144,7 @@ export const Streaming: Story = {
         id: 'msg-ai-streaming',
         kind: 'message',
         createdAt: at(300),
-        props: { role: 'assistant', content: 'Analyzing inventory deltas…', streaming: true },
+        props: { role: 'assistant', content: 'Analyzing inventory deltas...', streaming: true },
       },
     ],
   },
