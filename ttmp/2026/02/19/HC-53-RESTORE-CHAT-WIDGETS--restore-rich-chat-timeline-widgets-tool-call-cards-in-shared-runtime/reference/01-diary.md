@@ -32,12 +32,15 @@ RelatedFiles:
       Note: |-
         Added shared formatTimelineEntity bridge
         Diary notes shared formatting bridge design
+    - Path: ttmp/2026/02/19/HC-53-RESTORE-CHAT-WIDGETS--restore-rich-chat-timeline-widgets-tool-call-cards-in-shared-runtime/design-doc/02-generic-chatwindow-and-hypercard-renderer-pack-architecture.md
+      Note: Step 8 records this extended architecture analysis
 ExternalSources: []
 Summary: Detailed implementation diary for HC-53 rich chat widget regression analysis and restoration
-LastUpdated: 2026-02-19T08:00:00-05:00
+LastUpdated: 2026-02-19T13:30:00-05:00
 WhatFor: Preserve exact implementation and debugging journey for HC-53
 WhenToUse: Use when reviewing HC-53 history, verifying behavior, or extending projection architecture
 ---
+
 
 
 # Diary
@@ -524,3 +527,105 @@ I also recorded a follow-up verification caveat: bundle upload command succeeded
 
 - Uploaded bundle name: `HC-53 Restore Chat Widgets Analysis.pdf`
 - Remote path target: `/ai/2026/02/19/HC-53-RESTORE-CHAT-WIDGETS`
+
+## Step 8: Extended architecture analysis for pinocchio reuse and protobuf custom events
+
+I added a second long-form architecture pass to HC-53 focused on two gaps that were not fully covered in the first report: how far we can reuse `pinocchio/pkg/webchat`, and how to formalize Hypercard custom event payloads with protobuf while keeping timeline-first semantics.
+
+This step is intentionally docs-only. I did not modify application/runtime code; I only expanded the ticket design artifact and supporting diary/bookkeeping context for implementation planning.
+
+### Prompt Context
+
+**User prompt (verbatim):** "also examine how we can reuse as much of pkg/webchat from pinocchio, and the protobuf approach for custom events, in the hypercard context"
+
+**Assistant interpretation:** Extend the architecture/design document to include concrete pinocchio reuse analysis plus a protobuf contract strategy for Hypercard custom widget/card events.
+
+**Inferred user intent:** Avoid rebuilding already-solved infrastructure and converge Hypercard toward the same composable, typed SEM model used in pinocchio.
+
+### What I did
+
+- Audited pinocchio backend extension points:
+  - `pinocchio/pkg/sem/registry/registry.go`
+  - `pinocchio/pkg/webchat/timeline_registry.go`
+  - `pinocchio/pkg/webchat/timeline_projector.go`
+  - `pinocchio/pkg/webchat/timeline_upsert.go`
+- Audited pinocchio frontend extension points:
+  - `pinocchio/cmd/web-chat/web/src/sem/registry.ts`
+  - `pinocchio/cmd/web-chat/web/src/ws/wsManager.ts`
+  - `pinocchio/cmd/web-chat/web/src/webchat/ChatWidget.tsx`
+  - `pinocchio/cmd/web-chat/web/src/webchat/components/Timeline.tsx`
+- Audited protobuf contracts and generation setup:
+  - `pinocchio/proto/sem/base/tool.proto`
+  - `pinocchio/proto/sem/timeline/tool.proto`
+  - `pinocchio/proto/sem/timeline/transport.proto`
+  - `pinocchio/buf.yaml`
+  - `pinocchio/buf.gen.yaml`
+- Audited current Hypercard backend bridge already using pinocchio:
+  - `go-inventory-chat/internal/pinoweb/hypercard_events.go`
+  - `go-inventory-chat/cmd/hypercard-inventory-server/main.go`
+- Expanded:
+  - `design-doc/02-generic-chatwindow-and-hypercard-renderer-pack-architecture.md`
+  with:
+  - comparative architecture sections,
+  - reuse matrix,
+  - protobuf migration model,
+  - hybrid target flow diagrams and registration pseudocode,
+  - updated evidence appendix and open questions.
+
+### Why
+
+- The prior HC-53 report solved regression restoration and extraction direction, but did not fully answer reuse/protobuf strategy depth requested in follow-up prompts.
+- A code-change proposal without schema and extension-boundary analysis would risk repeating the same coupling issues that caused earlier regression during refactors.
+
+### What worked
+
+- Evidence confirmed Hypercard backend already composes on top of `pkg/webchat` and uses its extension seams; reuse opportunity is real, not speculative.
+- The analysis identified a clean incremental path:
+  1. frontend runtime extraction + registry composition,
+  2. Hypercard pack installation model,
+  3. protobuf contract hardening for custom payloads without transport rewrite.
+
+### What didn't work
+
+- Initial attempt to patch the design doc in one large `apply_patch` failed due context mismatch around frontmatter.
+- Resolved by splitting edits into smaller, anchored patches.
+
+### What I learned
+
+- The biggest “reuse” win is not replacing `ChatWindow`; it is adopting pinocchio’s registration architecture (`custom handler registries + typed decode + renderer maps`) around the existing Hypercard UI shell.
+- Hypercard’s backend is already aligned with pinocchio service composition; remaining debt is mostly frontend orchestration and payload typing.
+
+### What was tricky to build
+
+- The main difficulty was separating “already reused” pieces from “still coupled” pieces across two repos with similar concepts but different naming/layouts. I had to trace ingress, projection, hydration, and rendering boundaries end-to-end in both implementations to avoid superficial equivalence claims.
+
+### What warrants a second pair of eyes
+
+- Proposed protobuf ownership boundary:
+  - whether Hypercard custom proto files should live in pinocchio repo as canonical SEM schema source, or in Hypercard repo with generated artifacts consumed by both.
+- Proposed handler composition precedence model for future multi-pack collisions.
+
+### What should be done in the future
+
+- Add an explicit RFC decision on protobuf schema ownership and versioning policy before implementing pack extraction.
+- Add contract tests that run both legacy JSON decode and protobuf decode paths during migration.
+
+### Code review instructions
+
+- Read:
+  1. `ttmp/2026/02/19/HC-53-RESTORE-CHAT-WIDGETS--restore-rich-chat-timeline-widgets-tool-call-cards-in-shared-runtime/design-doc/02-generic-chatwindow-and-hypercard-renderer-pack-architecture.md`
+  2. `pinocchio/pkg/webchat/timeline_registry.go`
+  3. `pinocchio/cmd/web-chat/web/src/sem/registry.ts`
+  4. `go-inventory-chat/internal/pinoweb/hypercard_events.go`
+- Validate analysis consistency by checking:
+  - registry extensibility claims against source symbols,
+  - protobuf generation path against `buf.gen.yaml`.
+
+### Technical details
+
+- Key commands used for evidence gathering:
+  - `rg -n "RegisterTimelineHandler|registerSem|customKind|timeline.upsert|proto" ...`
+  - `nl -ba <file> | sed -n ...`
+  - `sed -n ... pinocchio/pkg/doc/topics/webchat-*.md`
+- Constraint honored from follow-up user instruction:
+  - no product code changes, document-only output.
