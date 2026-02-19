@@ -48,7 +48,7 @@ Store your detailed analysis in the new ticket, keep a detailed frequent diary a
 
 **Inferred user intent:** Establish HC-58 as the canonical runtime-refactor ticket and get a high-confidence analysis that improves on the imported proposal, especially around non-text streaming structures.
 
-**Commit (code):** N/A — documentation-only changes; no git commit created in this turn.
+**Commit (code):** dda91ff — "docs(HC-58): add chat runtime refactor analysis and diary"
 
 ### What I did
 - Ran `docmgr status --summary-only` and `docmgr ticket list` to confirm current state.
@@ -111,7 +111,7 @@ The key correction identified here is that streaming primitives cannot stay text
 
 **Inferred user intent:** Ensure the final HC-58 document reflects real system constraints, not only a generic architecture sketch.
 
-**Commit (code):** N/A — documentation-only changes; no git commit created in this turn.
+**Commit (code):** dda91ff — "docs(HC-58): add chat runtime refactor analysis and diary"
 
 ### What I did
 - Read imported proposal in three chunks from:
@@ -190,7 +190,7 @@ I also created this diary document as requested and prepared ticket task/changel
 
 **Inferred user intent:** Make the analysis implementation-ready and reviewable, not just conceptual.
 
-**Commit (code):** N/A — documentation-only changes; no git commit created in this turn.
+**Commit (code):** dda91ff — "docs(HC-58): add chat runtime refactor analysis and diary"
 
 ### What I did
 - Created design doc:
