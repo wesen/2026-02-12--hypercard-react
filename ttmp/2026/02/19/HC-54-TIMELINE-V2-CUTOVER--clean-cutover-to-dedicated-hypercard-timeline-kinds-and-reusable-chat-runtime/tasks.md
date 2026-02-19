@@ -12,7 +12,7 @@
 - [x] 3) Introduce generic frontend registration seams (kind normalizers + kind renderer registry) in shared/runtime layer:
   - add explicit bootstrap registration API used by apps (no `init` side effects)
   - remove legacy manual per-app widget/card routing helpers that become obsolete once registry dispatch exists
-- [ ] 4) Cut over backend projection to dedicated timeline kinds:
+- [x] 4) Cut over backend projection to dedicated timeline kinds:
   - update `go-inventory-chat/internal/pinoweb/hypercard_events.go` to upsert `hypercard_widget|hypercard_card`
   - stop emitting widget/card final payloads through `tool_result` + `customKind`
   - delete legacy backend code paths/constants/tests that assert `customKind` widget/card projection
@@ -42,3 +42,4 @@
 - [x] Start implementation diary and complete Step 1 contract freeze + no-legacy baseline
 - [x] Step 2 backend protobuf extraction landed with generated bindings and decode/props tests
 - [x] Step 3 frontend registry seams landed (timeline kind normalizers + inline widget renderer registry + explicit inventory bootstrap)
+- [x] Step 4 backend projection hard-cut verified complete (dedicated kinds only, no widget/card tool_result/customKind paths)

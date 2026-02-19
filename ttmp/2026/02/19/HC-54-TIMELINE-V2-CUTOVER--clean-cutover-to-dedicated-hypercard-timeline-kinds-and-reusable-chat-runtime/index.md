@@ -27,7 +27,7 @@ RelatedFiles:
       Note: Frontend projection layer to cut over to dedicated kind mapping
 ExternalSources: []
 Summary: Clean hard-cut execution ticket for dedicated Hypercard TimelineEntityV2 kinds, protobuf payload extraction, reusable chat runtime extraction, and full legacy path removal.
-LastUpdated: 2026-02-19T20:06:00-05:00
+LastUpdated: 2026-02-19T20:16:00-05:00
 WhatFor: Track and execute the 1-9 implementation sequence to complete a no-compatibility HC-53 follow-through cutover.
 WhenToUse: Use when implementing and reviewing the production cutover from legacy tool_result/customKind widget-card routing to dedicated TimelineEntityV2 kinds.
 ---

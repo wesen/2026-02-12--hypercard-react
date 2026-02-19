@@ -61,3 +61,13 @@ Completed HC-54 Step 3 by adding shared frontend registry seams for timeline-kin
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/sem/timelinePropsRegistry.test.ts — Kind normalizer registry tests
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/sem/timelineMapper.test.ts — Timeline mapper custom-kind props normalization tests
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/widgets/inlineWidgetRegistry.test.ts — Inline widget renderer registry tests
+
+## 2026-02-19
+
+Marked HC-54 Step 4 complete after backend hard-cut verification confirmed widget/card projection now persists only through dedicated `TimelineEntityV2` kinds and no active backend `tool_result/customKind` routing remains.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/internal/pinoweb/hypercard_events.go — Dedicated `hypercard_widget|hypercard_card` projection handlers
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/internal/pinoweb/hypercard_events_timeline_test.go — Snapshot coverage proving dedicated kind projection behavior
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/internal/pinoweb/hypercard_payload_proto.go — Protobuf extraction helpers used by projection handlers

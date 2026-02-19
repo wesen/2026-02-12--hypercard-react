@@ -19,7 +19,7 @@ RelatedFiles:
       Note: Authoritative implementation plan used during execution
 ExternalSources: []
 Summary: Execution diary for HC-54 task-by-task implementation and commit trail.
-LastUpdated: 2026-02-19T20:05:00-05:00
+LastUpdated: 2026-02-19T20:16:00-05:00
 WhatFor: Capture exact implementation steps, decisions, failures, and validations as HC-54 progresses.
 WhenToUse: Use when reviewing ongoing progress or resuming work from the last completed step.
 ---
@@ -289,3 +289,53 @@ This step introduced shared frontend extension seams in engine runtime and remov
 1. Normalizer resolution order is extension normalizer first, then built-in, then passthrough.
 2. Inline widget resolution order is per-call overrides first, then registered extension renderer.
 3. `InventoryChatWindow` now delegates all widget-type component dispatch to registry resolution and only provides host actions/context.
+
+## Step 4: Backend projection hard-cut completion verification
+
+Step 4 code had already landed in Step 2 (`ff68300`). This step completed formal verification and ticket-state progression for backend hard-cut criteria.
+
+### Prompt Context
+
+**User prompt (verbatim):** `Go ahead and work on it, task by task, commit at appropriate intervals, update your diary as you go.`
+
+**Assistant interpretation:** Continue sequential execution by closing verification-only steps explicitly and documenting evidence.
+
+**Inferred user intent:** Keep task progression auditable, including validation-only milestones.
+
+### What I did
+
+1. Re-validated backend codebase for forbidden widget/card legacy routing markers.
+2. Re-ran focused backend tests for pinoweb projection package.
+3. Updated HC-54 task/checklist/changelog to mark Step 4 as complete.
+
+### Commands run
+
+1. Legacy route scan:
+   - `rg -n "customKind|tool_result" go-inventory-chat/internal/pinoweb go-inventory-chat/cmd/hypercard-inventory-server || true`
+2. Focused backend test:
+   - `cd go-inventory-chat && go test ./internal/pinoweb -count=1`
+
+### What worked
+
+1. No backend hits for forbidden `tool_result/customKind` widget/card projection paths.
+2. Focused backend tests passed.
+
+### What didn't work
+
+1. Initial combined command sequence terminated early because `rg` exits non-zero on no-match; reran with `|| true` to preserve verification flow.
+
+### What I learned
+
+1. Verification-only steps still benefit from explicit command evidence in diary/changelog so ticket progression is reviewable.
+
+### What warrants a second pair of eyes
+
+1. Confirm integration tests outside pinoweb continue to align with dedicated kind assumptions as Step 5 frontend cutover proceeds.
+
+### What should be done in the future
+
+1. Execute Step 5 by removing remaining frontend `tool_result.customKind` widget/card mapping branches and shifting to dedicated kinds end-to-end.
+
+### Technical details
+
+1. Step 4 acceptance is satisfied by dedicated backend projection plus zero active backend legacy path matches for widget/card tool-result routing.
