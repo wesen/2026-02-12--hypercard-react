@@ -15,6 +15,12 @@ Owners: []
 RelatedFiles:
     - Path: 2026-02-12--hypercard-react/apps/inventory/src/features/chat/InventoryChatWindow.tsx
       Note: Real host integration constraints and runtime usage
+    - Path: 2026-02-12--hypercard-react/apps/inventory/src/features/chat/chatSlice.ts
+      Note: Current inventory-owned runtime metadata and suggestions state targeted for extraction/removal
+    - Path: 2026-02-12--hypercard-react/apps/inventory/src/features/chat/runtime/projectionAdapters.ts
+      Note: Current adapter-level metadata and suggestions handling targeted for runtime-core ownership
+    - Path: 2026-02-12--hypercard-react/apps/inventory/src/features/chat/selectors.ts
+      Note: Current selector API that will be replaced by runtime selectors for connection and turn stats
     - Path: 2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/runtime/projectionPipeline.ts
       Note: Current project/apply/adapter pipeline shape
     - Path: 2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/runtime/timelineChatRuntime.tsx
@@ -50,6 +56,7 @@ This document proposes a concrete runtime contract that preserves the good parts
 - per-window selector subscriptions for distinct rerender profiles
 - kit-based extension API for runtime behaviors and widget rendering
 - timeline-native UI (`TimelineConversationView`) as the only first-class chat surface
+- suggestions removed for now across runtime/UI/app state to simplify cutover and avoid preserving soon-to-be-replaced behavior
 
 ## Problem Statement
 `TimelineChatRuntimeWindow` currently combines transport wiring, projection policy, registry wiring, adapter side-effects, and UI composition in one surface. This has three practical consequences:
@@ -349,6 +356,47 @@ Target:
 2. The translation layer obscures structured timeline semantics and increases API confusion.
 3. Maintaining dual abstractions slows iteration and increases regression surface.
 
+## Inventory Runtime Ownership Cutover (`chatSlice` Extraction)
+Inventory currently owns multiple runtime concerns in `apps/inventory/src/features/chat/chatSlice.ts` that should be runtime-core concerns in HC-58:
+- connection lifecycle state (`connectionStatus`, `lastError`),
+- model + usage/turn performance stats (`modelName`, `currentTurnStats`, `streamStartTime`, `streamOutputTokens`),
+- suggestions list and normalization (`suggestions`, merge/replace reducers).
+
+### Ownership target after HC-58
+1. Runtime core owns transport/meta/stream lifecycle state.
+2. Timeline UI consumes runtime selectors directly.
+3. Inventory keeps only host-specific orchestration and domain-side effects (artifact windows, custom actions, app shell behavior).
+4. Suggestions are removed entirely for now and not re-homed.
+
+### State mapping
+| Current Inventory State (`chatSlice`) | Target Owner | Target API Shape |
+| --- | --- | --- |
+| `connectionStatus` | runtime core | `useConversationConnection(conversationId)` |
+| `lastError` | runtime core | `useConversationConnection(conversationId).error` |
+| `modelName` | runtime core meta | `useMeta(conversationId, s => s.modelName)` |
+| `currentTurnStats` | runtime core meta | `useMeta(conversationId, s => s.turnStats)` |
+| `streamStartTime` | runtime core stream/meta | `useMeta(...)/useStreamChannel(...)` |
+| `streamOutputTokens` | runtime core stream/meta | `useStreamChannel(conversationId, entityId, 'message.text')` derived metrics |
+| `suggestions` | removed | no replacement in HC-58/HC-59 |
+
+### Adapter and event handling mapping
+Current inventory `createChatMetaProjectionAdapter()` should be split:
+1. Runtime-default SEM handlers own `llm.start`, `llm.delta`, `llm.final`, `ws.error` metadata projection.
+2. Inventory keeps only adapters for domain projections (artifact upserts/runtime cards) and host actions.
+3. `hypercard.suggestions.*` handlers are deleted; runtime ignores these events or classifies them as unhandled debug-only envelopes.
+
+### What remains in Inventory after extraction
+- Host action wiring (`onOpenArtifact`, `onEditCard`, event viewer emission),
+- transport factory specifics (`InventoryWebChatClient` construction),
+- window chrome concerns (title/subtitle/header actions),
+- optional app-specific derived presentation not required by runtime correctness.
+
+### What is intentionally removed now
+1. Suggestion reducers/actions/selectors in inventory state.
+2. Suggestion props from runtime/UI components.
+3. Suggestion event handling in inventory adapters.
+4. Suggestion-focused styles/stories/docs for timeline chat path.
+
 ## Mapping from current files to target architecture
 
 ### Keep and evolve
@@ -409,11 +457,15 @@ Target:
 1. Move `InventoryWebChatClient` ownership behind manager-backed runtime connection.
 2. Keep adapters, but move them to phased adapter API.
 3. Validate with two simultaneous inventory windows on same conversation.
+4. Remove inventory runtime state ownership in `chatSlice` for connection/meta/turn stats and consume runtime selectors instead.
+5. Delete `createChatMetaProjectionAdapter` responsibilities that are generic runtime concerns.
+6. Remove suggestions from inventory window props and send flow.
 
 ### Phase 6: Cleanup after cutover
 1. Remove `projectionMode` API entirely.
 2. Delete event-drop branch and any wrapper-only plumbing.
 3. Remove dead exports and stories tied to removed layers.
+4. Remove all suggestion APIs/events/styles from chat runtime path until runtime refactor stabilizes.
 
 ## Validation Plan
 1. Unit tests for reducer semantics:

@@ -361,3 +361,76 @@ This step tightened the architecture policy from "phased compatibility" to "hard
   - "UI Hard Cutover" section,
   - removal of compatibility shim/wrapper language,
   - replacement of "deprecate" with "remove" actions.
+
+## Step 6: Inventory `chatSlice` Extraction Details and Suggestion Removal Direction
+You then asked for a concrete position on inventory `chatSlice` runtime ownership and how suggestion handling should be treated while the runtime is being simplified. I incorporated this into HC-58 as implementation-level guidance.
+
+This step makes HC-58 explicit about ownership boundaries: runtime concerns move to the core conversation runtime, inventory keeps host-specific concerns, and suggestions are removed for now rather than migrated.
+
+### Prompt Context
+
+**User prompt (verbatim):** "Furthermore, I see a lot of toplevel runtime stuff (streamerrors, conversation management) in 2026-02-12--hypercard-react/apps/inventory/src/features/chat/chatSlice.ts and would like to move all that into the main runtime. What do you think, and how would do that? What parts would you keep in inventory and how would you handle suggestions and where would you put suggestion code?"
+
+**Assistant interpretation:** Add concrete HC-58 implementation detail for moving connection/stream/meta ownership out of inventory `chatSlice` into main runtime and define suggestion strategy under current simplification goals.
+
+**Inferred user intent:** Reduce architectural confusion by eliminating app-owned runtime concerns and avoid preserving suggestion behavior while runtime architecture is being refactored.
+
+**Commit (code):** Pending (recorded after staging/commit step)
+
+### What I did
+- Re-read and grounded updates against:
+  - `apps/inventory/src/features/chat/chatSlice.ts`
+  - `apps/inventory/src/features/chat/runtime/projectionAdapters.ts`
+  - `apps/inventory/src/features/chat/selectors.ts`
+  - `apps/inventory/src/features/chat/InventoryChatWindow.tsx`
+- Updated HC-58 design doc:
+  - added related files for `chatSlice`, `projectionAdapters`, and selectors,
+  - added explicit executive summary bullet that suggestions are removed for now,
+  - added section `Inventory Runtime Ownership Cutover (chatSlice Extraction)` with:
+    - ownership target,
+    - state mapping table (current inventory -> target runtime APIs),
+    - adapter/event handling mapping,
+    - explicit “what remains in inventory” and “what is removed now” lists,
+  - extended implementation phases with explicit inventory extraction and suggestion removal tasks.
+- Added and checked ticket task:
+  - `Add concrete inventory chatSlice extraction details and remove-suggestions policy`
+
+### Why
+- Prior HC-58 framing described runtime cutover goals but did not give enough file-level migration detail for inventory state ownership decisions.
+
+### What worked
+- Existing inventory code clearly maps to runtime ownership buckets, making the migration plan concrete and testable.
+- Suggestion handling can be removed cleanly without blocking runtime correctness work.
+
+### What didn't work
+- None in this step.
+
+### What I learned
+- The highest value simplification is not just UI cutover; it is deleting app-owned runtime metadata management at the same time so ownership is unambiguous.
+
+### What was tricky to build
+- Balancing specificity against future refactor flexibility.
+- I resolved this by using an ownership matrix and API-shape mapping rather than over-prescribing exact implementation classes.
+
+### What warrants a second pair of eyes
+- Confirm that runtime selectors for stream/turn stats meet all current `StatsFooter` needs before inventory selectors are fully removed.
+
+### What should be done in the future
+- Execute HC-59 to remove suggestions across all layers before beginning code-heavy HC-58 runtime extraction.
+
+### Code review instructions
+- Review HC-58 updates in:
+  - `ttmp/2026/02/19/HC-58-CHAT-RUNTIME-REFACTOR--chat-runtime-refactor/design-doc/01-chat-runtime-refactor-analysis-and-concrete-blueprint.md`
+- Cross-check against source files:
+  - `apps/inventory/src/features/chat/chatSlice.ts`
+  - `apps/inventory/src/features/chat/runtime/projectionAdapters.ts`
+  - `apps/inventory/src/features/chat/selectors.ts`
+  - `apps/inventory/src/features/chat/InventoryChatWindow.tsx`
+
+### Technical details
+- Added explicit mappings for:
+  - `connectionStatus`, `lastError`, `modelName`, `currentTurnStats`, `streamStartTime`, `streamOutputTokens`
+- Declared suggestion path removal:
+  - suggestion state/actions/selectors,
+  - suggestion runtime props,
+  - suggestion event handlers.
