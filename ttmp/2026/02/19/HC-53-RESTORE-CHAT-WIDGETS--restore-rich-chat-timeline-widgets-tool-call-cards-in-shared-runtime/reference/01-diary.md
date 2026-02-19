@@ -455,3 +455,72 @@ This step makes the work reviewable as a durable engineering artifact, not just 
 ### Technical details
 
 - Commit hash placeholders will be filled after code + docs commit is finalized.
+
+## Step 7: Commit + reMarkable publication completion
+
+I finalized the work by committing the restoration and ticket artifacts, then uploading the bundled analysis to reMarkable as requested. This closes the delivery loop from implementation through external publication.
+
+I also recorded a follow-up verification caveat: bundle upload command succeeded, but cloud listing failed from this environment due DNS resolution errors, so remote existence confirmation relied on the successful upload response.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 1)
+
+**Assistant interpretation:** Ensure code is committed before uploading detailed analysis to reMarkable.
+
+**Inferred user intent:** Have a stable git checkpoint and a readable long-form report available on device.
+
+**Commit (code):** `b091a8c` — "fix(chat): restore rich timeline widgets in timeline-first projection"
+
+### What I did
+
+- Staged HC-53 code + ticket files.
+- Created commit `b091a8c`.
+- Ran reMarkable upload workflow:
+  - `remarquee status`
+  - `remarquee upload bundle --dry-run ...`
+  - `remarquee upload bundle ... --name "HC-53 Restore Chat Widgets Analysis" --remote-dir "/ai/2026/02/19/HC-53-RESTORE-CHAT-WIDGETS" --toc-depth 2`
+- Recorded successful upload output.
+
+### Why
+
+- User explicitly required upload after completion and commit.
+
+### What worked
+
+- Commit created successfully.
+- Upload reported success:
+  - `OK: uploaded HC-53 Restore Chat Widgets Analysis.pdf -> /ai/2026/02/19/HC-53-RESTORE-CHAT-WIDGETS`
+
+### What didn't work
+
+- Post-upload cloud listing command failed in this environment:
+  - `remarquee cloud ls /ai/2026/02/19/HC-53-RESTORE-CHAT-WIDGETS --long --non-interactive`
+  - DNS errors resolving reMarkable cloud hosts (`internal.cloud.remarkable.com`, `webapp-prod.cloud.remarkable.engineering`).
+
+### What I learned
+
+- Upload can succeed even when subsequent cloud listing fails due transient/network sandbox DNS constraints.
+
+### What was tricky to build
+
+- Git staging/commit required elevated permissions in this workspace because the worktree git metadata lives outside writable sandbox defaults.
+
+### What warrants a second pair of eyes
+
+- Optional manual confirmation on-device that the uploaded PDF appears under the target folder path.
+
+### What should be done in the future
+
+- Add a retry/health-check wrapper for cloud listing in upload runbooks when network environment can block DNS.
+
+### Code review instructions
+
+- Confirm commit:
+  - `git show --stat b091a8c`
+- Confirm upload command/output in terminal logs and changelog entry.
+
+### Technical details
+
+- Uploaded bundle name: `HC-53 Restore Chat Widgets Analysis.pdf`
+- Remote path target: `/ai/2026/02/19/HC-53-RESTORE-CHAT-WIDGETS`
