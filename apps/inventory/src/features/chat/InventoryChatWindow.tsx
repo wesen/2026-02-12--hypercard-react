@@ -255,7 +255,6 @@ export function InventoryChatWindow({ conversationId }: InventoryChatWindowProps
       semRegistry={semRegistryRef.current}
       adapters={projectionAdaptersRef.current}
       createClient={createClient}
-      projectionMode="timeline-upsert-only"
       hostActions={runtimeHostActions}
       timelineEntities={timelineEntities}
       onSend={handleSend}

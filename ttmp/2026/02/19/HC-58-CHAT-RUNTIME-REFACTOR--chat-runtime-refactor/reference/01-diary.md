@@ -496,3 +496,62 @@ This step is intentionally a planning checkpoint commit so subsequent refactor c
 - Core runtime files selected for first implementation slice:
   - `packages/engine/src/hypercard-chat/runtime/timelineChatRuntime.tsx`
   - `packages/engine/src/hypercard-chat/runtime/useProjectedChatConnection.ts`
+
+## Step 8: Remove `projectionMode` Gating from Runtime and Callers
+I implemented the first HC-58 runtime behavior change by deleting `projectionMode`/`timeline-upsert-only` gating from the runtime window API and all active callers.
+
+This is the first direct cutover from analysis into runtime behavior changes and aligns with the no-fallback policy: projection correctness can no longer depend on a caller-side drop mode.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 7)
+
+**Assistant interpretation:** Start code implementation for HC-58 task-by-task, with explicit commits and diary updates.
+
+**Inferred user intent:** Convert HC-58 design decisions into concrete runtime code changes with clear incremental history.
+
+**Commit (code):** Pending (recorded after staging/commit step)
+
+### What I did
+- Removed `TimelineProjectionMode` type and `projectionMode` prop from:
+  - `packages/engine/src/hypercard-chat/runtime/timelineChatRuntime.tsx`
+- Removed `timeline.upsert`-only filtering helper/branch in runtime window:
+  - deleted `isTimelineUpsertEnvelope` gating check
+  - retained `shouldProjectEnvelope` override hook path for now
+- Updated active caller integration:
+  - `apps/inventory/src/features/chat/InventoryChatWindow.tsx` (removed `projectionMode="timeline-upsert-only"`)
+- Updated runtime story:
+  - `packages/engine/src/components/widgets/TimelineChatRuntimeWindow.stories.tsx` (removed `projectionMode` arg)
+
+### Why
+- `projectionMode` represented exactly the class of correctness toggle HC-58 is removing.
+
+### What worked
+- API surface is now simpler and no active caller still depends on `projectionMode`.
+- Search confirms no remaining `projectionMode`/`timeline-upsert-only` references in `packages/engine/src` and `apps/inventory/src`.
+
+### What didn't work
+- None in this step.
+
+### What I learned
+- The `projectionMode` cut is localized and low-risk, making it a good first HC-58 implementation slice.
+
+### What was tricky to build
+- Ensuring all story and app call sites were updated in the same commit to avoid transient compile churn.
+
+### What warrants a second pair of eyes
+- Confirm whether any out-of-repo consumers compile against the removed `projectionMode` prop.
+
+### What should be done in the future
+- Remove remaining optional envelope-skip branch (`shouldProjectEnvelope`) in the connection hook path as next simplification phase.
+
+### Code review instructions
+- Review API + caller updates:
+  - `packages/engine/src/hypercard-chat/runtime/timelineChatRuntime.tsx`
+  - `apps/inventory/src/features/chat/InventoryChatWindow.tsx`
+  - `packages/engine/src/components/widgets/TimelineChatRuntimeWindow.stories.tsx`
+
+### Technical details
+- Validation search:
+  - `rg -n "projectionMode|TimelineProjectionMode|timeline-upsert-only" packages/engine/src apps/inventory/src`
+  - no matches.

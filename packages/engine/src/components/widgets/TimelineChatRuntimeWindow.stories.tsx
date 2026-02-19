@@ -72,7 +72,6 @@ function RuntimeStoryHost({
       timelineEntities={timelineEntities}
       semRegistry={semRegistry.current}
       createClient={createClient}
-      projectionMode="timeline-upsert-only"
       widgetNamespace={widgetNamespace}
       debug={debug}
       hostActions={{

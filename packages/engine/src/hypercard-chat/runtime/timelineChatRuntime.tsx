@@ -23,8 +23,6 @@ export interface TimelineChatRuntimeHostActions {
   onConnectionError?: (message: string) => void;
 }
 
-export type TimelineProjectionMode = 'all-events' | 'timeline-upsert-only';
-
 export interface TimelineChatRuntimeWindowProps
   extends Omit<
     TimelineChatWindowProps,
@@ -37,7 +35,6 @@ export interface TimelineChatRuntimeWindowProps
   createClient: ProjectedChatClientFactory;
   adapters?: ProjectionPipelineAdapter[];
   hostActions?: TimelineChatRuntimeHostActions;
-  projectionMode?: TimelineProjectionMode;
   shouldProjectEnvelope?: (envelope: SemEnvelope) => boolean;
   widgetNamespace?: string;
   debug?: boolean;
@@ -51,10 +48,6 @@ function normalizeWidgetNamespace(widgetNamespace: string | undefined): string {
   return 'hypercard';
 }
 
-function isTimelineUpsertEnvelope(envelope: SemEnvelope): boolean {
-  return envelope.event?.type === 'timeline.upsert';
-}
-
 export function TimelineChatRuntimeWindow({
   conversationId,
   dispatch,
@@ -63,7 +56,6 @@ export function TimelineChatRuntimeWindow({
   createClient,
   adapters = [],
   hostActions,
-  projectionMode = 'timeline-upsert-only',
   shouldProjectEnvelope,
   widgetNamespace,
   debug = false,
@@ -86,15 +78,12 @@ export function TimelineChatRuntimeWindow({
 
   const effectiveShouldProjectEnvelope = useMemo(() => {
     return (envelope: SemEnvelope): boolean => {
-      if (projectionMode === 'timeline-upsert-only' && !isTimelineUpsertEnvelope(envelope)) {
-        return false;
-      }
       if (shouldProjectEnvelope) {
         return shouldProjectEnvelope(envelope);
       }
       return true;
     };
-  }, [projectionMode, shouldProjectEnvelope]);
+  }, [shouldProjectEnvelope]);
 
   useProjectedChatConnection({
     conversationId,
