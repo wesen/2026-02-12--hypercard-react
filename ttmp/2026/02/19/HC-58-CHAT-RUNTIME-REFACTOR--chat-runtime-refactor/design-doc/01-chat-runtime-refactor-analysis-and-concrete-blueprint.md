@@ -43,12 +43,13 @@ The imported proposal is directionally strong and compatible with the goals behi
 
 The most important correction is the streaming contract. `streaming/append` and `streaming/finalize` as plain string operations are too narrow for our actual traffic. In our system, streaming and partial updates are not only text. We already handle tool deltas, tool result payloads, widget/card lifecycle updates, and metadata-rich SEM envelopes. The runtime must support typed structured stream fragments and patch semantics, not just cumulative text.
 
-This document proposes a concrete runtime contract that preserves the good parts of the imported design and corrects the weak parts:
+This document proposes a concrete runtime contract that preserves the good parts of the imported design and corrects the weak parts, with one explicit policy decision: hard cutover with no compatibility or fallback UI layers.
 - headless per-conversation runtime managed by a `ConversationManager`
 - idempotent reducer-level merge with version precedence and alias/canonical ID mapping
 - streaming channels that support structured payloads (text, JSON patch, object patch, status transitions, widget/card fragments)
 - per-window selector subscriptions for distinct rerender profiles
 - kit-based extension API for runtime behaviors and widget rendering
+- timeline-native UI (`TimelineConversationView`) as the only first-class chat surface
 
 ## Problem Statement
 `TimelineChatRuntimeWindow` currently combines transport wiring, projection policy, registry wiring, adapter side-effects, and UI composition in one surface. This has three practical consequences:
@@ -261,7 +262,7 @@ This prevents adapters from depending on implicit ordering.
 For incoming entity updates, runtime resolves canonical ID by:
 1. explicit `canonicalId` in payload (if present),
 2. existing alias map lookup,
-3. fallback to `entity.id`.
+3. defaulting to `entity.id`.
 
 ### Alias recording
 Whenever an update includes known alternates (`aliases`, `sourceEventId`, old ID), runtime writes alias entries.
@@ -335,6 +336,19 @@ type SemHandlerContext = {
 };
 ```
 
+## UI Hard Cutover
+The chain `TimelineChatRuntimeWindow -> TimelineChatWindow -> ChatWindow` will be removed.
+
+Target:
+- headless runtime layer (`ConversationRuntime` + `ConversationManager`)
+- one timeline-native UI component (`TimelineConversationView`)
+- no `ChatWindow` bridge, no message-model adapter layer in the primary path
+
+### Why hard cutover
+1. `ChatWindow` is message-first while runtime state is entity-first, forcing lossy translation.
+2. The translation layer obscures structured timeline semantics and increases API confusion.
+3. Maintaining dual abstractions slows iteration and increases regression surface.
+
 ## Mapping from current files to target architecture
 
 ### Keep and evolve
@@ -347,8 +361,11 @@ type SemHandlerContext = {
   - extract transport/session lifecycle into runtime core;
   - hook should subscribe to runtime rather than own transport.
 - `runtime/timelineChatRuntime.tsx`:
-  - keep as compatibility wrapper;
-  - internally consume runtime + selectors + UI shell.
+  - remove after replacing with provider/hooks + `TimelineConversationView`.
+- `runtime/TimelineChatWindow.tsx`:
+  - remove; responsibilities move into timeline-native view composition.
+- `components/widgets/ChatWindow.tsx`:
+  - remove from timeline chat stack; not used as intermediary UI abstraction.
 
 ### Constrain
 - `widgets/hypercardWidgetPack.tsx` and inline registry:
@@ -368,7 +385,7 @@ type SemHandlerContext = {
 - mutation reducer,
 - pipeline execution,
 - transport lifecycle hooks.
-2. Keep existing `SemRegistry` handlers via compatibility shim.
+2. Port existing `SemRegistry` handlers directly to new runtime mutation contract (no compatibility shim).
 
 ### Phase 2: Manager + connection claims
 1. Add `conversation/manager.ts` runtime cache keyed by conversation ID.
@@ -380,21 +397,23 @@ type SemHandlerContext = {
 - `llm.delta` -> `stream.apply(message.text, text.*)`
 - `tool.delta` -> `stream.apply(tool.patch, object.patch)`
 - hypercard lifecycle updates -> structured stream or timeline patches as appropriate.
-3. Keep compatibility path that still writes final timeline content for consumers not reading stream channels.
+3. Make stream channels + timeline entities the only data contract for chat UI consumers.
 
-### Phase 4: UI migration
+### Phase 4: UI cutover
 1. Add hook-level APIs (`useConversationRuntime`, selectors).
-2. Refactor `TimelineChatRuntimeWindow` to wrapper.
-3. Add per-window widget registry provider.
+2. Implement `TimelineConversationView` directly from timeline entities/stream channels.
+3. Remove `TimelineChatRuntimeWindow`, `TimelineChatWindow`, and `ChatWindow` from the timeline chat path.
+4. Add per-window widget registry provider.
 
 ### Phase 5: Host migration (Inventory first)
 1. Move `InventoryWebChatClient` ownership behind manager-backed runtime connection.
 2. Keep adapters, but move them to phased adapter API.
 3. Validate with two simultaneous inventory windows on same conversation.
 
-### Phase 6: Remove projection modes
-1. Deprecate `projectionMode` in wrapper.
-2. Remove event-drop correctness branch after migration confidence.
+### Phase 6: Cleanup after cutover
+1. Remove `projectionMode` API entirely.
+2. Delete event-drop branch and any wrapper-only plumbing.
+3. Remove dead exports and stories tied to removed layers.
 
 ## Validation Plan
 1. Unit tests for reducer semantics:
@@ -416,12 +435,9 @@ type SemHandlerContext = {
 - Mitigation: ship with minimal core channels and typed extension point.
 
 2. Risk: host adapters depending on implicit timing.
-- Mitigation: explicit phased adapter API and migration warnings.
+- Mitigation: explicit phased adapter API and strict migration checklist.
 
-3. Risk: regressions during wrapper migration.
-- Mitigation: compatibility wrapper around new core with golden story/test coverage.
-
-4. Risk: performance regressions from high-frequency stream mutations.
+3. Risk: performance regressions from high-frequency stream mutations.
 - Mitigation: per-channel selectors, batched commits, and optional throttled channel adapters.
 
 ## Open Questions
@@ -431,7 +447,7 @@ type SemHandlerContext = {
 4. Which stream channels should be standardized in v1 (`message.text`, `tool.patch`, `widget.patch`) versus kit-defined only?
 
 ## Recommendation
-Proceed with the imported architecture direction, but do not implement the streaming API as text-only append/finalize. The runtime should adopt structured stream channels from the first implementation increment so tool/widget/card and future multimodal flows fit naturally without another breaking redesign.
+Proceed with the imported architecture direction, enforce a hard UI cutover to a timeline-native view, and do not implement the streaming API as text-only append/finalize. The runtime should adopt structured stream channels from the first implementation increment so tool/widget/card and future multimodal flows fit naturally without another redesign.
 
 ## References
 - Imported proposal: `ttmp/2026/02/19/HC-58-CHAT-RUNTIME-REFACTOR--chat-runtime-refactor/sources/local/chat-runtime-chatgpt-pro.md`

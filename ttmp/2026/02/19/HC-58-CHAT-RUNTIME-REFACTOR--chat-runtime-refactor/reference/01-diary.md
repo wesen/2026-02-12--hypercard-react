@@ -307,3 +307,57 @@ This step intentionally happened after content authoring, because it is easier t
   - frontmatter parse error (`frontmatter delimiters '---' not found`) on imported source file
 - Doctor after fix reports only:
   - `missing_numeric_prefix` warning on source filename.
+
+## Step 5: Hard Cutover Decision (No Fallbacks)
+You asked to remove fallback/backwards-compatibility framing and commit to a timeline-native UI path. I updated the HC-58 design analysis accordingly.
+
+This step tightened the architecture policy from "phased compatibility" to "hard replacement" so implementation planning is unambiguous.
+
+### Prompt Context
+
+**User prompt (verbatim):** "no fallbacks, no backwards compatibility. Update the document to reflect that, and yes, timeline view."
+
+**Assistant interpretation:** Update HC-58 documentation to explicitly remove fallback/compatibility/wrapper language and define a hard cutover to a timeline-native view.
+
+**Inferred user intent:** Avoid diluted migration plans and force a single clear architecture target.
+
+**Commit (code):** pending
+
+### What I did
+- Updated design doc sections to enforce hard cutover:
+  - added explicit "UI Hard Cutover" section,
+  - removed compatibility wrapper strategy,
+  - replaced migration phases with removal/deletion tasks for `TimelineChatRuntimeWindow`, `TimelineChatWindow`, and `ChatWindow` in timeline chat path,
+  - removed deprecation language and replaced with API removal language.
+
+### Why
+- The prior draft still carried compatibility language that conflicted with your requested execution model.
+
+### What worked
+- Design document now states one target model: runtime + timeline-native view, no fallback layers.
+
+### What didn't work
+- None in this step.
+
+### What I learned
+- Architectural ambiguity in docs propagates to implementation ambiguity; explicit removal language is necessary when the strategy is hard cutover.
+
+### What was tricky to build
+- Preserving useful migration sequencing while deleting compatibility paths.
+- Approach: keep phased work breakdown, but convert phases to direct replacement and deletion milestones.
+
+### What warrants a second pair of eyes
+- Confirm whether non-timeline use cases still need `ChatWindow` outside this ticket scope. The current HC-58 doc now assumes timeline-chat path only.
+
+### What should be done in the future
+- Add an explicit removal checklist PR template for files/exports/stories tied to removed layers.
+
+### Code review instructions
+- Review changed design doc:
+  - `ttmp/2026/02/19/HC-58-CHAT-RUNTIME-REFACTOR--chat-runtime-refactor/design-doc/01-chat-runtime-refactor-analysis-and-concrete-blueprint.md`
+
+### Technical details
+- Core doc changes include:
+  - "UI Hard Cutover" section,
+  - removal of compatibility shim/wrapper language,
+  - replacement of "deprecate" with "remove" actions.
