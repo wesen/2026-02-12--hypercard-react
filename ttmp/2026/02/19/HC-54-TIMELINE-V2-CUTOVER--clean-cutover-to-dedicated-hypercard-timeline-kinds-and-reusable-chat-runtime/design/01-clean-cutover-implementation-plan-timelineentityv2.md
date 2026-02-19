@@ -34,8 +34,8 @@ RelatedFiles:
     - Path: /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/runtime/timelineEntityRenderer.ts
       Note: Inventory-local projection/render glue to remove after reusable runtime extraction
 ExternalSources: []
-Summary: Detailed production implementation plan for a strict no-compatibility cutover to dedicated Hypercard TimelineEntityV2 kinds, protobuf extraction, reusable runtime dispatch, and legacy path deletion.
-LastUpdated: 2026-02-19T18:30:00-05:00
+Summary: Detailed production implementation plan for a strict no-compatibility cutover to dedicated Hypercard TimelineEntityV2 kinds, protobuf extraction, reusable runtime dispatch, and legacy path deletion, with per-step reference guidance.
+LastUpdated: 2026-02-19T18:45:00-05:00
 WhatFor: Provide the exact execution blueprint, file end-state, and acceptance gates for HC-54 implementation.
 WhenToUse: Use while implementing HC-54 step-by-step; treat this as the source of truth for sequencing and legacy removal requirements.
 ---
@@ -130,6 +130,12 @@ Gate:
 
 1. No ambiguity remains in active docs about final kinds and IDs.
 
+References for this step:
+
+1. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/19/HC-53-RESTORE-CHAT-WIDGETS--restore-rich-chat-timeline-widgets-tool-call-cards-in-shared-runtime/design-doc/03-webchat-timeline-widget-entity-end-to-end-implementation-playbook.md` (contract and invariants baseline)
+2. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/pinocchio/pkg/doc/tutorials/04-intern-app-owned-middleware-events-timeline-widgets.md` (module ownership + contract-first setup)
+3. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/19/HC-53-RESTORE-CHAT-WIDGETS--restore-rich-chat-timeline-widgets-tool-call-cards-in-shared-runtime/design-doc/02-generic-chatwindow-and-hypercard-renderer-pack-architecture.md` (historical context + alignment note)
+
 ## Step 2: Protobuf extraction layer in backend
 
 Deliverables:
@@ -147,6 +153,12 @@ Gate:
 
 1. Unit tests confirm valid payload decode and deterministic errors for invalid payloads.
 
+References for this step:
+
+1. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/19/HC-53-RESTORE-CHAT-WIDGETS--restore-rich-chat-timeline-widgets-tool-call-cards-in-shared-runtime/design-doc/03-webchat-timeline-widget-entity-end-to-end-implementation-playbook.md` (Step 2 protobuf extraction pattern)
+2. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/pinocchio/pkg/doc/tutorials/04-intern-app-owned-middleware-events-timeline-widgets.md` (typed event contracts and explicit bootstrap flow)
+3. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/internal/pinoweb/hypercard_extractors.go` (current extraction surface to migrate)
+
 ## Step 3: Add generic frontend registry seams
 
 Deliverables:
@@ -162,6 +174,12 @@ Legacy deletion in this step:
 Gate:
 
 1. Registry can register/unregister kinds and fallback behavior remains stable.
+
+References for this step:
+
+1. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/pinocchio/cmd/web-chat/web/src/sem/timelinePropsRegistry.ts` (kind normalizer registry model)
+2. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/pinocchio/cmd/web-chat/web/src/webchat/rendererRegistry.ts` (kind renderer registry model)
+3. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/pinocchio/cmd/web-chat/web/src/features/thinkingMode/registerThinkingMode.tsx` (explicit module registration pattern)
 
 ## Step 4: Backend projection cutover to dedicated kinds
 
@@ -180,6 +198,12 @@ Gate:
 
 1. Timeline snapshots show `hypercard_widget` / `hypercard_card` entities with required props.
 
+References for this step:
+
+1. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/internal/pinoweb/hypercard_events.go` (current legacy projection path to replace)
+2. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/pinocchio/pkg/webchat/timeline_registry.go` (backend timeline handler registration seam)
+3. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/pinocchio/pkg/webchat/timeline_projector.go` (canonical upsert flow and custom handler execution model)
+
 ## Step 5: Frontend projection cutover to dedicated kinds
 
 Deliverables:
@@ -195,6 +219,12 @@ Legacy deletion in this step:
 Gate:
 
 1. Hydrated and live streams both produce widget/card entities through dedicated kind paths only.
+
+References for this step:
+
+1. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/sem/registry.ts` (current mapping path with legacy branches)
+2. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/artifacts/timelineProjection.ts` (timeline display mapper with customKind logic to remove)
+3. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/pinocchio/pkg/doc/tutorials/05-building-standalone-webchat-ui.md` (canonical timeline.upsert + hydration/replay flow)
 
 ## Step 6: Extract Hypercard renderer pack (git mv-first)
 
@@ -213,6 +243,12 @@ Gate:
 
 1. Renderer history preserved and styles/functionality retained post-move.
 
+References for this step:
+
+1. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/widgets/TimelineWidget.tsx` (source file for git mv)
+2. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/widgets/ArtifactPanelWidgets.tsx` (source file for git mv)
+3. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/19/HC-53-RESTORE-CHAT-WIDGETS--restore-rich-chat-timeline-widgets-tool-call-cards-in-shared-runtime/design-doc/03-webchat-timeline-widget-entity-end-to-end-implementation-playbook.md` (Step 6 extraction guidance)
+
 ## Step 7: Generalize ChatWindow runtime and orchestration
 
 Deliverables:
@@ -227,6 +263,12 @@ Legacy deletion in this step:
 Gate:
 
 1. At least one non-inventory integration path can consume the generalized runtime APIs.
+
+References for this step:
+
+1. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/widgets/ChatWindow.tsx` (presentational shell to keep generic)
+2. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/19/HC-53-RESTORE-CHAT-WIDGETS--restore-rich-chat-timeline-widgets-tool-call-cards-in-shared-runtime/design-doc/02-generic-chatwindow-and-hypercard-renderer-pack-architecture.md` (runtime extraction architecture)
+3. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/pinocchio/pkg/doc/tutorials/05-building-standalone-webchat-ui.md` (chat shell + ws/timeline orchestration boundaries)
 
 ## Step 8: Rewire Inventory to reusable runtime + Hypercard pack only
 
@@ -243,6 +285,12 @@ Gate:
 
 1. Inventory behavior parity achieved while significantly reducing app-local orchestration code.
 
+References for this step:
+
+1. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/InventoryChatWindow.tsx` (current heavy integration surface)
+2. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/runtime/projectionAdapters.ts` (app-specific side-effect boundary)
+3. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/19/HC-53-RESTORE-CHAT-WIDGETS--restore-rich-chat-timeline-widgets-tool-call-cards-in-shared-runtime/design-doc/03-webchat-timeline-widget-entity-end-to-end-implementation-playbook.md` (Step 8 rewire guidance)
+
 ## Step 9: Final hard-cut cleanup and validation gate
 
 Deliverables:
@@ -258,6 +306,12 @@ Legacy deletion in this step:
 Hard fail criteria:
 
 1. Any active code path still rendering widget/card through `tool_result/customKind`.
+
+References for this step:
+
+1. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/19/HC-54-TIMELINE-V2-CUTOVER--clean-cutover-to-dedicated-hypercard-timeline-kinds-and-reusable-chat-runtime/tasks.md` (step completion and hard-cut acceptance requirements)
+2. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/pinocchio/pkg/doc/tutorials/05-building-standalone-webchat-ui.md` (testing checklist pattern for hydration/replay correctness)
+3. `/home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/19/HC-53-RESTORE-CHAT-WIDGETS--restore-rich-chat-timeline-widgets-tool-call-cards-in-shared-runtime/design-doc/03-webchat-timeline-widget-entity-end-to-end-implementation-playbook.md` (validation matrix and hard-cut expectations)
 
 ## 6) End-State File Plan
 
