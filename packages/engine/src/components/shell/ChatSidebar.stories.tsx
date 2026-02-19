@@ -79,7 +79,6 @@ function ChatSidebarDemo() {
         isStreaming={isStreaming}
         onSend={send}
         onCancel={() => cancelFn?.()}
-        suggestions={['Hello!', 'Show me open deals', 'Help']}
         title="AI Assistant"
         placeholder="Ask about your CRM data…"
         footer={<span>Model: fake-gpt-4 · Streaming</span>}

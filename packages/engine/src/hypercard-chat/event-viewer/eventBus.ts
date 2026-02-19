@@ -65,8 +65,6 @@ function summarize(type: string, data: Record<string, unknown>): string {
   if (type === 'tool.result') return 'tool result';
   if (type === 'tool.delta') return 'tool delta';
 
-  if (type.startsWith('hypercard.suggestions')) return 'suggestions';
-
   if (type === 'timeline.upsert') {
     const entity = data.entity as Record<string, unknown> | undefined;
     const kind = typeof entity?.kind === 'string' ? entity.kind : '';

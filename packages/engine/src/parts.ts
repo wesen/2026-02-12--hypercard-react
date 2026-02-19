@@ -50,7 +50,6 @@ export const PARTS = {
   chatMessage: 'chat-message',
   chatComposer: 'chat-composer',
   chatInput: 'chat-input',
-  chatSuggestions: 'chat-suggestions',
   // AI panel
   aiPanel: 'ai-panel',
   aiPanelHeader: 'ai-panel-header',

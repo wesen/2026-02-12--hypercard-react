@@ -10,7 +10,6 @@ function ChatDemo() {
     <div style={{ width: 400, height: 350 }}>
       <ChatView
         messages={messages}
-        suggestions={['What is low stock?', 'Show report']}
         onSend={(text) => {
           setMessages((m) => [
             ...m,

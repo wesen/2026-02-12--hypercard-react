@@ -251,7 +251,6 @@ function InteractiveDemo() {
         isStreaming={isStreaming}
         onSend={send}
         onCancel={cancel}
-        suggestions={['Hello!', 'What can you help with?', 'Show me some data', 'Help']}
         title="AI Assistant"
         subtitle="Interactive demo"
         placeholder="Ask me anything…"
@@ -272,7 +271,6 @@ export const Welcome: Story = {
         messages={[]}
         isStreaming={false}
         onSend={() => {}}
-        suggestions={['What is my pipeline?', 'Show low stock items', 'Help me find a contact']}
         title="CRM Assistant"
         subtitle="Powered by AI"
         placeholder="Ask about your CRM data…"
@@ -288,7 +286,6 @@ export const CustomWelcome: Story = {
         messages={[]}
         isStreaming={false}
         onSend={() => {}}
-        suggestions={['Dashboard', 'Inventory', 'Reports']}
         title="Inventory Bot"
         welcomeContent={
           <div style={{ textAlign: 'center' }}>

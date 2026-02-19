@@ -78,7 +78,6 @@ function StreamingChatDemo() {
       <StreamingChatView
         messages={messages}
         isStreaming={isStreaming}
-        suggestions={['Hello!', 'What can you help with?', 'Tell me about my data']}
         onSend={send}
         onCancel={cancel}
         title="AI Assistant"
@@ -106,7 +105,6 @@ function StaticStory({ messages, isStreaming = false }: { messages: ChatMessage[
       <StreamingChatView
         messages={messages}
         isStreaming={isStreaming}
-        suggestions={['Suggestion 1', 'Suggestion 2']}
         onSend={() => {}}
         onCancel={() => {}}
         title="AI Assistant"

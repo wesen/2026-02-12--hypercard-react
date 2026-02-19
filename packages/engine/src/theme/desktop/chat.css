@@ -13,7 +13,6 @@
 /* Keep non-content chat chrome non-selectable */
 [data-part="chat-window-header"],
 [data-part="chat-composer"],
-[data-part="chat-suggestions"],
 [data-part="chat-window-footer"] {
   user-select: none;
 }
@@ -33,13 +32,6 @@
 }
 [data-part="chat-message"][data-role="ai"] [data-part="chat-role"] {
   color: var(--hc-color-success);
-}
-[data-part="chat-suggestions"] {
-  display: flex;
-  gap: 3px;
-  flex-wrap: wrap;
-  padding: 4px 8px;
-  border-top: 1px solid #ccc;
 }
 [data-part="chat-composer"] {
   display: flex;
@@ -73,7 +65,7 @@
 
 /* ─── Chat Window (full-view) ── */
 /* Reuses chat-message / chat-role / chat-timeline / chat-composer /
-   chat-suggestions from the Chat section above for message rendering.
+   from the Chat section above for message rendering.
    Only ChatWindow-specific parts (header, welcome, widgets, footer)
    are defined here. */
 [data-part="chat-window"] {
@@ -192,4 +184,3 @@
   font-family: var(--hc-font-family);
   margin-top: 4px;
 }
-

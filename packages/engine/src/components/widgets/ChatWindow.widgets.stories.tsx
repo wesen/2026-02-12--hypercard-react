@@ -478,13 +478,6 @@ function InteractiveWithWidgetsDemo() {
         isStreaming={isStreaming}
         onSend={smartRespond}
         onAction={(a) => alert(`Action: ${JSON.stringify(a)}`)}
-        suggestions={[
-          'Show stock levels',
-          'Show deals',
-          'Show contacts',
-          'Give me a summary report',
-          'Hello!',
-        ]}
         title="Smart Assistant"
         subtitle="Try: stock, deals, contacts, report"
         placeholder="Ask about inventory, deals, contacts, or reports…"

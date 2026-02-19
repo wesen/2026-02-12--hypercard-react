@@ -91,8 +91,6 @@ const meta = {
     title: 'Inventory Chat',
     subtitle: 'storybook',
     placeholder: 'Ask about inventory...',
-    suggestions: ['Show low stock', 'Generate restock card'],
-    showSuggestionsAlways: true,
     widgetNamespace: 'inventory',
     widgetRenderContext: widgetContext,
   },

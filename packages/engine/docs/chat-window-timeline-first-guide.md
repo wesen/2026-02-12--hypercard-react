@@ -277,7 +277,6 @@ Important design choice: rendering is derived entirely from timeline entities.
 Chat metadata state (`chatSlice`) only holds transport/UX metadata:
 
 - connection status,
-- suggestions,
 - model name,
 - token stats and streaming stats,
 - stream error.
@@ -451,7 +450,6 @@ Responsibilities:
 
 - observe semantic event types (`llm.start|delta|final`),
 - update model/tokens/stats,
-- handle suggestions events,
 - map `ws.error` to chat error metadata.
 
 Rule:

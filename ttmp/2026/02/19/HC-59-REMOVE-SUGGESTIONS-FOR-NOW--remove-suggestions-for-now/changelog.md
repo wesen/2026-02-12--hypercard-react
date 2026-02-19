@@ -73,3 +73,29 @@ Removed suggestion props/rendering from engine runtime and chat widgets, includi
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/runtime/timelineChatRuntime.tsx — Removed suggestions prop forwarding
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/19/HC-59-REMOVE-SUGGESTIONS-FOR-NOW--remove-suggestions-for-now/reference/01-diary.md — Recorded runtime/widget cleanup step
 
+
+## 2026-02-19
+
+Cleaned remaining suggestion references in stories/docs/theme/event-viewer and validated with typecheck + focused chat tests.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/stories/EventViewer.stories.tsx — Replaced suggestion event fixtures
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/docs/js-api-user-guide-reference.md — Removed suggestions API example
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/docs/chat-window-timeline-first-guide.md — Removed suggestions references
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/event-viewer/eventBus.ts — Removed suggestions summary special-case
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/parts.ts — Removed chatSuggestions part token
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/theme/desktop/chat.css — Removed chat-suggestions styling hooks
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/19/HC-59-REMOVE-SUGGESTIONS-FOR-NOW--remove-suggestions-for-now/reference/01-diary.md — Recorded cleanup and validation commands
+
+
+## 2026-02-19
+
+Per user direction, committed unexpected staged BookTracker deletions as an isolated commit before resuming HC-59.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/widgets/BookTracker.plugin.vm.js — Deleted in isolated commit bcd6ce6
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/widgets/BookTracker.stories.tsx — Deleted in isolated commit bcd6ce6
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/19/HC-59-REMOVE-SUGGESTIONS-FOR-NOW--remove-suggestions-for-now/reference/01-diary.md — Recorded user-directed isolation step
+

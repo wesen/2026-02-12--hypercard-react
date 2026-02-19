@@ -83,8 +83,6 @@ function RuntimeStoryHost({
       title="Runtime Chat"
       subtitle="runtime boundary"
       placeholder="Ask inventory runtime..."
-      suggestions={['Show low stock', 'Generate summary card']}
-      showSuggestionsAlways
     />
   );
 }

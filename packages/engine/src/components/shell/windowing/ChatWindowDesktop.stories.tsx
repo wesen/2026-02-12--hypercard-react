@@ -389,7 +389,7 @@ function DesktopChatWindow({ stack }: { stack: CardStackDefinition }) {
         } else if (lower.includes('help')) {
           aiMsg = {
             id: `ai-${Date.now()}`, role: 'ai',
-            text: "I can:\n\n• Show items — inline table\n• Show reports — inline report\n• Open windows on the desktop\n• Create new cards on the fly\n\nTry the suggestions or type a question!",
+            text: "I can:\n\n• Show items — inline table\n• Show reports — inline report\n• Open windows on the desktop\n• Create new cards on the fly\n\nTry typing a question.",
             status: 'complete',
             actions: [
               { label: '📋 Browse', action: 'open-browse' },
@@ -429,7 +429,6 @@ function DesktopChatWindow({ stack }: { stack: CardStackDefinition }) {
       onSend={handleSend}
       onCancel={() => setIsStreaming(false)}
       onAction={handleAction}
-      suggestions={['Show me the inventory', 'Give me a report', 'Create a card…', 'Help']}
       title="Assistant"
       placeholder="Ask about items, reports, or create new cards…"
       renderWidget={renderWidget}

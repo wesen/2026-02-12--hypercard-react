@@ -362,3 +362,138 @@ This keeps HC-59 aligned with the hard-cut simplification direction and ensures 
 
 ### Technical details
 - Post-change search still finds references only in stories/docs/theme/event-viewer, which are handled in the next task phase.
+
+## Step 6: User-Directed Isolated Commit for Unexpected Deletions
+During HC-59 work I detected unrelated staged deletions that I did not create and paused for direction. You instructed me to keep them and commit them as an individual commit before continuing.
+
+I followed that exactly to preserve auditability and avoid mixing unrelated file removals into HC-59 feature-cleanup commits.
+
+### Prompt Context
+
+**User prompt (verbatim):** "keep the deletions, commit them as an individual commit, then continue."
+
+**Assistant interpretation:** Commit the two unexpected BookTracker deletions as a standalone commit, then resume HC-59 implementation work.
+
+**Inferred user intent:** Maintain clean commit history separation while allowing those deletions to remain in branch history.
+
+**Commit (code):** bcd6ce6 — "chore: remove deprecated BookTracker widget files"
+
+### What I did
+- Verified status showed staged unexpected deletions:
+  - `packages/engine/src/components/widgets/BookTracker.plugin.vm.js`
+  - `packages/engine/src/components/widgets/BookTracker.stories.tsx`
+- Created isolated commit with only those deletions.
+
+### Why
+- You explicitly requested that these deletions be preserved and committed separately before continuing HC-59.
+
+### What worked
+- Commit was created cleanly with only the two delete operations.
+
+### What didn't work
+- N/A
+
+### What I learned
+- Isolated handling of unrelated staged changes kept HC-59 commits focused and reviewable.
+
+### What was tricky to build
+- Not technical; the key was preserving strict separation of unrelated and ticket-related work.
+
+### What warrants a second pair of eyes
+- N/A
+
+### What should be done in the future
+- Keep this “pause + explicit decision” pattern whenever unexpected staged changes appear.
+
+### Code review instructions
+- Review isolated commit:
+  - `bcd6ce6`
+
+### Technical details
+- Commit contents:
+  - deletion of `packages/engine/src/components/widgets/BookTracker.plugin.vm.js`
+  - deletion of `packages/engine/src/components/widgets/BookTracker.stories.tsx`
+
+## Step 7: Cleanup Remaining Suggestion References (Stories/Docs/Theme/Event Viewer) + Validation
+After runtime/widget API cleanup, the remaining suggestion references lived in story fixtures, docs, theme tokens/selectors, and event-viewer summary logic. I removed these so HC-59 is consistent end-to-end.
+
+I also ran typecheck and focused test suites to verify the changes across engine/inventory surfaces.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 3)
+
+**Assistant interpretation:** Continue task-by-task by removing all residual suggestion references and validating the codebase.
+
+**Inferred user intent:** Ensure suggestions are fully removed, not just from runtime logic, and leave a clean baseline.
+
+**Commit (code):** Pending (recorded after staging/commit step)
+
+### What I did
+- Story cleanup:
+  - removed `suggestions` / `showSuggestionsAlways` args from engine chat stories:
+    - `packages/engine/src/components/widgets/ChatView.stories.tsx`
+    - `packages/engine/src/components/widgets/StreamingChatView.stories.tsx`
+    - `packages/engine/src/components/widgets/ChatWindow.interaction.stories.tsx`
+    - `packages/engine/src/components/widgets/ChatWindow.stories.tsx`
+    - `packages/engine/src/components/widgets/ChatWindow.widgets.stories.tsx`
+    - `packages/engine/src/components/widgets/TimelineChatWindow.stories.tsx`
+    - `packages/engine/src/components/widgets/TimelineChatRuntimeWindow.stories.tsx`
+    - `packages/engine/src/components/shell/ChatSidebar.stories.tsx`
+    - `packages/engine/src/components/shell/windowing/ChatWindowDesktop.stories.tsx`
+- Inventory event-viewer story cleanup:
+  - replaced `hypercard.suggestions.v1` entries with non-suggestion events in:
+    - `apps/inventory/src/features/chat/stories/EventViewer.stories.tsx`
+- Event viewer logic cleanup:
+  - removed special suggestions summary mapping in:
+    - `packages/engine/src/hypercard-chat/event-viewer/eventBus.ts`
+- Theme/parts cleanup:
+  - removed `chatSuggestions` part token from:
+    - `packages/engine/src/parts.ts`
+  - removed `chat-suggestions` CSS selectors/comment references from:
+    - `packages/engine/src/theme/desktop/chat.css`
+- Docs cleanup:
+  - removed suggestions argument from `ui.chat(...)` reference:
+    - `docs/js-api-user-guide-reference.md`
+  - removed suggestion-specific bullets from timeline-first guide:
+    - `packages/engine/docs/chat-window-timeline-first-guide.md`
+- Verification:
+  - `rg` for `suggestions|showSuggestionsAlways|chat-suggestions|hypercard.suggestions` across target code/docs paths -> no matches
+  - `npm run typecheck` -> pass
+  - `npx vitest run apps/inventory/src/features/chat/chatSlice.test.ts apps/inventory/src/features/chat/runtime/projectionPipeline.test.ts apps/inventory/src/features/chat/eventBus.test.ts` -> pass
+
+### Why
+- Residual references in stories/docs/theme would otherwise document or test APIs that no longer exist, causing drift and confusion.
+
+### What worked
+- Targeted cleanup removed all remaining suggestion references in active source/docs paths.
+- Typecheck and focused tests passed after cleanup.
+
+### What didn't work
+- N/A
+
+### What I learned
+- Story fixtures are the largest lingering source of removed-prop references after runtime API changes.
+
+### What was tricky to build
+- Coordinating prop-surface changes across many story files without introducing storybook compile regressions.
+- I handled this by doing a global search and updating each hit in one cleanup pass, then validating with typecheck and tests.
+
+### What warrants a second pair of eyes
+- If any external docs outside this repo copy old suggestion prop examples, they should be updated too.
+
+### What should be done in the future
+- Keep suggestions behavior spec (`design-doc/02...`) as the source for planned reintroduction.
+
+### Code review instructions
+- Start with global cleanup files:
+  - `packages/engine/src/parts.ts`
+  - `packages/engine/src/theme/desktop/chat.css`
+  - `packages/engine/src/hypercard-chat/event-viewer/eventBus.ts`
+  - `apps/inventory/src/features/chat/stories/EventViewer.stories.tsx`
+- Then review story/doc updates listed above.
+
+### Technical details
+- Validation commands:
+  - `npm run typecheck`
+  - `npx vitest run apps/inventory/src/features/chat/chatSlice.test.ts apps/inventory/src/features/chat/runtime/projectionPipeline.test.ts apps/inventory/src/features/chat/eventBus.test.ts`

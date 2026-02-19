@@ -60,7 +60,6 @@ function ActionsDemo() {
         }}
         title="Task Manager"
         placeholder="Ask about your tasks…"
-        suggestions={['What is due today?', 'Show all tasks', 'Create a task']}
       />
     </StoryFrame>
   );
@@ -125,7 +124,6 @@ export const NarrowWidth: Story = {
         isStreaming={false}
         onSend={() => {}}
         title="Assistant"
-        suggestions={['Tasks', 'Reports', 'Help']}
       />
     </div>
   ),

@@ -113,7 +113,7 @@ ui.list({ items: Sel('allItems', 'shared'), columns: [...] })
 ui.detail({ fields: [...], record: Sel('currentItem', 'shared') })
 ui.form({ fields: [...] })
 ui.report({ sections: [...] })
-ui.chat({ messages: Sel('messages', 'shared'), suggestions: [...] })
+ui.chat({ messages: Sel('messages', 'shared') })
 ```
 
 ## 4. Built-in Actions

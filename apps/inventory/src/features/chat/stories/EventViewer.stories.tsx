@@ -84,12 +84,12 @@ export const MixedEvents: Story = {
         },
       }),
       makeEntry('tool.done', { summary: 'tool done' }),
-      makeEntry('hypercard.suggestions.v1', {
-        summary: 'suggestions',
+      makeEntry('hypercard.ready', {
+        summary: 'card ready',
         rawPayload: {
           event: {
-            type: 'hypercard.suggestions.v1',
-            data: { suggestions: ['Show low stock', 'Generate report', 'Check orders'] },
+            type: 'hypercard.ready',
+            data: { title: 'Inventory report ready' },
           },
         },
       }),
@@ -150,7 +150,6 @@ export const ColorCoded: Story = {
       makeEntry('tool.result', { summary: 'result received' }),
       makeEntry('tool.done', { summary: 'tool done' }),
       makeEntry('hypercard.ready', { summary: 'card ready' }),
-      makeEntry('hypercard.suggestions.v1', { summary: 'suggestions emitted' }),
       makeEntry('timeline.upsert', { summary: 'timeline entity upserted' }),
       makeEntry('ws.error', { summary: 'connection timeout' }),
     ],
