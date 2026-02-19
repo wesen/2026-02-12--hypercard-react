@@ -448,7 +448,7 @@ This step is intentionally a planning checkpoint commit so subsequent refactor c
 
 **Inferred user intent:** Execute the runtime refactor pragmatically in controlled, reviewable slices.
 
-**Commit (code):** Pending (recorded after staging/commit step)
+**Commit (code):** d6bb799 — "docs(HC-58): start code-phase task breakdown and diary"
 
 ### What I did
 - Confirmed HC-58 ticket/doc state and existing completed tasks.
@@ -510,7 +510,7 @@ This is the first direct cutover from analysis into runtime behavior changes and
 
 **Inferred user intent:** Convert HC-58 design decisions into concrete runtime code changes with clear incremental history.
 
-**Commit (code):** Pending (recorded after staging/commit step)
+**Commit (code):** f334644 — "refactor(HC-58): remove projectionMode gating path"
 
 ### What I did
 - Removed `TimelineProjectionMode` type and `projectionMode` prop from:
@@ -569,7 +569,7 @@ This finalizes the HC-58 “no event-drop correctness toggles” direction at th
 
 **Inferred user intent:** Keep runtime behavior deterministic and reduce API complexity by deleting optional drop paths.
 
-**Commit (code):** Pending (recorded after staging/commit step)
+**Commit (code):** 5788859 — "refactor(HC-58): remove shouldProjectEnvelope skip path"
 
 ### What I did
 - Removed `shouldProjectEnvelope` from runtime window API:
@@ -611,3 +611,56 @@ This finalizes the HC-58 “no event-drop correctness toggles” direction at th
 - Validation search:
   - `rg -n "shouldProjectEnvelope" packages/engine/src apps/inventory/src`
   - no matches.
+
+## Step 10: HC-58 Validation Pass (Typecheck + Focused Tests)
+With runtime gating paths removed, I ran a focused validation pass over touched chat runtime surfaces to confirm no type or behavior regressions in the inventory integration path.
+
+This closes the current HC-58 execution slice with verified runtime behavior and updated task bookkeeping.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 7)
+
+**Assistant interpretation:** Validate the implemented HC-58 runtime changes as a dedicated task before moving to next refactor slices.
+
+**Inferred user intent:** Keep each HC-58 phase shippable and reviewable, not just code-complete.
+
+**Commit (code):** Pending (recorded after staging/commit step)
+
+### What I did
+- Ran:
+  - `npm run typecheck`
+- Ran focused tests:
+  - `npx vitest run apps/inventory/src/features/chat/runtime/projectionPipeline.test.ts apps/inventory/src/features/chat/eventBus.test.ts apps/inventory/src/features/chat/webchatClient.test.ts`
+- Confirmed all tests passed and no type errors.
+
+### Why
+- HC-58 changes touched runtime connection/projection internals and caller-facing runtime props; this requires immediate post-change validation.
+
+### What worked
+- Typecheck passed.
+- 3 test files passed, 12 tests passed.
+
+### What didn't work
+- None in this step.
+
+### What I learned
+- The no-gating runtime path remains compatible with current inventory projection and event bus behavior.
+
+### What was tricky to build
+- Selecting a focused but sufficient validation subset.
+- I targeted tests that exercise projection pipeline ingress, event bus behavior, and websocket client ordering/replay expectations.
+
+### What warrants a second pair of eyes
+- Add engine-level runtime hook tests if we expand beyond this initial gating removal slice.
+
+### What should be done in the future
+- Continue HC-58 with the next structural cutover item (conversation-manager style shared connection ownership).
+
+### Code review instructions
+- Validate via command outputs in this step and inspect touched runtime files from Steps 8 and 9.
+
+### Technical details
+- Validation commands:
+  - `npm run typecheck`
+  - `npx vitest run apps/inventory/src/features/chat/runtime/projectionPipeline.test.ts apps/inventory/src/features/chat/eventBus.test.ts apps/inventory/src/features/chat/webchatClient.test.ts`
