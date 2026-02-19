@@ -678,7 +678,7 @@ This makes each task reviewable up front and reduces ambiguity before implementa
 
 **Inferred user intent:** Improve predictability and reviewability of upcoming HC-58 execution by naming exact target APIs/files per task.
 
-**Commit (code):** Pending (recorded after staging/commit step)
+**Commit (code):** 8080c4e — "docs(HC-58): add symbol-level execution map and task refs"
 
 ### What I did
 - Reworked `Implementation Backlog (Up Front)` in:
