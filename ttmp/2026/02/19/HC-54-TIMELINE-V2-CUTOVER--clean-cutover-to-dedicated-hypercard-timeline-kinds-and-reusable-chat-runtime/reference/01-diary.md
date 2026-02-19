@@ -19,7 +19,7 @@ RelatedFiles:
       Note: Authoritative implementation plan used during execution
 ExternalSources: []
 Summary: Execution diary for HC-54 task-by-task implementation and commit trail.
-LastUpdated: 2026-02-19T20:16:00-05:00
+LastUpdated: 2026-02-19T20:28:00-05:00
 WhatFor: Capture exact implementation steps, decisions, failures, and validations as HC-54 progresses.
 WhenToUse: Use when reviewing ongoing progress or resuming work from the last completed step.
 ---
@@ -339,3 +339,72 @@ Step 4 code had already landed in Step 2 (`ff68300`). This step completed formal
 ### Technical details
 
 1. Step 4 acceptance is satisfied by dedicated backend projection plus zero active backend legacy path matches for widget/card tool-result routing.
+
+## Step 5: Frontend mapping cutover to dedicated Hypercard kinds
+
+This step removed widget/card frontend dependency on `tool_result.customKind` and moved runtime mapping to dedicated `hypercard_widget` / `hypercard_card` entities.
+
+### Prompt Context
+
+**User prompt (verbatim):** `Go ahead and work on it, task by task, commit at appropriate intervals, update your diary as you go.`
+
+**Assistant interpretation:** Continue sequentially, close Step 5 with real code cutover and matching test updates.
+
+**Inferred user intent:** Eliminate legacy frontend projection branches and align runtime with dedicated-kind architecture.
+
+### What I did
+
+1. Reworked Hypercard SEM direct handlers in engine registry to upsert dedicated kinds:
+   - `hypercard.widget.*` -> `hypercard_widget` (`<itemId>:widget`)
+   - `hypercard.card.*` -> `hypercard_card` (`<itemId>:card`)
+2. Updated timeline projection logic to map dedicated kinds into widget/card timeline items.
+3. Removed widget/card special cases from `tool_result.customKind` timeline projection branches.
+4. Updated artifact extraction to read dedicated kinds from `timeline.upsert` entity props.
+5. Updated Inventory timeline renderer fallback to avoid widget/card-specific tool-result prefixes.
+6. Updated and re-ran affected engine + inventory tests.
+
+### Commands run
+
+1. Engine tests:
+   - `npm run test -w packages/engine`
+2. Affected inventory tests:
+   - `npx vitest run apps/inventory/src/features/chat/InventoryChatWindow.timeline.test.ts apps/inventory/src/features/chat/artifactRuntime.test.ts apps/inventory/src/features/chat/runtime/projectionPipeline.test.ts apps/inventory/src/features/chat/runtime/timelineEntityRenderer.test.ts`
+3. Full typecheck:
+   - `npm run typecheck`
+4. Legacy-branch verification:
+   - `rg -n "customKind\\s*===\\s*'hypercard\\.widget\\.v1'|customKind\\s*===\\s*'hypercard\\.card\\.v2'|tool_result.*hypercard\\.widget|tool_result.*hypercard\\.card" packages/engine/src apps/inventory/src go-inventory-chat/internal/pinoweb`
+
+### What worked
+
+1. All touched tests passed after cutover.
+2. Typecheck succeeded.
+3. Legacy widget/card custom-kind projection branches no longer exist in active engine/inventory code.
+
+### What didn't work
+
+1. No functional blockers. Existing expected plugin-runtime stderr remained during engine tests (known test behavior).
+
+### What I learned
+
+1. Dedicated kind parsing required both `formatTimelineUpsert` and `formatTimelineEntity` changes because both snapshot and in-memory entity paths are exercised in tests/runtime.
+2. Artifact extraction needed explicit handling for timeline entity `props.data` shape (artifact + card payload) rather than tool-result envelopes.
+
+### What was tricky to build
+
+1. Preserving old generic tool-result behavior while removing only Hypercard-specific custom-kind routing.
+2. Keeping timeline item IDs deterministic (`widget:<itemId>`, `card:<itemId>`) when source entities use `<itemId>:widget|card`.
+
+### What warrants a second pair of eyes
+
+1. Confirm whether Inventory should now switch to timeline-upsert-only projection ingest in a subsequent step to avoid dual-source concerns.
+2. Validate whether any downstream analytics/debug tooling depended on old status-row wording semantics.
+
+### What should be done in the future
+
+1. Move into Step 6 extraction (`git mv`) of Hypercard renderer pack files and registration entrypoint.
+2. Continue Step 7-8 runtime/generalization work to remove remaining Inventory-local orchestration code.
+
+### Technical details
+
+1. Hypercard lifecycle SEM events now normalize directly into dedicated timeline entities on the frontend registry path.
+2. Timeline projection and artifact extraction now derive widget/card data from dedicated entity props, not `tool_result.customKind`.

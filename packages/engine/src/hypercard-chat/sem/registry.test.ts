@@ -95,25 +95,27 @@ describe('SemRegistry default handlers', () => {
     }
   });
 
-  it('projects hypercard.widget.update as status and hypercard.widget.v1 as summarized result', () => {
+  it('projects hypercard.widget lifecycle events to dedicated hypercard_widget entities', () => {
     const registry = createSemRegistry({ enableTimelineUpsert: false });
 
-    const status = registry.handle(
+    const update = registry.handle(
       {
         sem: true,
         event: {
           type: 'hypercard.widget.update',
-          id: 'w-1',
-          data: { title: 'Low stock table' },
+          id: 'widget-event-1',
+          data: { itemId: 'w-1', title: 'Low stock table', widgetType: 'table' },
         },
       },
       { convId: 'c1', now: () => 2000 },
     );
 
-    expect(status.ops[0].type).toBe('upsertEntity');
-    if (status.ops[0].type === 'upsertEntity') {
-      expect(status.ops[0].entity.kind).toBe('status');
-      expect(status.ops[0].entity.props.text).toBe('Updating widget: Low stock table');
+    expect(update.ops[0].type).toBe('upsertEntity');
+    if (update.ops[0].type === 'upsertEntity') {
+      expect(update.ops[0].entity.id).toBe('w-1:widget');
+      expect(update.ops[0].entity.kind).toBe('hypercard_widget');
+      expect(update.ops[0].entity.props.phase).toBe('update');
+      expect(update.ops[0].entity.props.widgetType).toBe('table');
     }
 
     const ready = registry.handle(
@@ -121,8 +123,9 @@ describe('SemRegistry default handlers', () => {
         sem: true,
         event: {
           type: 'hypercard.widget.v1',
-          id: 'w-1',
+          id: 'widget-event-2',
           data: {
+            itemId: 'w-1',
             title: 'Low stock table',
             widgetType: 'table',
             data: { artifact: { id: 'low-stock-items', data: { rows: [] } } },
@@ -134,11 +137,13 @@ describe('SemRegistry default handlers', () => {
 
     expect(ready.ops[0].type).toBe('upsertEntity');
     if (ready.ops[0].type === 'upsertEntity') {
-      expect(ready.ops[0].entity.kind).toBe('tool_result');
-      expect(ready.ops[0].entity.props.customKind).toBe('hypercard.widget.v1');
-      expect(ready.ops[0].entity.props.resultText).toBe(
-        'Widget ready: Low stock table (table, artifact=low-stock-items)',
-      );
+      expect(ready.ops[0].entity.id).toBe('w-1:widget');
+      expect(ready.ops[0].entity.kind).toBe('hypercard_widget');
+      expect(ready.ops[0].entity.props.phase).toBe('ready');
+      expect(ready.ops[0].entity.props.title).toBe('Low stock table');
+      expect(ready.ops[0].entity.props.data).toEqual({
+        artifact: { id: 'low-stock-items', data: { rows: [] } },
+      });
     }
   });
 

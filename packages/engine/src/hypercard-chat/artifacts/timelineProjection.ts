@@ -1,6 +1,6 @@
 import type { TimelineEntity } from '../timeline/types';
 import type { TimelineItemStatus, TimelineItemUpdate } from '../types';
-import { booleanField, compactJSON, recordField, stringField, structuredRecordFromUnknown } from './semFields';
+import { booleanField, compactJSON, recordField, stringField } from './semFields';
 
 function shortText(value: string | undefined, max = 180): string | undefined {
   if (!value) {
@@ -59,10 +59,48 @@ function parseProjectedLifecycleStatus(text: string | undefined): ProjectedLifec
   );
 }
 
-function artifactIdFromStructuredResult(result: Record<string, unknown> | undefined): string | undefined {
-  const data = result ? recordField(result, 'data') : undefined;
+function artifactIdFromLifecycleData(data: Record<string, unknown> | undefined): string | undefined {
   const artifact = data ? recordField(data, 'artifact') : undefined;
   return artifact ? stringField(artifact, 'id') : undefined;
+}
+
+function lifecycleStatus(phase: string | undefined, error: string | undefined): TimelineItemStatus {
+  if (phase === 'error' || (error ?? '').trim().length > 0) {
+    return 'error';
+  }
+  if (phase === 'ready') {
+    return 'success';
+  }
+  return 'running';
+}
+
+function lifecycleDetail(
+  phase: string | undefined,
+  template: string | undefined,
+  artifactId: string | undefined,
+  error: string | undefined,
+): string | undefined {
+  if (phase === 'ready') {
+    return shortText(readyDetail(template, artifactId));
+  }
+  if (phase === 'error') {
+    return shortText(error && error.trim().length > 0 ? error : 'error');
+  }
+  if (phase === 'start') {
+    return 'started';
+  }
+  if (phase === 'update') {
+    return 'updating';
+  }
+  return undefined;
+}
+
+function itemIdFromEntityId(id: string, suffix: 'widget' | 'card'): string {
+  const marker = `:${suffix}`;
+  if (id.endsWith(marker)) {
+    return id.slice(0, -marker.length);
+  }
+  return id;
 }
 
 function readyDetail(template: string | undefined, artifactId: string | undefined): string {
@@ -134,6 +172,48 @@ export function formatTimelineUpsert(data: Record<string, unknown>): TimelineIte
     };
   }
 
+  if (kind === 'hypercard_widget') {
+    const props = recordField(entity, 'props') ?? {};
+    const itemId = stringField(props, 'itemId') ?? itemIdFromEntityId(id, 'widget');
+    const title = stringField(props, 'title') ?? 'Widget';
+    const widgetType = stringField(props, 'widgetType') ?? stringField(props, 'type') ?? stringField(props, 'template');
+    const phase = stringField(props, 'phase') ?? 'update';
+    const error = stringField(props, 'error');
+    const lifecycleData = recordField(props, 'data') ?? {};
+    const artifactId = artifactIdFromLifecycleData(lifecycleData);
+    return {
+      id: `widget:${itemId}`,
+      title,
+      status: lifecycleStatus(phase, error),
+      detail: lifecycleDetail(phase, widgetType, artifactId, error),
+      kind: 'widget',
+      template: widgetType,
+      artifactId,
+      rawData: lifecycleData,
+    };
+  }
+
+  if (kind === 'hypercard_card') {
+    const props = recordField(entity, 'props') ?? {};
+    const itemId = stringField(props, 'itemId') ?? itemIdFromEntityId(id, 'card');
+    const title = stringField(props, 'title') ?? 'Card';
+    const template = stringField(props, 'name') ?? stringField(props, 'template');
+    const phase = stringField(props, 'phase') ?? 'update';
+    const error = stringField(props, 'error');
+    const lifecycleData = recordField(props, 'data') ?? {};
+    const artifactId = artifactIdFromLifecycleData(lifecycleData);
+    return {
+      id: `card:${itemId}`,
+      title,
+      status: lifecycleStatus(phase, error),
+      detail: lifecycleDetail(phase, template, artifactId, error),
+      kind: 'card',
+      template,
+      artifactId,
+      rawData: lifecycleData,
+    };
+  }
+
   const status = recordField(entity, 'status');
   if (status && kind === 'status') {
     const text = stringField(status, 'text');
@@ -164,42 +244,7 @@ export function formatTimelineUpsert(data: Record<string, unknown>): TimelineIte
 
   const toolResult = recordField(entity, 'toolResult');
   if (toolResult && kind === 'tool_result') {
-    const customKind = stringField(toolResult, 'customKind');
     const toolCallId = stringField(toolResult, 'toolCallId') ?? id;
-    const resultRecord =
-      structuredRecordFromUnknown(toolResult.result) ?? structuredRecordFromUnknown(toolResult.resultRaw);
-
-    const resultTitle = resultRecord ? stringField(resultRecord, 'title') : undefined;
-    const resultTemplate = resultRecord ? stringField(resultRecord, 'template') : undefined;
-    const resultWidgetType = resultRecord ? stringField(resultRecord, 'type') : undefined;
-    const resultArtifactId = artifactIdFromStructuredResult(resultRecord);
-
-    if (customKind === 'hypercard.widget.v1') {
-      return {
-        id: `widget:${toolCallId}`,
-        title: resultTitle ?? 'Widget',
-        status: 'success',
-        detail: shortText(readyDetail(resultWidgetType, resultArtifactId)),
-        kind: 'widget',
-        template: resultWidgetType,
-        artifactId: resultArtifactId,
-        rawData: resultRecord ?? (entity as Record<string, unknown>),
-      };
-    }
-
-    if (customKind === 'hypercard.card.v2') {
-      return {
-        id: `card:${toolCallId}`,
-        title: resultTitle ?? 'Card',
-        status: 'success',
-        detail: shortText(readyDetail(resultTemplate, resultArtifactId)),
-        kind: 'card',
-        template: resultTemplate,
-        artifactId: resultArtifactId,
-        rawData: resultRecord ?? (entity as Record<string, unknown>),
-      };
-    }
-
     const resultText = stringField(toolResult, 'resultRaw') ?? compactJSON(toolResult.result);
     return {
       id: `tool:${toolCallId}`,
@@ -261,6 +306,16 @@ export function formatTimelineEntity(entity: TimelineEntity): TimelineItemUpdate
         id: entity.id,
         kind: entity.kind,
         toolResult,
+      },
+    });
+  }
+
+  if (entity.kind === 'hypercard_widget' || entity.kind === 'hypercard_card') {
+    return formatTimelineUpsert({
+      entity: {
+        id: entity.id,
+        kind: entity.kind,
+        props: entity.props,
       },
     });
   }

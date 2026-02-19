@@ -1,5 +1,3 @@
-import { configureStore } from '@reduxjs/toolkit';
-import { describe, expect, it } from 'vitest';
 import {
   artifactsReducer,
   createSemRegistry,
@@ -8,11 +6,10 @@ import {
   selectTimelineEntityById,
   timelineReducer,
 } from '@hypercard/engine';
+import { configureStore } from '@reduxjs/toolkit';
+import { describe, expect, it } from 'vitest';
 import { chatReducer } from '../chatSlice';
-import {
-  createChatMetaProjectionAdapter,
-  createInventoryArtifactProjectionAdapter,
-} from './projectionAdapters';
+import { createChatMetaProjectionAdapter, createInventoryArtifactProjectionAdapter } from './projectionAdapters';
 
 function createProjectionTestStore() {
   return configureStore({
@@ -112,21 +109,20 @@ describe('projection pipeline adapters', () => {
         version: '42',
         entities: [
           {
-            id: 'tool-1:result',
-            kind: 'tool_result',
+            id: 'card-low-stock:card',
+            kind: 'hypercard_card',
             createdAtMs: '100',
             updatedAtMs: '120',
-            toolResult: {
-              toolCallId: 'tool-1',
-              customKind: 'hypercard.card.v2',
-              result: {
+            props: {
+              itemId: 'card-low-stock',
+              title: 'Low Stock Card',
+              name: 'reportViewer',
+              phase: 'ready',
+              data: {
                 title: 'Low Stock Card',
-                template: 'reportViewer',
-                data: {
-                  artifact: {
-                    id: 'artifact-low-stock',
-                    data: { low: ['SKU-1', 'SKU-2'] },
-                  },
+                artifact: {
+                  id: 'artifact-low-stock',
+                  data: { low: ['SKU-1', 'SKU-2'] },
                 },
                 card: {
                   id: 'runtime.low.stock.card',
@@ -140,8 +136,8 @@ describe('projection pipeline adapters', () => {
     });
 
     const state = store.getState();
-    const entity = selectTimelineEntityById(state, convId, 'tool-1:result');
-    expect(entity?.kind).toBe('tool_result');
+    const entity = selectTimelineEntityById(state, convId, 'card-low-stock:card');
+    expect(entity?.kind).toBe('hypercard_card');
     expect(entity?.version).toBe('42');
 
     const artifact = state.artifacts.byId['artifact-low-stock'];

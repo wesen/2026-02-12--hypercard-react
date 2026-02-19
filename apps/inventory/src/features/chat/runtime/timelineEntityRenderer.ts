@@ -173,14 +173,7 @@ export function mapTimelineEntityToMessage(entity: TimelineEntity): ChatWindowMe
         : (shortText(
             typeof entity.props.result === 'string' ? entity.props.result : JSON.stringify(entity.props.result ?? {}),
           ) ?? '');
-    const prefix =
-      customKind === 'hypercard.widget.v1'
-        ? 'Widget'
-        : customKind === 'hypercard.card.v2'
-          ? 'Card'
-          : customKind
-            ? `Result (${customKind})`
-            : 'Result';
+    const prefix = customKind ? `Result (${customKind})` : 'Result';
     return {
       id: entity.id,
       role: 'system',

@@ -1,8 +1,5 @@
+import { buildArtifactOpenWindowPayload, extractArtifactUpsertFromSem } from '@hypercard/engine';
 import { describe, expect, it } from 'vitest';
-import {
-  buildArtifactOpenWindowPayload,
-  extractArtifactUpsertFromSem,
-} from '@hypercard/engine';
 
 describe('artifactRuntime', () => {
   it('builds deduped open-window payload with artifact param', () => {
@@ -65,20 +62,17 @@ describe('artifactRuntime', () => {
     });
   });
 
-  it('extracts artifact upsert from projected timeline tool_result with v2 customKind', () => {
+  it('extracts artifact upsert from projected timeline hypercard_card entity', () => {
     const projected = extractArtifactUpsertFromSem('timeline.upsert', {
       entity: {
-        kind: 'tool_result',
-        toolResult: {
-          customKind: 'hypercard.card.v2',
-          result: {
-            title: 'Low Stock Drilldown',
-            template: 'reportViewer',
-            data: {
-              artifact: {
-                id: 'low-stock-drilldown',
-                data: { threshold: 5 },
-              },
+        kind: 'hypercard_card',
+        props: {
+          title: 'Low Stock Drilldown',
+          name: 'reportViewer',
+          data: {
+            artifact: {
+              id: 'low-stock-drilldown',
+              data: { threshold: 5 },
             },
           },
         },

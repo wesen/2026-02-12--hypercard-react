@@ -16,7 +16,7 @@
   - update `go-inventory-chat/internal/pinoweb/hypercard_events.go` to upsert `hypercard_widget|hypercard_card`
   - stop emitting widget/card final payloads through `tool_result` + `customKind`
   - delete legacy backend code paths/constants/tests that assert `customKind` widget/card projection
-- [ ] 5) Cut over frontend timeline mapping to dedicated kinds:
+- [x] 5) Cut over frontend timeline mapping to dedicated kinds:
   - update Hypercard engine SEM/timeline mapping to ingest dedicated kinds from canonical `timeline.upsert`
   - remove `tool_result.customKind` widget/card mapping branches and related fallback logic
   - update/remove legacy tests tied to tool_result-based widget/card rendering
@@ -43,3 +43,4 @@
 - [x] Step 2 backend protobuf extraction landed with generated bindings and decode/props tests
 - [x] Step 3 frontend registry seams landed (timeline kind normalizers + inline widget renderer registry + explicit inventory bootstrap)
 - [x] Step 4 backend projection hard-cut verified complete (dedicated kinds only, no widget/card tool_result/customKind paths)
+- [x] Step 5 frontend mapping cut over to dedicated kinds with legacy widget/card customKind branches removed

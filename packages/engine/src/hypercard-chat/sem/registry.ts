@@ -1,10 +1,5 @@
 import type { Dispatch, UnknownAction } from '@reduxjs/toolkit';
-import {
-  addEntity,
-  clearConversation,
-  rekeyEntity,
-  upsertEntity,
-} from '../timeline/timelineSlice';
+import { addEntity, clearConversation, rekeyEntity, upsertEntity } from '../timeline/timelineSlice';
 import type { TimelineEntity } from '../timeline/types';
 import { mapTimelineEntityFromUpsert } from './timelineMapper';
 import type {
@@ -30,16 +25,13 @@ function stringField(record: Record<string, unknown>, key: string): string | und
   return typeof value === 'string' && value.trim() ? value : undefined;
 }
 
-function recordField(
-  record: Record<string, unknown>,
-  key: string,
-): Record<string, unknown> | undefined {
+function recordField(record: Record<string, unknown>, key: string): Record<string, unknown> | undefined {
   const value = record[key];
   return isRecord(value) ? value : undefined;
 }
 
 function eventId(event: SemEvent | undefined, fallbackPrefix: string): string {
-  if (event?.id && event.id.trim()) return event.id;
+  if (event?.id?.trim()) return event.id;
   return `${fallbackPrefix}-${Date.now()}`;
 }
 
@@ -190,10 +182,7 @@ function toolResultHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerRe
     props: {
       customKind,
       result: data.result,
-      resultText:
-        typeof data.result === 'string'
-          ? data.result
-          : JSON.stringify(data.result ?? {}),
+      resultText: typeof data.result === 'string' ? data.result : JSON.stringify(data.result ?? {}),
     },
   });
 }
@@ -236,137 +225,57 @@ function wsErrorHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResul
   });
 }
 
-function artifactIdFromStructuredData(
-  data: Record<string, unknown>,
-): string | undefined {
-  const payload = recordField(data, 'data');
-  const artifact = payload ? recordField(payload, 'artifact') : undefined;
-  return artifact ? stringField(artifact, 'id') : undefined;
+function lifecyclePhase(type: string | undefined): string {
+  if (!type) return 'update';
+  if (type.endsWith('.start')) return 'start';
+  if (type.endsWith('.update')) return 'update';
+  if (type.endsWith('.error')) return 'error';
+  if (type.endsWith('.v1') || type.endsWith('.v2')) return 'ready';
+  return 'update';
 }
 
-function widgetStatusHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResult {
-  const type = envelope.event?.type ?? 'hypercard.widget.update';
+function lifecycleData(record: Record<string, unknown>): Record<string, unknown> {
+  return recordField(record, 'data') ?? {};
+}
+
+function widgetLifecycleHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResult {
+  const type = envelope.event?.type;
   const data = asRecord(envelope.event?.data);
-  const title = stringField(data, 'title') ?? 'Widget';
-  const detail = type.endsWith('.start')
-    ? `Building widget: ${title}`
-    : `Updating widget: ${title}`;
+  const itemId = stringField(data, 'itemId') ?? eventId(envelope.event, 'hypercard-widget');
   return upsert({
-    id: `${eventId(envelope.event, 'hypercard-widget')}:status`,
-    kind: 'status',
+    id: `${itemId}:widget`,
+    kind: 'hypercard_widget',
     createdAt: ctx.now(),
     updatedAt: ctx.now(),
     props: {
-      type: 'info',
-      text: detail,
+      schemaVersion: 1,
+      itemId,
+      title: stringField(data, 'title') ?? 'Widget',
+      widgetType: stringField(data, 'widgetType') ?? stringField(data, 'type') ?? 'widget',
+      phase: lifecyclePhase(type),
+      error: stringField(data, 'error') ?? stringField(data, 'message') ?? '',
+      data: lifecycleData(data),
     },
   });
 }
 
-function widgetErrorHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResult {
+function cardLifecycleHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResult {
+  const type = envelope.event?.type;
   const data = asRecord(envelope.event?.data);
-  const title = stringField(data, 'title') ?? 'Widget';
-  const errorText =
-    stringField(data, 'error') ??
-    stringField(data, 'message') ??
-    `Widget failed: ${title}`;
+  const itemId = stringField(data, 'itemId') ?? eventId(envelope.event, 'hypercard-card');
   return upsert({
-    id: `${eventId(envelope.event, 'hypercard-widget')}:status`,
-    kind: 'status',
+    id: `${itemId}:card`,
+    kind: 'hypercard_card',
     createdAt: ctx.now(),
     updatedAt: ctx.now(),
     props: {
-      type: 'error',
-      text: errorText,
-    },
-  });
-}
-
-function widgetV1ResultHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResult {
-  const data = asRecord(envelope.event?.data);
-  const title = stringField(data, 'title') ?? 'Widget';
-  const widgetType =
-    stringField(data, 'widgetType') ??
-    stringField(data, 'type') ??
-    'widget';
-  const artifactId = artifactIdFromStructuredData(data);
-  const detail = artifactId
-    ? `Widget ready: ${title} (${widgetType}, artifact=${artifactId})`
-    : `Widget ready: ${title} (${widgetType})`;
-  return upsert({
-    id: `${eventId(envelope.event, 'hypercard-widget')}:result`,
-    kind: 'tool_result',
-    createdAt: ctx.now(),
-    updatedAt: ctx.now(),
-    props: {
-      customKind: 'hypercard.widget.v1',
-      result: data,
-      resultText: detail,
-      title,
-      widgetType,
-      artifactId,
-    },
-  });
-}
-
-function cardStatusHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResult {
-  const type = envelope.event?.type ?? 'hypercard.card.update';
-  const data = asRecord(envelope.event?.data);
-  const title = stringField(data, 'title') ?? 'Card';
-  const detail = type.endsWith('.start')
-    ? `Building card proposal: ${title}`
-    : `Updating card proposal: ${title}`;
-  return upsert({
-    id: `${eventId(envelope.event, 'hypercard-card')}:status`,
-    kind: 'status',
-    createdAt: ctx.now(),
-    updatedAt: ctx.now(),
-    props: {
-      type: 'info',
-      text: detail,
-    },
-  });
-}
-
-function cardErrorHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResult {
-  const data = asRecord(envelope.event?.data);
-  const title = stringField(data, 'title') ?? 'Card';
-  const errorText =
-    stringField(data, 'error') ??
-    stringField(data, 'message') ??
-    `Card failed: ${title}`;
-  return upsert({
-    id: `${eventId(envelope.event, 'hypercard-card')}:status`,
-    kind: 'status',
-    createdAt: ctx.now(),
-    updatedAt: ctx.now(),
-    props: {
-      type: 'error',
-      text: errorText,
-    },
-  });
-}
-
-function cardV2ResultHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResult {
-  const data = asRecord(envelope.event?.data);
-  const title = stringField(data, 'title') ?? 'Card';
-  const template = stringField(data, 'template') ?? 'card';
-  const artifactId = artifactIdFromStructuredData(data);
-  const detail = artifactId
-    ? `Card ready: ${title} (template=${template}, artifact=${artifactId})`
-    : `Card ready: ${title} (template=${template})`;
-  return upsert({
-    id: `${eventId(envelope.event, 'hypercard-card')}:result`,
-    kind: 'tool_result',
-    createdAt: ctx.now(),
-    updatedAt: ctx.now(),
-    props: {
-      customKind: 'hypercard.card.v2',
-      result: data,
-      resultText: detail,
-      title,
-      template,
-      artifactId,
+      schemaVersion: 1,
+      itemId,
+      title: stringField(data, 'title') ?? 'Card',
+      name: stringField(data, 'name') ?? stringField(data, 'template') ?? '',
+      phase: lifecyclePhase(type),
+      error: stringField(data, 'error') ?? stringField(data, 'message') ?? '',
+      data: lifecycleData(data),
     },
   });
 }
@@ -375,10 +284,7 @@ export interface SemRegistryOptions {
   enableTimelineUpsert?: boolean;
 }
 
-export function registerDefaultSemHandlers(
-  registry: SemRegistry,
-  options: SemRegistryOptions = {},
-): void {
+export function registerDefaultSemHandlers(registry: SemRegistry, options: SemRegistryOptions = {}): void {
   registry.clear();
   if (options.enableTimelineUpsert !== false) {
     registry.register('timeline.upsert', timelineUpsertHandler);
@@ -398,15 +304,15 @@ export function registerDefaultSemHandlers(
   registry.register('tool.result', toolResultHandler);
   registry.register('tool.done', toolDoneHandler);
 
-  registry.register('hypercard.widget.start', widgetStatusHandler);
-  registry.register('hypercard.widget.update', widgetStatusHandler);
-  registry.register('hypercard.widget.error', widgetErrorHandler);
-  registry.register('hypercard.widget.v1', widgetV1ResultHandler);
+  registry.register('hypercard.widget.start', widgetLifecycleHandler);
+  registry.register('hypercard.widget.update', widgetLifecycleHandler);
+  registry.register('hypercard.widget.error', widgetLifecycleHandler);
+  registry.register('hypercard.widget.v1', widgetLifecycleHandler);
 
-  registry.register('hypercard.card.start', cardStatusHandler);
-  registry.register('hypercard.card.update', cardStatusHandler);
-  registry.register('hypercard.card.error', cardErrorHandler);
-  registry.register('hypercard.card.v2', cardV2ResultHandler);
+  registry.register('hypercard.card.start', cardLifecycleHandler);
+  registry.register('hypercard.card.update', cardLifecycleHandler);
+  registry.register('hypercard.card.error', cardLifecycleHandler);
+  registry.register('hypercard.card.v2', cardLifecycleHandler);
 
   registry.register('log', logHandler);
   registry.register('ws.error', wsErrorHandler);
@@ -418,11 +324,7 @@ export function createSemRegistry(options: SemRegistryOptions = {}): SemRegistry
   return registry;
 }
 
-export function applySemTimelineOps(
-  dispatch: Dispatch<UnknownAction>,
-  convId: string,
-  ops: SemTimelineOp[],
-): void {
+export function applySemTimelineOps(dispatch: Dispatch<UnknownAction>, convId: string, ops: SemTimelineOp[]): void {
   for (const op of ops) {
     if (op.type === 'addEntity') {
       dispatch(addEntity({ convId, entity: op.entity }));
@@ -440,10 +342,7 @@ export function applySemTimelineOps(
   }
 }
 
-export function mergeEffects(
-  primary: RuntimeEffect[],
-  secondary: RuntimeEffect[],
-): RuntimeEffect[] {
+export function mergeEffects(primary: RuntimeEffect[], secondary: RuntimeEffect[]): RuntimeEffect[] {
   if (primary.length === 0) return secondary;
   if (secondary.length === 0) return primary;
   return [...primary, ...secondary];

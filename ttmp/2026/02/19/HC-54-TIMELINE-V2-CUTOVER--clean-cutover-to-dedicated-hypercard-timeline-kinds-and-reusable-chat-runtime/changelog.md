@@ -71,3 +71,18 @@ Marked HC-54 Step 4 complete after backend hard-cut verification confirmed widge
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/internal/pinoweb/hypercard_events.go — Dedicated `hypercard_widget|hypercard_card` projection handlers
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/internal/pinoweb/hypercard_events_timeline_test.go — Snapshot coverage proving dedicated kind projection behavior
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/go-inventory-chat/internal/pinoweb/hypercard_payload_proto.go — Protobuf extraction helpers used by projection handlers
+
+## 2026-02-19
+
+Completed HC-54 Step 5 by cutting frontend projection/render mapping over to dedicated Hypercard kinds and removing widget/card legacy custom-kind routing through `tool_result`.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/sem/registry.ts — Hypercard SEM direct handlers now upsert `hypercard_widget` / `hypercard_card` entities
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/artifacts/timelineProjection.ts — Dedicated kind timeline item projection; widget/card customKind branches removed
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/artifacts/artifactRuntime.ts — Artifact extraction updated for timeline `hypercard_widget` / `hypercard_card` entities
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/runtime/timelineEntityRenderer.ts — Message fallback no longer treats widget/card as special tool-result custom kinds
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/runtime/projectionPipeline.test.ts — Snapshot hydration test updated to dedicated card kind
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/InventoryChatWindow.timeline.test.ts — Timeline projection tests updated to dedicated widget/card kinds
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/runtime/timelineEntityRenderer.test.ts — Renderer tests updated to dedicated kind fixtures
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/artifactRuntime.test.ts — Artifact extraction tests updated for dedicated timeline kinds
