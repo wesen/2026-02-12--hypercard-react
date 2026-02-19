@@ -22,10 +22,10 @@ const (
 	eventTypeHypercardSuggestionsUpdate events.EventType = "hypercard.suggestions.update"
 	eventTypeHypercardSuggestionsV1     events.EventType = "hypercard.suggestions.v1"
 	eventTypeHypercardSuggestionsError  events.EventType = "hypercard.suggestions.error"
-	eventTypeHypercardCardStart      events.EventType = "hypercard.card.start"
-	eventTypeHypercardCardUpdate     events.EventType = "hypercard.card.update"
-	eventTypeHypercardCardV2         events.EventType = "hypercard.card.v2"
-	eventTypeHypercardCardError      events.EventType = "hypercard.card.error"
+	eventTypeHypercardCardStart         events.EventType = "hypercard.card.start"
+	eventTypeHypercardCardUpdate        events.EventType = "hypercard.card.update"
+	eventTypeHypercardCardV2            events.EventType = "hypercard.card.v2"
+	eventTypeHypercardCardError         events.EventType = "hypercard.card.error"
 	hypercardPolicyMiddlewareName                        = "inventory_artifact_policy"
 	hypercardGeneratorMiddlewareName                     = "inventory_artifact_generator"
 	hypercardSuggestionsMiddlewareName                   = "inventory_suggestions_policy"
@@ -296,103 +296,59 @@ func registerHypercardSEMMappings() {
 }
 
 func registerHypercardTimelineHandlers() {
-	registerStatus := func(eventType string, statusType string, textFn func(map[string]any) string) {
+	registerWidgetLifecycle := func(eventType string, phase string) {
 		webchat.RegisterTimelineHandler(eventType, func(ctx context.Context, p *webchat.TimelineProjector, ev webchat.TimelineSemEvent, _ int64) error {
-			data := parseTimelineData(ev.Data)
-			entityID := ev.ID + ":status"
-			return p.Upsert(ctx, ev.Seq, &timelinepb.TimelineEntityV1{
-				Id:   entityID,
-				Kind: "status",
-				Snapshot: &timelinepb.TimelineEntityV1_Status{
-					Status: &timelinepb.StatusSnapshotV1{
-						SchemaVersion: 1,
-						Type:          statusType,
-						Text:          textFn(data),
-					},
-				},
-			})
-		})
-	}
-
-	registerStatus("hypercard.widget.start", "info", func(data map[string]any) string {
-		title := stringFromMap(data, "title")
-		if title == "" {
-			return "Building widget..."
-		}
-		return "Building widget: " + title
-	})
-	registerStatus("hypercard.widget.update", "info", func(data map[string]any) string {
-		title := stringFromMap(data, "title")
-		if title == "" {
-			return "Updating widget..."
-		}
-		return "Updating widget: " + title
-	})
-	registerStatus("hypercard.widget.error", "error", func(data map[string]any) string {
-		msg := stringFromMap(data, "error")
-		if msg == "" {
-			msg = "Widget generation failed"
-		}
-		return msg
-	})
-	registerStatus("hypercard.card.start", "info", func(data map[string]any) string {
-		title := stringFromMap(data, "title")
-		if title == "" {
-			return "Building card proposal..."
-		}
-		return "Building card proposal: " + title
-	})
-	registerStatus("hypercard.card.update", "info", func(data map[string]any) string {
-		title := stringFromMap(data, "title")
-		if title == "" {
-			return "Updating card proposal..."
-		}
-		return "Updating card proposal: " + title
-	})
-	registerStatus("hypercard.card.error", "error", func(data map[string]any) string {
-		msg := stringFromMap(data, "error")
-		if msg == "" {
-			msg = "Card proposal generation failed"
-		}
-		return msg
-	})
-
-	registerResult := func(eventType string, customKind string) {
-		webchat.RegisterTimelineHandler(eventType, func(ctx context.Context, p *webchat.TimelineProjector, ev webchat.TimelineSemEvent, _ int64) error {
-			data := parseTimelineData(ev.Data)
-			resultStruct, err := structpb.NewStruct(data)
+			pb, err := decodeWidgetLifecyclePayload(ev.Data, ev.ID, phase)
 			if err != nil {
-				resultStruct, _ = structpb.NewStruct(map[string]any{"raw": string(ev.Data)})
+				return nil
 			}
-			return p.Upsert(ctx, ev.Seq, &timelinepb.TimelineEntityV1{
-				Id:   ev.ID + ":result",
-				Kind: "tool_result",
-				Snapshot: &timelinepb.TimelineEntityV1_ToolResult{
-					ToolResult: &timelinepb.ToolResultSnapshotV1{
-						SchemaVersion: 1,
-						ToolCallId:    ev.ID,
-						Result:        resultStruct,
-						ResultRaw:     string(ev.Data),
-						CustomKind:    customKind,
-					},
-				},
-			})
+			props := propsFromWidgetLifecycle(pb)
+			itemID := strings.TrimSpace(pb.GetItemId())
+			if itemID == "" {
+				itemID = strings.TrimSpace(ev.ID)
+				props["itemId"] = itemID
+			}
+			return p.Upsert(ctx, ev.Seq, timelineEntityV2FromMap(itemID+":widget", "hypercard_widget", props))
 		})
 	}
 
-	registerResult("hypercard.widget.v1", "hypercard.widget.v1")
-	registerResult("hypercard.card.v2", "hypercard.card.v2")
+	registerCardLifecycle := func(eventType string, phase string) {
+		webchat.RegisterTimelineHandler(eventType, func(ctx context.Context, p *webchat.TimelineProjector, ev webchat.TimelineSemEvent, _ int64) error {
+			pb, err := decodeCardLifecyclePayload(ev.Data, ev.ID, phase)
+			if err != nil {
+				return nil
+			}
+			props := propsFromCardLifecycle(pb)
+			itemID := strings.TrimSpace(pb.GetItemId())
+			if itemID == "" {
+				itemID = strings.TrimSpace(ev.ID)
+				props["itemId"] = itemID
+			}
+			return p.Upsert(ctx, ev.Seq, timelineEntityV2FromMap(itemID+":card", "hypercard_card", props))
+		})
+	}
+
+	registerWidgetLifecycle("hypercard.widget.start", "start")
+	registerWidgetLifecycle("hypercard.widget.update", "update")
+	registerWidgetLifecycle("hypercard.widget.v1", "ready")
+	registerWidgetLifecycle("hypercard.widget.error", "error")
+
+	registerCardLifecycle("hypercard.card.start", "start")
+	registerCardLifecycle("hypercard.card.update", "update")
+	registerCardLifecycle("hypercard.card.v2", "ready")
+	registerCardLifecycle("hypercard.card.error", "error")
 }
 
-func parseTimelineData(raw json.RawMessage) map[string]any {
-	var data map[string]any
-	if len(raw) > 0 {
-		_ = json.Unmarshal(raw, &data)
+func timelineEntityV2FromMap(id, kind string, props map[string]any) *timelinepb.TimelineEntityV2 {
+	st, err := structpb.NewStruct(props)
+	if err != nil {
+		st = &structpb.Struct{Fields: map[string]*structpb.Value{}}
 	}
-	if data == nil {
-		data = map[string]any{}
+	return &timelinepb.TimelineEntityV2{
+		Id:    strings.TrimSpace(id),
+		Kind:  strings.TrimSpace(kind),
+		Props: st,
 	}
-	return data
 }
 
 func semFrame(eventType, id string, data map[string]any) ([]byte, error) {
@@ -407,19 +363,4 @@ func semFrame(eventType, id string, data map[string]any) ([]byte, error) {
 			"data": data,
 		},
 	})
-}
-
-func stringFromMap(m map[string]any, key string) string {
-	if m == nil {
-		return ""
-	}
-	v, ok := m[key]
-	if !ok {
-		return ""
-	}
-	s, ok := v.(string)
-	if !ok {
-		return ""
-	}
-	return strings.TrimSpace(s)
 }

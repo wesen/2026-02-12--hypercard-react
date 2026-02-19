@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package sem.hypercard;
+
+option go_package = "github.com/go-go-golems/hypercard-inventory-chat/internal/pinoweb/pb/sem/hypercard;hypercardpb";
+
+import "google/protobuf/struct.proto";
+
+message CardLifecycleV1 {
+  string item_id = 1;
+  string title = 2;
+  string name = 3;
+  string phase = 4;
+  string error = 5;
+  google.protobuf.Struct data = 6;
+}

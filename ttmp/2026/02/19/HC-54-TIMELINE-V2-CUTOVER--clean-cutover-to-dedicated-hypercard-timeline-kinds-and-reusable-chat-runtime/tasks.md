@@ -5,7 +5,7 @@
 - [x] 1) Freeze dedicated TimelineEntityV2 contract for Hypercard kinds (`hypercard_widget`, `hypercard_card`) and deterministic IDs (`<itemId>:widget`, `<itemId>:card`):
   - define canonical required props fields and lifecycle phases in docs + code comments
   - remove/ban legacy contract references for widget/card routing (`tool_result.customKind`, oneof-era assumptions) from active HC-54 docs
-- [ ] 2) Add protobuf extraction layer for Hypercard SEM event payloads in backend:
+- [x] 2) Add protobuf extraction layer for Hypercard SEM event payloads in backend:
   - add app-owned protobuf messages and generated Go bindings for widget/card lifecycle payload extraction
   - switch translator/projector decode helpers to protobuf extraction (`protojson`) instead of ad-hoc map decoding
   - remove legacy map-decoding helpers once protobuf extraction is wired and tested
@@ -40,3 +40,4 @@
 
 - [x] Create ticket workspace for clean TimelineEntityV2 cutover and populate 1-9 execution task plan
 - [x] Start implementation diary and complete Step 1 contract freeze + no-legacy baseline
+- [x] Step 2 backend protobuf extraction landed with generated bindings and decode/props tests
