@@ -46,12 +46,37 @@ export function useProjectedChatConnection({
   shouldProjectEnvelope,
 }: UseProjectedChatConnectionInput): void {
   const clientRef = useRef<ProjectedChatClient | null>(null);
+  const callbacksRef = useRef<{
+    adapters: ProjectionPipelineAdapter[];
+    onRawEnvelope?: (envelope: SemEnvelope) => void;
+    onStatus?: (status: string) => void;
+    onError?: (error: string) => void;
+    shouldProjectEnvelope?: (envelope: SemEnvelope) => boolean;
+  }>({
+    adapters,
+    onRawEnvelope,
+    onStatus,
+    onError,
+    shouldProjectEnvelope,
+  });
+
+  // Keep the latest callbacks without forcing socket teardown/reconnect
+  // on every render when handler identities change.
+  callbacksRef.current = {
+    adapters,
+    onRawEnvelope,
+    onStatus,
+    onError,
+    shouldProjectEnvelope,
+  };
 
   useEffect(() => {
     const client = createClient({
-      onRawEnvelope,
+      onRawEnvelope: (envelope) => {
+        callbacksRef.current.onRawEnvelope?.(envelope);
+      },
       onEnvelope: (envelope) => {
-        if (shouldProjectEnvelope && !shouldProjectEnvelope(envelope)) {
+        if (callbacksRef.current.shouldProjectEnvelope?.(envelope) === false) {
           return;
         }
         projectSemEnvelope({
@@ -59,11 +84,15 @@ export function useProjectedChatConnection({
           dispatch,
           semRegistry,
           envelope,
-          adapters,
+          adapters: callbacksRef.current.adapters,
         });
       },
-      onStatus,
-      onError,
+      onStatus: (status) => {
+        callbacksRef.current.onStatus?.(status);
+      },
+      onError: (error) => {
+        callbacksRef.current.onError?.(error);
+      },
     });
     clientRef.current = client;
     client.connect();
@@ -75,14 +104,9 @@ export function useProjectedChatConnection({
       }
     };
   }, [
-    adapters,
     conversationId,
     createClient,
     dispatch,
-    onError,
-    onRawEnvelope,
-    onStatus,
     semRegistry,
-    shouldProjectEnvelope,
   ]);
 }
