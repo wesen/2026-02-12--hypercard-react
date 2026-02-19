@@ -321,7 +321,7 @@ This step tightened the architecture policy from "phased compatibility" to "hard
 
 **Inferred user intent:** Avoid diluted migration plans and force a single clear architecture target.
 
-**Commit (code):** pending
+**Commit (code):** 56184a7 — "docs(HC-58): enforce hard-cut timeline-view architecture"
 
 ### What I did
 - Updated design doc sections to enforce hard cutover:
