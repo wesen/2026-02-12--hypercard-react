@@ -2,7 +2,7 @@ import type { Dispatch, UnknownAction } from '@reduxjs/toolkit';
 import { useEffect, useRef } from 'react';
 import type { SemRegistry } from '../sem/registry';
 import type { SemEnvelope } from '../sem/types';
-import { type ProjectionPipelineAdapter, projectSemEnvelope } from './projectionPipeline';
+import { type ProjectionPipelineAdapter, projectSemEnvelope, runProjectionAdapters } from './projectionPipeline';
 
 export interface ProjectedChatConnectionStatus {
   status: string;
@@ -77,6 +77,13 @@ export function useProjectedChatConnection({
       },
       onEnvelope: (envelope) => {
         if (callbacksRef.current.shouldProjectEnvelope?.(envelope) === false) {
+          runProjectionAdapters({
+            conversationId,
+            dispatch,
+            envelope,
+            projected: { ops: [], effects: [] },
+            adapters: callbacksRef.current.adapters,
+          });
           return;
         }
         projectSemEnvelope({

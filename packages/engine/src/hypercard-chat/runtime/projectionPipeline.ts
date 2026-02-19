@@ -41,6 +41,33 @@ export interface HydrateTimelineSnapshotInput {
   now?: () => number;
 }
 
+export interface RunProjectionAdaptersInput {
+  conversationId: string;
+  dispatch: Dispatch<UnknownAction>;
+  envelope: SemEnvelope;
+  projected: SemHandlerResult;
+  adapters?: ProjectionPipelineAdapter[];
+}
+
+export function runProjectionAdapters(input: RunProjectionAdaptersInput): void {
+  const {
+    conversationId,
+    dispatch,
+    envelope,
+    projected,
+    adapters = [],
+  } = input;
+
+  for (const adapter of adapters) {
+    adapter.onEnvelope?.({
+      conversationId,
+      dispatch,
+      envelope,
+      projected,
+    });
+  }
+}
+
 export function projectSemEnvelope(
   input: ProjectSemEnvelopeInput,
 ): SemHandlerResult {
@@ -59,14 +86,13 @@ export function projectSemEnvelope(
   });
   applySemTimelineOps(dispatch, conversationId, projected.ops);
 
-  for (const adapter of adapters) {
-    adapter.onEnvelope?.({
-      conversationId,
-      dispatch,
-      envelope,
-      projected,
-    });
-  }
+  runProjectionAdapters({
+    conversationId,
+    dispatch,
+    envelope,
+    projected,
+    adapters,
+  });
 
   return projected;
 }

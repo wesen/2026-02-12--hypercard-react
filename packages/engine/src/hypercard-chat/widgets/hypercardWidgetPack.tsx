@@ -1,7 +1,11 @@
 import type { TimelineWidgetItem } from '../types';
 import { HypercardCardPanelWidget, HypercardGeneratedWidgetPanel } from './HypercardArtifactPanels';
 import { HypercardTimelineWidget, timelineItemsFromInlineWidget } from './HypercardTimelinePanel';
-import { type InlineWidgetRenderContext, registerInlineWidgetRenderer } from './inlineWidgetRegistry';
+import {
+  type InlineWidgetRenderContext,
+  registerInlineWidgetRenderer,
+  unregisterInlineWidgetRenderer,
+} from './inlineWidgetRegistry';
 
 export interface HypercardWidgetPackRenderContext extends InlineWidgetRenderContext {
   debug?: boolean;
@@ -12,6 +16,13 @@ export interface HypercardWidgetPackRenderContext extends InlineWidgetRenderCont
 export interface RegisterHypercardWidgetPackOptions {
   namespace?: string;
 }
+
+export interface HypercardWidgetPackRegistration {
+  namespace: string;
+  unregister: () => void;
+}
+
+const registrationCounts = new Map<string, number>();
 
 function asItemHandler(value: unknown): ((item: TimelineWidgetItem) => void) | undefined {
   return typeof value === 'function' ? (value as (item: TimelineWidgetItem) => void) : undefined;
@@ -26,9 +37,7 @@ function normalizeNamespace(namespace: string | undefined): string {
   return key.length > 0 ? key : 'hypercard';
 }
 
-export function registerHypercardWidgetPack(options: RegisterHypercardWidgetPackOptions = {}): void {
-  const namespace = normalizeNamespace(options.namespace);
-
+function registerRenderersForNamespace(namespace: string): void {
   registerInlineWidgetRenderer(`${namespace}.cards`, (widget, context) => {
     const items = timelineItemsFromInlineWidget(widget);
     const ctx = asContext(context);
@@ -59,4 +68,48 @@ export function registerHypercardWidgetPack(options: RegisterHypercardWidgetPack
     const ctx = asContext(context);
     return <HypercardTimelineWidget items={items} debug={ctx.debug === true} />;
   });
+}
+
+function unregisterRenderersForNamespace(namespace: string): void {
+  unregisterInlineWidgetRenderer(`${namespace}.cards`);
+  unregisterInlineWidgetRenderer(`${namespace}.widgets`);
+  unregisterInlineWidgetRenderer(`${namespace}.timeline`);
+}
+
+export function unregisterHypercardWidgetPack(options: RegisterHypercardWidgetPackOptions = {}): void {
+  const namespace = normalizeNamespace(options.namespace);
+  unregisterRenderersForNamespace(namespace);
+  registrationCounts.delete(namespace);
+}
+
+export function registerHypercardWidgetPack(
+  options: RegisterHypercardWidgetPackOptions = {},
+): HypercardWidgetPackRegistration {
+  const namespace = normalizeNamespace(options.namespace);
+  const count = registrationCounts.get(namespace) ?? 0;
+
+  if (count === 0) {
+    registerRenderersForNamespace(namespace);
+  }
+  registrationCounts.set(namespace, count + 1);
+
+  let unregistered = false;
+  return {
+    namespace,
+    unregister: () => {
+      if (unregistered) {
+        return;
+      }
+      unregistered = true;
+
+      const currentCount = registrationCounts.get(namespace) ?? 0;
+      if (currentCount <= 1) {
+        unregisterRenderersForNamespace(namespace);
+        registrationCounts.delete(namespace);
+        return;
+      }
+
+      registrationCounts.set(namespace, currentCount - 1);
+    },
+  };
 }

@@ -7,6 +7,7 @@ export * from './event-viewer/EventViewerWindow';
 export * from './event-viewer/eventBus';
 export * from './runtime/projectionPipeline';
 export * from './runtime/TimelineChatWindow';
+export * from './runtime/timelineChatRuntime';
 export * from './runtime/timelineDisplayMessages';
 export * from './runtime/useProjectedChatConnection';
 

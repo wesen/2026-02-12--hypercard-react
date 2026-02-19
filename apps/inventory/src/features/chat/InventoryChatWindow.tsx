@@ -2,20 +2,18 @@ import {
   buildArtifactOpenWindowPayload,
   createSemRegistry,
   emitConversationEvent,
-  type HypercardWidgetPackRenderContext,
   openRuntimeCardCodeEditor as openCodeEditor,
   type ProjectedChatClientHandlers,
   type ProjectionPipelineAdapter,
-  registerHypercardWidgetPack,
+  type SemEnvelope,
   type SemRegistry,
   selectTimelineEntities as selectTimelineEntitiesForConversation,
-  TimelineChatWindow,
+  TimelineChatRuntimeWindow,
   type TimelineWidgetItem,
-  useProjectedChatConnection,
 } from '@hypercard/engine';
 import { openWindow } from '@hypercard/engine/desktop-core';
 import type { Dispatch, UnknownAction } from '@reduxjs/toolkit';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import {
   type ChatConnectionStatus,
@@ -129,15 +127,11 @@ export function InventoryChatWindow({ conversationId }: InventoryChatWindowProps
   const streamOutputTokens = useSelector((s: ChatStateSlice) => selectStreamOutputTokens(s, conversationId));
 
   const [debugMode, setDebugMode] = useState(false);
-  const semRegistryRef = useRef<SemRegistry>(createSemRegistry({ enableTimelineUpsert: false }));
+  const semRegistryRef = useRef<SemRegistry>(createSemRegistry());
   const projectionAdaptersRef = useRef<ProjectionPipelineAdapter[]>([
     createChatMetaProjectionAdapter(),
     createInventoryArtifactProjectionAdapter(),
   ]);
-
-  useEffect(() => {
-    registerHypercardWidgetPack({ namespace: 'inventory' });
-  }, []);
 
   const createClient = useCallback(
     (handlers: ProjectedChatClientHandlers): InventoryWebChatClient => {
@@ -153,20 +147,6 @@ export function InventoryChatWindow({ conversationId }: InventoryChatWindowProps
     },
     [conversationId],
   );
-
-  useProjectedChatConnection({
-    conversationId,
-    dispatch,
-    semRegistry: semRegistryRef.current,
-    adapters: projectionAdaptersRef.current,
-    createClient,
-    onRawEnvelope: (envelope) => {
-      emitConversationEvent(conversationId, envelope);
-    },
-    onStatus: (status) => dispatch(setConnectionStatus({ conversationId, status: normalizeConnectionStatus(status) })),
-    onError: (error) => dispatch(setStreamError({ conversationId, message: error })),
-    shouldProjectEnvelope: (envelope) => envelope.event?.type !== 'timeline.upsert',
-  });
 
   const subtitle = useMemo(() => {
     return `${connectionStatus} · ${conversationId.slice(0, 8)}…`;
@@ -220,13 +200,21 @@ export function InventoryChatWindow({ conversationId }: InventoryChatWindowProps
     [dispatch, store],
   );
 
-  const widgetRenderContext = useMemo<HypercardWidgetPackRenderContext>(
+  const runtimeHostActions = useMemo(
     () => ({
-      debug: debugMode,
       onOpenArtifact: openArtifact,
       onEditCard: editCard,
+      onEmitRawEnvelope: (envelope: SemEnvelope) => {
+        emitConversationEvent(conversationId, envelope);
+      },
+      onConnectionStatus: (status: string) => {
+        dispatch(setConnectionStatus({ conversationId, status: normalizeConnectionStatus(status) }));
+      },
+      onConnectionError: (message: string) => {
+        dispatch(setStreamError({ conversationId, message }));
+      },
     }),
-    [debugMode, editCard, openArtifact],
+    [conversationId, dispatch, editCard, openArtifact],
   );
 
   const handleSend = useCallback(
@@ -266,12 +254,17 @@ export function InventoryChatWindow({ conversationId }: InventoryChatWindowProps
   }, [dispatch, conversationId]);
 
   return (
-    <TimelineChatWindow
+    <TimelineChatRuntimeWindow
+      conversationId={conversationId}
+      dispatch={dispatch}
+      semRegistry={semRegistryRef.current}
+      adapters={projectionAdaptersRef.current}
+      createClient={createClient}
+      projectionMode="timeline-upsert-only"
+      hostActions={runtimeHostActions}
       timelineEntities={timelineEntities}
-      isStreaming={isStreaming}
       onSend={handleSend}
       widgetNamespace="inventory"
-      widgetRenderContext={widgetRenderContext}
       debug={debugMode}
       title="Inventory Chat"
       subtitle={subtitle}

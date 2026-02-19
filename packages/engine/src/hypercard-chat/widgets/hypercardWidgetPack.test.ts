@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { registerHypercardWidgetPack } from './hypercardWidgetPack';
+import { registerHypercardWidgetPack, unregisterHypercardWidgetPack } from './hypercardWidgetPack';
 import {
   clearRegisteredInlineWidgetRenderers,
   renderInlineWidget,
@@ -12,14 +12,32 @@ describe('registerHypercardWidgetPack', () => {
   });
 
   it('registers timeline/cards/widgets renderers for a namespace', () => {
-    registerHypercardWidgetPack({ namespace: 'inventory' });
+    const registration = registerHypercardWidgetPack({ namespace: 'inventory' });
     expect(resolveInlineWidgetRenderer('inventory.timeline')).toBeDefined();
     expect(resolveInlineWidgetRenderer('inventory.cards')).toBeDefined();
     expect(resolveInlineWidgetRenderer('inventory.widgets')).toBeDefined();
+    registration.unregister();
+  });
+
+  it('keeps renderers active until the final registration is unregistered', () => {
+    const first = registerHypercardWidgetPack({ namespace: 'inventory' });
+    const second = registerHypercardWidgetPack({ namespace: 'inventory' });
+
+    first.unregister();
+    expect(resolveInlineWidgetRenderer('inventory.timeline')).toBeDefined();
+
+    second.unregister();
+    expect(resolveInlineWidgetRenderer('inventory.timeline')).toBeUndefined();
+  });
+
+  it('supports explicit namespace-level unregistration', () => {
+    registerHypercardWidgetPack({ namespace: 'inventory' });
+    unregisterHypercardWidgetPack({ namespace: 'inventory' });
+    expect(resolveInlineWidgetRenderer('inventory.timeline')).toBeUndefined();
   });
 
   it('renders a card panel with host callbacks from context', () => {
-    registerHypercardWidgetPack({ namespace: 'inventory' });
+    const registration = registerHypercardWidgetPack({ namespace: 'inventory' });
     const onOpenArtifact = vi.fn();
     const onEditCard = vi.fn();
     const rendered = renderInlineWidget(
@@ -42,5 +60,6 @@ describe('registerHypercardWidgetPack', () => {
       { onOpenArtifact, onEditCard, debug: true },
     );
     expect(rendered).toBeTruthy();
+    registration.unregister();
   });
 });
