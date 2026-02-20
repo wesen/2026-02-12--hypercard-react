@@ -266,3 +266,12 @@ Added detailed technical postmortem document for HC-01 webchat extraction hard c
 
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/20/HC-01-EXTRACT-WEBCHAT--extract-and-clean-up-webchat-from-hypercard-inventory-app/design-doc/04-postmortem-webchat-extraction-hard-cutover.md — Comprehensive HC-01 technical postmortem
 
+
+## 2026-02-20
+
+Uploaded HC-01 technical postmortem to reMarkable as PDF: /ai/2026/02/20/HC-postmortems/04-postmortem-webchat-extraction-hard-cutover
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/20/HC-01-EXTRACT-WEBCHAT--extract-and-clean-up-webchat-from-hypercard-inventory-app/design-doc/04-postmortem-webchat-extraction-hard-cutover.md — Source markdown uploaded to reMarkable
+
