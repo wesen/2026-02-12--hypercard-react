@@ -32,6 +32,7 @@ WhenToUse: ""
 
 - **Related Files**: See frontmatter RelatedFiles field
 - **External Sources**: See frontmatter ExternalSources field
+- **Primary V1 Plan**: [design-doc/02-hc58-v1-simplified-implementation-plan.md](./design-doc/02-hc58-v1-simplified-implementation-plan.md)
 
 ## Status
 

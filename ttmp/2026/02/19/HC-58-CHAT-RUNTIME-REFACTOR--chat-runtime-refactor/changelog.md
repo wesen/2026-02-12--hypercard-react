@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-02-20
+
+Added a new HC-58 V1 implementation plan document that rewrites the refactor into an explicit, ambiguity-free execution blueprint with point-by-point API design, build instructions, verification matrix, PR slicing, and a strict out-of-scope contract.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/19/HC-58-CHAT-RUNTIME-REFACTOR--chat-runtime-refactor/design-doc/02-hc58-v1-simplified-implementation-plan.md — New primary implementation plan for HC-58 V1
+
 ## 2026-02-19
 
 - Initial workspace created
