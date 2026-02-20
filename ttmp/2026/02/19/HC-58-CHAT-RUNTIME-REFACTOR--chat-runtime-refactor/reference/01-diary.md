@@ -22,7 +22,7 @@ RelatedFiles:
 ExternalSources:
     - local:chat-runtime-chatgpt-pro.md
 Summary: Detailed implementation diary for HC-58 ticket setup, source import, proposal review, and concrete architecture analysis write-up.
-LastUpdated: 2026-02-19T19:42:19-05:00
+LastUpdated: 2026-02-19T19:45:00-05:00
 WhatFor: Preserve a step-by-step record of decisions, findings, and follow-up checks for the chat runtime refactor analysis.
 WhenToUse: Use when reviewing how HC-58 analysis was produced and why specific corrections were made.
 ---
@@ -1124,3 +1124,80 @@ I completed the section in one code commit plus task bookkeeping updates after r
 - Validation outputs:
   - TypeScript build: success.
   - Vitest: `3 files passed`, `7 tests passed` (including `runtime.test.ts` and `runtime.integration.test.ts`).
+
+## Step 18: Complete Section 3 Projection-Path and Determinism Tasks
+I completed Section 3 by validating one projection path usage, tightening `SemRegistry` determinism, and adding missing reducer/runtime tests that codify replay and version-merge invariants.
+
+I also checked off all Section 3 tasks after passing the required verification commands.
+
+### Prompt Context
+
+**User prompt (verbatim):** "continue, you have full permissions now"
+
+**Assistant interpretation:** Keep executing the backlog in order beyond Section 2, with concrete implementation/test changes and immediate checklist updates.
+
+**Inferred user intent:** Progress steadily through HC-58 sections with strict test-backed completion evidence.
+
+**Commit (code):** ae7f348 — "feat(HC-58): harden deterministic projection and replay invariants"
+
+### What I did
+- Updated deterministic fallback-id behavior in:
+  - `packages/engine/src/hypercard-chat/sem/registry.ts`
+  - changed fallback ID generation from `Date.now()` to `ctx.now()` via `eventId(..., now)` so registry projection is replay/test deterministic.
+- Added/updated tests:
+  - `packages/engine/src/hypercard-chat/sem/registry.test.ts`
+    - unknown event type returns no-op result,
+    - missing event ID uses deterministic fallback from `ctx.now`.
+  - `packages/engine/src/hypercard-chat/conversation/runtime.test.ts`
+    - duplicate buffered envelopes replay idempotently (single timeline entity after hydrate).
+  - `packages/engine/src/hypercard-chat/timeline/timelineSlice.test.ts`
+    - versionless patch merge keeps versioned entity version and merges props correctly.
+- Re-verified one projection path usage via grep:
+  - `projectSemEnvelope` and `applySemTimelineOps` remain centralized in runtime + projection pipeline.
+- Checked off Section 3 tasks in:
+  - `ttmp/2026/02/19/HC-58-CHAT-RUNTIME-REFACTOR--chat-runtime-refactor/tasks.md`
+  - `HC58-S3-T01`
+  - `HC58-S3-T02`
+  - `HC58-S3-T03`
+
+### Why
+- Section 3 establishes the deterministic behavior contract required before metadata migration and UI cutover tasks.
+
+### What worked
+- Typecheck passed.
+- Focused engine tests passed, including new determinism/replay cases.
+- Projection-path grep confirms centralization remains intact.
+
+### What didn't work
+- An initial edit attempt invoked `apply_patch` through `exec_command`; tooling warned to use the dedicated `apply_patch` tool. I corrected immediately and continued with proper edit calls.
+
+### What I learned
+- Small non-deterministic utilities (like fallback ID generation) can undermine replay guarantees even when reducer/version logic is otherwise correct.
+
+### What was tricky to build
+- The reducer’s versionless-merge branch has nuanced semantics; test assertions needed to explicitly pin version retention and partial props merge in one case.
+
+### What warrants a second pair of eyes
+- `rekeyEntity` remains in reducer/registry op plumbing for compatibility; if later sections remove old identity mechanics completely, this path should be reevaluated for deprecation/removal timing.
+
+### What should be done in the future
+- Continue with Section 4 (`HC58-S4-T01..T03`) to migrate runtime metadata ownership out of inventory adapters and narrow adapter responsibilities to side-effects only.
+
+### Code review instructions
+- Review determinism fix:
+  - `packages/engine/src/hypercard-chat/sem/registry.ts`
+- Review invariant tests:
+  - `packages/engine/src/hypercard-chat/sem/registry.test.ts`
+  - `packages/engine/src/hypercard-chat/conversation/runtime.test.ts`
+  - `packages/engine/src/hypercard-chat/timeline/timelineSlice.test.ts`
+- Confirm Section 3 task state:
+  - `ttmp/2026/02/19/HC-58-CHAT-RUNTIME-REFACTOR--chat-runtime-refactor/tasks.md`
+
+### Technical details
+- Commands run:
+  - `rg -n "applySemTimelineOps\(|projectSemEnvelope\(" packages/engine/src/hypercard-chat`
+  - `npm run typecheck`
+  - `npm run test -w packages/engine -- registry.test.ts timelineSlice.test.ts runtime.test.ts runtime.integration.test.ts`
+- Validation outputs:
+  - TypeScript build: success.
+  - Vitest: `8 files passed`, `33 tests passed` (including updated runtime/registry/timeline suites).

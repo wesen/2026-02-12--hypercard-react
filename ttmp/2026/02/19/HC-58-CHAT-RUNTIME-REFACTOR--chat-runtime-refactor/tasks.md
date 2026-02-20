@@ -207,7 +207,7 @@ Verification:
 Covers plan points: 7, 13, 14.
 
 ### HC58-S3-T01 Route all envelope ingestion through `projectSemEnvelope`
-- [ ] Enforce one projection call path under runtime core.
+- [x] Enforce one projection call path under runtime core.
 
 Files to edit:
 1. `2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/conversation/runtime.ts`
@@ -226,7 +226,7 @@ Verification:
 2. `cd 2026-02-12--hypercard-react && npm run typecheck`
 
 ### HC58-S3-T02 Keep `SemRegistry` deterministic and central
-- [ ] Keep registry as the only projection behavior definition.
+- [x] Keep registry as the only projection behavior definition.
 
 Files to edit:
 1. `2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/sem/registry.ts`
@@ -243,7 +243,7 @@ Verification:
 1. `cd 2026-02-12--hypercard-react && npm run test -w packages/engine -- registry.test.ts`
 
 ### HC58-S3-T03 Lock replay idempotency and version ordering via tests
-- [ ] Add/update reducer and runtime tests for deterministic replay.
+- [x] Add/update reducer and runtime tests for deterministic replay.
 
 Files to edit:
 1. `2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/timeline/timelineSlice.test.ts`

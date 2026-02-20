@@ -30,6 +30,17 @@ Implemented HC-58 Section 2 code tasks (`HC58-S2-T01..T04`): moved projected con
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/19/HC-58-CHAT-RUNTIME-REFACTOR--chat-runtime-refactor/tasks.md — Section 2 tasks checked off after passing verification
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/19/HC-58-CHAT-RUNTIME-REFACTOR--chat-runtime-refactor/reference/01-diary.md — Added Step 17 command/test/commit trace for Section 2
 
+Implemented HC-58 Section 3 code tasks (`HC58-S3-T01..T03`): validated single projection-path enforcement, made `SemRegistry` fallback IDs deterministic via `ctx.now`, and added replay/version determinism tests covering unknown-event no-op, duplicate replay idempotency, and versionless merge behavior.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/sem/registry.ts — Deterministic fallback ID generation now sourced from `SemContext.now`
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/sem/registry.test.ts — Added unknown-event no-op and deterministic fallback-ID tests
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/conversation/runtime.test.ts — Added duplicate buffered replay idempotency test
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/timeline/timelineSlice.test.ts — Added versionless patch-on-versioned-entity contract test
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/19/HC-58-CHAT-RUNTIME-REFACTOR--chat-runtime-refactor/tasks.md — Section 3 tasks checked off after verification
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/19/HC-58-CHAT-RUNTIME-REFACTOR--chat-runtime-refactor/reference/01-diary.md — Added Step 18 command/test/commit trace for Section 3
+
 ## 2026-02-19
 
 - Initial workspace created
