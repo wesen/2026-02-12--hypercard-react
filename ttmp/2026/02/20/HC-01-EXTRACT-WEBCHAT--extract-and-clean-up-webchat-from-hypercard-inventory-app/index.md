@@ -6,7 +6,9 @@ Topics: []
 DocType: index
 Intent: long-term
 Owners: []
-RelatedFiles: []
+RelatedFiles:
+    - Path: ttmp/2026/02/20/HC-01-EXTRACT-WEBCHAT--extract-and-clean-up-webchat-from-hypercard-inventory-app/design-doc/04-postmortem-webchat-extraction-hard-cutover.md
+      Note: Comprehensive technical postmortem for the extraction
 ExternalSources:
     - local:chatgpt-pro-webchat-cleanup.md
 Summary: ""
@@ -14,6 +16,7 @@ LastUpdated: 2026-02-20T07:44:08.329034621-05:00
 WhatFor: ""
 WhenToUse: ""
 ---
+
 
 
 # Extract and Clean Up Webchat from Hypercard/Inventory App

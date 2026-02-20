@@ -257,3 +257,12 @@ Unblocked and completed task `8.5` by fixing stale CRM imports incompatible with
 - `npm run typecheck` passed
 - `npm run build-storybook` passed
 - `npm test` passed
+
+## 2026-02-20
+
+Added detailed technical postmortem document for HC-01 webchat extraction hard cutover, expanding diary content into architecture timeline, incident log, decisions, and follow-up plan.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/20/HC-01-EXTRACT-WEBCHAT--extract-and-clean-up-webchat-from-hypercard-inventory-app/design-doc/04-postmortem-webchat-extraction-hard-cutover.md — Comprehensive HC-01 technical postmortem
+

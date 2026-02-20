@@ -23,3 +23,12 @@ Added design and detailed diary docs, checked off completed migration tasks, and
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/20/HC-51-BACKEND-TIMELINEV2-SERVER--port-hypercard-inventory-backend-to-timelinev2/design-doc/01-timelinev2-backend-port-plan.md — Migration rationale and implementation plan
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/20/HC-51-BACKEND-TIMELINEV2-SERVER--port-hypercard-inventory-backend-to-timelinev2/reference/01-diary.md — Detailed implementation diary with commands and errors
 
+
+## 2026-02-20
+
+Added incident postmortem document capturing TimelineV2 backend startup failure, technical root cause (stale TimelineEntityV1 app handlers), remediation details, and prevention follow-ups.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/20/HC-51-BACKEND-TIMELINEV2-SERVER--port-hypercard-inventory-backend-to-timelinev2/design-doc/02-postmortem-timelinev2-backend-cutover-incident.md — New incident postmortem
+
