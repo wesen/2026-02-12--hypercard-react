@@ -5,26 +5,28 @@
  * code here before dispatching openWindow, and the editor reads it on mount.
  */
 
-import { getPendingRuntimeCards } from '../../plugin-runtime';
-import { openWindow } from '../../desktop/core';
 import type { UnknownAction } from 'redux';
+import { type OpenWindowPayload, openWindow } from '../../desktop/core';
+import { getPendingRuntimeCards } from '../../plugin-runtime';
 
 const pendingCode = new Map<string, string>();
 type WindowDispatch = (action: UnknownAction) => unknown;
 
+export function buildCodeEditorWindowPayload(cardId: string): OpenWindowPayload {
+  return {
+    id: `window:code-editor:${cardId}`,
+    title: `✏️ ${cardId}`,
+    icon: '✏️',
+    bounds: { x: 100, y: 40, w: 600, h: 500 },
+    content: { kind: 'app', appKey: `code-editor:${cardId}` },
+    dedupeKey: `code-editor:${cardId}`,
+  };
+}
+
 /** Stash code for a card editor and open the window. */
 export function openCodeEditor(dispatch: WindowDispatch, cardId: string, code: string): void {
   pendingCode.set(cardId, code);
-  dispatch(
-    openWindow({
-      id: `window:code-editor:${cardId}`,
-      title: `✏️ ${cardId}`,
-      icon: '✏️',
-      bounds: { x: 100, y: 40, w: 600, h: 500 },
-      content: { kind: 'app', appKey: `code-editor:${cardId}` },
-      dedupeKey: `code-editor:${cardId}`,
-    }),
-  );
+  dispatch(openWindow(buildCodeEditorWindowPayload(cardId)));
 }
 
 /** Get the initial code for a card editor. Falls back to registry. */

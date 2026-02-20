@@ -1,9 +1,11 @@
+import { useDispatch } from 'react-redux';
+import type { RenderEntity } from '../../chat/renderers/types';
+import { stringField } from '../../chat/sem/semHelpers';
 import type { SemContext, SemEvent } from '../../chat/sem/semRegistry';
 import { registerSem } from '../../chat/sem/semRegistry';
-import { recordField, stringField } from '../../chat/sem/semHelpers';
-import { timelineSlice, type TimelineEntity } from '../../chat/state/timelineSlice';
-import type { RenderEntity } from '../../chat/renderers/types';
-import { extractArtifactUpsertFromSem } from '../artifacts/artifactRuntime';
+import { type TimelineEntity, timelineSlice } from '../../chat/state/timelineSlice';
+import { openWindow } from '../../desktop/core';
+import { buildArtifactOpenWindowPayload, extractArtifactUpsertFromSem } from '../artifacts/artifactRuntime';
 import { upsertArtifact } from '../artifacts/artifactsSlice';
 
 function asDataRecord(ev: SemEvent): Record<string, unknown> {
@@ -18,12 +20,7 @@ function widgetEntityId(data: Record<string, unknown>, fallbackId: string): stri
   return `widget:${itemId}`;
 }
 
-function upsertWidgetEntity(
-  ctx: SemContext,
-  ev: SemEvent,
-  status: 'running' | 'success' | 'error',
-  detail: string,
-) {
+function upsertWidgetEntity(ctx: SemContext, ev: SemEvent, status: 'running' | 'success' | 'error', detail: string) {
   const data = asDataRecord(ev);
   const entityId = widgetEntityId(data, ev.id);
   const title = stringField(data, 'title') ?? 'Widget';
@@ -36,7 +33,7 @@ function upsertWidgetEntity(
       upsertArtifact({
         ...artifactUpdate,
         updatedAt: Date.now(),
-      })
+      }),
     );
   }
 
@@ -79,39 +76,39 @@ export function registerHypercardWidgetSemHandlers() {
   });
 }
 
-function emitArtifactIntent(mode: 'open' | 'edit', artifactId: string) {
-  if (typeof window === 'undefined') return;
-  window.dispatchEvent(
-    new CustomEvent('hypercard:artifact', {
-      detail: {
-        mode,
-        artifactId,
-      },
-    })
-  );
-}
-
 export function HypercardWidgetRenderer({ e }: { e: RenderEntity }) {
+  const dispatch = useDispatch();
   const title = String(e.props.title ?? 'Widget');
   const status = String(e.props.status ?? 'running');
   const detail = String(e.props.detail ?? '');
   const artifactId = e.props.artifactId ? String(e.props.artifactId) : '';
   const template = e.props.template ? String(e.props.template) : '';
 
+  const openArtifact = () => {
+    const payload = buildArtifactOpenWindowPayload({
+      artifactId,
+      template,
+      title,
+    });
+    if (!payload) {
+      return;
+    }
+    dispatch(openWindow(payload));
+  };
+
   return (
     <div data-part="chat-message" data-role="system">
       <div data-part="chat-role">Widget:</div>
       <div style={{ fontSize: 11, whiteSpace: 'pre-wrap' }}>
-        <strong>{title}</strong> ({status})
-        {template ? ` · ${template}` : ''}
+        <strong>{title}</strong> ({status}){template ? ` · ${template}` : ''}
         {detail ? ` — ${detail}` : ''}
       </div>
       {artifactId && (
         <div style={{ marginTop: 4, display: 'flex', gap: 6 }}>
-          <button type="button" data-part="btn" onClick={() => emitArtifactIntent('open', artifactId)}>
+          <button type="button" data-part="btn" onClick={openArtifact}>
             Open
           </button>
-          <button type="button" data-part="btn" onClick={() => emitArtifactIntent('edit', artifactId)}>
+          <button type="button" data-part="btn" onClick={openArtifact}>
             Edit
           </button>
         </div>

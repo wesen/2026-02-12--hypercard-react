@@ -1,11 +1,14 @@
+import { useDispatch } from 'react-redux';
+import type { RenderEntity } from '../../chat/renderers/types';
+import { recordField, stringField } from '../../chat/sem/semHelpers';
 import type { SemContext, SemEvent } from '../../chat/sem/semRegistry';
 import { registerSem } from '../../chat/sem/semRegistry';
-import { recordField, stringField } from '../../chat/sem/semHelpers';
-import { timelineSlice, type TimelineEntity } from '../../chat/state/timelineSlice';
-import type { RenderEntity } from '../../chat/renderers/types';
+import { type TimelineEntity, timelineSlice } from '../../chat/state/timelineSlice';
+import { openWindow } from '../../desktop/core';
 import { registerRuntimeCard } from '../../plugin-runtime';
-import { extractArtifactUpsertFromSem } from '../artifacts/artifactRuntime';
+import { buildArtifactOpenWindowPayload, extractArtifactUpsertFromSem } from '../artifacts/artifactRuntime';
 import { upsertArtifact } from '../artifacts/artifactsSlice';
+import { buildCodeEditorWindowPayload } from '../editor/editorLaunch';
 
 function asDataRecord(ev: SemEvent): Record<string, unknown> {
   if (typeof ev.data === 'object' && ev.data !== null && !Array.isArray(ev.data)) {
@@ -21,7 +24,7 @@ function cardEntityId(data: Record<string, unknown>, fallbackId: string): string
 
 function maybeRegisterRuntimeCard(
   data: Record<string, unknown>,
-  artifactUpdate: { runtimeCardId?: string; runtimeCardCode?: string } | undefined
+  artifactUpdate: { runtimeCardId?: string; runtimeCardCode?: string } | undefined,
 ) {
   if (artifactUpdate?.runtimeCardId && artifactUpdate?.runtimeCardCode) {
     registerRuntimeCard(artifactUpdate.runtimeCardId, artifactUpdate.runtimeCardCode);
@@ -37,12 +40,7 @@ function maybeRegisterRuntimeCard(
   }
 }
 
-function upsertCardEntity(
-  ctx: SemContext,
-  ev: SemEvent,
-  status: 'running' | 'success' | 'error',
-  detail: string,
-) {
+function upsertCardEntity(ctx: SemContext, ev: SemEvent, status: 'running' | 'success' | 'error', detail: string) {
   const data = asDataRecord(ev);
   const entityId = cardEntityId(data, ev.id);
   const itemId = stringField(data, 'itemId') ?? ev.id;
@@ -54,7 +52,7 @@ function upsertCardEntity(
       upsertArtifact({
         ...artifactUpdate,
         updatedAt: Date.now(),
-      })
+      }),
     );
   }
 
@@ -101,39 +99,47 @@ export function registerHypercardCardSemHandlers() {
   });
 }
 
-function emitArtifactIntent(mode: 'open' | 'edit', artifactId: string) {
-  if (typeof window === 'undefined') return;
-  window.dispatchEvent(
-    new CustomEvent('hypercard:artifact', {
-      detail: {
-        mode,
-        artifactId,
-      },
-    })
-  );
-}
-
 export function HypercardCardRenderer({ e }: { e: RenderEntity }) {
+  const dispatch = useDispatch();
   const title = String(e.props.title ?? 'Card');
   const status = String(e.props.status ?? 'running');
   const detail = String(e.props.detail ?? '');
   const artifactId = e.props.artifactId ? String(e.props.artifactId) : '';
   const runtimeCardId = e.props.runtimeCardId ? String(e.props.runtimeCardId) : '';
 
+  const openArtifact = () => {
+    const payload = buildArtifactOpenWindowPayload({
+      artifactId,
+      title,
+      runtimeCardId,
+    });
+    if (!payload) {
+      return;
+    }
+    dispatch(openWindow(payload));
+  };
+
+  const editArtifact = () => {
+    if (!runtimeCardId) {
+      openArtifact();
+      return;
+    }
+    dispatch(openWindow(buildCodeEditorWindowPayload(runtimeCardId)));
+  };
+
   return (
     <div data-part="chat-message" data-role="system">
       <div data-part="chat-role">Card:</div>
       <div style={{ fontSize: 11, whiteSpace: 'pre-wrap' }}>
-        <strong>{title}</strong> ({status})
-        {runtimeCardId ? ` · runtime=${runtimeCardId}` : ''}
+        <strong>{title}</strong> ({status}){runtimeCardId ? ` · runtime=${runtimeCardId}` : ''}
         {detail ? ` — ${detail}` : ''}
       </div>
       {artifactId && (
         <div style={{ marginTop: 4, display: 'flex', gap: 6 }}>
-          <button type="button" data-part="btn" onClick={() => emitArtifactIntent('open', artifactId)}>
+          <button type="button" data-part="btn" onClick={openArtifact}>
             Open
           </button>
-          <button type="button" data-part="btn" onClick={() => emitArtifactIntent('edit', artifactId)}>
+          <button type="button" data-part="btn" onClick={editArtifact}>
             Edit
           </button>
         </div>
