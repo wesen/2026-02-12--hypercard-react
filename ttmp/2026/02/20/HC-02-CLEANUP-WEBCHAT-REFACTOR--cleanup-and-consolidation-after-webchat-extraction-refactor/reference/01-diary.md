@@ -11,6 +11,8 @@ DocType: reference
 Intent: long-term
 Owners: []
 RelatedFiles:
+    - Path: apps/inventory/src/App.tsx
+      Note: Restore chat header actions for event viewer and debug launch
     - Path: packages/engine/src/chat/components/ChatConversationWindow.tsx
       Note: F4 implementation details (starter suggestion lifecycle)
     - Path: packages/engine/src/chat/state/selectors.ts
@@ -26,7 +28,9 @@ RelatedFiles:
     - Path: ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/design-doc/01-exhaustive-legacy-and-consolidation-assessment-after-hc-01.md
       Note: Primary output of investigation documented in diary
     - Path: ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/tasks.md
-      Note: Track and close icon double-click routing bug task
+      Note: |-
+        Track and close icon double-click routing bug task
+        Track and close header-actions restoration task
     - Path: ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/various/01-hc01-touched-files-existing.txt
       Note: Computed surviving touched-file set used in audit
     - Path: ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/various/02-hc01-touched-files-removed.txt
@@ -37,6 +41,7 @@ LastUpdated: 2026-02-20T16:24:04.03865615-05:00
 WhatFor: Preserve detailed investigation history for HC-02 cleanup scope derivation from HC-01 touched files.
 WhenToUse: Use when reviewing why each cleanup task exists and how findings were derived from concrete code evidence.
 ---
+
 
 
 
@@ -687,6 +692,71 @@ The fix routes non-card icon opens through the same internal command pipeline us
 - Re-run:
   - `pnpm exec vitest run packages/engine/src/components/shell/windowing/desktopContributions.test.ts packages/engine/src/components/shell/windowing/desktopCommandRouter.test.ts`
   - `pnpm exec tsc -p packages/engine/tsconfig.json --noEmit`
+
+## Step 10: Restore chat header controls for Event Viewer and Debug launch
+
+After fixing icon double-click routing, a separate UX regression remained: the chat assistant header no longer exposed quick-access controls that existed before extraction. Specifically, users could no longer launch Event Viewer or debug tooling directly from the active chat window header.
+
+This step restores those controls with per-conversation Event Viewer launch and debug-window launch from the chat header, while keeping command-path behavior centralized.
+
+### Prompt Context
+
+**User prompt (verbatim):** "I can't see the event viewer start button or the debug mode in the chat assistant window anymore (they use to be in the top header), I thought we fixed that in F2?"
+
+**Assistant interpretation:** Reconcile F2 scope with user expectation and restore chat-window header actions that were previously available.
+
+**Inferred user intent:** Regain in-context chat debugging controls without relying only on desktop icons/menus.
+
+**Commit (code):** `56360b4` — "fix(inventory): restore chat header event/debug actions"
+
+### What I did
+- Added task #17 in HC-02 and checked it off after implementation.
+- Restored chat-window header actions in inventory app by introducing a small wrapper:
+  - `InventoryChatAssistantWindow` in `apps/inventory/src/App.tsx`
+- Header actions now include:
+  - `🧭 Events` button: opens Event Viewer for the current conversation ID.
+  - `🔧 Debug` button: opens Stacks & Cards debug window.
+- Consolidated runtime-debug payload construction:
+  - introduced `buildRuntimeDebugWindowPayload()` helper.
+  - reused helper in both header action and `debug.stacks` command handler.
+
+### Why
+- F2 restored icon/menu discoverability but not per-chat header controls.
+- Users working inside chat windows need immediate access to event/debug tools scoped to current conversation context.
+
+### What worked
+- Inventory and engine typecheck both passed.
+- Desktop command routing tests still passed.
+- Header controls are now visible and functional in chat assistant windows again.
+
+### What didn't work
+- Initial approach attempted to add `debugMode` prop to `ChatConversationWindow`; app-level typecheck failed because that surface was not exposed across package boundary.
+- Resolution:
+  - reverted `debugMode` API change.
+  - implemented header controls at app integration layer using existing `headerActions` prop.
+
+### What I learned
+- Integration-level UX regressions can hide behind “fixed command paths” when in-window affordances are not part of acceptance criteria.
+
+### What was tricky to build
+- Maintaining behavior parity required distinguishing:
+  - desktop-global launch affordances (icons/menus, F2)
+  - per-chat contextual actions (header buttons in the chat window itself).
+
+### What warrants a second pair of eyes
+- Confirm whether `🔧 Debug` should evolve back to an in-chat render-mode toggle (as legacy implementation had) versus current debug-window launch behavior.
+
+### What should be done in the future
+- Add a small integration test around chat header actions to lock this UX contract.
+
+### Code review instructions
+- Review:
+  - `apps/inventory/src/App.tsx`
+  - `ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/tasks.md`
+- Re-run:
+  - `pnpm exec tsc -p apps/inventory/tsconfig.json --noEmit`
+  - `pnpm exec tsc -p packages/engine/tsconfig.json --noEmit`
+  - `pnpm exec vitest run packages/engine/src/components/shell/windowing/desktopContributions.test.ts packages/engine/src/components/shell/windowing/desktopCommandRouter.test.ts`
 
 ## Usage Examples
 
