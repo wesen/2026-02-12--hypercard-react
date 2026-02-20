@@ -332,13 +332,13 @@ Verification:
 Covers plan points: 4, 10.
 
 ### HC58-S5-T01 Introduce `TimelineConversationView` as primary runtime UI
-- [ ] Add new timeline-native conversation view.
+- [x] Add new timeline-native conversation view.
 
 Files to create:
 1. `2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/runtime/TimelineConversationView.tsx`
 
 Files to edit:
-1. `2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/runtime/TimelineChatWindow.tsx`
+1. `2026-02-12--hypercard-react/apps/inventory/src/features/chat/InventoryChatWindow.tsx`
 2. `2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/index.ts`
 
 Behavior:
@@ -353,15 +353,15 @@ Verification:
 1. `cd 2026-02-12--hypercard-react && npm run typecheck`
 
 ### HC58-S5-T02 Remove `timelineDisplayMessages` from primary runtime path
-- [ ] Stop using `buildTimelineDisplayMessages(...)` in primary runtime integration.
+- [x] Stop using `buildTimelineDisplayMessages(...)` in primary runtime integration.
 
 Files to edit:
-1. `2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/runtime/TimelineChatWindow.tsx`
-2. `2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/runtime/timelineDisplayMessages.ts`
+1. `2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/runtime/TimelineConversationView.tsx`
+2. `2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/runtime/timelineDisplayMessages.ts` (deleted)
 
 Steps:
-1. Keep `timelineDisplayMessages.ts` only for legacy compatibility wrappers if required.
-2. Mark file and legacy usage with deprecation comments.
+1. Remove `timelineDisplayMessages.ts` entirely in hard cutover.
+2. Remove legacy `TimelineChatWindow.tsx` projection component.
 
 Acceptance criteria:
 1. Inventory primary chat no longer depends on `timelineDisplayMessages.ts`.
@@ -369,19 +369,21 @@ Acceptance criteria:
 Verification:
 1. `rg -n "buildTimelineDisplayMessages\(" 2026-02-12--hypercard-react/apps/inventory/src 2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/runtime`
 
-### HC58-S5-T03 Convert `TimelineChatRuntimeWindow` into compatibility wrapper
-- [ ] Keep wrapper temporarily, but implement on top of runtime manager + timeline-native view.
+### HC58-S5-T03 Remove `TimelineChatRuntimeWindow` compatibility wrapper
+- [x] Hard-cut the wrapper path; primary runtime path is `TimelineConversationView` + `useProjectedChatConnection`.
 
 Files to edit:
-1. `2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/runtime/timelineChatRuntime.tsx`
+1. `2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/runtime/timelineChatRuntime.tsx` (deleted)
+2. `2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/index.ts`
+3. `2026-02-12--hypercard-react/packages/engine/src/components/widgets/TimelineChatRuntimeWindow.stories.tsx` (deleted)
 
 Steps:
-1. Remove infrastructure ownership from wrapper.
-2. Add `@deprecated` TSDoc with migration target.
-3. Keep existing call sites functional during migration window.
+1. Delete wrapper implementation and remove its export.
+2. Delete wrapper story that encoded legacy usage.
+3. Keep inventory functional on direct runtime hook + timeline-native view.
 
 Acceptance criteria:
-1. Wrapper no longer owns transport/projection lifecycle.
+1. No runtime wrapper compatibility path remains.
 
 Verification:
 1. `cd 2026-02-12--hypercard-react && npm run typecheck`
@@ -392,7 +394,7 @@ Verification:
 Covers plan points: 5, 15.
 
 ### HC58-S6-T01 Add per-window widget registry instance API
-- [ ] Introduce local widget registry factory and remove global dependence from primary path.
+- [x] Introduce local widget registry factory and remove global dependence from primary path.
 
 Files to create/edit:
 1. `2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/widgets/inlineWidgetRegistry.ts`
@@ -410,14 +412,14 @@ Verification:
 2. `cd 2026-02-12--hypercard-react && npm run test -w packages/engine -- inlineWidgetRegistry.test.ts`
 
 ### HC58-S6-T02 Port `hypercardWidgetPack` to register against injected registry
-- [ ] Remove global mutable dependence from primary usage.
+- [x] Remove global mutable dependence from primary usage.
 
 Files to edit:
 1. `2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/widgets/hypercardWidgetPack.tsx`
 
 Steps:
 1. Change registration API to accept registry instance.
-2. Keep legacy namespace/global adapter only for compatibility wrapper path.
+2. Remove legacy namespace/global adapter entry points from runtime usage.
 
 Acceptance criteria:
 1. Primary path uses injected registry only.
@@ -427,7 +429,7 @@ Verification:
 2. `cd 2026-02-12--hypercard-react && npm run typecheck`
 
 ### HC58-S6-T03 Define explicit app extension bootstrap for inventory
-- [ ] Consolidate inventory-specific SEM/widget/adapter registration in one bootstrap module.
+- [x] Consolidate inventory-specific SEM/widget/adapter registration in one bootstrap module.
 
 Files to create/edit:
 1. `2026-02-12--hypercard-react/apps/inventory/src/features/chat/runtime/registerInventoryConversationExtensions.ts` (new)
@@ -449,7 +451,7 @@ Verification:
 Cross-cuts Sections 1-6 into app usage.
 
 ### HC58-S7-T01 Replace inventory runtime usage with conversation runtime primitives
-- [ ] Migrate inventory chat window to conversation runtime selectors + timeline-native view.
+- [x] Migrate inventory chat window to conversation runtime selectors + timeline-native view.
 
 Files to edit:
 1. `2026-02-12--hypercard-react/apps/inventory/src/features/chat/InventoryChatWindow.tsx`
@@ -466,7 +468,7 @@ Verification:
 1. `cd 2026-02-12--hypercard-react && npm run typecheck`
 
 ### HC58-S7-T02 Remove obsolete inventory chat runtime slice fields/actions
-- [ ] Delete or reduce `chatSlice.ts` to inventory-only domain concerns.
+- [x] Delete or reduce `chatSlice.ts` to inventory-only domain concerns.
 
 Files to edit:
 1. `2026-02-12--hypercard-react/apps/inventory/src/features/chat/chatSlice.ts`
@@ -485,7 +487,7 @@ Verification:
 ## Section 8: Validation, Documentation, and Cleanup
 
 ### HC58-S8-T01 Add/refresh runtime and integration tests for all new invariants
-- [ ] Ensure all invariants in V1 plan are covered by tests.
+- [x] Ensure all invariants in V1 plan are covered by tests.
 
 Test groups required:
 1. Runtime ownership tests.
@@ -502,7 +504,7 @@ Verification:
 1. `cd 2026-02-12--hypercard-react && npm run test -w packages/engine`
 
 ### HC58-S8-T02 Update docs and stories to new primary runtime model
-- [ ] Align docs/stories with conversation runtime architecture.
+- [x] Align docs/stories with conversation runtime architecture.
 
 Files to edit (minimum):
 1. `2026-02-12--hypercard-react/packages/engine/docs/chat-window-timeline-first-guide.md`
@@ -511,14 +513,14 @@ Files to edit (minimum):
 
 Acceptance criteria:
 1. Docs describe runtime-owned lifecycle and selector-driven UI.
-2. Stories do not present deprecated path as primary usage.
+2. Stories include only supported runtime surfaces.
 
 Verification:
 1. `cd 2026-02-12--hypercard-react && npm run storybook:check`
 2. `cd 2026-02-12--hypercard-react && npm run typecheck`
 
 ### HC58-S8-T03 Remove stale exports and dead primary-path dependencies
-- [ ] Final cleanup once migration is complete.
+- [x] Final cleanup once migration is complete.
 
 Files to edit:
 1. `2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/index.ts`
@@ -526,7 +528,7 @@ Files to edit:
 
 Acceptance criteria:
 1. Public API reflects new primary path.
-2. Deprecated wrappers clearly marked or removed per migration decision.
+2. Removed wrappers are absent from exports and call sites.
 
 Verification:
 1. `cd 2026-02-12--hypercard-react && npm run typecheck`
@@ -535,7 +537,7 @@ Verification:
 ---
 
 ## Final Gate (Must Be Green Before Declaring HC-58 V1 Complete)
-- [ ] `cd 2026-02-12--hypercard-react && npm run typecheck`
-- [ ] `cd 2026-02-12--hypercard-react && npm run test -w packages/engine`
+- [x] `cd 2026-02-12--hypercard-react && npm run typecheck`
+- [x] `cd 2026-02-12--hypercard-react && npm run test -w packages/engine`
 - [ ] Multi-window manual smoke test documented in changelog.
-- [ ] HC-58 design-doc, tasks, and changelog updated in same final PR.
+- [x] HC-58 design-doc, tasks, and changelog updated in same final PR.

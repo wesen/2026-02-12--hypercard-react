@@ -22,7 +22,7 @@ RelatedFiles:
 ExternalSources:
     - local:chat-runtime-chatgpt-pro.md
 Summary: Detailed implementation diary for HC-58 ticket setup, source import, proposal review, and concrete architecture analysis write-up.
-LastUpdated: 2026-02-19T19:55:06-05:00
+LastUpdated: 2026-02-20T20:45:00-05:00
 WhatFor: Preserve a step-by-step record of decisions, findings, and follow-up checks for the chat runtime refactor analysis.
 WhenToUse: Use when reviewing how HC-58 analysis was produced and why specific corrections were made.
 ---
@@ -1308,3 +1308,120 @@ I kept the section in two disciplined phases: code+tests first, then checklist/d
   - TypeScript build: success.
   - Engine vitest suite: `27 files passed`, `196 tests passed`.
   - Inventory projection pipeline test: `1 file passed`, `2 tests passed`.
+
+## Step 20: Section 5-8 Hard Cutover and Runtime Cleanup
+I completed the remainder of the HC-58 V1 implementation with a hard cutover policy: deprecated compatibility layers were removed instead of retained.
+
+This step includes timeline-native view cutover, wrapper/projection-chain deletion, per-window widget registry migration, explicit inventory runtime extension bootstrap, and inventory chat slice removal.
+
+### Prompt Context
+
+**User prompt (verbatim):** "remove deprecated / backwards compatibility as well. hard cutover."
+
+**Assistant interpretation:** Replace compatibility/deprecation strategy with immediate hard-cut removal of legacy runtime UI layers and global widget registry behavior.
+
+**Inferred user intent:** Finish HC-58 with one clear primary architecture and no transitional wrappers.
+
+**Commit (code):** 0d84a3d — "feat(HC-58): hard-cut to timeline conversation view and local widget registries"
+
+### What I did
+- Section 5 hard cutover:
+  - Added new primary UI:
+    - `packages/engine/src/hypercard-chat/runtime/TimelineConversationView.tsx`
+  - Removed legacy timeline message projection chain:
+    - deleted `packages/engine/src/hypercard-chat/runtime/TimelineChatWindow.tsx`
+    - deleted `packages/engine/src/hypercard-chat/runtime/timelineDisplayMessages.ts`
+    - deleted `packages/engine/src/hypercard-chat/runtime/timelineDisplayMessages.test.ts`
+  - Removed wrapper story surfaces:
+    - deleted `packages/engine/src/components/widgets/TimelineChatWindow.stories.tsx`
+    - deleted `packages/engine/src/components/widgets/TimelineChatRuntimeWindow.stories.tsx`
+  - Removed stale exports from:
+    - `packages/engine/src/hypercard-chat/index.ts`
+- Section 6 widget registry de-globalization:
+  - Replaced global registry API with per-window instance API in:
+    - `packages/engine/src/hypercard-chat/widgets/inlineWidgetRegistry.ts`
+  - Added/updated tests:
+    - `packages/engine/src/hypercard-chat/widgets/inlineWidgetRegistry.test.ts`
+    - includes independent registry isolation test.
+  - Ported widget pack to injected registry in:
+    - `packages/engine/src/hypercard-chat/widgets/hypercardWidgetPack.tsx`
+    - `packages/engine/src/hypercard-chat/widgets/hypercardWidgetPack.test.ts`
+- Section 6 inventory extension bootstrap:
+  - Added centralized bootstrap module:
+    - `apps/inventory/src/features/chat/runtime/registerInventoryConversationExtensions.ts`
+  - Consolidates one-time creation of:
+    - sem registry,
+    - widget registry,
+    - adapter list,
+    - widget pack registration.
+- Section 7 inventory integration cutover:
+  - Reworked inventory integration to runtime primitives + timeline-native view:
+    - `apps/inventory/src/features/chat/InventoryChatWindow.tsx`
+  - Removed obsolete inventory chat runtime slice surface:
+    - deleted `apps/inventory/src/features/chat/chatSlice.ts`
+    - deleted `apps/inventory/src/features/chat/chatSlice.test.ts`
+    - deleted `apps/inventory/src/features/chat/selectors.ts`
+  - Removed chat reducer from inventory store:
+    - `apps/inventory/src/app/store.ts`
+  - Updated orphaned story type dependency:
+    - `apps/inventory/src/features/chat/stories/ModelStats.stories.tsx`
+- Section 8 docs/stories cleanup:
+  - Updated architecture guide to hard-cut primary path:
+    - `packages/engine/docs/chat-window-timeline-first-guide.md`
+  - Updated HC-58 implementation plan metadata/status to reflect removed compatibility layers:
+    - `ttmp/2026/02/19/HC-58-CHAT-RUNTIME-REFACTOR--chat-runtime-refactor/design-doc/02-hc58-v1-simplified-implementation-plan.md`
+  - Updated task checklist to mark completed sections and hard-cut wording:
+    - `ttmp/2026/02/19/HC-58-CHAT-RUNTIME-REFACTOR--chat-runtime-refactor/tasks.md`
+
+### Why
+- The user requested hard cutover explicitly.
+- Maintaining both legacy and primary paths would keep ambiguity and prolong migration risk.
+
+### What worked
+- Full repo typecheck passed after deletions and API shifts.
+- Full engine test suite passed after removals.
+- Inventory projection adapter test passed with new bootstrap/layout.
+- Storybook taxonomy check passed after story deletions and updates.
+
+### What didn't work
+- N/A for build/test behavior in this step.
+- Manual multi-window UI smoke was not executed in this non-interactive terminal session.
+
+### What I learned
+- Deleting compatibility layers reduced complexity quickly, but required synchronized updates across exports, stories, docs, and inventory store wiring.
+
+### What was tricky to build
+- The most error-prone part was sequencing hard deletes with replacement APIs so typecheck remained green across story/test surfaces.
+
+### What warrants a second pair of eyes
+- `TimelineConversationView` now owns direct entity rendering semantics. Teams using prior message-projection behavior should review whether any removed grouping behavior from `timelineDisplayMessages` needs to be reintroduced intentionally in a runtime-native form.
+
+### What should be done in the future
+- Run a true interactive multi-window smoke test and record outcome in changelog before final ticket close.
+
+### Code review instructions
+- Start with hard cutover core:
+  - `packages/engine/src/hypercard-chat/runtime/TimelineConversationView.tsx`
+  - `apps/inventory/src/features/chat/InventoryChatWindow.tsx`
+  - `apps/inventory/src/features/chat/runtime/registerInventoryConversationExtensions.ts`
+- Then verify widget registry migration:
+  - `packages/engine/src/hypercard-chat/widgets/inlineWidgetRegistry.ts`
+  - `packages/engine/src/hypercard-chat/widgets/hypercardWidgetPack.tsx`
+- Then verify removals/cleanup:
+  - `packages/engine/src/hypercard-chat/index.ts`
+  - `apps/inventory/src/app/store.ts`
+  - deleted files listed above
+
+### Technical details
+- Commands run:
+  - `npm run typecheck`
+  - `npm run test -w packages/engine`
+  - `npx vitest run apps/inventory/src/features/chat/runtime/projectionPipeline.test.ts`
+  - `npm run storybook:check`
+  - `rg -n "buildTimelineDisplayMessages\\(" apps/inventory/src packages/engine/src/hypercard-chat/runtime || true`
+  - `rg -n "setConnectionStatus|setModelName|markStreamStart|updateStreamTokens|setTurnStats" apps/inventory/src/features/chat || true`
+- Validation outputs:
+  - TypeScript build: success.
+  - Engine vitest suite: `26 files passed`, `193 tests passed`.
+  - Inventory projection pipeline test: `1 file passed`, `2 tests passed`.
+  - Storybook taxonomy check: passed (`46 story files`).

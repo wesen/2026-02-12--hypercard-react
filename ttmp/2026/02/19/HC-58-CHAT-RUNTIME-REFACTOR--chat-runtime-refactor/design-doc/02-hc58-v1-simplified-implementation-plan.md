@@ -15,26 +15,22 @@ Owners: []
 RelatedFiles:
     - Path: 2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/runtime/useProjectedChatConnection.ts
       Note: Current hook-owned connection lifecycle to be replaced by runtime-owned connection claims
-    - Path: 2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/runtime/timelineChatRuntime.tsx
-      Note: Current mixed runtime+UI wrapper that should be reduced to compatibility-only
+    - Path: 2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/runtime/TimelineConversationView.tsx
+      Note: Primary timeline-native view after hard cutover
     - Path: 2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/runtime/projectionPipeline.ts
       Note: Existing one-path projection seam to preserve and re-home under runtime core
     - Path: 2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/sem/registry.ts
       Note: Core deterministic SEM handler registry
     - Path: 2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/timeline/timelineSlice.ts
       Note: Stable-id and version-aware merge rules to preserve
-    - Path: 2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/runtime/TimelineChatWindow.tsx
-      Note: Current timeline-to-chatwindow bridge
-    - Path: 2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/runtime/timelineDisplayMessages.ts
-      Note: Current second projection layer to eliminate from primary runtime path
     - Path: 2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/widgets/inlineWidgetRegistry.ts
       Note: Current global widget registry design to replace with per-window registry
     - Path: 2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/widgets/hypercardWidgetPack.tsx
       Note: Current ref-counted global namespace registration
     - Path: 2026-02-12--hypercard-react/apps/inventory/src/features/chat/InventoryChatWindow.tsx
       Note: Current host composition and integration target for migration
-    - Path: 2026-02-12--hypercard-react/apps/inventory/src/features/chat/chatSlice.ts
-      Note: Runtime-like app state that moves to runtime core
+    - Path: 2026-02-12--hypercard-react/apps/inventory/src/features/chat/runtime/registerInventoryConversationExtensions.ts
+      Note: Inventory runtime extension bootstrap module
     - Path: 2026-02-12--hypercard-react/apps/inventory/src/features/chat/runtime/projectionAdapters.ts
       Note: Adapter narrowing boundary (domain side-effects only)
     - Path: pinocchio/cmd/web-chat/web/src/ws/wsManager.ts
@@ -46,7 +42,7 @@ RelatedFiles:
     - Path: pinocchio/pkg/webchat/conversation.go
       Note: ConvManager ownership model alignment target
 Summary: Detailed, ambiguity-free HC-58 V1 implementation plan that keeps one deterministic projection path, introduces conversation runtime ownership, aligns with pinocchio web-chat, and defines explicit out-of-scope boundaries.
-LastUpdated: 2026-02-20T10:00:00-05:00
+LastUpdated: 2026-02-20T20:45:00-05:00
 WhatFor: Provide a definitive implementation blueprint developers can execute without interpretation gaps.
 WhenToUse: Use as the primary execution reference for HC-58 implementation, review, and handoff.
 ---
@@ -149,11 +145,10 @@ export function useTimelineEntity(conversationId: string, entityId: string): Tim
 export function useConversationMeta<T>(conversationId: string, select: (meta: ConversationRuntimeMeta) => T): T;
 ```
 
-### Compatibility Layer (Temporary)
+### Hard Cutover Layer
 ```ts
-// packages/engine/src/hypercard-chat/runtime/timelineChatRuntime.tsx
-// Kept temporarily, implemented on top of conversation runtime + selectors.
-// Marked @deprecated in TSDoc.
+// Compatibility wrappers are removed in hard cutover.
+// Primary path is TimelineConversationView + useProjectedChatConnection.
 ```
 
 ## Implementation Ordering (Non-negotiable)
@@ -161,7 +156,7 @@ export function useConversationMeta<T>(conversationId: string, select: (meta: Co
 2. Connection ownership migration.
 3. Metadata ownership migration.
 4. Timeline-native view cutover.
-5. Wrapper deprecation and cleanup.
+5. Wrapper deletion and stale API cleanup.
 
 No team should start UI cleanup before runtime ownership exists.
 
@@ -274,9 +269,10 @@ Inventory keeps only domain metadata not reusable across apps.
 4. Keep inventory artifact adapter; remove metadata adapter.
 5. Update `InventoryChatWindow` footer reads to runtime selectors.
 
-Migration safety steps:
-1. Keep temporary compatibility selectors in inventory that forward to runtime selectors.
-2. Remove compatibility selectors once all call sites are migrated.
+Hard-cut migration steps:
+1. Remove inventory compatibility selectors immediately.
+2. Migrate all call sites directly to runtime selectors in the same change.
+3. Add grep/typecheck guard in verification to ensure removed selectors are not imported.
 
 Tests:
 1. Runtime unit tests for metadata updates by event type.
@@ -311,8 +307,8 @@ No batch message synthesis step in core runtime path.
 1. Create `packages/engine/src/hypercard-chat/runtime/TimelineConversationView.tsx`.
 2. Implement direct entity list rendering using runtime selectors.
 3. Extract only minimal shared formatting helpers from `timelineDisplayMessages.ts` where needed.
-4. Keep `timelineDisplayMessages.ts` only for legacy wrapper compatibility during transition.
-5. Mark legacy bridge as deprecated and remove from default exports in final cleanup step.
+4. Delete `timelineDisplayMessages.ts` and all references in runtime/stories.
+5. Keep only direct entity rendering in `TimelineConversationView`.
 
 Tests:
 1. UI test verifying entity order and content parity against current behavior.
@@ -351,7 +347,7 @@ Result:
 1. Introduce local registry object and context provider for runtime chat view.
 2. Port `registerHypercardWidgetPack` to a pure function that registers into provided registry instance.
 3. Remove direct use of global `extensionRenderers` for primary runtime path.
-4. Keep legacy global registry functions only for compatibility wrappers until final cleanup.
+4. Delete legacy global registry functions and migrate all registrations to injected registry instances.
 
 Tests:
 1. Unit: two registries resolve different renderers for same type.
@@ -454,9 +450,9 @@ Inventory UI contracts:
 2. `modelName/turnStats/stream*` from `useConversationMeta`.
 
 ### How to Build It
-1. Mark existing `chatSlice` fields as deprecated in comments.
-2. Implement runtime meta selectors and migrate UI call sites.
-3. Remove dead reducers/actions/types once migration passes.
+1. Remove existing `chatSlice` runtime metadata fields/actions outright.
+2. Implement runtime meta selectors and migrate UI call sites in the same slice.
+3. Delete dead reducers/actions/types and update imports.
 4. Remove metadata adapter `createChatMetaProjectionAdapter` from inventory.
 
 Tests:
@@ -517,23 +513,23 @@ New primary component:
 />
 ```
 
-Legacy wrapper policy:
-1. `TimelineChatRuntimeWindow` retained short-term.
-2. implemented by composing new runtime + view.
-3. marked deprecated.
+Hard cutover policy:
+1. `TimelineChatRuntimeWindow` is removed.
+2. `TimelineChatWindow` is removed.
+3. `TimelineConversationView` is the only supported runtime chat surface.
 
 ### How to Build It
 1. Implement `TimelineConversationView.tsx` in engine runtime.
 2. Migrate inventory to new component.
-3. Keep wrapper compatibility for stories/other callers.
-4. Add deprecation JSDoc and migration note in docs.
+3. Delete wrapper stories/exports and migrate callers immediately.
+4. Update docs to present only timeline-native runtime usage.
 
 Tests:
 1. story updates for new component.
 2. e2e/smoke of inventory window.
 
 Done criteria:
-1. inventory no longer uses wrapper chain as primary path.
+1. inventory does not import any removed wrapper chain symbol.
 
 ---
 
@@ -735,15 +731,15 @@ This section is the strict execution order with concrete code moves.
 ### Phase D: Timeline-Native UI Cutover
 1. Create `TimelineConversationView`.
 2. Migrate inventory chat to it.
-3. Keep wrapper for compatibility only.
+3. Delete wrapper chain and related exports/stories.
 
 ### Phase E: Registry and Widget Isolation
 1. Add per-window widget registry implementation.
 2. Migrate hypercard widget pack registration to local registry injection.
-3. Keep global registry only for compatibility path.
+3. Remove global registry usage from runtime path.
 
 ### Phase F: Cleanup and Hardening
-1. Remove dead exports and obsolete wrappers from primary docs/stories.
+1. Remove dead exports and obsolete wrappers from docs/stories and code.
 2. Complete runtime and integration test suite.
 3. Update HC-58 docs/tasks/changelog.
 
@@ -791,8 +787,8 @@ Each PR must include:
    Mitigation: freeze projection pipeline behavior and add parity tests.
 3. Risk: widget rendering regressions due to registry changes.
    Mitigation: run side-by-side storybook snapshots during transition.
-4. Risk: compatibility wrapper removal too early.
-   Mitigation: keep wrapper until all known callsites are migrated.
+4. Risk: hidden callers of removed wrapper symbols.
+   Mitigation: run code search + typecheck in same PR; migrate or delete each call site before merge.
 
 ---
 
@@ -808,4 +804,3 @@ The following are explicitly not part of HC-58 V1.
 
 Out-of-scope enforcement rule:
 1. If a change does not directly improve runtime ownership clarity, projection determinism, or pinocchio alignment, defer it.
-
