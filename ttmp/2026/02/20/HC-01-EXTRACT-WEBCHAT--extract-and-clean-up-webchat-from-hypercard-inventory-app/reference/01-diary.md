@@ -990,3 +990,115 @@ The main edge was ensuring migration stayed strictly engine-local without accide
   - `6.3` yamlFormat move
 - Task update command:
   - `docmgr task check --ticket HC-01-EXTRACT-WEBCHAT --id 41,42,43`
+
+---
+
+## Step 10: Phase 6.4-6.6 Implementation (Code Editor + Runtime Card Debug Window)
+
+Completed the remaining Phase 6 extraction tasks by migrating hypercard runtime debug/editor windows into `packages/engine`, adapting imports/state keys to engine ownership, and wiring exports/dependencies for standalone engine consumption.
+
+This finishes the debug/editor window migration boundary needed before Phase 7 inventory-shell cleanup.
+
+### Prompt Context
+
+**User prompt (verbatim):** "continue"
+
+**Assistant interpretation:** Continue task-by-task implementation from the currently open Phase 6 migration tasks.
+
+**Inferred user intent:** Keep moving the refactor forward with implementation, validation, and ticket tracking updates (not just analysis).
+
+**Commit (code):** d0e758d — "feat(engine): migrate hypercard runtime debug and editor windows"
+
+### What I did
+
+1. Migrated editor/runtime debug windows into engine:
+   - Added `packages/engine/src/hypercard/editor/CodeEditorWindow.tsx`
+   - Added `packages/engine/src/hypercard/editor/editorLaunch.ts`
+   - Added `packages/engine/src/hypercard/debug/RuntimeCardDebugWindow.tsx`
+2. Adapted imports and runtime coupling:
+   - Replaced external `@hypercard/engine`/desktop import paths with engine-local imports
+   - `editorLaunch.ts` now uses `openWindow` from `../../desktop/core` and runtime-card lookup from `../../plugin-runtime`
+   - `CodeEditorWindow.tsx` now imports runtime-card registry functions from `../../plugin-runtime`
+3. Removed direct stack singleton coupling in runtime debug window:
+   - Eliminated direct `STACK` import
+   - Added `RuntimeCardDebugWindowProps { stacks?: CardStackDefinition[] }`
+   - Reads `activeStack` from `stacks[0]`
+4. Updated inventory-specific state assumptions to engine state shape:
+   - Runtime debug window now reads artifacts from `hypercardArtifacts` slice key
+5. Reused engine debug utility surface:
+   - Runtime debug window imports syntax highlighter from `../../chat/debug/SyntaxHighlight`
+6. Exported migrated modules from hypercard barrel:
+   - Updated `packages/engine/src/hypercard/index.ts` to export debug/editor modules
+7. Added explicit editor dependencies in engine package:
+   - `@codemirror/commands`
+   - `@codemirror/language`
+   - `@codemirror/state`
+   - `@codemirror/theme-one-dark`
+   - `@codemirror/view`
+8. Fixed dispatch typing compatibility:
+   - `editorLaunch.ts` dispatch signature changed from `unknown` action type to `UnknownAction` to align with `useDispatch()` variance rules
+9. Validation executed:
+   - `npm run -w packages/engine typecheck`
+   - `npm run -w packages/engine test -- src/chat/ws/wsManager.test.ts src/chat/sem/semRegistry.test.ts src/hypercard/timeline/hypercardWidget.test.ts src/hypercard/timeline/hypercardCard.test.ts`
+10. Checked off tasks:
+    - `docmgr task check --ticket HC-01-EXTRACT-WEBCHAT --id 44,45,46`
+
+### Why
+
+Phase 6 required full migration of debug/editor windows into engine so the inventory app can stop owning chat/runtime-card UI components. Completing 6.4-6.6 closes that migration slice and keeps Phase 7 focused on app-shell wiring and legacy deletion.
+
+### What worked
+
+- Migration files compiled cleanly after import rewiring and dispatch type tightening.
+- Targeted tests stayed green after adding editor dependencies and hypercard exports.
+- Task tracking remained aligned by closing 44/45/46 once validation passed.
+
+### What didn't work
+
+- Initial `docmgr` command used `--index` and failed because `task check` expects `--id`:
+  - Error: `unknown flag: --index`
+  - Resolution: reran as `docmgr task check --ticket HC-01-EXTRACT-WEBCHAT --id 44,45,46`
+- Initial broad dispatch type in `editorLaunch.ts` caused TypeScript variance failure:
+  - Error: `Dispatch<UnknownAction> is not assignable to parameter of type WindowDispatch`
+  - Resolution: changed `WindowDispatch` action parameter type to `UnknownAction`
+
+### What I learned
+
+- Engine-local migration is straightforward when runtime/editor helpers are isolated; most friction came from typing and state-key assumptions rather than UI code.
+- Treating runtime debug window stack source as props (`stacks`) removes hidden global coupling and makes composition/testing simpler.
+
+### What was tricky to build
+
+The trickiest part was function-type variance around Redux dispatch typing. A dispatch parameter type of `unknown` is too broad and rejects `Dispatch<UnknownAction>` under strict function compatibility. Using `UnknownAction` resolves that without leaking app-specific types.
+
+### What warrants a second pair of eyes
+
+1. `RuntimeCardDebugWindow` currently selects the first stack (`stacks[0]`) as active; confirm this is the expected contract for multi-stack usage.
+2. `editorLaunch` still uses a module-level pending-code map; evaluate whether this should eventually move into structured state/bootstrap infrastructure.
+
+### What should be done in the future
+
+- Proceed to Phase 7 migration (inventory app thin shell): store wiring, App routing swaps, and legacy feature-directory deletion.
+
+### Code review instructions
+
+- Review migration targets first:
+  - `packages/engine/src/hypercard/editor/CodeEditorWindow.tsx`
+  - `packages/engine/src/hypercard/editor/editorLaunch.ts`
+  - `packages/engine/src/hypercard/debug/RuntimeCardDebugWindow.tsx`
+- Then verify export/dependency wiring:
+  - `packages/engine/src/hypercard/index.ts`
+  - `packages/engine/package.json`
+  - `package-lock.json`
+- Re-run validation:
+  - `npm run -w packages/engine typecheck`
+  - `npm run -w packages/engine test -- src/chat/ws/wsManager.test.ts src/chat/sem/semRegistry.test.ts src/hypercard/timeline/hypercardWidget.test.ts src/hypercard/timeline/hypercardCard.test.ts`
+
+### Technical details
+
+- Phase 6 tasks completed:
+  - `6.4` CodeEditorWindow move
+  - `6.5` editorLaunch move
+  - `6.6` RuntimeCardDebugWindow move (STACK decoupled via `stacks` prop)
+- Task update command:
+  - `docmgr task check --ticket HC-01-EXTRACT-WEBCHAT --id 44,45,46`

@@ -159,3 +159,17 @@ Phase 6.1-6.3 complete (commit e8fbc61): migrated EventViewerWindow, SyntaxHighl
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/chat/debug/yamlFormat.ts — Moved YAML formatter utility to engine debug module
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/chat/index.ts — Exported debug viewer/highlighter/formatter from chat barrel
 
+
+
+## 2026-02-20
+
+Phase 6.4-6.6 complete (commit d0e758d): migrated CodeEditorWindow, editorLaunch, and RuntimeCardDebugWindow into engine hypercard modules, removed direct STACK coupling via `stacks` prop, and exported debug/editor modules from hypercard barrel.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard/debug/RuntimeCardDebugWindow.tsx — Moved runtime card debug window to engine and switched to `stacks?: CardStackDefinition[]` prop
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard/editor/CodeEditorWindow.tsx — Moved CodeMirror runtime card editor into engine
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard/editor/editorLaunch.ts — Moved editor launch helper and rewired to engine desktop/runtime modules
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard/index.ts — Exported migrated debug/editor modules
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/package.json — Added explicit CodeMirror editor dependencies for engine-owned editor window
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/package-lock.json — Lockfile updates for added editor dependencies
