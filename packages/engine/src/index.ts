@@ -14,8 +14,6 @@ export * from './app';
 export * from './cards';
 // ── Plugin Runtime ──
 export * from './plugin-runtime';
-// ── Chat ──
-export * from './chat';
 
 // ── Widgets ──
 export * from './components/widgets';
