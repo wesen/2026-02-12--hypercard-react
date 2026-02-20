@@ -171,4 +171,41 @@ describe('SemRegistry default handlers', () => {
 
     expect(result.ops).toHaveLength(0);
   });
+
+  it('returns no-op projection for unknown event types', () => {
+    const registry = createSemRegistry();
+    const result = registry.handle(
+      {
+        sem: true,
+        event: {
+          type: 'unknown.event',
+          id: 'unknown-1',
+          data: { any: 'value' },
+        },
+      },
+      { convId: 'c1', now: () => 1 },
+    );
+
+    expect(result.ops).toEqual([]);
+    expect(result.effects).toEqual([]);
+  });
+
+  it('uses deterministic fallback ids from ctx.now when event id is missing', () => {
+    const registry = createSemRegistry();
+    const result = registry.handle(
+      {
+        sem: true,
+        event: {
+          type: 'llm.start',
+          data: { role: 'assistant' },
+        },
+      },
+      { convId: 'c1', now: () => 42 },
+    );
+
+    expect(result.ops[0].type).toBe('addEntity');
+    if (result.ops[0].type === 'addEntity') {
+      expect(result.ops[0].entity.id).toBe('llm-start-42');
+    }
+  });
 });

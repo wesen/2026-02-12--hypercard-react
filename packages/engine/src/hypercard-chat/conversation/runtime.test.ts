@@ -102,6 +102,36 @@ describe('createConversationRuntime', () => {
     expect(runtime.getState().connection.hydratedVersion).toBe('11');
   });
 
+  it('keeps duplicate buffered replay idempotent', () => {
+    const harness = createRuntimeHarness();
+    const runtime = createConversationRuntime({
+      conversationId: 'conv-1',
+      semRegistry: createSemRegistry(),
+      createClient: harness.createClient,
+      waitForHydration: true,
+    });
+
+    const duplicateEnvelope = {
+      sem: true as const,
+      event: {
+        type: 'llm.start',
+        id: 'm1',
+        seq: 1,
+        data: { role: 'assistant' },
+      },
+    };
+    runtime.ingestEnvelope(duplicateEnvelope);
+    runtime.ingestEnvelope(duplicateEnvelope);
+    expect(runtime.getState().timeline.ids).toEqual([]);
+
+    runtime.hydrateSnapshot({
+      version: '12',
+      entities: [],
+    });
+
+    expect(runtime.getState().timeline.ids).toEqual(['m1']);
+  });
+
   it('routes transport events through runtime-owned handlers', () => {
     const harness = createRuntimeHarness();
     const runtime = createConversationRuntime({
@@ -126,4 +156,3 @@ describe('createConversationRuntime', () => {
     expect(runtime.getState().timeline.ids).toContain('m1');
   });
 });
-

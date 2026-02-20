@@ -30,9 +30,13 @@ function recordField(record: Record<string, unknown>, key: string): Record<strin
   return isRecord(value) ? value : undefined;
 }
 
-function eventId(event: SemEvent | undefined, fallbackPrefix: string): string {
+function eventId(
+  event: SemEvent | undefined,
+  fallbackPrefix: string,
+  now: () => number,
+): string {
   if (event?.id?.trim()) return event.id;
-  return `${fallbackPrefix}-${Date.now()}`;
+  return `${fallbackPrefix}-${now()}`;
 }
 
 function upsert(entity: TimelineEntity): SemHandlerResult {
@@ -83,7 +87,7 @@ function timelineUpsertHandler(envelope: SemEnvelope, ctx: SemContext): SemHandl
 function llmStartHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResult {
   const data = asRecord(envelope.event?.data);
   return add({
-    id: eventId(envelope.event, 'llm-start'),
+    id: eventId(envelope.event, 'llm-start', ctx.now),
     kind: 'message',
     createdAt: ctx.now(),
     props: {
@@ -99,7 +103,7 @@ function llmDeltaHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResu
   const cumulative = stringField(data, 'cumulative');
   const delta = stringField(data, 'delta');
   return upsert({
-    id: eventId(envelope.event, 'llm-delta'),
+    id: eventId(envelope.event, 'llm-delta', ctx.now),
     kind: 'message',
     createdAt: ctx.now(),
     updatedAt: ctx.now(),
@@ -114,7 +118,7 @@ function llmDeltaHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResu
 function llmFinalHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResult {
   const data = asRecord(envelope.event?.data);
   return upsert({
-    id: eventId(envelope.event, 'llm-final'),
+    id: eventId(envelope.event, 'llm-final', ctx.now),
     kind: 'message',
     createdAt: ctx.now(),
     updatedAt: ctx.now(),
@@ -129,7 +133,7 @@ function llmFinalHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResu
 function llmThinkingSummaryHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResult {
   const data = asRecord(envelope.event?.data);
   return upsert({
-    id: eventId(envelope.event, 'llm-thinking-summary'),
+    id: eventId(envelope.event, 'llm-thinking-summary', ctx.now),
     kind: 'message',
     createdAt: ctx.now(),
     updatedAt: ctx.now(),
@@ -144,7 +148,7 @@ function llmThinkingSummaryHandler(envelope: SemEnvelope, ctx: SemContext): SemH
 function toolStartHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResult {
   const data = asRecord(envelope.event?.data);
   return add({
-    id: eventId(envelope.event, 'tool-start'),
+    id: eventId(envelope.event, 'tool-start', ctx.now),
     kind: 'tool_call',
     createdAt: ctx.now(),
     props: {
@@ -159,7 +163,7 @@ function toolDeltaHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerRes
   const data = asRecord(envelope.event?.data);
   const patch = asRecord(data.patch);
   return upsert({
-    id: eventId(envelope.event, 'tool-delta'),
+    id: eventId(envelope.event, 'tool-delta', ctx.now),
     kind: 'tool_call',
     createdAt: ctx.now(),
     updatedAt: ctx.now(),
@@ -173,7 +177,7 @@ function toolDeltaHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerRes
 function toolResultHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResult {
   const data = asRecord(envelope.event?.data);
   const customKind = stringField(data, 'customKind') ?? '';
-  const base = eventId(envelope.event, 'tool-result');
+  const base = eventId(envelope.event, 'tool-result', ctx.now);
   return upsert({
     id: customKind ? `${base}:custom` : `${base}:result`,
     kind: 'tool_result',
@@ -189,7 +193,7 @@ function toolResultHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerRe
 
 function toolDoneHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResult {
   return upsert({
-    id: eventId(envelope.event, 'tool-done'),
+    id: eventId(envelope.event, 'tool-done', ctx.now),
     kind: 'tool_call',
     createdAt: ctx.now(),
     updatedAt: ctx.now(),
@@ -200,7 +204,7 @@ function toolDoneHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResu
 function logHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResult {
   const data = asRecord(envelope.event?.data);
   return add({
-    id: eventId(envelope.event, 'log'),
+    id: eventId(envelope.event, 'log', ctx.now),
     kind: 'log',
     createdAt: ctx.now(),
     props: {
@@ -214,7 +218,7 @@ function logHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResult {
 function wsErrorHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResult {
   const data = asRecord(envelope.event?.data);
   return upsert({
-    id: eventId(envelope.event, 'ws-error'),
+    id: eventId(envelope.event, 'ws-error', ctx.now),
     kind: 'status',
     createdAt: ctx.now(),
     updatedAt: ctx.now(),
@@ -241,7 +245,8 @@ function lifecycleData(record: Record<string, unknown>): Record<string, unknown>
 function widgetLifecycleHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResult {
   const type = envelope.event?.type;
   const data = asRecord(envelope.event?.data);
-  const itemId = stringField(data, 'itemId') ?? eventId(envelope.event, 'hypercard-widget');
+  const itemId =
+    stringField(data, 'itemId') ?? eventId(envelope.event, 'hypercard-widget', ctx.now);
   return upsert({
     id: `${itemId}:widget`,
     kind: 'hypercard_widget',
@@ -262,7 +267,8 @@ function widgetLifecycleHandler(envelope: SemEnvelope, ctx: SemContext): SemHand
 function cardLifecycleHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResult {
   const type = envelope.event?.type;
   const data = asRecord(envelope.event?.data);
-  const itemId = stringField(data, 'itemId') ?? eventId(envelope.event, 'hypercard-card');
+  const itemId =
+    stringField(data, 'itemId') ?? eventId(envelope.event, 'hypercard-card', ctx.now);
   return upsert({
     id: `${itemId}:card`,
     kind: 'hypercard_card',

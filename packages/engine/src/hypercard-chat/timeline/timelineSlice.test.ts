@@ -60,6 +60,40 @@ describe('timelineSlice', () => {
     expect(state.conversations.a.byId.x.props.text).toBe('new');
   });
 
+  it('merges versionless patches into versioned entities without dropping version', () => {
+    const state = reduce([
+      upsertEntity({
+        convId: 'a',
+        entity: {
+          id: 'x',
+          kind: 'status',
+          createdAt: 1,
+          updatedAt: 1,
+          version: '100',
+          props: { text: 'baseline', done: false },
+        },
+      }),
+      upsertEntity({
+        convId: 'a',
+        entity: {
+          id: 'x',
+          kind: 'status',
+          createdAt: 1,
+          updatedAt: 2,
+          props: { done: true, extra: 'patched' },
+        },
+      }),
+    ]);
+
+    expect(state.conversations.a.byId.x.version).toBe('100');
+    expect(state.conversations.a.byId.x.updatedAt).toBe(2);
+    expect(state.conversations.a.byId.x.props).toEqual({
+      text: 'baseline',
+      done: true,
+      extra: 'patched',
+    });
+  });
+
   it('rekeys entity ids', () => {
     const state = reduce([
       addEntity({
