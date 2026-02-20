@@ -32,8 +32,8 @@
 
 - [ ] HC58-IMPL-01 Runtime core scaffold:
   `packages/engine/src/hypercard-chat/conversation/runtimeCore.ts` (new), symbols to add:
-  `ConversationRuntimeState`, `ConversationMutation`, `createConversationRuntime`, `applyConversationMutations`
-  Task explanation and bigger refactor purpose: centralize runtime mutation/state logic so it is no longer split across wrappers, hooks, and app slices.
+  `ConversationRuntimeState`, `ConversationProjectionOp`, `createConversationRuntime`, `applyProjectionOps`
+  Task explanation and bigger refactor purpose: centralize runtime projection-op/state logic so it is no longer split across wrappers, hooks, and app slices.
 
 - [ ] HC58-IMPL-02 One projection path for all windows:
   `packages/engine/src/hypercard-chat/runtime/projectionPipeline.ts` + `packages/engine/src/hypercard-chat/runtime/useProjectedChatConnection.ts`, symbols:
@@ -62,7 +62,7 @@
 
 - [ ] HC58-IMPL-07 Runtime SEM handler migration:
   `packages/engine/src/hypercard-chat/sem/registry.ts`,
-  move generic meta handling (`llm.start`, `llm.delta`, `llm.final`, `ws.error`) into runtime-owned mutation handlers
+  move generic meta handling (`llm.start`, `llm.delta`, `llm.final`, `ws.error`) into runtime-owned projection handlers
   Task explanation and bigger refactor purpose: remove generic runtime metadata projection from app adapters and unify it in engine runtime.
 
 - [ ] HC58-IMPL-08 Inventory adapter narrowing:

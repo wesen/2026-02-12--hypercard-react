@@ -110,6 +110,8 @@ Runtime projection operation:
 
 No separate stream-channel abstraction is required in HC-58 v1.
 
+Here, \"projection ops\" are intentionally simple reducer-facing operations, not a second event protocol.
+
 ### Runtime state contract
 ```ts
 type ConversationRuntimeState = {
@@ -242,7 +244,7 @@ After HC-58:
 ## Execution Map (Task -> Symbols)
 | Task ID | Concrete Target | Symbols / Files |
 | --- | --- | --- |
-| `HC58-IMPL-01` | Runtime core scaffold | `packages/engine/src/hypercard-chat/conversation/runtimeCore.ts` (new): `ConversationRuntimeState`, `ConversationMutation`, `createConversationRuntime`, `applyConversationMutations` |
+| `HC58-IMPL-01` | Runtime core scaffold | `packages/engine/src/hypercard-chat/conversation/runtimeCore.ts` (new): `ConversationRuntimeState`, `ConversationProjectionOp`, `createConversationRuntime`, `applyProjectionOps` |
 | `HC58-IMPL-02` | One projection path | `packages/engine/src/hypercard-chat/runtime/projectionPipeline.ts`, `packages/engine/src/hypercard-chat/runtime/useProjectedChatConnection.ts`: single shared `projectSemEnvelope(...)` entrypoint for all windows |
 | `HC58-IMPL-03` | Stable entity ID invariants | `runtimeCore.ts` (new) + `packages/engine/src/hypercard-chat/timeline/timelineSlice.ts`: remove alias/rekey paths and enforce direct stable `entity.id` merge |
 | `HC58-IMPL-04` | Deterministic apply ordering | `runtimeCore.ts` (new) + `packages/engine/src/hypercard-chat/runtime/projectionPipeline.ts`: one-pass deterministic envelope apply |

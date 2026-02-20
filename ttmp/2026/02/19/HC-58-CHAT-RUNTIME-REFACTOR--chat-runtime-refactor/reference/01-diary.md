@@ -897,3 +897,59 @@ I also simplified the implementation tasks so they now track deterministic singl
   - same envelopes + same projection path for every window,
   - no projection mode controls,
   - adapters constrained to post-projection side-effects.
+
+## Step 15: Clarify "Conversation Mutations" as Simple Projection Ops
+I tightened HC-58 wording to remove ambiguity around "conversation mutations." The plan now uses "projection ops" terminology to reflect simple reducer-facing operations (`addEntity`, `upsertEntity`, `clearConversation`, meta/cursor updates), not a separate protocol.
+
+This keeps the simplified one-path model clear and avoids introducing conceptual overhead in task names.
+
+### Prompt Context
+
+**User prompt (verbatim):** "so the tasks still reference conversation mutations, what's that about now?"
+
+**Assistant interpretation:** Clarify what that term means in the simplified design and remove confusing terminology from tasks/design docs.
+
+**Inferred user intent:** Ensure HC-58 language stays aligned with the simplified architecture and does not imply hidden complexity.
+
+**Commit (code):** N/A (documentation updates in progress)
+
+### What I did
+- Updated task wording in:
+  - `ttmp/2026/02/19/HC-58-CHAT-RUNTIME-REFACTOR--chat-runtime-refactor/tasks.md`
+- Replaced symbols:
+  - `ConversationMutation` -> `ConversationProjectionOp`
+  - `applyConversationMutations` -> `applyProjectionOps`
+- Updated one task sentence:
+  - `mutation handlers` -> `projection handlers`
+- Updated execution map + explanatory sentence in:
+  - `ttmp/2026/02/19/HC-58-CHAT-RUNTIME-REFACTOR--chat-runtime-refactor/design-doc/01-chat-runtime-refactor-analysis-and-concrete-blueprint.md`
+
+### Why
+- "Mutation" wording suggested a new abstraction layer that we explicitly decided not to introduce in HC-58.
+
+### What worked
+- Symbols and prose now match the one-path SEM projection model.
+
+### What didn't work
+- N/A
+
+### What I learned
+- Even small symbol names can signal architecture complexity; naming should reinforce simplification decisions.
+
+### What was tricky to build
+- Keeping task symbols and design execution map synchronized so implementation references stay coherent.
+
+### What warrants a second pair of eyes
+- Confirm naming preference (`ConversationProjectionOp` / `applyProjectionOps`) before code phase starts.
+
+### What should be done in the future
+- Keep future task additions using "projection" terminology unless we intentionally introduce a broader abstraction.
+
+### Code review instructions
+- Check updated symbols in:
+  - `ttmp/2026/02/19/HC-58-CHAT-RUNTIME-REFACTOR--chat-runtime-refactor/tasks.md`
+- Check execution map + clarifying note in:
+  - `ttmp/2026/02/19/HC-58-CHAT-RUNTIME-REFACTOR--chat-runtime-refactor/design-doc/01-chat-runtime-refactor-analysis-and-concrete-blueprint.md`
+
+### Technical details
+- No behavioral/code changes. Documentation terminology alignment only.
