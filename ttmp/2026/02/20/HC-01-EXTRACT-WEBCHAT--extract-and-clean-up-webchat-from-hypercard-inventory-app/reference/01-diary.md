@@ -18,6 +18,22 @@ RelatedFiles:
     - Path: apps/inventory/src/features/chat/webchatClient.ts
     - Path: packages/engine/src/chat/chatApi.ts
       Note: Resolved pre-existing typecheck gap for StreamHandlers
+    - Path: packages/engine/src/chat/renderers/builtin/GenericRenderer.tsx
+      Note: Phase 3 fallback renderer
+    - Path: packages/engine/src/chat/renderers/builtin/LogRenderer.tsx
+      Note: Phase 3 builtin log renderer
+    - Path: packages/engine/src/chat/renderers/builtin/MessageRenderer.tsx
+      Note: Phase 3 message renderer preserving legacy UX
+    - Path: packages/engine/src/chat/renderers/builtin/StatusRenderer.tsx
+      Note: Phase 3 builtin status renderer
+    - Path: packages/engine/src/chat/renderers/builtin/ToolCallRenderer.tsx
+      Note: Phase 3 builtin tool-call renderer
+    - Path: packages/engine/src/chat/renderers/builtin/ToolResultRenderer.tsx
+      Note: Phase 3 builtin tool-result renderer
+    - Path: packages/engine/src/chat/renderers/rendererRegistry.ts
+      Note: Phase 3 registry and default renderer registration
+    - Path: packages/engine/src/chat/renderers/types.ts
+      Note: Phase 3 renderer contracts
     - Path: packages/engine/src/chat/runtime/conversationManager.ts
       Note: Phase 2 per-conversation runtime lifecycle manager
     - Path: packages/engine/src/chat/runtime/http.ts
@@ -38,6 +54,8 @@ RelatedFiles:
       Note: Phase 2 integration coverage for WS replay behavior
     - Path: packages/engine/src/chat/ws/wsManager.ts
       Note: Phase 2 WS runtime with hydration buffering and SemContext dispatch
+    - Path: packages/engine/src/components/widgets/ChatTimelineRenderers.stories.tsx
+      Note: Phase 3 Storybook stories for builtin renderers
     - Path: packages/engine/src/components/widgets/ChatWindow.tsx
     - Path: packages/engine/src/index.ts
     - Path: ttmp/2026/02/20/HC-01-EXTRACT-WEBCHAT--extract-and-clean-up-webchat-from-hypercard-inventory-app/changelog.md
@@ -52,6 +70,7 @@ LastUpdated: 2026-02-20T00:00:00Z
 WhatFor: Track exploration, decisions, and implementation progress
 WhenToUse: Reference during implementation and code review
 ---
+
 
 
 
@@ -529,3 +548,99 @@ The trickiest part was preserving hydration ordering guarantees while adapting f
   - `${protocol}://${host}${basePrefix}/ws?conv_id=${encodeURIComponent(convId)}`
 - Task updates executed:
   - `docmgr task check --ticket HC-01-EXTRACT-WEBCHAT --id 12,13,14,15,16`
+
+---
+
+## Step 6: Phase 3 Implementation (Renderer Registry + Builtin Renderers + Stories)
+
+Implemented Phase 3 by introducing a renderer registry and a first batch of builtin renderers that cover the current core timeline kinds (`message`, `tool_call`, `tool_result`, `status`, `log`) plus a generic fallback.
+
+This step also introduces Storybook coverage for each builtin renderer and keeps message presentation behavior (role labels, thinking indicator, streaming cursor) inside `MessageRenderer`, aligned with the renderer-only Phase 4 direction.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 4)
+
+**Assistant interpretation:** Continue sequentially through the task list and keep implementation/docs/commits synchronized.
+
+**Inferred user intent:** Deliver incremental, reviewable architecture migration progress with concrete UX-preserving outcomes.
+
+**Commit (code):** 27758b7 — "feat(engine): add timeline renderer registry and builtin renderers"
+
+### What I did
+
+1. Added renderer contracts in `packages/engine/src/chat/renderers/types.ts`
+2. Added `rendererRegistry.ts` with:
+   - `registerTimelineRenderer`
+   - `unregisterTimelineRenderer`
+   - `clearRegisteredTimelineRenderers`
+   - `resolveTimelineRenderers`
+   - `registerDefaultTimelineRenderers`
+3. Added builtin renderer components:
+   - `MessageRenderer.tsx`
+   - `ToolCallRenderer.tsx`
+   - `ToolResultRenderer.tsx`
+   - `StatusRenderer.tsx`
+   - `LogRenderer.tsx`
+   - `GenericRenderer.tsx`
+4. Added builtin barrel export `renderers/builtin/index.ts`
+5. Added Storybook stories at `packages/engine/src/components/widgets/ChatTimelineRenderers.stories.tsx`
+6. Exported renderers from `packages/engine/src/chat/index.ts`
+7. Ran typecheck + tests (including Storybook taxonomy check) and fixed story placement to satisfy taxonomy constraints
+8. Checked off tasks 3.1-3.6 in docmgr
+
+### Why
+
+Phase 3 is the bridge between entity state and UI rendering. Establishing renderer contracts now enables Phase 4 to simplify `ChatWindow` into a shell without losing existing message UX.
+
+### What worked
+
+- Registry API copied cleanly from pinocchio with engine-local renderer types
+- Message behavior port from legacy `ChatWindow` to `MessageRenderer` retained expected role/cursor/thinking presentation
+- Storybook taxonomy and tests passed after relocating stories under `components/widgets`
+
+### What didn't work
+
+- Initial Storybook story location under `packages/engine/src/chat/renderers/...` failed repo taxonomy check:
+  - `engine story path must be under packages/engine/src/components or packages/engine/src/plugin-runtime`
+- Resolution:
+  - moved stories to `packages/engine/src/components/widgets/ChatTimelineRenderers.stories.tsx`
+
+### What I learned
+
+- This repo enforces strict story placement; renderer stories can still target chat modules if stored under `components/`
+- The renderer contract is already sufficient for Phase 4 `timelineContent` rendering, so no additional renderer abstraction is needed right now
+
+### What was tricky to build
+
+Preserving message behavior while decoupling from `ChatWindow` required choosing what belongs to the renderer vs shell. The solution was to keep semantic message rendering details in `MessageRenderer` and avoid coupling to shell state beyond entity props.
+
+### What warrants a second pair of eyes
+
+- Visual consistency of new renderer output compared to existing `ChatWindow` message rendering
+- Whether `registerDefaultTimelineRenderers()` should mutate extension registry or stay purely declarative
+- Future `status`/`log` payload shape assumptions in renderers before hypercard-specific kinds are added
+
+### What should be done in the future
+
+- Proceed to Phase 4 tasks with renderer-only `ChatWindow` conversion and `ChatConversationWindow`
+
+### Code review instructions
+
+- Start with `packages/engine/src/chat/renderers/rendererRegistry.ts` and `packages/engine/src/chat/renderers/types.ts`
+- Review builtin renderer files under `packages/engine/src/chat/renderers/builtin/`
+- Review stories at `packages/engine/src/components/widgets/ChatTimelineRenderers.stories.tsx`
+- Validate with:
+  - `npm run -w packages/engine typecheck`
+  - `npm run -w packages/engine test -- src/chat/state/timelineSlice.test.ts src/chat/sem/semRegistry.test.ts src/chat/ws/wsManager.test.ts`
+- Confirm task bookkeeping:
+  - `docmgr task list --ticket HC-01-EXTRACT-WEBCHAT`
+
+### Technical details
+
+- Builtin renderer kind mapping:
+  - `message`, `tool_call`, `tool_result`, `status`, `log`
+- Fallback renderer:
+  - `default: GenericRenderer`
+- Task updates executed:
+  - `docmgr task check --ticket HC-01-EXTRACT-WEBCHAT --id 17,18,19,20,21,22`

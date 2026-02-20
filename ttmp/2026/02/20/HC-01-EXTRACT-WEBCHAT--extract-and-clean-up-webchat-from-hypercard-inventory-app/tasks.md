@@ -24,12 +24,12 @@
 
 ## Phase 3: Renderer Registry + Builtin Renderers
 
-- [ ] **3.1** Copy + adapt renderer registry from `pinocchio/.../webchat/rendererRegistry.ts` to `packages/engine/src/chat/renderers/rendererRegistry.ts` -- define `RenderEntity` type and `ChatWidgetRenderers` type
-- [ ] **3.2** Create builtin MessageRenderer at `packages/engine/src/chat/renderers/builtin/MessageRenderer.tsx` -- renders `e.props.content` with streaming cursor, role labels, thinking indicator
-- [ ] **3.3** Create builtin ToolCallRenderer, ToolResultRenderer, StatusRenderer, LogRenderer at `packages/engine/src/chat/renderers/builtin/` -- one file each
-- [ ] **3.4** Create GenericRenderer (fallback) at `packages/engine/src/chat/renderers/builtin/GenericRenderer.tsx`
-- [ ] **3.5** Create `registerDefaultTimelineRenderers()` function that registers all builtin renderers
-- [ ] **3.6** Write Storybook stories for each builtin renderer showing representative entities
+- [x] **3.1** Copy + adapt renderer registry from `pinocchio/.../webchat/rendererRegistry.ts` to `packages/engine/src/chat/renderers/rendererRegistry.ts` -- define `RenderEntity` type and `ChatWidgetRenderers` type
+- [x] **3.2** Create builtin MessageRenderer at `packages/engine/src/chat/renderers/builtin/MessageRenderer.tsx` -- renders `e.props.content` with streaming cursor, role labels, thinking indicator
+- [x] **3.3** Create builtin ToolCallRenderer, ToolResultRenderer, StatusRenderer, LogRenderer at `packages/engine/src/chat/renderers/builtin/` -- one file each
+- [x] **3.4** Create GenericRenderer (fallback) at `packages/engine/src/chat/renderers/builtin/GenericRenderer.tsx`
+- [x] **3.5** Create `registerDefaultTimelineRenderers()` function that registers all builtin renderers
+- [x] **3.6** Write Storybook stories for each builtin renderer showing representative entities
 
 ## Phase 4: ChatConversationWindow + ChatWindow Renderer-Only Conversion
 

@@ -36,3 +36,19 @@ Phase 2 complete: added wsManager with hydration buffering/replay, HTTP helpers,
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/chat/ws/wsManager.test.ts — Added WS integration tests for frame dispatch and hydration buffering
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/chat/ws/wsManager.ts — Adapted pinocchio WS manager to SemContext and chatSessionSlice
 
+
+## 2026-02-20
+
+Phase 3 complete: added renderer registry, builtin timeline renderers (message/tool/status/log/generic), default renderer registration, and Storybook coverage (commit 27758b7).
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/chat/renderers/builtin/GenericRenderer.tsx — Added builtin fallback renderer
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/chat/renderers/builtin/LogRenderer.tsx — Added builtin log renderer
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/chat/renderers/builtin/MessageRenderer.tsx — Preserved message UX behavior in renderer form
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/chat/renderers/builtin/StatusRenderer.tsx — Added builtin status renderer
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/chat/renderers/builtin/ToolCallRenderer.tsx — Added builtin tool-call renderer
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/chat/renderers/builtin/ToolResultRenderer.tsx — Added builtin tool-result renderer
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/chat/renderers/rendererRegistry.ts — Added renderer registry + default registration function
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/widgets/ChatTimelineRenderers.stories.tsx — Added Storybook stories for each builtin renderer
+
