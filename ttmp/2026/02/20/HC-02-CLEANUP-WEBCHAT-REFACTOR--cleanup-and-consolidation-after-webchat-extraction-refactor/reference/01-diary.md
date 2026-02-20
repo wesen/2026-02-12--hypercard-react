@@ -16,6 +16,8 @@ RelatedFiles:
         Restore chat header actions for event viewer and debug launch
         Add local chat render-mode toggle in header actions
         F6 explicit inventory registration of hypercard timeline module
+    - Path: apps/inventory/src/domain/pluginBundle.vm.js
+      Note: Artifact lookup behavior in reportViewer/itemViewer analyzed
     - Path: packages/engine/src/chat/components/ChatConversationWindow.tsx
       Note: |-
         F4 implementation details (starter suggestion lifecycle)
@@ -31,6 +33,10 @@ RelatedFiles:
       Note: F6 default-module and late-registration coverage
     - Path: packages/engine/src/chat/runtime/registerChatModules.ts
       Note: F5/F6 bootstrap split (default modules + explicit hypercard opt-in)
+    - Path: packages/engine/src/chat/sem/semRegistry.ts
+      Note: Tool result projection path analyzed for missing artifact upsert side effects
+    - Path: packages/engine/src/chat/sem/timelineMapper.ts
+      Note: CustomKind remap path analyzed for artifactId extraction behavior
     - Path: packages/engine/src/chat/state/selectors.ts
       Note: F4 selector migration to timeline state
     - Path: packages/engine/src/chat/state/suggestions.ts
@@ -39,6 +45,8 @@ RelatedFiles:
       Note: F4 reducers for upsert/consume suggestions
     - Path: packages/engine/src/components/shell/windowing/useDesktopShellController.tsx
       Note: Fix non-card icon double-click routing through shell command pipeline
+    - Path: packages/engine/src/hypercard/artifacts/artifactRuntime.ts
+      Note: Artifact extraction/open payload normalization path analyzed
     - Path: packages/engine/src/hypercard/timeline/hypercardCard.test.ts
       Note: F6 explicit hypercard module registration in tests
     - Path: packages/engine/src/hypercard/timeline/hypercardCard.tsx
@@ -57,6 +65,7 @@ RelatedFiles:
         Track and close header-actions restoration task
         Track and close renderer debug mode task
         F5 and F6 task closures
+        Added task #19 for remapped tool_result artifact open fix
     - Path: ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/various/01-hc01-touched-files-existing.txt
       Note: Computed surviving touched-file set used in audit
     - Path: ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/various/02-hc01-touched-files-removed.txt
@@ -67,6 +76,7 @@ LastUpdated: 2026-02-20T16:24:04.03865615-05:00
 WhatFor: Preserve detailed investigation history for HC-02 cleanup scope derivation from HC-01 touched files.
 WhenToUse: Use when reviewing why each cleanup task exists and how findings were derived from concrete code evidence.
 ---
+
 
 
 
@@ -964,6 +974,66 @@ In parallel, renderer registry lifecycle was hardened so late module registratio
   - `pnpm exec tsc -b packages/engine`
   - `pnpm exec tsc -p packages/engine/tsconfig.json --noEmit`
   - `pnpm exec tsc -p apps/inventory/tsconfig.json --noEmit`
+
+## Step 13: Analyze widget artifact open failure and add fix task
+
+After receiving a concrete runtime example and screenshot, I traced the failing path for `Open/Edit` on remapped widget results. The visible widget entity existed in timeline, but artifact lookup in plugin card viewer failed, yielding `Artifact not found`.
+
+Root cause analysis indicates a gap between timeline remapping and artifact-store projection, with a secondary normalization risk around quoted artifact IDs.
+
+### Prompt Context
+
+**User prompt (verbatim):** "I get an issue when receiving that widget: ... But then the artifact window after I click edit/open says \"Artifact not found: \"sales-summary-2026-02-20\"\" Analyze and create a task to fix it, explain to me why it's broken."
+
+**Assistant interpretation:** Diagnose why a rendered widget cannot open its artifact and add a concrete task for implementation.
+
+**Inferred user intent:** Understand exact breakage mechanism and queue a targeted fix that restores artifact open/edit behavior for tool-result projected widgets.
+
+**Commit (code):** N/A (analysis + task creation)
+
+### What I did
+- Traced data flow:
+  1. `tool.result` SEM handler projects `tool_result` entities.
+  2. `timelineMapper` remaps `customKind=hypercard.widget.v1` into `hypercard_widget`.
+  3. renderer uses `artifactId` and opens `reportViewer/itemViewer` with `param=artifactId`.
+  4. plugin card resolves artifact by ID from `domains.artifacts.byId`.
+- Confirmed artifact store upsert side-effects currently happen in direct `hypercard.widget.v1` / `hypercard.card.v2` SEM handlers, not in the remapped `tool_result` path.
+- Added task #19 in HC-02:
+  - `Fix artifact open/edit for remapped tool_result hypercard widgets/cards: ensure artifact store upsert on customKind remap path and normalize quoted artifact IDs before window param lookup`.
+
+### Why
+- The renderer can have `artifactId` and still fail if `hypercardArtifacts.byId[artifactId]` was never populated.
+- The error string showing quoted ID suggests param normalization also needs hardening.
+
+### What worked
+- Analysis isolated a concrete architectural seam where projection is incomplete for custom tool-result remaps.
+- Task created with explicit fix scope.
+
+### What didn't work
+- N/A
+
+### What I learned
+- Timeline remapping alone is insufficient for artifact workflows; artifact-store projection must be triggered on every equivalent ingestion path.
+
+### What was tricky to build
+- The failure mode looks like a UI issue, but root cause spans SEM projection, remapping, and plugin artifact domain lookup.
+
+### What warrants a second pair of eyes
+- Confirm whether backend may emit quoted artifact IDs in some tool-result payloads; if so, normalize consistently at ingestion boundary.
+
+### What should be done in the future
+- Implement task #19 and add regression tests for:
+  - remapped `tool_result` widget/card path populates artifact store
+  - open/edit works with and without quoted artifact IDs.
+
+### Code review instructions
+- Review analysis-relevant files:
+  - `packages/engine/src/chat/sem/semRegistry.ts`
+  - `packages/engine/src/chat/sem/timelineMapper.ts`
+  - `packages/engine/src/hypercard/timeline/hypercardWidget.tsx`
+  - `packages/engine/src/hypercard/artifacts/artifactRuntime.ts`
+  - `apps/inventory/src/domain/pluginBundle.vm.js`
+  - `ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/tasks.md`
 
 ## Usage Examples
 
