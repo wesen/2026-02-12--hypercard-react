@@ -14,15 +14,11 @@ export * from './app';
 export * from './cards';
 // ── Plugin Runtime ──
 export * from './plugin-runtime';
-// ── Chat ──
-export * from './chat';
 // ── HyperCard Chat Tooling ──
 export * from './hypercard-chat';
 
 // ── Widgets ──
 export * from './components/widgets';
-// ── Debug utilities ──
-export * from './debug';
 // ── Diagnostics (Redux perf / FPS) ──
 export * from './diagnostics';
 // ── State ──

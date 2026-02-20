@@ -1,5 +1,4 @@
 import { configureStore, type Reducer } from '@reduxjs/toolkit';
-import { debugReducer } from '../debug/debugSlice';
 import { initDiagnostics } from '../diagnostics/diagnosticsStore';
 import { createReduxPerfMiddleware } from '../diagnostics/reduxPerfMiddleware';
 import { startFrameMonitor } from '../diagnostics/frameMonitor';
@@ -53,7 +52,6 @@ export function createAppStore<T extends Record<string, Reducer>>(
     pluginCardRuntime: pluginCardRuntimeReducer,
     windowing: windowingReducer,
     notifications: notificationsReducer,
-    debug: debugReducer,
     ...domainReducers,
   };
 
