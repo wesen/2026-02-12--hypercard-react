@@ -92,3 +92,12 @@ Phase 5 complete (commit fd931ff): extracted hypercard artifacts/timeline module
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/chat/sem/timelineMapper.test.ts — Added remap tests for hypercard customKind
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard/timeline/registerHypercardTimeline.ts — Central hypercard module registration
 
+
+## 2026-02-20
+
+Added a dedicated reference document explaining Step 4 Phase 1 timeline reducer behavior: conversation scoping, pinocchio-preserving version gating semantics, invariants, and practical examples.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/20/HC-01-EXTRACT-WEBCHAT--extract-and-clean-up-webchat-from-hypercard-inventory-app/reference/02-conversation-scoped-timeline-reducer-semantics-and-version-gating.md — Primary explanatory reference for reducer/version semantics
+
