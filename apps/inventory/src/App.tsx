@@ -8,6 +8,7 @@ import {
 import { type OpenWindowPayload, openWindow } from '@hypercard/engine/desktop-core';
 import { type DesktopContribution, DesktopShell } from '@hypercard/engine/desktop-react';
 import { type ReactNode, useCallback, useMemo } from 'react';
+import { useDispatch } from 'react-redux';
 import { STACK } from './domain/stack';
 import { ReduxPerfWindow } from './features/debug/ReduxPerfWindow';
 
@@ -101,6 +102,46 @@ function buildEventViewerWindowPayload(convId: string): OpenWindowPayload {
   };
 }
 
+function buildRuntimeDebugWindowPayload(): OpenWindowPayload {
+  return {
+    id: 'window:runtime-debug',
+    title: '🔧 Stacks & Cards',
+    icon: '🔧',
+    bounds: { x: 80, y: 30, w: 560, h: 480 },
+    content: { kind: 'app', appKey: 'runtime-card-debug' },
+    dedupeKey: 'runtime-card-debug',
+  };
+}
+
+function InventoryChatAssistantWindow({ convId }: { convId: string }) {
+  const dispatch = useDispatch();
+
+  const openEventViewer = useCallback(() => {
+    dispatch(openWindow(buildEventViewerWindowPayload(convId)));
+  }, [convId, dispatch]);
+
+  const openRuntimeDebug = useCallback(() => {
+    dispatch(openWindow(buildRuntimeDebugWindowPayload()));
+  }, [dispatch]);
+
+  return (
+    <ChatConversationWindow
+      convId={convId}
+      title="Inventory Chat"
+      headerActions={
+        <>
+          <button type="button" data-part="btn" onClick={openEventViewer} style={{ fontSize: 10, padding: '1px 6px' }}>
+            🧭 Events
+          </button>
+          <button type="button" data-part="btn" onClick={openRuntimeDebug} style={{ fontSize: 10, padding: '1px 6px' }}>
+            🔧 Debug
+          </button>
+        </>
+      }
+    />
+  );
+}
+
 export function App() {
   const renderAppWindow = useCallback((appKey: string): ReactNode => {
     if (appKey === REDUX_PERF_APP_KEY) {
@@ -108,7 +149,7 @@ export function App() {
     }
     if (appKey.startsWith(`${CHAT_APP_KEY}:`)) {
       const convId = appKey.slice(CHAT_APP_KEY.length + 1);
-      return <ChatConversationWindow convId={convId} title="Inventory Chat" />;
+      return <InventoryChatAssistantWindow convId={convId} />;
     }
     if (appKey.startsWith('event-viewer:')) {
       const convId = appKey.slice('event-viewer:'.length);
@@ -238,16 +279,7 @@ export function App() {
             priority: 100,
             matches: (commandId) => commandId === 'debug.stacks' || commandId === 'icon.open.runtime-debug',
             run: (_commandId, ctx) => {
-              ctx.dispatch(
-                openWindow({
-                  id: 'window:runtime-debug',
-                  title: '🔧 Stacks & Cards',
-                  icon: '🔧',
-                  bounds: { x: 80, y: 30, w: 560, h: 480 },
-                  content: { kind: 'app', appKey: 'runtime-card-debug' },
-                  dedupeKey: 'runtime-card-debug',
-                }),
-              );
+              ctx.dispatch(openWindow(buildRuntimeDebugWindowPayload()));
               return 'handled';
             },
           },
