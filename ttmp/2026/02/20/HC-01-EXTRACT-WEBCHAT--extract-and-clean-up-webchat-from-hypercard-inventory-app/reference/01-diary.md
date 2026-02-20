@@ -1204,3 +1204,114 @@ The only operational wrinkle was filesystem policy blocking direct `rm -rf` via 
   - `8.1` obsolete tests deleted as part of hard directory removal
 - Pending:
   - `7.5` manual runtime behavior validation
+
+---
+
+## Step 12: Phase 8 Test + Story Migration (8.2, 8.3, 8.4, 8.6)
+
+Completed the remaining technical migration work for Phase 8 except the global verification gate in 8.5. This included porting legacy inventory tests into engine, adding missing chat-session reducer coverage, creating engine stories for migrated debug/editor windows, and removing legacy adapter-based ChatWindow stories that depended on `ChatWindowMessage`/`renderLegacyTimelineContent`.
+
+### Prompt Context
+
+**User prompt (verbatim):** "continue"
+
+**Assistant interpretation:** Continue the ticket implementation sequence into pending Phase 8 tasks after Phase 7 cutover.
+
+**Inferred user intent:** Keep reducing legacy surface and close as many remaining migration tasks as possible with concrete code+validation.
+
+**Commits (code):**
+- `ff51a4d` — "test(engine): migrate chat/hypercard utility tests from inventory"
+- `bfdc46c` — "test(engine): add chat session slice reducer coverage"
+- `05dc318` — "chore(stories): replace legacy chatwindow story set"
+
+### What I did
+
+1. Migrated legacy tests into engine (`8.2`):
+   - Added `packages/engine/src/chat/debug/eventBus.test.ts`
+   - Added `packages/engine/src/chat/debug/yamlFormat.test.ts`
+   - Added `packages/engine/src/hypercard/artifacts/artifactsSlice.test.ts`
+   - Added `packages/engine/src/hypercard/artifacts/artifactRuntime.test.ts`
+2. Completed missing test coverage in `8.3`:
+   - Added `packages/engine/src/chat/state/chatSessionSlice.test.ts`
+   - Covered conversation scoping, suggestion normalization/merge/fallback, stream metrics/error reset, reset/clear behavior
+3. Recreated stories for migrated components (`8.4`):
+   - Added `packages/engine/src/components/widgets/EventViewerWindow.stories.tsx`
+   - Added `packages/engine/src/components/widgets/CodeEditorWindow.stories.tsx`
+   - Added `packages/engine/src/components/widgets/RuntimeCardDebugWindow.stories.tsx`
+4. Removed legacy adapter story usage (`8.6`):
+   - Deleted `packages/engine/src/components/widgets/ChatWindow.stories.tsx`
+   - Deleted `packages/engine/src/components/widgets/ChatWindow.widgets.stories.tsx`
+   - Deleted `packages/engine/src/components/widgets/ChatWindow.interaction.stories.tsx`
+   - Deleted `packages/engine/src/components/shell/windowing/ChatWindowDesktop.stories.tsx`
+   - This removes story dependencies on `ChatWindowMessage` + `renderLegacyTimelineContent`
+5. Validation runs:
+   - `npm run -w packages/engine typecheck` (pass)
+   - `npm run -w packages/engine test -- ...` targeted suites for migrated tests (pass)
+   - `npm test` full suite (pass; 191 tests)
+   - `npm run storybook:check` (pass; taxonomy adjusted after story cleanup)
+   - `npm run build-storybook` (fails due unrelated CRM import/export mismatch, not introduced by this migration)
+6. Updated tasks:
+   - Checked `8.2`, `8.3`, `8.4`, `8.6`
+   - Left `8.5` open pending story-render verification gate not blocked by unrelated CRM baseline issues
+
+### Why
+
+- `8.2` and `8.3` are direct quality gates for preserving behavior while deleting inventory chat source.
+- `8.4` and `8.6` ensure Storybook coverage reflects the new architecture and no longer trains contributors on legacy message-adapter patterns.
+
+### What worked
+
+- All migrated tests passed quickly with minimal adaptation.
+- New stories compile and pass taxonomy checks.
+- Removing legacy ChatWindow stories did not break engine tests and reduced architectural ambiguity in Storybook.
+
+### What didn't work
+
+- `build-storybook` currently fails due unrelated pre-existing CRM imports from `@hypercard/engine` (`streamingChatReducer` etc.) not exported by engine index:
+  - failure file: `apps/crm/src/app/store.ts`
+  - this same external mismatch also explains prior workspace-wide typecheck blockers
+- Because of this, `8.5` cannot be fully closed in this ticket without either fixing CRM or narrowing global Storybook scope.
+
+### What I learned
+
+- Most listed `8.3` coverage already existed; only `chatSessionSlice.test.ts` was missing.
+- Story cleanup is safest as hard deletion when equivalent entity-native coverage already exists (`ChatConversationWindow` + renderer stories).
+
+### What was tricky to build
+
+The `eventBus` test migration needed adaptation to stricter engine SEM typing (`SemEnvelope` requires `sem: true` and event `id`). Once aligned, typecheck/test passed cleanly.
+
+### What warrants a second pair of eyes
+
+1. Confirm deletion of `ChatWindow*` + `ChatWindowDesktop` stories is acceptable versus rewriting to entity-native forms.
+2. Decide whether to address CRM export mismatch in this ticket to unblock global `build-storybook` and close `8.5`.
+
+### What should be done in the future
+
+- Resolve external CRM engine-export mismatch (or isolate Storybook build scope), then close `8.5`.
+- Execute remaining Phase 7 manual runtime validation (`7.5`) if not already covered by an external smoke path.
+
+### Code review instructions
+
+- Test migration files:
+  - `packages/engine/src/chat/debug/eventBus.test.ts`
+  - `packages/engine/src/chat/debug/yamlFormat.test.ts`
+  - `packages/engine/src/hypercard/artifacts/artifactsSlice.test.ts`
+  - `packages/engine/src/hypercard/artifacts/artifactRuntime.test.ts`
+  - `packages/engine/src/chat/state/chatSessionSlice.test.ts`
+- Story migration/cleanup:
+  - `packages/engine/src/components/widgets/EventViewerWindow.stories.tsx`
+  - `packages/engine/src/components/widgets/CodeEditorWindow.stories.tsx`
+  - `packages/engine/src/components/widgets/RuntimeCardDebugWindow.stories.tsx`
+  - deleted legacy story files listed above
+- Validate with:
+  - `npm run -w packages/engine typecheck`
+  - `npm test`
+  - `npm run storybook:check`
+
+### Technical details
+
+- Phase 8 tasks completed in this step:
+  - `8.2`, `8.3`, `8.4`, `8.6`
+- Remaining open in this phase:
+  - `8.5` (global story-render verification blocked by unrelated CRM export mismatch)

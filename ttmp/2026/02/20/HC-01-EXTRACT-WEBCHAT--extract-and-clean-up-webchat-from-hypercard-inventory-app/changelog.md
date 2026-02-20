@@ -190,3 +190,30 @@ Phase 7.1-7.4 complete + 8.1 complete (commit df8ef49): hard-cut inventory app t
 - `npm run -w apps/inventory build` passed
 - `npm run storybook:check` passed (42 story files)
 - Workspace-wide `npm run typecheck` still fails due unrelated existing CRM type issues; Phase `7.5` remains open for manual runtime behavior verification
+
+
+## 2026-02-20
+
+Phase 8 progress: completed `8.2`, `8.3`, `8.4`, and `8.6` via engine test migration, missing chatSession reducer coverage, new engine debug/editor stories, and removal of legacy adapter-based ChatWindow stories.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/chat/debug/eventBus.test.ts — Migrated event bus behavior tests from inventory to engine
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/chat/debug/yamlFormat.test.ts — Migrated YAML formatter tests from inventory to engine
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard/artifacts/artifactsSlice.test.ts — Migrated artifact reducer tests to engine
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard/artifacts/artifactRuntime.test.ts — Migrated artifact extraction/open-window tests to engine
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/chat/state/chatSessionSlice.test.ts — Added missing chat session slice coverage for conversation-scoped behavior
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/widgets/EventViewerWindow.stories.tsx — Added engine story for migrated event viewer window
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/widgets/CodeEditorWindow.stories.tsx — Added engine story for migrated code editor window
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/widgets/RuntimeCardDebugWindow.stories.tsx — Added engine story for migrated runtime card debug window
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/widgets/ChatWindow.stories.tsx — Deleted legacy message-adapter story surface
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/widgets/ChatWindow.widgets.stories.tsx — Deleted legacy message-adapter story surface
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/widgets/ChatWindow.interaction.stories.tsx — Deleted legacy message-adapter story surface
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/shell/windowing/ChatWindowDesktop.stories.tsx — Deleted legacy desktop story using message adapter
+
+### Validation Notes
+
+- `npm run -w packages/engine typecheck` passed
+- `npm test` passed (191 tests)
+- `npm run storybook:check` passed
+- `npm run build-storybook` failed due unrelated pre-existing CRM import/export mismatch (`apps/crm/src/app/store.ts` expecting non-exported `streamingChatReducer`), so `8.5` remains open
