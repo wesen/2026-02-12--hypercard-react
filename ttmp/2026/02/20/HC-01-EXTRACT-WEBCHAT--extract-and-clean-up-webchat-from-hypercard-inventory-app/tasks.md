@@ -66,15 +66,15 @@
 
 ## Phase 7: Inventory App Thin Shell
 
-- [ ] **7.1** Update `apps/inventory/src/app/store.ts` -- remove chatReducer and artifactsReducer imports from features/chat, use engine-provided reducers instead
-- [ ] **7.2** Update `apps/inventory/src/App.tsx` window routing -- replace all inventory chat component references with engine imports (ChatConversationWindow, EventViewerWindow, RuntimeCardDebugWindow, CodeEditorWindow)
-- [ ] **7.3** Delete `apps/inventory/src/features/chat/` directory entirely (22 source files + tests + stories)
-- [ ] **7.4** Verify no remaining references to deleted files -- search for imports from `../features/chat/` or symbols defined there
+- [x] **7.1** Update `apps/inventory/src/app/store.ts` -- remove chatReducer and artifactsReducer imports from features/chat, use engine-provided reducers instead
+- [x] **7.2** Update `apps/inventory/src/App.tsx` window routing -- replace all inventory chat component references with engine imports (ChatConversationWindow, EventViewerWindow, RuntimeCardDebugWindow, CodeEditorWindow)
+- [x] **7.3** Delete `apps/inventory/src/features/chat/` directory entirely (22 source files + tests + stories)
+- [x] **7.4** Verify no remaining references to deleted files -- search for imports from `../features/chat/` or symbols defined there
 - [ ] **7.5** Verify: `tsc --noEmit` passes, app boots, chat connects, messages stream, artifacts open, event viewer works
 
 ## Phase 8: Tests + Stories Migration
 
-- [ ] **8.1** Delete obsolete tests: `chatSlice.test.ts`, `InventoryChatWindow.timeline.test.ts`
+- [x] **8.1** Delete obsolete tests: `chatSlice.test.ts`, `InventoryChatWindow.timeline.test.ts`
 - [ ] **8.2** Migrate passing tests to engine: `eventBus.test.ts`, `artifactsSlice.test.ts`, `artifactRuntime.test.ts`, `yamlFormat.test.ts`
 - [ ] **8.3** Write new tests: `timelineSlice.test.ts` (conversation-scoped upsert, version gating), `semRegistry.test.ts` (handler registration, context threading), `timelineMapper.test.ts` (proto mapping, customKind remap), `chatSessionSlice.test.ts`, `hypercardWidget.test.ts`, `hypercardCard.test.ts`
 - [ ] **8.4** Move/recreate Storybook stories from inventory to engine alongside their components

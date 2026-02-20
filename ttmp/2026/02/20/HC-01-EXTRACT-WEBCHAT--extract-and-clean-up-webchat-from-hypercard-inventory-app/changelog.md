@@ -173,3 +173,20 @@ Phase 6.4-6.6 complete (commit d0e758d): migrated CodeEditorWindow, editorLaunch
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard/index.ts — Exported migrated debug/editor modules
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/package.json — Added explicit CodeMirror editor dependencies for engine-owned editor window
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/package-lock.json — Lockfile updates for added editor dependencies
+
+
+## 2026-02-20
+
+Phase 7.1-7.4 complete + 8.1 complete (commit df8ef49): hard-cut inventory app to engine chat modules, deleted `apps/inventory/src/features/chat/` entirely, and removed obsolete legacy chat tests/stories with the directory.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/app/store.ts — Switched from inventory-local chat/artifact reducers to engine `timeline` and `chatSession` reducers
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/App.tsx — Replaced inventory-local chat window components with engine exports (`ChatConversationWindow`, `EventViewerWindow`, `RuntimeCardDebugWindow`, `CodeEditorWindow`)
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/ — Deleted legacy chat subsystem (components, slices, runtime client, tests, stories, utils)
+
+### Validation Notes
+
+- `npm run -w apps/inventory build` passed
+- `npm run storybook:check` passed (42 story files)
+- Workspace-wide `npm run typecheck` still fails due unrelated existing CRM type issues; Phase `7.5` remains open for manual runtime behavior verification
