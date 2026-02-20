@@ -1439,3 +1439,69 @@ The key subtlety was test isolation for runtime module registration: dynamically
   - `9.3` unification re-evaluation decision (keep split) + legacy adapter retirement
 - Remaining open tasks in ticket:
   - `7.5`, `8.5`
+
+---
+
+## Step 14: Unblocked Global Verification Gate (8.5) by CRM Compatibility Alignment
+
+After Phase 8/9 work, global verification commands (`npm run typecheck`, `npm run build-storybook`) were still failing from unrelated CRM stale imports (`streamingChatReducer`, `FakeResponse`, `ResponseMatcher`) not exported by current engine index. I patched CRM to current engine contracts so ticket verification could run end-to-end and `8.5` could be closed.
+
+### Prompt Context
+
+**User prompt (verbatim):** "continue"
+
+**Assistant interpretation:** Continue until outstanding tasks are closed or clearly blocked.
+
+**Inferred user intent:** Remove practical blockers and complete verification tasks where feasible.
+
+**Commit (code):** `bdb614d` — "fix(crm): align chat store and response types with engine exports"
+
+### What I did
+
+1. Updated CRM store wiring to current engine chat reducers:
+   - File: `apps/crm/src/app/store.ts`
+   - Replaced removed `streamingChatReducer` import with engine `timelineReducer` + `chatSessionReducer`
+2. Removed stale engine type imports in CRM response matcher:
+   - File: `apps/crm/src/chat/crmChatResponses.ts`
+   - Replaced missing `FakeResponse`/`ResponseMatcher` imports with local structural types
+3. Re-ran global verification commands:
+   - `npm run typecheck` (pass)
+   - `npm run build-storybook` (pass)
+   - `npm test` (pass)
+
+### Why
+
+Task `8.5` requires full test/story verification. That gate was blocked by unrelated baseline CRM incompatibilities. Aligning CRM to current engine API removed the blocker and restored reliable global verification.
+
+### What worked
+
+- Root TypeScript build now passes.
+- Storybook production build now completes successfully.
+- Full test suite remains green.
+
+### What didn't work
+
+- No new failures introduced.
+
+### What I learned
+
+- Remaining verification blockers were environmental/API drift issues outside the immediate chat extraction module surface, but still necessary to resolve for end-to-end gate closure.
+
+### What was tricky to build
+
+- Minimal: ensuring CRM alignment fix stayed compatibility-focused (no behavioral redesign), just API contract updates.
+
+### What warrants a second pair of eyes
+
+1. Confirm CRM should continue using `timeline` + `chatSession` slices in its current chat integration path.
+
+### What should be done in the future
+
+- Remaining open ticket task is `7.5`, which still requires runtime/manual behavior verification (boot/connect/stream/artifact/event-viewer flow).
+
+### Technical details
+
+- Closed in this step:
+  - `8.5` full suite + stories render verification gate
+- Still open:
+  - `7.5` manual runtime verification gate

@@ -241,3 +241,19 @@ Phase 9 complete (`9.1`, `9.2`, `9.3`) via structured chat runtime error model, 
 - `npm test` passed (194 tests)
 - `npm run storybook:check` passed
 - Ticket tasks now complete except `7.5` and `8.5` (manual/global verification gates)
+
+
+## 2026-02-20
+
+Unblocked and completed task `8.5` by fixing stale CRM imports incompatible with current engine exports; root `typecheck`, `build-storybook`, and full tests now pass.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/crm/src/app/store.ts — Replaced removed `streamingChatReducer` usage with engine `timeline` + `chatSession` reducers
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/crm/src/chat/crmChatResponses.ts — Replaced stale engine response type imports with local structural types
+
+### Validation Notes
+
+- `npm run typecheck` passed
+- `npm run build-storybook` passed
+- `npm test` passed
