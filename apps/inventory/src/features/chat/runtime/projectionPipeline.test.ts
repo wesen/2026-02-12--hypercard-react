@@ -8,25 +8,25 @@ import {
 } from '@hypercard/engine';
 import { configureStore } from '@reduxjs/toolkit';
 import { describe, expect, it } from 'vitest';
-import { chatReducer } from '../chatSlice';
-import { createChatMetaProjectionAdapter, createInventoryArtifactProjectionAdapter } from './projectionAdapters';
+import { createInventoryArtifactProjectionAdapter } from './projectionAdapters';
 
 function createProjectionTestStore() {
   return configureStore({
     reducer: {
       timeline: timelineReducer,
-      chat: chatReducer,
       artifacts: artifactsReducer,
     },
   });
 }
 
 describe('projection pipeline adapters', () => {
-  it('projects llm envelopes into timeline and chat metadata', () => {
+  it('projects llm envelopes into timeline entities', () => {
     const store = createProjectionTestStore();
     const registry = createSemRegistry();
     const convId = 'conv-proj-1';
-    const adapters = [createChatMetaProjectionAdapter()];
+    const adapters: ReturnType<
+      typeof createInventoryArtifactProjectionAdapter
+    >[] = [];
 
     projectSemEnvelope({
       conversationId: convId,
@@ -85,13 +85,6 @@ describe('projection pipeline adapters', () => {
     expect(messageEntity?.kind).toBe('message');
     expect(messageEntity?.props.content).toBe('Hello world');
     expect(messageEntity?.props.streaming).toBe(false);
-
-    const conv = state.chat.conversations[convId];
-    expect(conv.modelName).toBe('gpt-5');
-    expect(conv.currentTurnStats?.inputTokens).toBe(10);
-    expect(conv.currentTurnStats?.outputTokens).toBe(8);
-    expect(conv.currentTurnStats?.durationMs).toBe(1000);
-    expect(conv.currentTurnStats?.tps).toBe(8);
   });
 
   it('hydrates snapshot entities and drives artifact index through adapter', () => {

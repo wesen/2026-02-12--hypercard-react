@@ -4,6 +4,7 @@ import type { SemRegistry } from '../sem/registry';
 import type { SemEnvelope } from '../sem/types';
 import type { TimelineEntity } from '../timeline/types';
 import type { TimelineWidgetItem } from '../types';
+import type { ConversationRuntime } from '../conversation/types';
 import {
   type HypercardWidgetPackRenderContext,
   registerHypercardWidgetPack,
@@ -33,6 +34,7 @@ export interface TimelineChatRuntimeWindowProps
   timelineEntities: TimelineEntity[];
   semRegistry: SemRegistry;
   createClient: ProjectedChatClientFactory;
+  runtime?: ConversationRuntime;
   adapters?: ProjectionPipelineAdapter[];
   hostActions?: TimelineChatRuntimeHostActions;
   widgetNamespace?: string;
@@ -53,6 +55,7 @@ export function TimelineChatRuntimeWindow({
   timelineEntities,
   semRegistry,
   createClient,
+  runtime,
   adapters = [],
   hostActions,
   widgetNamespace,
@@ -78,6 +81,7 @@ export function TimelineChatRuntimeWindow({
     conversationId,
     dispatch,
     semRegistry,
+    runtime,
     adapters,
     createClient,
     onRawEnvelope: hostActions?.onEmitRawEnvelope,

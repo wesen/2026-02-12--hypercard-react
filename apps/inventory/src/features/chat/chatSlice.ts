@@ -18,6 +18,8 @@ export interface TurnStats {
 }
 
 export interface ConversationState {
+  // Legacy inventory-local metadata. Primary runtime metadata now lives in
+  // engine ConversationRuntime and should be consumed via runtime selectors.
   connectionStatus: ChatConnectionStatus;
   lastError: string | null;
   modelName: string | null;

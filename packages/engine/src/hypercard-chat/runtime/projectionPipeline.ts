@@ -9,6 +9,10 @@ export interface ProjectionPipelineAdapterContext {
   projected: SemHandlerResult;
 }
 
+/**
+ * Adapter hooks are strictly for side effects (artifacts, telemetry, debug).
+ * Core timeline projection correctness must stay in SemRegistry handlers.
+ */
 export interface ProjectionPipelineAdapter {
   onEnvelope?: (ctx: ProjectionPipelineAdapterContext) => void;
 }
@@ -49,6 +53,13 @@ export interface RunProjectionAdaptersInput {
   adapters?: ProjectionPipelineAdapter[];
 }
 
+function projectionResultSignature(projected: SemHandlerResult): string {
+  return JSON.stringify({
+    ops: projected.ops,
+    effects: projected.effects,
+  });
+}
+
 export function runProjectionAdapters(input: RunProjectionAdaptersInput): void {
   const {
     conversationId,
@@ -57,14 +68,27 @@ export function runProjectionAdapters(input: RunProjectionAdaptersInput): void {
     projected,
     adapters = [],
   } = input;
+  const assertImmutable = true;
 
   for (const adapter of adapters) {
+    const before = assertImmutable
+      ? projectionResultSignature(projected)
+      : '';
     adapter.onEnvelope?.({
       conversationId,
       dispatch,
       envelope,
       projected,
     });
+    if (
+      assertImmutable &&
+      before !== projectionResultSignature(projected)
+    ) {
+      throw new Error(
+        'Projection adapter mutated SemRegistry projection output. ' +
+          'Move projection logic into SemRegistry handlers.',
+      );
+    }
   }
 }
 

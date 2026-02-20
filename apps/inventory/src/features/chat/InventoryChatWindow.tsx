@@ -1,8 +1,12 @@
 import {
   buildArtifactOpenWindowPayload,
+  ConversationManagerProvider,
+  createConversationManager,
+  createConversationRuntime,
   createSemRegistry,
   emitConversationEvent,
   openRuntimeCardCodeEditor as openCodeEditor,
+  type ConversationRuntimeMeta,
   type ProjectedChatClientHandlers,
   type ProjectionPipelineAdapter,
   type SemEnvelope,
@@ -10,29 +14,16 @@ import {
   selectTimelineEntities as selectTimelineEntitiesForConversation,
   TimelineChatRuntimeWindow,
   type TimelineWidgetItem,
+  useConversationConnection,
+  useConversationMeta,
+  useConversationRuntime,
 } from '@hypercard/engine';
 import { openWindow } from '@hypercard/engine/desktop-core';
 import type { Dispatch, UnknownAction } from '@reduxjs/toolkit';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
-import {
-  type ChatConnectionStatus,
-  setConnectionStatus,
-  setStreamError,
-  type TurnStats,
-} from './chatSlice';
-import {
-  createChatMetaProjectionAdapter,
-  createInventoryArtifactProjectionAdapter,
-} from './runtime/projectionAdapters';
-import {
-  type ChatStateSlice,
-  selectConnectionStatus,
-  selectCurrentTurnStats,
-  selectModelName,
-  selectStreamOutputTokens,
-  selectStreamStartTime,
-} from './selectors';
+import { createInventoryArtifactProjectionAdapter } from './runtime/projectionAdapters';
+import { type ChatStateSlice } from './selectors';
 import { InventoryWebChatClient, type InventoryWebChatClientHandlers, submitPrompt } from './webchatClient';
 
 function formatNumber(n: number): string {
@@ -49,11 +40,11 @@ function StatsFooter({
   streamStartTime,
   streamOutputTokens,
 }: {
-  modelName: string | null;
-  turnStats: TurnStats | null;
+  modelName: string | undefined;
+  turnStats: ConversationRuntimeMeta['turnStats'];
   isStreaming: boolean;
-  streamStartTime: number | null;
-  streamOutputTokens: number;
+  streamStartTime: number | undefined;
+  streamOutputTokens: number | undefined;
 }) {
   const parts: string[] = [];
 
@@ -63,9 +54,10 @@ function StatsFooter({
 
   if (isStreaming && streamStartTime) {
     const elapsed = (Date.now() - streamStartTime) / 1000;
-    if (streamOutputTokens > 0 && elapsed > 0) {
-      const liveTps = Math.round((streamOutputTokens / elapsed) * 10) / 10;
-      parts.push(`streaming: ${formatNumber(streamOutputTokens)} tok · ${liveTps} tok/s`);
+    const outputTokens = streamOutputTokens ?? 0;
+    if (outputTokens > 0 && elapsed > 0) {
+      const liveTps = Math.round((outputTokens / elapsed) * 10) / 10;
+      parts.push(`streaming: ${formatNumber(outputTokens)} tok · ${liveTps} tok/s`);
     } else {
       parts.push('streaming...');
     }
@@ -105,52 +97,39 @@ export interface InventoryChatWindowProps {
   conversationId: string;
 }
 
-function normalizeConnectionStatus(status: string): ChatConnectionStatus {
-  if (status === 'connecting') return 'connecting';
-  if (status === 'connected') return 'connected';
-  if (status === 'closed') return 'closed';
-  if (status === 'error') return 'error';
-  return 'error';
+interface InventoryConversationRuntimeWindowProps {
+  conversationId: string;
+  semRegistry: SemRegistry;
+  adapters: ProjectionPipelineAdapter[];
+  createClient: (handlers: ProjectedChatClientHandlers) => InventoryWebChatClient;
 }
 
-export function InventoryChatWindow({ conversationId }: InventoryChatWindowProps) {
+function InventoryConversationRuntimeWindow({
+  conversationId,
+  semRegistry,
+  adapters,
+  createClient,
+}: InventoryConversationRuntimeWindowProps) {
   const dispatch = useDispatch<Dispatch<UnknownAction>>();
   const store = useStore();
-  const connectionStatus = useSelector((s: ChatStateSlice) => selectConnectionStatus(s, conversationId));
-  const timelineEntities = useSelector((s: ChatStateSlice) => selectTimelineEntitiesForConversation(s, conversationId));
-  const modelName = useSelector((s: ChatStateSlice) => selectModelName(s, conversationId));
-  const currentTurnStats = useSelector((s: ChatStateSlice) => selectCurrentTurnStats(s, conversationId));
-  const streamStartTime = useSelector((s: ChatStateSlice) => selectStreamStartTime(s, conversationId));
-  const streamOutputTokens = useSelector((s: ChatStateSlice) => selectStreamOutputTokens(s, conversationId));
-
-  const [debugMode, setDebugMode] = useState(false);
-  const semRegistryRef = useRef<SemRegistry>(createSemRegistry());
-  const projectionAdaptersRef = useRef<ProjectionPipelineAdapter[]>([
-    createChatMetaProjectionAdapter(),
-    createInventoryArtifactProjectionAdapter(),
-  ]);
-
-  const createClient = useCallback(
-    (handlers: ProjectedChatClientHandlers): InventoryWebChatClient => {
-      const inventoryHandlers: InventoryWebChatClientHandlers = {
-        onRawEnvelope: handlers.onRawEnvelope,
-        onEnvelope: handlers.onEnvelope,
-        onStatus: handlers.onStatus as InventoryWebChatClientHandlers['onStatus'],
-        onError: handlers.onError,
-      };
-      return new InventoryWebChatClient(conversationId, inventoryHandlers, {
-        hydrate: false,
-      });
-    },
-    [conversationId],
+  const runtime = useConversationRuntime(conversationId);
+  const connection = useConversationConnection(conversationId);
+  const meta = useConversationMeta(conversationId, (value) => value);
+  const timelineEntities = useSelector((s: ChatStateSlice) =>
+    selectTimelineEntitiesForConversation(s, conversationId),
   );
 
+  const [debugMode, setDebugMode] = useState(false);
+
   const subtitle = useMemo(() => {
-    return `${connectionStatus} · ${conversationId.slice(0, 8)}…`;
-  }, [connectionStatus, conversationId]);
+    return `${connection.status} · ${conversationId.slice(0, 8)}…`;
+  }, [connection.status, conversationId]);
 
   const isStreaming = useMemo(
-    () => timelineEntities.some((entity) => entity.kind === 'message' && entity.props.streaming === true),
+    () =>
+      timelineEntities.some(
+        (entity) => entity.kind === 'message' && entity.props.streaming === true,
+      ),
     [timelineEntities],
   );
 
@@ -204,14 +183,8 @@ export function InventoryChatWindow({ conversationId }: InventoryChatWindowProps
       onEmitRawEnvelope: (envelope: SemEnvelope) => {
         emitConversationEvent(conversationId, envelope);
       },
-      onConnectionStatus: (status: string) => {
-        dispatch(setConnectionStatus({ conversationId, status: normalizeConnectionStatus(status) }));
-      },
-      onConnectionError: (message: string) => {
-        dispatch(setStreamError({ conversationId, message }));
-      },
     }),
-    [conversationId, dispatch, editCard, openArtifact],
+    [conversationId, editCard, openArtifact],
   );
 
   const handleSend = useCallback(
@@ -229,10 +202,10 @@ export function InventoryChatWindow({ conversationId }: InventoryChatWindowProps
         await submitPrompt(prompt, conversationId);
       } catch (error) {
         const message = error instanceof Error ? error.message : 'chat request failed';
-        dispatch(setStreamError({ conversationId, message }));
+        runtime.setConnectionStatus('error', message);
       }
     },
-    [conversationId, dispatch, isStreaming],
+    [conversationId, isStreaming, runtime],
   );
 
   const openEventViewer = useCallback(() => {
@@ -241,7 +214,12 @@ export function InventoryChatWindow({ conversationId }: InventoryChatWindowProps
         id: `window:event-viewer:${conversationId}`,
         title: `📡 Events — ${conversationId.slice(0, 8)}…`,
         icon: '📡',
-        bounds: { x: 600 + Math.round(Math.random() * 40), y: 60 + Math.round(Math.random() * 30), w: 580, h: 400 },
+        bounds: {
+          x: 600 + Math.round(Math.random() * 40),
+          y: 60 + Math.round(Math.random() * 30),
+          w: 580,
+          h: 400,
+        },
         content: { kind: 'app', appKey: `event-viewer:${conversationId}` },
         dedupeKey: `event-viewer:${conversationId}`,
       }),
@@ -252,8 +230,9 @@ export function InventoryChatWindow({ conversationId }: InventoryChatWindowProps
     <TimelineChatRuntimeWindow
       conversationId={conversationId}
       dispatch={dispatch}
-      semRegistry={semRegistryRef.current}
-      adapters={projectionAdaptersRef.current}
+      runtime={runtime}
+      semRegistry={semRegistry}
+      adapters={adapters}
       createClient={createClient}
       hostActions={runtimeHostActions}
       timelineEntities={timelineEntities}
@@ -281,13 +260,73 @@ export function InventoryChatWindow({ conversationId }: InventoryChatWindowProps
       }
       footer={
         <StatsFooter
-          modelName={modelName}
-          turnStats={currentTurnStats}
+          modelName={meta.modelName}
+          turnStats={meta.turnStats}
           isStreaming={isStreaming}
-          streamStartTime={streamStartTime}
-          streamOutputTokens={streamOutputTokens}
+          streamStartTime={meta.streamStartTime}
+          streamOutputTokens={meta.streamOutputTokens}
         />
       }
     />
+  );
+}
+
+export function InventoryChatWindow({ conversationId }: InventoryChatWindowProps) {
+  const dispatch = useDispatch<Dispatch<UnknownAction>>();
+  const semRegistryRef = useRef<SemRegistry>(createSemRegistry());
+  const projectionAdaptersRef = useRef<ProjectionPipelineAdapter[]>([
+    createInventoryArtifactProjectionAdapter(),
+  ]);
+
+  const createClient = useCallback(
+    (handlers: ProjectedChatClientHandlers): InventoryWebChatClient => {
+      const inventoryHandlers: InventoryWebChatClientHandlers = {
+        onRawEnvelope: handlers.onRawEnvelope,
+        onEnvelope: handlers.onEnvelope,
+        onStatus: handlers.onStatus as InventoryWebChatClientHandlers['onStatus'],
+        onError: handlers.onError,
+      };
+      return new InventoryWebChatClient(conversationId, inventoryHandlers, {
+        hydrate: false,
+      });
+    },
+    [conversationId],
+  );
+
+  const conversationManager = useMemo(() => {
+    return createConversationManager({
+      createRuntime: (runtimeConversationId) =>
+        createConversationRuntime({
+          conversationId: runtimeConversationId,
+          semRegistry: semRegistryRef.current,
+          dispatch,
+          createClient: (handlers) => {
+            const inventoryHandlers: InventoryWebChatClientHandlers = {
+              onRawEnvelope: handlers.onRawEnvelope,
+              onEnvelope: handlers.onEnvelope,
+              onStatus: handlers.onStatus as InventoryWebChatClientHandlers['onStatus'],
+              onError: handlers.onError,
+            };
+            return new InventoryWebChatClient(runtimeConversationId, inventoryHandlers, {
+              hydrate: false,
+            });
+          },
+          getAdapters: () => projectionAdaptersRef.current,
+          onRawEnvelope: (envelope) => {
+            emitConversationEvent(runtimeConversationId, envelope);
+          },
+        }),
+    });
+  }, [dispatch]);
+
+  return (
+    <ConversationManagerProvider manager={conversationManager}>
+      <InventoryConversationRuntimeWindow
+        conversationId={conversationId}
+        semRegistry={semRegistryRef.current}
+        adapters={projectionAdaptersRef.current}
+        createClient={createClient}
+      />
+    </ConversationManagerProvider>
   );
 }

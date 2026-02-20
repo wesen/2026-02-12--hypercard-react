@@ -242,6 +242,7 @@ function lifecycleData(record: Record<string, unknown>): Record<string, unknown>
   return recordField(record, 'data') ?? {};
 }
 
+// XXX these also need to go into their own section
 function widgetLifecycleHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResult {
   const type = envelope.event?.type;
   const data = asRecord(envelope.event?.data);
@@ -264,6 +265,7 @@ function widgetLifecycleHandler(envelope: SemEnvelope, ctx: SemContext): SemHand
   });
 }
 
+// XXX these also need to go into their own section
 function cardLifecycleHandler(envelope: SemEnvelope, ctx: SemContext): SemHandlerResult {
   const type = envelope.event?.type;
   const data = asRecord(envelope.event?.data);
@@ -310,6 +312,7 @@ export function registerDefaultSemHandlers(registry: SemRegistry, options: SemRe
   registry.register('tool.result', toolResultHandler);
   registry.register('tool.done', toolDoneHandler);
 
+  // XXX this should be moved to the hypercard widgets section
   registry.register('hypercard.widget.start', widgetLifecycleHandler);
   registry.register('hypercard.widget.update', widgetLifecycleHandler);
   registry.register('hypercard.widget.error', widgetLifecycleHandler);

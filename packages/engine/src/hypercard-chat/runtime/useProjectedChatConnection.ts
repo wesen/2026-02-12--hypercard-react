@@ -28,6 +28,7 @@ export interface UseProjectedChatConnectionInput {
   conversationId: string;
   dispatch: Dispatch<UnknownAction>;
   semRegistry: SemRegistry;
+  runtime?: ConversationRuntime;
   adapters?: ProjectionPipelineAdapter[];
   createClient: ProjectedChatClientFactory;
   onRawEnvelope?: (envelope: SemEnvelope) => void;
@@ -39,6 +40,7 @@ export function useProjectedChatConnection({
   conversationId,
   dispatch,
   semRegistry,
+  runtime: providedRuntime,
   adapters = [],
   createClient,
   onRawEnvelope,
@@ -68,28 +70,33 @@ export function useProjectedChatConnection({
   };
 
   useEffect(() => {
-    const runtime = createConversationRuntime({
-      conversationId,
-      semRegistry,
-      dispatch,
-      createClient,
-      getAdapters: () => callbacksRef.current.adapters,
-      onRawEnvelope: (envelope) => {
-        callbacksRef.current.onRawEnvelope?.(envelope);
-      },
-      onStatus: (status) => {
-        callbacksRef.current.onStatus?.(status);
-      },
-      onError: (error) => {
-        callbacksRef.current.onError?.(error);
-      },
-    });
+    const ownsRuntime = !providedRuntime;
+    const runtime =
+      providedRuntime ??
+      createConversationRuntime({
+        conversationId,
+        semRegistry,
+        dispatch,
+        createClient,
+        getAdapters: () => callbacksRef.current.adapters,
+        onRawEnvelope: (envelope) => {
+          callbacksRef.current.onRawEnvelope?.(envelope);
+        },
+        onStatus: (status) => {
+          callbacksRef.current.onStatus?.(status);
+        },
+        onError: (error) => {
+          callbacksRef.current.onError?.(error);
+        },
+      });
     runtimeRef.current = runtime;
     const releaseConnection = runtime.claimConnection();
 
     return () => {
       releaseConnection();
-      runtime.dispose();
+      if (ownsRuntime) {
+        runtime.dispose();
+      }
       if (runtimeRef.current === runtime) {
         runtimeRef.current = null;
       }
@@ -98,6 +105,7 @@ export function useProjectedChatConnection({
     conversationId,
     createClient,
     dispatch,
+    providedRuntime,
     semRegistry,
   ]);
 }

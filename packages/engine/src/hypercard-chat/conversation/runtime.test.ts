@@ -155,4 +155,71 @@ describe('createConversationRuntime', () => {
     expect(runtime.getState().connection.status).toBe('connected');
     expect(runtime.getState().timeline.ids).toContain('m1');
   });
+
+  it('extracts generic llm/ws metadata into runtime meta state', () => {
+    const harness = createRuntimeHarness();
+    const runtime = createConversationRuntime({
+      conversationId: 'conv-1',
+      semRegistry: createSemRegistry(),
+      createClient: harness.createClient,
+    });
+
+    runtime.ingestEnvelope({
+      sem: true,
+      event: {
+        type: 'llm.start',
+        id: 'm1',
+        data: {},
+        metadata: { model: 'gpt-5' },
+      },
+    });
+    expect(runtime.getState().meta.modelName).toBe('gpt-5');
+    expect(runtime.getState().meta.streamStartTime).toBeTypeOf('number');
+
+    runtime.ingestEnvelope({
+      sem: true,
+      event: {
+        type: 'llm.delta',
+        id: 'm1',
+        data: { cumulative: 'Hello' },
+        metadata: { usage: { outputTokens: 3 } },
+      },
+    });
+    expect(runtime.getState().meta.streamOutputTokens).toBe(3);
+
+    runtime.ingestEnvelope({
+      sem: true,
+      event: {
+        type: 'llm.final',
+        id: 'm1',
+        data: { text: 'Hello world' },
+        metadata: {
+          model: 'gpt-5',
+          durationMs: 1000,
+          usage: {
+            inputTokens: 10,
+            outputTokens: 8,
+            cachedTokens: 2,
+          },
+        },
+      },
+    });
+    expect(runtime.getState().meta.turnStats?.inputTokens).toBe(10);
+    expect(runtime.getState().meta.turnStats?.outputTokens).toBe(8);
+    expect(runtime.getState().meta.turnStats?.cachedTokens).toBe(2);
+    expect(runtime.getState().meta.turnStats?.durationMs).toBe(1000);
+    expect(runtime.getState().meta.turnStats?.tps).toBe(8);
+    expect(runtime.getState().meta.streamStartTime).toBeUndefined();
+    expect(runtime.getState().meta.streamOutputTokens).toBe(0);
+
+    runtime.ingestEnvelope({
+      sem: true,
+      event: {
+        type: 'ws.error',
+        id: 'err-1',
+        data: { message: 'websocket stream error' },
+      },
+    });
+    expect(runtime.getState().meta.lastError).toBe('websocket stream error');
+  });
 });
