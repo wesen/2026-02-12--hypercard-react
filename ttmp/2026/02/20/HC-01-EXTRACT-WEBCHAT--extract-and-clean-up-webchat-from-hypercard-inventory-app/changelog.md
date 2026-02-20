@@ -119,3 +119,13 @@ Expanded suggestions analysis doc with a second detailed option: keep suggestion
 
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/20/HC-01-EXTRACT-WEBCHAT--extract-and-clean-up-webchat-from-hypercard-inventory-app/design-doc/02-analysis-project-suggestions-as-timeline-entities.md — Added Option 2 projector-meta design and implementation track
 
+
+## 2026-02-20
+
+Added design doc for structured runtime error state (typed conversation-scoped error records) and appended Phase 9 tasks for this feature plus later module-bootstrap registration formalization.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/20/HC-01-EXTRACT-WEBCHAT--extract-and-clean-up-webchat-from-hypercard-inventory-app/design-doc/03-structured-runtime-error-state-for-chat.md — New design proposal for replacing string-only error channeling
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/20/HC-01-EXTRACT-WEBCHAT--extract-and-clean-up-webchat-from-hypercard-inventory-app/tasks.md — Added end-of-plan tasks 9.1 and 9.2
+

@@ -79,3 +79,8 @@
 - [ ] **8.3** Write new tests: `timelineSlice.test.ts` (conversation-scoped upsert, version gating), `semRegistry.test.ts` (handler registration, context threading), `timelineMapper.test.ts` (proto mapping, customKind remap), `chatSessionSlice.test.ts`, `hypercardWidget.test.ts`, `hypercardCard.test.ts`
 - [ ] **8.4** Move/recreate Storybook stories from inventory to engine alongside their components
 - [ ] **8.5** Verify full test suite passes and stories render correctly
+
+## Phase 9: Runtime Error Model + Registration Bootstrap Formalization
+
+- [ ] **9.1** Implement structured conversation-scoped runtime error state per `design-doc/03-structured-runtime-error-state-for-chat.md` -- add typed `ChatErrorRecord`, reducer actions/selectors, and migrate ws/http/runtime callsites away from string-only error channeling
+- [ ] **9.2** Move SEM/renderer registration into a formal module-bootstrap layer (beyond `registerChatModules`) -- define bootstrap module contract and route `registerDefaultSemHandlers()` / `registerHypercardTimelineModule()` through explicit bootstrap orchestration instead of ad-hoc runtime module init
