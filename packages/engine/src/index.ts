@@ -12,6 +12,8 @@
 export * from './app';
 // ── Card DSL ──
 export * from './cards';
+// ── Chat ──
+export * from './chat';
 // ── Plugin Runtime ──
 export * from './plugin-runtime';
 
