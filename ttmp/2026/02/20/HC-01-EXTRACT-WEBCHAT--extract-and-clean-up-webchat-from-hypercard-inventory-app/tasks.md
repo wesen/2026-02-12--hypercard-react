@@ -33,11 +33,11 @@
 
 ## Phase 4: ChatConversationWindow + ChatWindow Renderer-Only Conversion
 
-- [ ] **4.1** Convert ChatWindow to renderer-only shell -- remove message-centric props/rendering (`messages`, message block parsing, role labels, streaming/thinking rendering) and require `timelineContent: ReactNode` for timeline body
-- [ ] **4.2** Create ChatConversationWindow at `packages/engine/src/chat/components/ChatConversationWindow.tsx` -- uses useConversation hook, selects entities + session state, maps entities through rendererRegistry, renders ChatWindow with timelineContent slot
-- [ ] **4.3** Extract StatsFooter from `InventoryChatWindow.tsx:494-551` into `packages/engine/src/chat/components/StatsFooter.tsx`
-- [ ] **4.4** Move eventBus from `apps/inventory/.../eventBus.ts` to `packages/engine/src/chat/debug/eventBus.ts` -- wire event emission into conversationManager
-- [ ] **4.5** Write Storybook story for ChatConversationWindow with mock WebSocket backend
+- [x] **4.1** Convert ChatWindow to renderer-only shell -- remove message-centric props/rendering (`messages`, message block parsing, role labels, streaming/thinking rendering) and require `timelineContent: ReactNode` for timeline body
+- [x] **4.2** Create ChatConversationWindow at `packages/engine/src/chat/components/ChatConversationWindow.tsx` -- uses useConversation hook, selects entities + session state, maps entities through rendererRegistry, renders ChatWindow with timelineContent slot
+- [x] **4.3** Extract StatsFooter from `InventoryChatWindow.tsx:494-551` into `packages/engine/src/chat/components/StatsFooter.tsx`
+- [x] **4.4** Move eventBus from `apps/inventory/.../eventBus.ts` to `packages/engine/src/chat/debug/eventBus.ts` -- wire event emission into conversationManager
+- [x] **4.5** Write Storybook story for ChatConversationWindow with mock WebSocket backend
 
 ## Phase 5: Hypercard Module -- Artifacts, Timeline Entities, Renderers
 

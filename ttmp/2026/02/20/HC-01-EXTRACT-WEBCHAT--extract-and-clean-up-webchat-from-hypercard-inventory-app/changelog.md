@@ -52,3 +52,18 @@ Phase 3 complete: added renderer registry, builtin timeline renderers (message/t
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/chat/renderers/rendererRegistry.ts — Added renderer registry + default registration function
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/widgets/ChatTimelineRenderers.stories.tsx — Added Storybook stories for each builtin renderer
 
+
+## 2026-02-20
+
+Phase 4 complete: converted ChatWindow to renderer-only timeline shell, added ChatConversationWindow/StatsFooter, moved eventBus to engine, wired runtime event emission, and added ChatConversationWindow Storybook mock backend story (commit 6e07ad1).
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/chat/components/ChatConversationWindow.tsx — Added entity-driven conversation window using renderer registry
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/chat/components/StatsFooter.tsx — Extracted stats footer from inventory chat window
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/chat/debug/eventBus.ts — Moved conversation event bus into engine chat debug module
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/chat/runtime/conversationManager.ts — Wired event bus emission for SEM envelopes
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/chat/ws/wsManager.ts — Added envelope callback hook to WS manager
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/widgets/ChatConversationWindow.stories.tsx — Added Storybook story with mocked WS/fetch backend
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/widgets/ChatWindow.tsx — Removed message-centric rendering from ChatWindow and introduced timelineContent shell API
+

@@ -18,6 +18,12 @@ RelatedFiles:
     - Path: apps/inventory/src/features/chat/webchatClient.ts
     - Path: packages/engine/src/chat/chatApi.ts
       Note: Resolved pre-existing typecheck gap for StreamHandlers
+    - Path: packages/engine/src/chat/components/ChatConversationWindow.tsx
+      Note: Phase 4 connected conversation window
+    - Path: packages/engine/src/chat/components/StatsFooter.tsx
+      Note: Phase 4 extracted stats footer
+    - Path: packages/engine/src/chat/debug/eventBus.ts
+      Note: Phase 4 event bus relocation to engine
     - Path: packages/engine/src/chat/renderers/builtin/GenericRenderer.tsx
       Note: Phase 3 fallback renderer
     - Path: packages/engine/src/chat/renderers/builtin/LogRenderer.tsx
@@ -35,7 +41,9 @@ RelatedFiles:
     - Path: packages/engine/src/chat/renderers/types.ts
       Note: Phase 3 renderer contracts
     - Path: packages/engine/src/chat/runtime/conversationManager.ts
-      Note: Phase 2 per-conversation runtime lifecycle manager
+      Note: |-
+        Phase 2 per-conversation runtime lifecycle manager
+        Phase 4 event bus wiring
     - Path: packages/engine/src/chat/runtime/http.ts
       Note: Phase 2 HTTP helpers for prompt submit and timeline snapshot
     - Path: packages/engine/src/chat/runtime/useConversation.ts
@@ -53,10 +61,15 @@ RelatedFiles:
     - Path: packages/engine/src/chat/ws/wsManager.test.ts
       Note: Phase 2 integration coverage for WS replay behavior
     - Path: packages/engine/src/chat/ws/wsManager.ts
-      Note: Phase 2 WS runtime with hydration buffering and SemContext dispatch
+      Note: |-
+        Phase 2 WS runtime with hydration buffering and SemContext dispatch
+        Phase 4 envelope callback support
+    - Path: packages/engine/src/components/widgets/ChatConversationWindow.stories.tsx
+      Note: Phase 4 mock-backend story coverage
     - Path: packages/engine/src/components/widgets/ChatTimelineRenderers.stories.tsx
       Note: Phase 3 Storybook stories for builtin renderers
     - Path: packages/engine/src/components/widgets/ChatWindow.tsx
+      Note: Phase 4 renderer-only shell conversion and legacy adapter helper
     - Path: packages/engine/src/index.ts
     - Path: ttmp/2026/02/20/HC-01-EXTRACT-WEBCHAT--extract-and-clean-up-webchat-from-hypercard-inventory-app/changelog.md
       Note: Recorded plan direction change
@@ -70,6 +83,7 @@ LastUpdated: 2026-02-20T00:00:00Z
 WhatFor: Track exploration, decisions, and implementation progress
 WhenToUse: Reference during implementation and code review
 ---
+
 
 
 
@@ -644,3 +658,104 @@ Preserving message behavior while decoupling from `ChatWindow` required choosing
   - `default: GenericRenderer`
 - Task updates executed:
   - `docmgr task check --ticket HC-01-EXTRACT-WEBCHAT --id 17,18,19,20,21,22`
+
+---
+
+## Step 7: Phase 4 Implementation (Renderer-Only ChatWindow + ChatConversationWindow)
+
+Completed Phase 4 by converting `ChatWindow` into a renderer-driven shell and introducing `ChatConversationWindow` as the connected entity renderer host. The old in-component message rendering logic is removed from `ChatWindow`.
+
+This lands the architecture change requested in the plan update: message behavior now lives in renderers (`MessageRenderer` and peers), while `ChatWindow` only owns shell UI (header/timeline container/suggestions/composer/footer).
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 4)
+
+**Assistant interpretation:** Continue progressing task-by-task with detailed diary and commits.
+
+**Inferred user intent:** Maintain momentum through the plan while enforcing the new renderer-only ChatWindow direction.
+
+**Commit (code):** 6e07ad1 — "feat(engine): convert ChatWindow to renderer timeline shell"
+
+### What I did
+
+1. Converted `ChatWindow` API and implementation:
+   - removed message-centric props/render loop from component
+   - switched to `timelineContent` + `timelineItemCount`
+   - preserved shell behavior (header/suggestions/composer/footer)
+2. Added `renderLegacyTimelineContent()` adapter helper in `ChatWindow.tsx` for transitional callers/stories
+3. Added `ChatConversationWindow` component:
+   - uses `useConversation(convId)`
+   - selects entities/session state
+   - resolves entity renderers via `resolveTimelineRenderers()`
+   - renders shell via new `ChatWindow` API
+4. Extracted `StatsFooter` from inventory chat into `packages/engine/src/chat/components/StatsFooter.tsx`
+5. Moved event bus to engine:
+   - added `packages/engine/src/chat/debug/eventBus.ts`
+   - wired envelope emission through `conversationManager` + `wsManager` callback
+6. Added Storybook story for ChatConversationWindow with mocked WS/fetch backend:
+   - `packages/engine/src/components/widgets/ChatConversationWindow.stories.tsx`
+7. Updated affected stories and inventory ChatWindow usage to new timeline shell props
+8. Validated with typecheck + chat runtime tests + taxonomy check
+9. Checked off tasks 4.1-4.5
+
+### Why
+
+This step is the inflection point where rendering responsibility is cleanly separated: renderer modules own content presentation, and ChatWindow is no longer a second rendering engine. That simplifies future feature work and avoids duplicate code paths.
+
+### What worked
+
+- ChatWindow shell conversion compiled cleanly after migrating story/caller usage
+- ChatConversationWindow integrated naturally with earlier Phase 2 runtime hooks/selectors
+- Event bus wiring through runtime path provides a single source for SEM envelope emission
+
+### What didn't work
+
+- Existing story set relied heavily on legacy `messages` prop shape
+- Resolution:
+  - rewrote legacy-heavy story files to use `timelineContent` + adapter helper
+  - added explicit ChatConversationWindow mock-backend story under allowed components path
+
+### What I learned
+
+- A local adapter (`renderLegacyTimelineContent`) is useful for migration while still keeping ChatWindow itself renderer-only
+- Story taxonomy constraints require feature stories to live under `packages/engine/src/components/...`, even when demonstrating chat module internals
+
+### What was tricky to build
+
+The tricky part was performing a hard API pivot on ChatWindow without stalling validation. Many stories and desktop demos assumed direct `messages` rendering. The approach was to remove the rendering logic from ChatWindow and move compatibility to an explicit helper layer so the architectural boundary remains intact.
+
+### What warrants a second pair of eyes
+
+- Transitional helper `renderLegacyTimelineContent` should remain temporary and eventually be removed
+- `ChatConversationWindow` currently calls `registerDefaultTimelineRenderers()` in a memoized path; confirm desired bootstrap location long-term
+- Story mock backend mutates `window.WebSocket`/`window.fetch`; review for side-effect safety in Storybook runtime
+
+### What should be done in the future
+
+- Proceed to Phase 5 hypercard module extraction tasks (artifacts + hypercard timeline handlers/renderers)
+
+### Code review instructions
+
+- Start with `packages/engine/src/components/widgets/ChatWindow.tsx`
+- Then review:
+  - `packages/engine/src/chat/components/ChatConversationWindow.tsx`
+  - `packages/engine/src/chat/components/StatsFooter.tsx`
+  - `packages/engine/src/chat/debug/eventBus.ts`
+  - `packages/engine/src/chat/runtime/conversationManager.ts`
+  - `packages/engine/src/chat/ws/wsManager.ts`
+- Validate with:
+  - `npm run -w packages/engine typecheck`
+  - `npm run -w packages/engine test -- src/chat/state/timelineSlice.test.ts src/chat/sem/semRegistry.test.ts src/chat/ws/wsManager.test.ts`
+- Confirm task bookkeeping:
+  - `docmgr task list --ticket HC-01-EXTRACT-WEBCHAT`
+
+### Technical details
+
+- New ChatWindow shell props:
+  - `timelineContent: ReactNode`
+  - `timelineItemCount?: number`
+- Runtime event flow:
+  - `wsManager.onEnvelope -> conversationManager -> emitConversationEvent(convId, envelope)`
+- Task updates executed:
+  - `docmgr task check --ticket HC-01-EXTRACT-WEBCHAT --id 23,24,25,26,27`
