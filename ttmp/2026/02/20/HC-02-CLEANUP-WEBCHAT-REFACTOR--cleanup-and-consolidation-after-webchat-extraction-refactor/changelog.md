@@ -27,3 +27,13 @@ Executed F4: moved suggestions to timeline artifacts, added starter-suggestion c
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard/timeline/registerHypercardTimeline.ts — F4 SEM suggestion projection to timeline artifacts
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/design-doc/02-f4-suggestions-as-timeline-entities-and-starter-consumption.md — F4 design rationale and implementation plan
 
+
+## 2026-02-20
+
+Follow-up fix after F4: prevent starter suggestions from reappearing after chat starts by upserting and consuming starter suggestions atomically at first send (commit 43f31aa).
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/chat/components/ChatConversationWindow.tsx — Fix starter suggestion lifecycle race on first send
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/reference/01-diary.md — Step 8 diary entry for post-F4 suggestion persistence fix
+

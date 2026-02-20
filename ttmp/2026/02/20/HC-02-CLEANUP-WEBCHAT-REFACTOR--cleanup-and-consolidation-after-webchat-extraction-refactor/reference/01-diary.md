@@ -562,6 +562,62 @@ The key user-facing addition was the starter-suggestions lifecycle: when convers
   - `pnpm exec vitest run packages/engine/src/chat/state/timelineSlice.test.ts packages/engine/src/chat/state/selectors.test.ts packages/engine/src/chat/runtime/registerChatModules.test.ts packages/engine/src/hypercard/timeline/hypercardCard.test.ts packages/engine/src/chat/state/chatSessionSlice.test.ts`
   - `pnpm exec tsc -p packages/engine/tsconfig.json --noEmit`
 
+## Step 8: Fix starter suggestions persisting after chat begins
+
+After F4, a runtime edge case remained: users could still see starter suggestions after beginning a conversation. This happened when starter suggestions were consumed before the starter entity existed, allowing the empty-state seeding effect to recreate suggestions.
+
+The fix was to make first-send lifecycle deterministic by forcing starter entity creation and then consuming it in the same send path.
+
+### Prompt Context
+
+**User prompt (verbatim):** "I still see suggestions in the cahtwindow even after starting to chat"
+
+**Assistant interpretation:** Investigate why starter suggestions remain visible after first interaction and patch behavior immediately.
+
+**Inferred user intent:** Ensure starter suggestions reliably disappear once chat starts.
+
+**Commit (code):** `43f31aa` — "fix(chat): consume starter suggestions on first send reliably"
+
+### What I did
+- Updated `sendWithSuggestionLifecycle` in:
+  - `packages/engine/src/chat/components/ChatConversationWindow.tsx`
+- New first-send sequence:
+  1. `upsertSuggestions(starter, DEFAULT_CHAT_SUGGESTIONS, replace=true)`
+  2. `consumeSuggestions(starter)`
+  3. `await send(prompt)`
+
+### Why
+- `consumeSuggestions` is a no-op if entity does not exist.
+- If first send happens before starter entity is present, the prior logic could later reseed starter suggestions via empty-state effect.
+- Upsert+consume guarantees a persisted consumed marker exists before send.
+
+### What worked
+- Targeted F4 test suite remained green.
+- Engine typecheck passed.
+
+### What didn't work
+- N/A
+
+### What I learned
+- Lifecycle markers must be persisted even when UI state is still in initial empty phase, otherwise effects can reintroduce consumed UI state.
+
+### What was tricky to build
+- The issue was timing-sensitive: send boundary and effect boundary both touched starter suggestion state; ordering had to be made explicit.
+
+### What warrants a second pair of eyes
+- Confirm desired behavior for assistant-provided suggestions after conversation starts (current behavior still allows assistant suggestions to display).
+
+### What should be done in the future
+- Add a component-level test for this exact race:
+  - first send before starter seeding completes still results in no starter suggestions shown afterward.
+
+### Code review instructions
+- Review:
+  - `packages/engine/src/chat/components/ChatConversationWindow.tsx`
+- Re-run:
+  - `pnpm exec vitest run packages/engine/src/chat/state/timelineSlice.test.ts packages/engine/src/chat/state/selectors.test.ts packages/engine/src/chat/runtime/registerChatModules.test.ts packages/engine/src/hypercard/timeline/hypercardCard.test.ts packages/engine/src/chat/state/chatSessionSlice.test.ts`
+  - `pnpm exec tsc -p packages/engine/tsconfig.json --noEmit`
+
 ## Usage Examples
 
 <!-- Show how to use this reference in practice -->
