@@ -8,7 +8,14 @@ export interface RenderEntity {
   updatedAt?: number;
 }
 
-export type TimelineRenderer = React.ComponentType<{ e: RenderEntity }>;
+export type RenderMode = 'normal' | 'debug';
+
+export interface RenderContext {
+  mode: RenderMode;
+  convId: string;
+}
+
+export type TimelineRenderer = React.ComponentType<{ e: RenderEntity; ctx?: RenderContext }>;
 
 export type ChatWidgetRenderers = Record<string, TimelineRenderer> & {
   default: TimelineRenderer;

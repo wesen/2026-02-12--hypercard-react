@@ -5,7 +5,7 @@ import {
   registerDefaultTimelineRenderers,
   resolveTimelineRenderers,
 } from '../renderers/rendererRegistry';
-import type { RenderEntity } from '../renderers/types';
+import type { RenderEntity, RenderMode } from '../renderers/types';
 import {
   type ChatStateSlice,
   selectCurrentTurnStats,
@@ -32,6 +32,7 @@ export interface ChatConversationWindowProps {
   title?: string;
   placeholder?: string;
   headerActions?: ReactNode;
+  renderMode?: RenderMode;
 }
 
 function toRenderEntity(entity: {
@@ -56,6 +57,7 @@ export function ChatConversationWindow({
   title = 'Chat',
   placeholder,
   headerActions,
+  renderMode = 'normal',
 }: ChatConversationWindowProps) {
   const dispatch = useDispatch();
   const { send, connectionStatus, isStreaming } = useConversation(convId, basePrefix);
@@ -132,9 +134,9 @@ export function ChatConversationWindow({
       entities.map((entity) => {
         const renderEntity = toRenderEntity(entity);
         const Renderer = renderers[renderEntity.kind] ?? renderers.default;
-        return <Renderer key={renderEntity.id} e={renderEntity} />;
+        return <Renderer key={renderEntity.id} e={renderEntity} ctx={{ mode: renderMode, convId }} />;
       }),
-    [entities, renderers]
+    [convId, entities, renderMode, renderers]
   );
 
   const subtitle =

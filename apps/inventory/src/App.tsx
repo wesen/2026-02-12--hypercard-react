@@ -7,7 +7,7 @@ import {
 } from '@hypercard/engine';
 import { type OpenWindowPayload, openWindow } from '@hypercard/engine/desktop-core';
 import { type DesktopContribution, DesktopShell } from '@hypercard/engine/desktop-react';
-import { type ReactNode, useCallback, useMemo } from 'react';
+import { type ReactNode, useCallback, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { STACK } from './domain/stack';
 import { ReduxPerfWindow } from './features/debug/ReduxPerfWindow';
@@ -115,26 +115,30 @@ function buildRuntimeDebugWindowPayload(): OpenWindowPayload {
 
 function InventoryChatAssistantWindow({ convId }: { convId: string }) {
   const dispatch = useDispatch();
+  const [renderMode, setRenderMode] = useState<'normal' | 'debug'>('normal');
 
   const openEventViewer = useCallback(() => {
     dispatch(openWindow(buildEventViewerWindowPayload(convId)));
   }, [convId, dispatch]);
 
-  const openRuntimeDebug = useCallback(() => {
-    dispatch(openWindow(buildRuntimeDebugWindowPayload()));
-  }, [dispatch]);
-
   return (
     <ChatConversationWindow
       convId={convId}
       title="Inventory Chat"
+      renderMode={renderMode}
       headerActions={
         <>
           <button type="button" data-part="btn" onClick={openEventViewer} style={{ fontSize: 10, padding: '1px 6px' }}>
             🧭 Events
           </button>
-          <button type="button" data-part="btn" onClick={openRuntimeDebug} style={{ fontSize: 10, padding: '1px 6px' }}>
-            🔧 Debug
+          <button
+            type="button"
+            data-part="btn"
+            data-state={renderMode === 'debug' ? 'active' : undefined}
+            onClick={() => setRenderMode((mode) => (mode === 'normal' ? 'debug' : 'normal'))}
+            style={{ fontSize: 10, padding: '1px 6px' }}
+          >
+            {renderMode === 'debug' ? '🔍 Debug ON' : '🔍 Debug'}
           </button>
         </>
       }

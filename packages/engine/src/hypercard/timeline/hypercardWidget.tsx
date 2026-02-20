@@ -1,5 +1,5 @@
 import { useDispatch } from 'react-redux';
-import type { RenderEntity } from '../../chat/renderers/types';
+import type { RenderContext, RenderEntity } from '../../chat/renderers/types';
 import { stringField } from '../../chat/sem/semHelpers';
 import type { SemContext, SemEvent } from '../../chat/sem/semRegistry';
 import { registerSem } from '../../chat/sem/semRegistry';
@@ -76,7 +76,7 @@ export function registerHypercardWidgetSemHandlers() {
   });
 }
 
-export function HypercardWidgetRenderer({ e }: { e: RenderEntity }) {
+export function HypercardWidgetRenderer({ e, ctx }: { e: RenderEntity; ctx?: RenderContext }) {
   const dispatch = useDispatch();
   const title = String(e.props.title ?? 'Widget');
   const status = String(e.props.status ?? 'running');
@@ -103,6 +103,18 @@ export function HypercardWidgetRenderer({ e }: { e: RenderEntity }) {
         <strong>{title}</strong> ({status}){template ? ` · ${template}` : ''}
         {detail ? ` — ${detail}` : ''}
       </div>
+      {ctx?.mode === 'debug' && (
+        <pre
+          style={{
+            margin: '6px 0 0',
+            fontSize: 10,
+            whiteSpace: 'pre-wrap',
+            opacity: 0.9,
+          }}
+        >
+          {JSON.stringify(e.props, null, 2)}
+        </pre>
+      )}
       {artifactId && (
         <div style={{ marginTop: 4, display: 'flex', gap: 6 }}>
           <button type="button" data-part="btn" onClick={openArtifact}>
