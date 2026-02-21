@@ -14,11 +14,11 @@
 
 ## Global Implementation Workflow
 
-- [ ] Implement issues one by one in the sequence below
+- [x] Implement issues one by one in the sequence below
 - [ ] For each issue, add/adjust tests before finalizing
 - [ ] For each issue, run targeted test command(s) and record results
-- [ ] For each issue, check off issue tasks and append diary step
-- [ ] For each issue, create focused commit with clear message
+- [x] For each issue, check off issue tasks and append diary step
+- [x] For each issue, create focused commit with clear message
 - [ ] After all issues, run broader regression test pass and final doctor check
 
 ## Issue 1: Event Viewer Scroll Should Not Snap Back While Reviewing History
@@ -70,7 +70,7 @@
 ### Docs and Commit
 
 - [x] Append detailed diary step for Issue 2
-- [ ] Check off Issue 2 tasks and commit
+- [x] Check off Issue 2 tasks and commit
 
 ## Issue 3: Token Display Semantics (Header Totals + Footer Last Message)
 
@@ -95,7 +95,7 @@
 ### Docs and Commit
 
 - [x] Append detailed diary step for Issue 3
-- [ ] Check off Issue 3 tasks and commit
+- [x] Check off Issue 3 tasks and commit
 
 ## Issue 4: Allow Multiple Windows for Same Top-Level Icon/Card
 
@@ -119,7 +119,7 @@
 ### Docs and Commit
 
 - [x] Append detailed diary step for Issue 4
-- [ ] Check off Issue 4 tasks and commit
+- [x] Check off Issue 4 tasks and commit
 
 ## Issue 5: Remove Double Emojis in Window Titles
 
@@ -141,7 +141,7 @@
 ### Docs and Commit
 
 - [x] Append detailed diary step for Issue 5
-- [ ] Check off Issue 5 tasks and commit
+- [x] Check off Issue 5 tasks and commit
 
 ## Issue 6: Show Buffered/Recent Events for Late-Opened Event Viewer
 
@@ -167,16 +167,16 @@
 ### Docs and Commit
 
 - [x] Append detailed diary step for Issue 6
-- [ ] Check off Issue 6 tasks and commit
+- [x] Check off Issue 6 tasks and commit
 
 ## Issue 7: Copy Conversation ID from Chat Header
 
 ### Implementation
 
-- [ ] Add `Copy Conv ID` action in chat header actions
-- [ ] Wire clipboard copy for full conversation ID
-- [ ] Add short-lived success feedback state
-- [ ] Provide tooltip/title for clarity
+- [x] Add `Copy Conv ID` action in chat header actions
+- [x] Wire clipboard copy for full conversation ID
+- [x] Add short-lived success feedback state
+- [x] Provide tooltip/title for clarity
 
 ### Tests
 
@@ -189,12 +189,12 @@
 
 ### Docs and Commit
 
-- [ ] Append detailed diary step for Issue 7
-- [ ] Check off Issue 7 tasks and commit
+- [x] Append detailed diary step for Issue 7
+- [x] Check off Issue 7 tasks and commit
 
 ## Final Wrap-Up
 
-- [ ] Re-run `docmgr doctor --ticket HC-01-QOL-IMPROVEMENTS --stale-after 30`
-- [ ] Update changelog with implementation completion summary
-- [ ] Upload updated implementation docs/diary bundle to reMarkable
+- [x] Re-run `docmgr doctor --ticket HC-01-QOL-IMPROVEMENTS --stale-after 30`
+- [x] Update changelog with implementation completion summary
+- [x] Upload updated implementation docs/diary bundle to reMarkable
 - [ ] Mark ticket status according to project workflow
