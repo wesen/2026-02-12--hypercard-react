@@ -50,6 +50,9 @@ export function StatsFooter({
     if (turnStats.cacheCreationInputTokens !== undefined && turnStats.cacheCreationInputTokens > 0) {
       tokenParts.push(`CacheWrite:${formatNumber(turnStats.cacheCreationInputTokens)}`);
     }
+    if (turnStats.cacheReadInputTokens !== undefined && turnStats.cacheReadInputTokens > 0) {
+      tokenParts.push(`CacheRead:${formatNumber(turnStats.cacheReadInputTokens)}`);
+    }
     if (tokenParts.length > 0) {
       parts.push(tokenParts.join(' '));
     }

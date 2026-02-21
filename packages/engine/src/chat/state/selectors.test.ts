@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ChatSessionSliceState } from './chatSessionSlice';
 import {
+  selectConversationCachedTokens,
   selectConversationTotalTokens,
   selectRenderableTimelineEntities,
   selectSuggestions,
@@ -115,7 +116,7 @@ describe('selectors', () => {
     expect(selectSuggestions(state, 'conv-4')).toEqual([]);
   });
 
-  it('returns conversation total tokens from chat session state', () => {
+  it('returns conversation total tokens (including cache) from chat session state', () => {
     const state = createState(
       { byConvId: {} },
       {
@@ -138,7 +139,9 @@ describe('selectors', () => {
       }
     );
 
-    expect(selectConversationTotalTokens(state, 'conv-tokens')).toBe(320);
+    expect(selectConversationCachedTokens(state, 'conv-tokens')).toBe(12);
+    expect(selectConversationTotalTokens(state, 'conv-tokens')).toBe(332);
+    expect(selectConversationCachedTokens(state, 'conv-missing')).toBe(0);
     expect(selectConversationTotalTokens(state, 'conv-missing')).toBe(0);
   });
 });
