@@ -342,19 +342,7 @@ export function useDesktopShellController({
     [dispatch, stack.id, stack.cards],
   );
 
-  const handleOpenIcon = useCallback(
-    (iconId: string) => {
-      dispatch(setSelectedIcon(iconId));
-      if (stack.cards[iconId]) {
-        openCardWindow(iconId);
-      } else {
-        onCommandProp?.(`icon.open.${iconId}`);
-      }
-    },
-    [dispatch, onCommandProp, openCardWindow, stack.cards],
-  );
-
-  const handleCommand = useCallback(
+  const routeCommand = useCallback(
     (commandId: string) => {
       const contributionHandled = routeContributionCommand(
         commandId,
@@ -403,6 +391,18 @@ export function useDesktopShellController({
       store,
       windows,
     ],
+  );
+
+  const handleOpenIcon = useCallback(
+    (iconId: string) => {
+      dispatch(setSelectedIcon(iconId));
+      if (stack.cards[iconId]) {
+        openCardWindow(iconId);
+        return;
+      }
+      routeCommand(`icon.open.${iconId}`);
+    },
+    [dispatch, openCardWindow, routeCommand, stack.cards],
   );
 
   const defaultAdapters = useMemo<WindowContentAdapter[]>(
@@ -488,7 +488,7 @@ export function useDesktopShellController({
     toast,
     onDesktopBackgroundClick: handleDesktopBackgroundClick,
     onActiveMenuChange: handleActiveMenuChange,
-    onCommand: handleCommand,
+    onCommand: routeCommand,
     onSelectIcon: handleSelectIcon,
     onOpenIcon: handleOpenIcon,
     onFocusWindow: handleFocus,

@@ -14,6 +14,16 @@ export interface RuntimeCardDefinition {
   registeredAt: number;
 }
 
+export interface RuntimeCardInjectionFailure {
+  cardId: string;
+  error: string;
+}
+
+export interface RuntimeCardInjectionResult {
+  injected: string[];
+  failed: RuntimeCardInjectionFailure[];
+}
+
 const registry = new Map<string, RuntimeCardDefinition>();
 const listeners = new Set<() => void>();
 
@@ -59,14 +69,26 @@ export function injectPendingCards(
   service: { defineCard(sessionId: string, cardId: string, code: string): unknown },
   sessionId: string,
 ): string[] {
+  return injectPendingCardsWithReport(service, sessionId).injected;
+}
+
+export function injectPendingCardsWithReport(
+  service: { defineCard(sessionId: string, cardId: string, code: string): unknown },
+  sessionId: string,
+): RuntimeCardInjectionResult {
   const injected: string[] = [];
+  const failed: RuntimeCardInjectionFailure[] = [];
   for (const def of registry.values()) {
     try {
       service.defineCard(sessionId, def.cardId, def.code);
       injected.push(def.cardId);
     } catch (err) {
       console.error(`[runtimeCardRegistry] Failed to inject card ${def.cardId} into ${sessionId}:`, err);
+      failed.push({
+        cardId: def.cardId,
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   }
-  return injected;
+  return { injected, failed };
 }

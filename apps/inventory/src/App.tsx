@@ -1,23 +1,31 @@
-import { openWindow, type OpenWindowPayload } from '@hypercard/engine/desktop-core';
-import { DesktopShell, type DesktopContribution } from '@hypercard/engine/desktop-react';
 import {
+  ChatConversationWindow,
   CodeEditorWindow,
+  ensureChatModulesRegistered,
   EventViewerWindow,
-  getRuntimeCardEditorInitialCode,
+  getEditorInitialCode,
+  registerChatRuntimeModule,
+  registerHypercardTimelineModule,
+  RuntimeCardDebugWindow,
 } from '@hypercard/engine';
-import { type ReactNode, useCallback, useMemo } from 'react';
+import { type OpenWindowPayload, openWindow } from '@hypercard/engine/desktop-core';
+import { type DesktopContribution, DesktopShell } from '@hypercard/engine/desktop-react';
+import { type ReactNode, useCallback, useMemo, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { STACK } from './domain/stack';
-import { InventoryChatWindow } from './features/chat/InventoryChatWindow';
-import { RuntimeCardDebugWindow } from './features/chat/RuntimeCardDebugWindow';
 import { ReduxPerfWindow } from './features/debug/ReduxPerfWindow';
 
 const CHAT_APP_KEY = 'inventory-chat';
 const REDUX_PERF_APP_KEY = 'redux-perf-debug';
 
+registerChatRuntimeModule({
+  id: 'chat.hypercard-timeline',
+  register: registerHypercardTimelineModule,
+});
+ensureChatModulesRegistered();
+
 function newConversationId(): string {
-  return typeof window.crypto?.randomUUID === 'function'
-    ? window.crypto.randomUUID()
-    : `inv-${Date.now()}`;
+  return typeof window.crypto?.randomUUID === 'function' ? window.crypto.randomUUID() : `inv-${Date.now()}`;
 }
 
 function buildChatWindowPayload(options?: { dedupeKey?: string }): OpenWindowPayload {
@@ -40,6 +48,113 @@ function buildChatWindowPayload(options?: { dedupeKey?: string }): OpenWindowPay
   };
 }
 
+function chatConversationIdFromAppKey(appKey: string | undefined): string | null {
+  if (!appKey || !appKey.startsWith(`${CHAT_APP_KEY}:`)) {
+    return null;
+  }
+  const convId = appKey.slice(CHAT_APP_KEY.length + 1).trim();
+  return convId.length > 0 ? convId : null;
+}
+
+function asObject(value: unknown): Record<string, unknown> | null {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return null;
+  }
+  return value as Record<string, unknown>;
+}
+
+function resolveEventViewerConversationId(state: unknown, focusedWindowId: string | null): string | null {
+  const root = asObject(state);
+  const windowing = root ? asObject(root.windowing) : null;
+  const windows = windowing ? asObject(windowing.windows) : null;
+  if (!windows) {
+    return null;
+  }
+
+  if (focusedWindowId) {
+    const focusedWindow = asObject(windows[focusedWindowId]);
+    const content = focusedWindow ? asObject(focusedWindow.content) : null;
+    const fromFocused = chatConversationIdFromAppKey(
+      content && typeof content.appKey === 'string' ? content.appKey : undefined,
+    );
+    if (fromFocused) {
+      return fromFocused;
+    }
+  }
+
+  for (const value of Object.values(windows)) {
+    const win = asObject(value);
+    const content = win ? asObject(win.content) : null;
+    const convId = chatConversationIdFromAppKey(
+      content && typeof content.appKey === 'string' ? content.appKey : undefined,
+    );
+    if (convId) {
+      return convId;
+    }
+  }
+
+  return null;
+}
+
+function buildEventViewerWindowPayload(convId: string): OpenWindowPayload {
+  const shortId = convId.slice(0, 8);
+  return {
+    id: `window:event-viewer:${convId}`,
+    title: `🧭 Event Viewer (${shortId})`,
+    icon: '🧭',
+    bounds: { x: 780, y: 40, w: 560, h: 420 },
+    content: {
+      kind: 'app',
+      appKey: `event-viewer:${convId}`,
+    },
+    dedupeKey: `event-viewer:${convId}`,
+  };
+}
+
+function buildRuntimeDebugWindowPayload(): OpenWindowPayload {
+  return {
+    id: 'window:runtime-debug',
+    title: '🔧 Stacks & Cards',
+    icon: '🔧',
+    bounds: { x: 80, y: 30, w: 560, h: 480 },
+    content: { kind: 'app', appKey: 'runtime-card-debug' },
+    dedupeKey: 'runtime-card-debug',
+  };
+}
+
+function InventoryChatAssistantWindow({ convId }: { convId: string }) {
+  const dispatch = useDispatch();
+  const [renderMode, setRenderMode] = useState<'normal' | 'debug'>('normal');
+
+  const openEventViewer = useCallback(() => {
+    dispatch(openWindow(buildEventViewerWindowPayload(convId)));
+  }, [convId, dispatch]);
+
+  return (
+    <ChatConversationWindow
+      convId={convId}
+      title="Inventory Chat"
+      renderMode={renderMode}
+      headerActions={
+        <>
+          <button type="button" data-part="btn" onClick={openEventViewer} style={{ fontSize: 10, padding: '1px 6px' }}>
+            🧭 Events
+          </button>
+          <button
+            type="button"
+            data-part="btn"
+            data-state={renderMode === 'debug' ? 'active' : undefined}
+            onClick={() => setRenderMode((mode) => (mode === 'normal' ? 'debug' : 'normal'))}
+            style={{ fontSize: 10, padding: '1px 6px' }}
+          >
+            {renderMode === 'debug' ? '🔍 Debug ON' : '🔍 Debug'}
+          </button>
+        </>
+      }
+    />
+  );
+}
+
 export function App() {
   const renderAppWindow = useCallback((appKey: string): ReactNode => {
     if (appKey === REDUX_PERF_APP_KEY) {
@@ -47,23 +162,18 @@ export function App() {
     }
     if (appKey.startsWith(`${CHAT_APP_KEY}:`)) {
       const convId = appKey.slice(CHAT_APP_KEY.length + 1);
-      return <InventoryChatWindow conversationId={convId} />;
+      return <InventoryChatAssistantWindow convId={convId} />;
     }
     if (appKey.startsWith('event-viewer:')) {
       const convId = appKey.slice('event-viewer:'.length);
       return <EventViewerWindow conversationId={convId} />;
     }
     if (appKey === 'runtime-card-debug') {
-      return <RuntimeCardDebugWindow />;
+      return <RuntimeCardDebugWindow stacks={[STACK]} />;
     }
     if (appKey.startsWith('code-editor:')) {
       const cardId = appKey.slice('code-editor:'.length);
-      return (
-        <CodeEditorWindow
-          cardId={cardId}
-          initialCode={getRuntimeCardEditorInitialCode(cardId)}
-        />
-      );
+      return <CodeEditorWindow cardId={cardId} initialCode={getEditorInitialCode(cardId)} />;
     }
     return null;
   }, []);
@@ -76,6 +186,7 @@ export function App() {
     }));
     const debugIcons = [
       { id: 'runtime-debug', label: 'Stacks & Cards', icon: '🔧' },
+      { id: 'event-viewer', label: 'Event Viewer', icon: '🧭' },
     ];
     if (import.meta.env.DEV) {
       debugIcons.push({ id: 'redux-perf', label: 'Redux Perf', icon: '📈' });
@@ -106,17 +217,14 @@ export function App() {
     return [
       {
         id: 'inventory.desktop',
-        icons: [
-          { id: 'new-chat', label: 'New Chat', icon: '💬' },
-          ...debugIcons,
-          ...cardIcons,
-        ],
+        icons: [{ id: 'new-chat', label: 'New Chat', icon: '💬' }, ...debugIcons, ...cardIcons],
         menus: [
           {
             id: 'file',
             label: 'File',
             items: [
               { id: 'new-chat', label: 'New Chat', commandId: 'chat.new', shortcut: 'Ctrl+N' },
+              { id: 'event-viewer', label: 'Open Event Viewer', commandId: 'debug.event-viewer' },
               {
                 id: 'new-home',
                 label: `New ${STACK.cards[STACK.homeCard]?.title ?? 'Home'} Window`,
@@ -149,6 +257,7 @@ export function App() {
                   label: 'Debug',
                   items: [
                     { id: 'redux-perf', label: '📈 Redux Perf', commandId: 'debug.redux-perf' },
+                    { id: 'event-viewer', label: '🧭 Event Viewer', commandId: 'debug.event-viewer' },
                     { id: 'stacks-cards', label: '🔧 Stacks & Cards', commandId: 'debug.stacks' },
                   ],
                 },
@@ -166,18 +275,24 @@ export function App() {
             },
           },
           {
+            id: 'inventory.debug.event-viewer',
+            priority: 100,
+            matches: (commandId) => commandId === 'debug.event-viewer' || commandId === 'icon.open.event-viewer',
+            run: (_commandId, ctx) => {
+              const convId = resolveEventViewerConversationId(ctx.getState?.(), ctx.focusedWindowId);
+              if (!convId) {
+                return 'pass';
+              }
+              ctx.dispatch(openWindow(buildEventViewerWindowPayload(convId)));
+              return 'handled';
+            },
+          },
+          {
             id: 'inventory.debug.stacks',
             priority: 100,
             matches: (commandId) => commandId === 'debug.stacks' || commandId === 'icon.open.runtime-debug',
             run: (_commandId, ctx) => {
-              ctx.dispatch(openWindow({
-                id: 'window:runtime-debug',
-                title: '🔧 Stacks & Cards',
-                icon: '🔧',
-                bounds: { x: 80, y: 30, w: 560, h: 480 },
-                content: { kind: 'app', appKey: 'runtime-card-debug' },
-                dedupeKey: 'runtime-card-debug',
-              }));
+              ctx.dispatch(openWindow(buildRuntimeDebugWindowPayload()));
               return 'handled';
             },
           },
@@ -186,14 +301,16 @@ export function App() {
             priority: 100,
             matches: (commandId) => commandId === 'debug.redux-perf' || commandId === 'icon.open.redux-perf',
             run: (_commandId, ctx) => {
-              ctx.dispatch(openWindow({
-                id: 'window:redux-perf:dev',
-                title: '📈 Redux Perf',
-                icon: '📈',
-                bounds: { x: 900, y: 40, w: 420, h: 320 },
-                content: { kind: 'app', appKey: REDUX_PERF_APP_KEY },
-                dedupeKey: REDUX_PERF_APP_KEY,
-              }));
+              ctx.dispatch(
+                openWindow({
+                  id: 'window:redux-perf:dev',
+                  title: '📈 Redux Perf',
+                  icon: '📈',
+                  bounds: { x: 900, y: 40, w: 420, h: 320 },
+                  content: { kind: 'app', appKey: REDUX_PERF_APP_KEY },
+                  dedupeKey: REDUX_PERF_APP_KEY,
+                }),
+              );
               return 'handled';
             },
           },
@@ -203,11 +320,5 @@ export function App() {
     ];
   }, []);
 
-  return (
-    <DesktopShell
-      stack={STACK}
-      contributions={contributions}
-      renderAppWindow={renderAppWindow}
-    />
-  );
+  return <DesktopShell stack={STACK} contributions={contributions} renderAppWindow={renderAppWindow} />;
 }

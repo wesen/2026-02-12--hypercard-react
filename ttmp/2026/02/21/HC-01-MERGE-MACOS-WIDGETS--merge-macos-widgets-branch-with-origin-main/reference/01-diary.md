@@ -275,3 +275,112 @@ The resulting strategy emphasizes preserving upstream chat/hypercard architectur
   - `ttmp/2026/02/21/HC-01-MERGE-MACOS-WIDGETS--merge-macos-widgets-branch-with-origin-main/various/merge_summary.txt`
   - `ttmp/2026/02/21/HC-01-MERGE-MACOS-WIDGETS--merge-macos-widgets-branch-with-origin-main/various/left_right_log.txt`
   - `ttmp/2026/02/21/HC-01-MERGE-MACOS-WIDGETS--merge-macos-widgets-branch-with-origin-main/various/fileset_counts.txt`
+
+## Step 4: Re-run merge, resolve conflicts, and validate resolved surfaces
+
+After the merge state was reset by the user, I re-ran `git merge origin/main` and applied the conflict plan from Step 3. I resolved all unmerged paths and then found/cleaned hidden diff3 conflict markers in a few files that were not flagged as unresolved by `git status`.
+
+I then validated the critical merged surfaces with targeted tests. Full `packages/engine` build could not complete in this environment because required npm dependencies (for protobuf runtime/codegen imports) were not installed locally.
+
+### Prompt Context
+
+**User prompt (verbatim):** "ok, you don't need a separate branch, I just cleared the merge state."
+
+**Assistant interpretation:** Continue directly on the current branch and complete the merge/resolution work in-place.
+
+**Inferred user intent:** Finish the merge now without extra branching overhead.
+
+**Commit (code):** N/A — merge commit not yet created in this step
+
+### What I did
+- Re-ran merge:
+  - `git merge origin/main`
+- Resolved non-content conflict classes mechanically:
+  - removed legacy/deleted paths (`DD`, `UD`, `AU`)
+  - kept upstream-added replacements (`UA`, `DU`)
+- Resolved all 7 `UU` files by taking `origin/main` versions:
+  - `apps/inventory/src/App.tsx`
+  - `apps/inventory/src/app/store.ts`
+  - `packages/engine/src/chat/debug/eventBus.test.ts`
+  - `packages/engine/src/components/widgets/CodeEditorWindow.stories.tsx`
+  - `packages/engine/src/hypercard/artifacts/artifactsSlice.test.ts`
+  - `packages/engine/src/hypercard/debug/RuntimeCardDebugWindow.tsx`
+  - `packages/engine/src/index.ts`
+- Discovered hidden conflict markers with:
+  - `rg -n "^(<<<<<<<|>>>>>>>|\\|\\|\\|\\|\\|\\|\\|)" .`
+- Replaced marker-bearing files with exact upstream content and staged:
+  - `packages/engine/src/chat/debug/EventViewerWindow.tsx`
+  - `packages/engine/src/chat/debug/eventBus.ts`
+  - `packages/engine/src/hypercard/editor/CodeEditorWindow.tsx`
+  - `packages/engine/src/hypercard/artifacts/artifactsSelectors.ts`
+- Removed remaining legacy `packages/engine/src/hypercard-chat/*` files that no longer exist in `origin/main`:
+  - `packages/engine/src/hypercard-chat/artifacts/semFields.ts`
+  - `packages/engine/src/hypercard-chat/index.ts`
+  - `packages/engine/src/hypercard-chat/runtime-card-tools/RuntimeCardDebugWindow.tsx`
+  - `packages/engine/src/hypercard-chat/runtime-card-tools/editorLaunch.ts`
+  - `packages/engine/src/hypercard-chat/types.ts`
+  - `packages/engine/src/hypercard-chat/windowAdapters.ts`
+- Validation executed:
+  - `npm run test -w packages/engine -- src/chat/debug/eventBus.test.ts src/hypercard/artifacts/artifactsSlice.test.ts` (pass)
+  - `npm run build -w packages/engine` (failed due missing local deps)
+  - `npm ls @bufbuild/protobuf --depth=2` (showed dependency absent in current install)
+
+### Why
+- Needed to complete the in-progress merge while preserving upstream migration architecture.
+- Needed to avoid silent bad merges from hidden conflict markers.
+- Needed minimum confidence checks on the files directly involved in manual conflict resolution.
+
+### What worked
+- All unresolved merge entries were eliminated (`All conflicts fixed but you are still merging`).
+- Targeted engine tests passed:
+  - `src/chat/debug/eventBus.test.ts`
+  - `src/hypercard/artifacts/artifactsSlice.test.ts`
+- Legacy `hypercard-chat` remnants were cleaned to match upstream structure and avoid stale imports.
+
+### What didn't work
+- Full engine build failed because local node_modules does not currently include required protobuf package dependencies.
+- Exact evidence:
+  - command: `npm run build -w packages/engine`
+  - errors: `TS2307 Cannot find module '@bufbuild/protobuf/...`
+  - command: `npm ls @bufbuild/protobuf --depth=2`
+  - result: `(empty)`
+
+### What I learned
+- Git can report conflicts resolved while still leaving diff3 markers in content for some renamed/add paths if they are staged without content cleanup.
+- Matching upstream directory removals (`hypercard-chat`) is necessary after migration-heavy merges; partial keeps create typecheck breakage.
+
+### What was tricky to build
+- Root cause: a subset of files had embedded diff3 markers but were not in the `U*` status set after staging.
+- Symptom: tests/build failed with parser errors (`Unexpected "<<"`) despite no unresolved merge entries.
+- Solution steps:
+  - global marker scan with `rg`
+  - force-replace affected files from `origin/main`
+  - re-stage and re-run tests.
+
+### What warrants a second pair of eyes
+- Final staged diff for broad migration deletions/renames under:
+  - `packages/engine/src/chat/*`
+  - `packages/engine/src/hypercard/*`
+  - `apps/inventory/src/features/chat/*`
+- Whether the pre-existing local change in `go-inventory-chat/go.mod` should be included in or excluded from subsequent commits.
+
+### What should be done in the future
+- Add a merge checklist item to run global conflict-marker scan (`rg`) before merge commit.
+
+### Code review instructions
+- Verify merge resolution state:
+  - `git status`
+  - `git status --porcelain=v1 | awk '...U... {print}'`
+- Verify no marker remnants:
+  - `rg -n "^(<<<<<<<|>>>>>>>|\\|\\|\\|\\|\\|\\|\\|)" .`
+- Re-run targeted tests:
+  - `npm run test -w packages/engine -- src/chat/debug/eventBus.test.ts src/hypercard/artifacts/artifactsSlice.test.ts`
+
+### Technical details
+- Key conflict-resolved files:
+  - `apps/inventory/src/App.tsx`
+  - `apps/inventory/src/app/store.ts`
+  - `packages/engine/src/chat/debug/eventBus.ts`
+  - `packages/engine/src/components/widgets/CodeEditorWindow.stories.tsx`
+  - `packages/engine/src/hypercard/debug/RuntimeCardDebugWindow.tsx`
+  - `packages/engine/src/index.ts`

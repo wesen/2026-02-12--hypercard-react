@@ -1,4 +1,12 @@
-import type { FakeResponse, ResponseMatcher } from '@hypercard/engine';
+type FakeResponse = {
+  text: string;
+  actions?: Array<{
+    label: string;
+    action: unknown;
+  }>;
+};
+
+type ResponseMatcher = (input: string) => FakeResponse | null;
 
 type ChatNavAction = {
   scope: 'system';

@@ -4,9 +4,6 @@ export { ChatView, type ChatViewProps } from './ChatView';
 export {
   ChatWindow,
   type ChatWindowProps,
-  type ChatWindowMessage,
-  type ChatContentBlock,
-  type InlineWidget,
 } from './ChatWindow';
 export { Checkbox, type CheckboxProps } from './Checkbox';
 export { Chip, type ChipProps } from './Chip';

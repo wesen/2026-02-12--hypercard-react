@@ -6,6 +6,8 @@ import { startFrameMonitor } from '../diagnostics/frameMonitor';
 import { pluginCardRuntimeReducer } from '../features/pluginCardRuntime/pluginCardRuntimeSlice';
 import { notificationsReducer } from '../features/notifications/notificationsSlice';
 import { windowingReducer } from '../desktop/core/state/windowingSlice';
+import { createArtifactProjectionMiddleware } from '../hypercard/artifacts/artifactProjectionMiddleware';
+import { hypercardArtifactsReducer } from '../hypercard/artifacts/artifactsSlice';
 
 /** Options for `createAppStore`. */
 export interface CreateAppStoreOptions {
@@ -54,6 +56,7 @@ export function createAppStore<T extends Record<string, Reducer>>(
     windowing: windowingReducer,
     notifications: notificationsReducer,
     debug: debugReducer,
+    hypercardArtifacts: hypercardArtifactsReducer,
     ...domainReducers,
   };
 
@@ -67,10 +70,13 @@ export function createAppStore<T extends Record<string, Reducer>>(
     : null;
 
   function createStore() {
+    const artifactProjectionMiddleware = createArtifactProjectionMiddleware();
     const store = configureStore({
       reducer,
       middleware: (getDefault) =>
-        perfMiddleware ? getDefault().concat(perfMiddleware) : getDefault(),
+        perfMiddleware
+          ? getDefault().concat(artifactProjectionMiddleware.middleware, perfMiddleware)
+          : getDefault().concat(artifactProjectionMiddleware.middleware),
     });
 
     // Start frame monitor when diagnostics are enabled

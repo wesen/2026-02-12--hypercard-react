@@ -12,12 +12,10 @@
 export * from './app';
 // ── Card DSL ──
 export * from './cards';
-// ── Plugin Runtime ──
-export * from './plugin-runtime';
 // ── Chat ──
 export * from './chat';
-// ── HyperCard Chat Tooling ──
-export * from './hypercard-chat';
+// ── Plugin Runtime ──
+export * from './plugin-runtime';
 
 // ── Widgets ──
 export * from './components/widgets';
@@ -25,6 +23,8 @@ export * from './components/widgets';
 export * from './debug';
 // ── Diagnostics (Redux perf / FPS) ──
 export * from './diagnostics';
+// ── Hypercard ──
+export * from './hypercard';
 // ── State ──
 export {
   clearToast,

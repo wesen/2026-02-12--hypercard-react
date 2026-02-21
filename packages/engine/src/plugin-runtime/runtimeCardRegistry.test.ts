@@ -7,6 +7,7 @@ import {
   onRegistryChange,
   clearRuntimeCardRegistry,
   injectPendingCards,
+  injectPendingCardsWithReport,
 } from './runtimeCardRegistry';
 
 beforeEach(() => {
@@ -70,5 +71,18 @@ describe('runtimeCardRegistry', () => {
     const injected = injectPendingCards(service, 'session-1');
     expect(injected).toEqual(['good']); // bad was skipped
     expect(service.defineCard).toHaveBeenCalledTimes(2);
+  });
+
+  it('returns injection failure details with report helper', () => {
+    registerRuntimeCard('bad', 'syntax error');
+    registerRuntimeCard('good', 'valid code');
+    const service = {
+      defineCard: vi.fn().mockImplementation((_s, cardId) => {
+        if (cardId === 'bad') throw new Error('syntax error');
+      }),
+    };
+    const report = injectPendingCardsWithReport(service, 'session-1');
+    expect(report.injected).toEqual(['good']);
+    expect(report.failed).toEqual([{ cardId: 'bad', error: 'syntax error' }]);
   });
 });

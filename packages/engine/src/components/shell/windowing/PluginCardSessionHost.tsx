@@ -11,8 +11,9 @@ import {
   setRuntimeSessionStatus,
 } from '../../../features/pluginCardRuntime';
 import { selectFocusedWindowId, selectSessionCurrentNav, selectSessionNavDepth } from '../../../desktop/core/state';
+import { markRuntimeCardInjectionResults } from '../../../hypercard/artifacts/artifactsSlice';
 import type { RuntimeIntent } from '../../../plugin-runtime/contracts';
-import { hasRuntimeCard, injectPendingCards, onRegistryChange } from '../../../plugin-runtime/runtimeCardRegistry';
+import { hasRuntimeCard, injectPendingCardsWithReport, onRegistryChange } from '../../../plugin-runtime/runtimeCardRegistry';
 import { QuickJSCardRuntimeService } from '../../../plugin-runtime/runtimeService';
 import type { UINode } from '../../../plugin-runtime/uiTypes';
 import { dispatchRuntimeIntent } from './pluginIntentRouting';
@@ -146,9 +147,20 @@ export function PluginCardSessionHost({
 
         // Inject any runtime cards that were registered before the session loaded
         if (runtimeService) {
-          const injected = injectPendingCards(runtimeService, sessionId);
-          if (injected.length > 0) {
-            console.log(`[PluginCardSessionHost] Injected ${injected.length} runtime cards into ${sessionId}:`, injected);
+          const report = injectPendingCardsWithReport(runtimeService, sessionId);
+          if (report.injected.length > 0 || report.failed.length > 0) {
+            dispatch(
+              markRuntimeCardInjectionResults({
+                injectedCardIds: report.injected,
+                failed: report.failed.map((item) => ({ cardId: item.cardId, error: item.error })),
+              }),
+            );
+          }
+          if (report.injected.length > 0) {
+            console.log(
+              `[PluginCardSessionHost] Injected ${report.injected.length} runtime cards into ${sessionId}:`,
+              report.injected,
+            );
           }
         }
 
@@ -216,12 +228,23 @@ export function PluginCardSessionHost({
       return;
     }
     return onRegistryChange(() => {
-      const injected = injectPendingCards(runtimeService, sessionId);
-      if (injected.length > 0) {
-        console.log(`[PluginCardSessionHost] Live-injected ${injected.length} runtime cards into ${sessionId}:`, injected);
+      const report = injectPendingCardsWithReport(runtimeService, sessionId);
+      if (report.injected.length > 0 || report.failed.length > 0) {
+        dispatch(
+          markRuntimeCardInjectionResults({
+            injectedCardIds: report.injected,
+            failed: report.failed.map((item) => ({ cardId: item.cardId, error: item.error })),
+          }),
+        );
+      }
+      if (report.injected.length > 0) {
+        console.log(
+          `[PluginCardSessionHost] Live-injected ${report.injected.length} runtime cards into ${sessionId}:`,
+          report.injected,
+        );
       }
     });
-  }, [pluginConfig, runtimeSession, sessionId]);
+  }, [dispatch, pluginConfig, runtimeSession, sessionId]);
 
   useEffect(() => {
     if (!pluginConfig) {
