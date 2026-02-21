@@ -12,6 +12,33 @@ export interface ArtifactUpsert {
   runtimeCardCode?: string;
 }
 
+export function normalizeArtifactId(raw: unknown): string | undefined {
+  if (typeof raw !== 'string') {
+    return undefined;
+  }
+
+  let value = raw.trim();
+  if (!value) {
+    return undefined;
+  }
+
+  // Handle doubly-wrapped ids such as "\"sales-summary-2026-02-20\"".
+  for (let i = 0; i < 2; i += 1) {
+    const isDoubleQuoted = value.startsWith('"') && value.endsWith('"');
+    const isSingleQuoted = value.startsWith("'") && value.endsWith("'");
+    if (value.length > 1 && (isDoubleQuoted || isSingleQuoted)) {
+      value = value.slice(1, -1).trim();
+      continue;
+    }
+    break;
+  }
+
+  if (!value) {
+    return undefined;
+  }
+  return value;
+}
+
 function artifactFromStructured(
   record: Record<string, unknown>,
   source: ArtifactSource,
@@ -19,7 +46,7 @@ function artifactFromStructured(
 ): ArtifactUpsert | undefined {
   const payload = recordField(record, 'data');
   const artifact = payload ? recordField(payload, 'artifact') : undefined;
-  const artifactId = artifact ? stringField(artifact, 'id') : undefined;
+  const artifactId = normalizeArtifactId(artifact ? stringField(artifact, 'id') : undefined);
   if (!artifactId) {
     return undefined;
   }
@@ -30,6 +57,38 @@ function artifactFromStructured(
     data: artifact ? recordField(artifact, 'data') : undefined,
     source,
   };
+}
+
+function artifactFromTimelineToolResult(
+  toolResult: Record<string, unknown>,
+): ArtifactUpsert | undefined {
+  const customKind = stringField(toolResult, 'customKind');
+  const resultRecord =
+    structuredRecordFromUnknown(toolResult.result) ?? structuredRecordFromUnknown(toolResult.resultRaw);
+  if (!customKind || !resultRecord) {
+    return undefined;
+  }
+  if (customKind === 'hypercard.widget.v1') {
+    const template =
+      stringField(resultRecord, 'widgetType') ??
+      stringField(resultRecord, 'type') ??
+      stringField(resultRecord, 'template');
+    return artifactFromStructured(resultRecord, 'widget', template);
+  }
+  if (customKind === 'hypercard.card.v2') {
+    const upsert = artifactFromStructured(resultRecord, 'card', stringField(resultRecord, 'template'));
+    if (upsert) {
+      const cardData =
+        recordField(resultRecord, 'card') ??
+        (resultRecord.data ? recordField(resultRecord.data as Record<string, unknown>, 'card') : undefined);
+      if (cardData) {
+        upsert.runtimeCardId = stringField(cardData, 'id');
+        upsert.runtimeCardCode = stringField(cardData, 'code');
+      }
+    }
+    return upsert;
+  }
+  return undefined;
 }
 
 export function extractArtifactUpsertFromSem(
@@ -64,37 +123,80 @@ export function extractArtifactUpsertFromSem(
   }
 
   const entity = recordField(data, 'entity');
-  if (!entity || stringField(entity, 'kind') !== 'tool_result') {
+  if (!entity) {
     return undefined;
   }
-  const toolResult = recordField(entity, 'toolResult');
+
+  if (stringField(entity, 'kind') !== 'tool_result') {
+    return undefined;
+  }
+
+  // Legacy V1 projection: entity.toolResult
+  // Timeline V2 projection: entity.props
+  const toolResult = recordField(entity, 'toolResult') ?? recordField(entity, 'props');
   if (!toolResult) {
     return undefined;
   }
-  const customKind = stringField(toolResult, 'customKind');
-  const resultRecord =
-    structuredRecordFromUnknown(toolResult.result) ?? structuredRecordFromUnknown(toolResult.resultRaw);
-  if (!resultRecord) {
+  return artifactFromTimelineToolResult(toolResult);
+}
+
+function upsertFromHypercardEntityProps(
+  entityKind: string,
+  props: Record<string, unknown>,
+): ArtifactUpsert | undefined {
+  const preferredSource: ArtifactSource = entityKind === 'hypercard_card' ? 'card' : 'widget';
+  const rawData = recordField(props, 'rawData');
+
+  if (rawData) {
+    const fromRaw = artifactFromStructured(
+      rawData,
+      preferredSource,
+      stringField(rawData, 'widgetType') ?? stringField(rawData, 'type') ?? stringField(rawData, 'template'),
+    );
+    if (fromRaw) {
+      return fromRaw;
+    }
+  }
+
+  const toolLike = artifactFromTimelineToolResult(props);
+  if (toolLike) {
+    return toolLike;
+  }
+
+  const fallbackId = normalizeArtifactId(stringField(props, 'artifactId'));
+  if (!fallbackId) {
     return undefined;
   }
-  if (customKind === 'hypercard.widget.v1') {
-    const template =
-      stringField(resultRecord, 'widgetType') ??
-      stringField(resultRecord, 'type') ??
-      stringField(resultRecord, 'template');
-    return artifactFromStructured(resultRecord, 'widget', template);
+
+  return {
+    id: fallbackId,
+    title: stringField(props, 'title'),
+    template: stringField(props, 'template'),
+    source: preferredSource,
+  };
+}
+
+export function extractArtifactUpsertFromTimelineEntity(
+  entityKind: string | undefined,
+  props: unknown,
+): ArtifactUpsert | undefined {
+  const kind = String(entityKind || '');
+  if (!kind) {
+    return undefined;
   }
-  if (customKind === 'hypercard.card.v2') {
-    const upsert = artifactFromStructured(resultRecord, 'card', stringField(resultRecord, 'template'));
-    if (upsert && customKind === 'hypercard.card.v2') {
-      const cardData = recordField(resultRecord, 'card') ?? (resultRecord.data ? recordField(resultRecord.data as Record<string, unknown>, 'card') : undefined);
-      if (cardData) {
-        upsert.runtimeCardId = stringField(cardData, 'id');
-        upsert.runtimeCardCode = stringField(cardData, 'code');
-      }
-    }
-    return upsert;
+
+  if (!props || typeof props !== 'object' || Array.isArray(props)) {
+    return undefined;
   }
+  const record = props as Record<string, unknown>;
+
+  if (kind === 'hypercard_widget' || kind === 'hypercard_card') {
+    return upsertFromHypercardEntityProps(kind, record);
+  }
+  if (kind === 'tool_result') {
+    return artifactFromTimelineToolResult(record);
+  }
+
   return undefined;
 }
 
@@ -121,8 +223,8 @@ export function buildArtifactOpenWindowPayload(input: {
   stackId?: string;
   runtimeCardId?: string;
 }): OpenWindowPayload | undefined {
-  const artifactId = input.artifactId.trim();
-  if (artifactId.length === 0) {
+  const artifactId = normalizeArtifactId(input.artifactId);
+  if (!artifactId) {
     return undefined;
   }
   const safeKey = sanitizeArtifactKey(artifactId);

@@ -6,7 +6,12 @@ import { registerSem } from '../../chat/sem/semRegistry';
 import { type TimelineEntity, timelineSlice } from '../../chat/state/timelineSlice';
 import { openWindow } from '../../desktop/core';
 import { registerRuntimeCard } from '../../plugin-runtime';
-import { buildArtifactOpenWindowPayload, extractArtifactUpsertFromSem } from '../artifacts/artifactRuntime';
+import {
+  buildArtifactOpenWindowPayload,
+  extractArtifactUpsertFromSem,
+  extractArtifactUpsertFromTimelineEntity,
+  normalizeArtifactId,
+} from '../artifacts/artifactRuntime';
 import { upsertArtifact } from '../artifacts/artifactsSlice';
 import { buildCodeEditorWindowPayload } from '../editor/editorLaunch';
 
@@ -108,8 +113,18 @@ export function HypercardCardRenderer({ e, ctx }: { e: RenderEntity; ctx?: Rende
   const runtimeCardId = e.props.runtimeCardId ? String(e.props.runtimeCardId) : '';
 
   const openArtifact = () => {
+    const fromTimelineEntity = extractArtifactUpsertFromTimelineEntity(e.kind, e.props);
+    if (fromTimelineEntity) {
+      dispatch(
+        upsertArtifact({
+          ...fromTimelineEntity,
+          updatedAt: Date.now(),
+        }),
+      );
+    }
+
     const payload = buildArtifactOpenWindowPayload({
-      artifactId,
+      artifactId: fromTimelineEntity?.id ?? artifactId,
       title,
       runtimeCardId,
     });
@@ -146,7 +161,7 @@ export function HypercardCardRenderer({ e, ctx }: { e: RenderEntity; ctx?: Rende
           {JSON.stringify(e.props, null, 2)}
         </pre>
       )}
-      {artifactId && (
+      {normalizeArtifactId(artifactId) && (
         <div style={{ marginTop: 4, display: 'flex', gap: 6 }}>
           <button type="button" data-part="btn" onClick={openArtifact}>
             Open

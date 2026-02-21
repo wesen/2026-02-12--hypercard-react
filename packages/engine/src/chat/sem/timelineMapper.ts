@@ -28,15 +28,32 @@ function normalizedToolCallId(id: string, props: Record<string, unknown>): strin
 }
 
 function artifactIdFromResult(result: Record<string, unknown> | undefined): string | undefined {
+  const normalize = (value: string | undefined): string | undefined => {
+    if (!value) return undefined;
+    let normalized = value.trim();
+    if (!normalized) return undefined;
+    for (let i = 0; i < 2; i += 1) {
+      const quoted =
+        (normalized.startsWith('"') && normalized.endsWith('"')) ||
+        (normalized.startsWith("'") && normalized.endsWith("'"));
+      if (quoted && normalized.length > 1) {
+        normalized = normalized.slice(1, -1).trim();
+      } else {
+        break;
+      }
+    }
+    return normalized || undefined;
+  };
+
   if (!result) return undefined;
   const artifact = recordField(result, 'artifact');
   if (artifact) {
-    return stringField(artifact, 'id');
+    return normalize(stringField(artifact, 'id'));
   }
   const data = recordField(result, 'data');
   const nestedArtifact = data ? recordField(data, 'artifact') : undefined;
   if (nestedArtifact) {
-    return stringField(nestedArtifact, 'id');
+    return normalize(stringField(nestedArtifact, 'id'));
   }
   return undefined;
 }

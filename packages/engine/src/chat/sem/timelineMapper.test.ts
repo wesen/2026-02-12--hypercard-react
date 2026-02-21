@@ -67,4 +67,33 @@ describe('timelineEntityFromProto', () => {
       })
     );
   });
+
+  it('normalizes quoted artifact ids during remap', () => {
+    const mapped = timelineEntityFromProto(
+      {
+        id: 'tool-3:custom',
+        kind: 'tool_result',
+        createdAtMs: 300,
+        props: {
+          customKind: 'hypercard.widget.v1',
+          result: {
+            itemId: 'widget-quoted',
+            title: "Today's Sales Summary",
+            data: { artifact: { id: '"sales-summary-2026-02-20"' } },
+          },
+        },
+      } as any,
+      9
+    );
+
+    expect(mapped).toEqual(
+      expect.objectContaining({
+        id: 'widget:widget-quoted',
+        kind: 'hypercard_widget',
+        props: expect.objectContaining({
+          artifactId: 'sales-summary-2026-02-20',
+        }),
+      })
+    );
+  });
 });
