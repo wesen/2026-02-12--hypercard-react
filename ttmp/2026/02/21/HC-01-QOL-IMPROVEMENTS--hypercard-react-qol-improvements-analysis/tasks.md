@@ -198,3 +198,13 @@
 - [x] Update changelog with implementation completion summary
 - [x] Upload updated implementation docs/diary bundle to reMarkable
 - [ ] Mark ticket status according to project workflow
+
+## Post-Issue Follow-Ups (2026-02-21)
+
+- [x] Hide suggestions immediately after clicking a suggestion chip in chat
+- [x] Consume both starter and assistant suggestion entities on suggestion-send
+- [x] Ensure new suggestion upserts clear prior consumed state
+- [x] Add reducer test for consumed-state reset on next suggestion block
+- [ ] Add Event Viewer toggles to hide `llm.delta` and `llm.thinking.delta` events
+- [ ] Add Event Viewer `Export YAML` action for currently visible events
+- [ ] Add/adjust tests for event-type filtering and YAML export behavior

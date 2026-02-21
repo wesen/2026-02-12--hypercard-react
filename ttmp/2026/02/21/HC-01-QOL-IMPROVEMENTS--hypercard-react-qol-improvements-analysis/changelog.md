@@ -148,3 +148,13 @@ Event viewer controls clarified: replaced ambiguous pinned/free toggle with expl
 - /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/packages/engine/src/chat/debug/EventViewerWindow.tsx — Follow stream and hold controls
 - /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/ttmp/2026/02/21/HC-01-QOL-IMPROVEMENTS--hypercard-react-qol-improvements-analysis/reference/01-diary.md — Step 14 diary entry
 
+
+## 2026-02-21
+
+Suggestion-click UX fix completed: clicking a suggestion now hides suggestion chips until a new suggestions block arrives (commit 27b9ee5).
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/packages/engine/src/chat/components/ChatConversationWindow.tsx — Consume starter+assistant suggestions on suggestion send
+- /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/packages/engine/src/chat/state/timelineSlice.ts — Clear consumed flag when new suggestions are upserted
+- /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/packages/engine/src/chat/state/timelineSlice.test.ts — Reducer test for consumed-state reset

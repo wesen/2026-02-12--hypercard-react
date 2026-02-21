@@ -1152,3 +1152,83 @@ I kept the underlying auto-scroll mechanics unchanged and only improved the user
   - `followStream()` sets `autoScroll=true` and scrolls to end anchor.
   - `holdPosition()` sets `autoScroll=false`.
 - Previous `Pinned` concept corresponded to auto-scroll being enabled (viewport pinned to newest event).
+
+## Step 15: Hide suggestions immediately after suggestion click and reset on next block
+
+I completed the in-flight suggestion UX fix so suggestion chips disappear immediately when the user clicks one and sends it. This prevents stale suggestion chips from staying visible while the request is already in progress.
+
+I also fixed the state edge so suggestions can reappear when the next suggestions block arrives by clearing prior consumed state during suggestion upsert.
+
+### Prompt Context
+
+**User prompt (verbatim):** "another QOL thing: when lcicking a suggestion, the user message is sent but the suggestions are still visible. they should be removed until the next potential suggestions block comes in."
+
+**Assistant interpretation:** Ensure clicking a suggestion immediately hides suggestion chips and keeps them hidden until a fresh suggestion update arrives.
+
+**Inferred user intent:** Clean up chat UX so suggestion interactions behave like one-shot actions instead of persistent buttons.
+
+**Commit (code):** `27b9ee5` — "fix(chat): hide suggestions after suggestion send until next block"
+
+### What I did
+
+- Updated suggestion-send lifecycle in:
+  - `packages/engine/src/chat/components/ChatConversationWindow.tsx`
+  - On send, consume both:
+    - `suggestions:starter`
+    - `suggestions:assistant`
+- Updated suggestions reducer in:
+  - `packages/engine/src/chat/state/timelineSlice.ts`
+  - `upsertSuggestions(...)` now removes stale `consumedAt` whenever a new suggestion block is upserted.
+- Added reducer coverage in:
+  - `packages/engine/src/chat/state/timelineSlice.test.ts`
+  - New test verifies consumed suggestions are shown again after a new upsert.
+- Ran targeted tests:
+  - `npm run test -w packages/engine -- src/chat/state/timelineSlice.test.ts`
+  - `npm run test -w packages/engine -- src/chat/state/selectors.test.ts`
+
+### Why
+
+- Previously, only starter suggestions were consumed on send, so assistant suggestions could remain visible after click.
+- Once assistant suggestions are consumed, new suggestion blocks must explicitly clear `consumedAt` or they remain hidden forever.
+
+### What worked
+
+- Suggestion entities now hide immediately after click-send.
+- New suggestion upserts restore visibility as intended.
+- Targeted reducer/selector tests pass.
+
+### What didn't work
+
+- `npm run typecheck -w packages/engine` fails due broad pre-existing workspace baseline issues (missing React declaration files and many unrelated TS errors).
+- This was not introduced by this patch; it affects many files across the package.
+
+### What I learned
+
+- Suggestion lifecycle requires two coordinated invariants:
+  - consume currently visible suggestion entities on click
+  - clear consumed flag on next authoritative suggestion update.
+
+### What was tricky to build
+
+- The subtle bug was state persistence: `upsertSuggestions` merged old props and unintentionally preserved `consumedAt`, which blocked future visibility after consumption.
+
+### What warrants a second pair of eyes
+
+- Confirm whether consuming both starter+assistant is always desired for custom deployments that may show both simultaneously.
+
+### What should be done in the future
+
+- Continue next follow-up request: add event viewer toggles for delta/thinking-delta and YAML export for visible events.
+
+### Code review instructions
+
+- Start with `packages/engine/src/chat/components/ChatConversationWindow.tsx`.
+- Review consumed-flag reset in `packages/engine/src/chat/state/timelineSlice.ts`.
+- Validate reducer behavior in `packages/engine/src/chat/state/timelineSlice.test.ts`.
+
+### Technical details
+
+- Consumption now happens for:
+  - `STARTER_SUGGESTIONS_ENTITY_ID`
+  - `ASSISTANT_SUGGESTIONS_ENTITY_ID`
+- Upsert now drops stale `consumedAt` via destructuring before rebuilding suggestion props.
