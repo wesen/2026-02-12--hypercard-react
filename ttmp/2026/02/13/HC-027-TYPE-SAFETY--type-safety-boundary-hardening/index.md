@@ -1,7 +1,7 @@
 ---
 Title: Type Safety Boundary Hardening
 Ticket: HC-027-TYPE-SAFETY
-Status: active
+Status: complete
 Topics:
     - architecture
     - code-quality
@@ -15,7 +15,7 @@ RelatedFiles:
     - Path: packages/engine/src/app/createDSLApp.tsx
       Note: App factory snapshot selector currently typed with `any`
     - Path: packages/engine/src/app/generateCardStories.tsx
-      Note: Story helper exposes `createStore: () => any` and `snapshotSelector(state: any)`
+      Note: 'Story helper exposes `createStore: () => any` and `snapshotSelector(state: any)`'
     - Path: packages/engine/src/cards/runtime.ts
       Note: RuntimeLookup currently generic-collapses to `any`
     - Path: packages/engine/src/cards/types.ts
@@ -24,10 +24,11 @@ RelatedFiles:
       Note: Deep analysis this ticket implements
 ExternalSources: []
 Summary: Implements type boundary hardening described in finding 14 deep-dive analysis.
-LastUpdated: 2026-02-13T16:56:00-05:00
+LastUpdated: 2026-02-17T07:40:36.143282817-05:00
 WhatFor: Strengthen compile-time guarantees at shell/runtime/app helper integration boundaries
 WhenToUse: Use while replacing public-boundary `any` usage with typed contracts
 ---
+
 
 # Type Safety Boundary Hardening
 

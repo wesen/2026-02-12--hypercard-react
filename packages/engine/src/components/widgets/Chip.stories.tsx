@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { Chip } from './Chip';
 
 const meta = {
-  title: 'Widgets/Chip',
+  title: 'Engine/Widgets/Chip',
   component: Chip,
 } satisfies Meta<typeof Chip>;
 

@@ -33,3 +33,8 @@ Analyzed scaffolding vs domain split: 504 lines (28%) scaffolding, 1318 lines (7
 
 - /home/manuel/code/wesen/2026-02-12--hypercard-react/ttmp/2026/02/13/HC-019-DSL-CRM-APP--dsl-driven-crm-app-with-per-card-storybook-stories/design/02-scaffolding-vs-domain-what-an-llm-should-generate.md — Scaffolding vs domain analysis
 
+
+## 2026-02-17
+
+Bulk close through HC-034 per cleanup reset
+

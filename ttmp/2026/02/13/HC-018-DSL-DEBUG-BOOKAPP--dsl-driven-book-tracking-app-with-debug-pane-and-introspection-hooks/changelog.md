@@ -78,3 +78,8 @@ Step 7: split book-tracker-debug cards into per-card modules and extracted reusa
 - /home/manuel/code/wesen/2026-02-12--hypercard-react/packages/engine/src/components/shell/RuntimeDebugPane.stories.tsx — Storybook coverage for reusable debug pane
 - /home/manuel/code/wesen/2026-02-12--hypercard-react/packages/engine/src/components/shell/RuntimeDebugPane.tsx — Reusable debug pane component added
 
+
+## 2026-02-17
+
+Bulk close through HC-034 per cleanup reset
+

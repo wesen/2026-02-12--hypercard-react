@@ -1,11 +1,10 @@
-// Import these CSS files in your app entry to load the theme tokens.
-// The base.css is required; pick a theme override or write your own.
-
-// Base tokens (required):
-import './base.css';
-
-// Optional theme layers:
-// import './classic.css';
-// import './modern.css';
+// Import this module once in app entry to load default HyperCard desktop + widget CSS packs.
+// Optional theme layers can be added on top (classic / modern / desktop theme-macos1).
+import './desktop/tokens.css';
+import './desktop/shell.css';
+import './desktop/primitives.css';
+import './desktop/chat.css';
+import './desktop/syntax.css';
+import './desktop/animations.css';
 
 export { HyperCardTheme, type HyperCardThemeProps } from './HyperCardTheme';

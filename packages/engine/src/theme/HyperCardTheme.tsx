@@ -15,7 +15,7 @@ export interface HyperCardThemeProps {
  * HyperCard CSS. Wrap standalone widgets, stories, or embedded uses in
  * this component so theme tokens and part selectors activate.
  *
- * HyperCardShell uses this internally — you only need it when rendering
+ * DesktopShell uses this internally. Use this component directly when rendering
  * widgets outside the shell (Storybook, tests, embedding).
  */
 export function HyperCardTheme({ children, theme, unstyled, themeVars }: HyperCardThemeProps) {

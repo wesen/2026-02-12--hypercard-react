@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { ReportView } from './ReportView';
 
 const meta = {
-  title: 'Widgets/ReportView',
+  title: 'Engine/Widgets/ReportView',
   component: ReportView,
   args: {
     sections: [

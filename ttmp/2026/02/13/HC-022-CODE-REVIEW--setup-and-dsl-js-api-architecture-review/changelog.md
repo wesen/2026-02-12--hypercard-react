@@ -22,3 +22,8 @@
   - `HC-026-APP-CONSOLIDATION`
   - `HC-027-TYPE-SAFETY`
   - `HC-028-TEST-SAFETY-NET`
+
+## 2026-02-17
+
+Bulk close through HC-034 per cleanup reset
+

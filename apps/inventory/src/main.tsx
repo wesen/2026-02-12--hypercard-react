@@ -5,7 +5,7 @@ import { App } from './App';
 import { store } from './app/store';
 
 // Load engine base theme tokens
-import '../../../packages/engine/src/theme/base.css';
+import '@hypercard/engine/theme';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

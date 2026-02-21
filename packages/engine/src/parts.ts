@@ -54,6 +54,25 @@ export const PARTS = {
   // AI panel
   aiPanel: 'ai-panel',
   aiPanelHeader: 'ai-panel-header',
+  // Desktop windowing shell
+  windowingDesktopShell: 'windowing-desktop-shell',
+  windowingMenuBar: 'windowing-menu-bar',
+  windowingMenuButton: 'windowing-menu-button',
+  windowingMenuPanel: 'windowing-menu-panel',
+  windowingMenuItem: 'windowing-menu-item',
+  windowingMenuShortcut: 'windowing-menu-shortcut',
+  windowingMenuSeparator: 'windowing-menu-separator',
+  windowingIconLayer: 'windowing-icon-layer',
+  windowingIcon: 'windowing-icon',
+  windowingIconGlyph: 'windowing-icon-glyph',
+  windowingIconLabel: 'windowing-icon-label',
+  windowingWindowLayer: 'windowing-window-layer',
+  windowingWindow: 'windowing-window',
+  windowingWindowTitleBar: 'windowing-window-title-bar',
+  windowingCloseButton: 'windowing-close-button',
+  windowingWindowTitle: 'windowing-window-title',
+  windowingWindowBody: 'windowing-window-body',
+  windowingResizeHandle: 'windowing-resize-handle',
 } as const;
 
 export type PartName = (typeof PARTS)[keyof typeof PARTS];

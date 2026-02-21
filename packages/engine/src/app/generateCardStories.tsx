@@ -1,29 +1,33 @@
-import { type ComponentType, useEffect } from 'react';
-import { Provider, useDispatch, useSelector } from 'react-redux';
-import type { CardStackDefinition, SharedActionRegistry, SharedSelectorRegistry } from '../cards/types';
-import { HyperCardShell } from '../components/shell/HyperCardShell';
-import { StandardDebugPane } from '../debug/StandardDebugPane';
-import { useStandardDebugHooks } from '../debug/useStandardDebugHooks';
-import { navigate } from '../features/navigation/navigationSlice';
-import { type NavigationStateSlice, selectCurrentCardId } from '../features/navigation/selectors';
+import { type ComponentType, useRef } from 'react';
+import { Provider } from 'react-redux';
+import type { CardStackDefinition } from '../cards/types';
+import type { DesktopIconDef } from '../components/shell/windowing/types';
+import { DesktopShell } from '../components/shell/windowing/DesktopShell';
 
-export interface CardStoriesConfig<TRootState = unknown> {
+export interface CardStoriesConfig {
   /** The card stack definition */
-  stack: CardStackDefinition<TRootState>;
-  /** Shared selectors registry */
-  sharedSelectors: SharedSelectorRegistry<TRootState>;
-  /** Shared actions registry */
-  sharedActions: SharedActionRegistry<TRootState>;
+  stack: CardStackDefinition;
   /** Factory to create a fresh store (for story isolation). Use createAppStore().createStore. */
   createStore: () => any; // eslint-disable-line -- Store type varies per app; typed at call site
-  /** Navigation shortcut buttons */
-  navShortcuts: Array<{ card: string; icon: string }>;
-  /** Map of card → param value for detail/param cards in stories */
-  cardParams?: Record<string, string>;
-  /** Snapshot selector for the debug pane state inspector */
-  snapshotSelector?: (state: unknown) => Record<string, unknown>;
-  /** Debug pane title */
-  debugTitle?: string;
+  /** Optional desktop icon overrides for DesktopShell stories */
+  icons?: DesktopIconDef[];
+  /** Map of card → structured params value for detail/param cards in stories */
+  cardParams?: Record<string, unknown>;
+  /** Optional store seeding hook for deterministic story runtime state. */
+  seedStore?: (store: any) => void;
+}
+
+/** Story params are stored in window nav as strings; encode structured params deterministically. */
+export function toStoryParam(value: unknown): string | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  return JSON.stringify(value);
 }
 
 /**
@@ -51,81 +55,62 @@ export interface CardStoriesConfig<TRootState = unknown> {
  * export const ContactDetail: StoryObj<typeof meta> = createStory('contactDetail', 'c1');
  * ```
  */
-export function createStoryHelpers<TRootState = unknown>(config: CardStoriesConfig<TRootState>) {
-  const {
-    stack,
-    sharedSelectors,
-    sharedActions,
-    createStore,
-    navShortcuts,
-    cardParams = {},
-    snapshotSelector,
-    debugTitle,
-  } = config;
+export function createStoryHelpers(config: CardStoriesConfig) {
+  const { stack, createStore, icons, cardParams = {}, seedStore } = config;
 
-  // Store decorator for story isolation
-  function storeDecorator(Story: ComponentType) {
+  function StoryStoreProvider({ Story }: { Story: ComponentType }) {
+    const storeRef = useRef<any>(null);
+    const seededRef = useRef(false);
+    if (!storeRef.current) {
+      storeRef.current = createStore();
+    }
+    if (!seededRef.current) {
+      seedStore?.(storeRef.current);
+      seededRef.current = true;
+    }
+
     return (
-      <Provider store={createStore()}>
+      <Provider store={storeRef.current}>
         <Story />
       </Provider>
     );
   }
 
-  // Shell-at-card component for navigating to a specific card
-  function ShellAtCard({ card, param }: { card: string; param?: string }) {
-    const debugHooks = useStandardDebugHooks();
-    const dispatch = useDispatch();
-    const currentCard = useSelector((state: NavigationStateSlice) => selectCurrentCardId(state));
+  // Store decorator for story isolation
+  function storeDecorator(Story: ComponentType) {
+    return <StoryStoreProvider Story={Story} />;
+  }
 
-    useEffect(() => {
-      if (currentCard !== card) {
-        dispatch(navigate({ card, paramValue: param }));
-      }
-    }, [dispatch, card, param, currentCard]);
+  // Shell-at-card component for navigating to a specific card
+  function ShellAtCard({ card, params }: { card: string; params?: unknown }) {
+    const stackAtCard = {
+      ...stack,
+      homeCard: card,
+    };
 
     return (
-      <HyperCardShell
-        stack={stack}
-        sharedSelectors={sharedSelectors}
-        sharedActions={sharedActions}
-        debugHooks={debugHooks}
-        layoutMode="debugPane"
-        renderDebugPane={() => (
-          <StandardDebugPane title={debugTitle ?? `${stack.name} Debug`} snapshotSelector={snapshotSelector} />
-        )}
-        navShortcuts={navShortcuts}
+      <DesktopShell
+        stack={stackAtCard}
+        icons={icons}
+        homeParam={toStoryParam(params)}
       />
     );
   }
 
   // Full app component (for default story / meta.component)
   function FullApp() {
-    const debugHooks = useStandardDebugHooks();
-    return (
-      <HyperCardShell
-        stack={stack}
-        sharedSelectors={sharedSelectors}
-        sharedActions={sharedActions}
-        debugHooks={debugHooks}
-        layoutMode="debugPane"
-        renderDebugPane={() => (
-          <StandardDebugPane title={debugTitle ?? `${stack.name} Debug`} snapshotSelector={snapshotSelector} />
-        )}
-        navShortcuts={navShortcuts}
-      />
-    );
+    return <DesktopShell stack={stack} icons={icons} />;
   }
 
   /**
    * Creates a story object for a specific card.
    * @param card — card ID from the stack
-   * @param param — optional param value (for detail cards)
+   * @param params — optional structured params payload (encoded for nav storage)
    */
-  function createStory(card: string, param?: string) {
-    const resolvedParam = param ?? cardParams[card];
+  function createStory(card: string, params?: unknown) {
+    const resolvedParams = params ?? cardParams[card];
     return {
-      render: () => <ShellAtCard card={card} param={resolvedParam} />,
+      render: () => <ShellAtCard card={card} params={resolvedParams} />,
     };
   }
 

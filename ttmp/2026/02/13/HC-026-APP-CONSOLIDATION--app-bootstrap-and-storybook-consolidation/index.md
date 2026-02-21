@@ -1,7 +1,7 @@
 ---
 Title: App Bootstrap and Storybook Consolidation
 Ticket: HC-026-APP-CONSOLIDATION
-Status: active
+Status: complete
 Topics:
     - architecture
     - code-quality
@@ -26,10 +26,11 @@ RelatedFiles:
       Note: Duplication indicators for state-binding boilerplate
 ExternalSources: []
 Summary: Consolidates app/store/story wiring on engine helpers and reduces repeated card state-binding boilerplate.
-LastUpdated: 2026-02-13T16:52:00-05:00
+LastUpdated: 2026-02-17T07:40:35.997469667-05:00
 WhatFor: Reduce setup divergence and maintenance overhead across apps
 WhenToUse: Use during migration of manual app/story wiring to shared helper paths
 ---
+
 
 # App Bootstrap and Storybook Consolidation
 

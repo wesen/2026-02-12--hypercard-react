@@ -242,10 +242,10 @@ dispatch(resetNavigation());    // resets to homeCard without layout change
 
 ## 11. Theming
 
-Import base theme, then optionally a named theme:
+Import default theme packs, then optionally a named theme:
 
 ```ts
-import '@hypercard/engine/src/theme/base.css';
+import '@hypercard/engine/src/theme';
 import '@hypercard/engine/src/theme/modern.css';
 ```
 

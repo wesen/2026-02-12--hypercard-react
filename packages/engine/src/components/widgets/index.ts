@@ -1,5 +1,9 @@
 export { Btn, type BtnProps } from './Btn';
 export { ChatView, type ChatViewProps } from './ChatView';
+export {
+  ChatWindow,
+  type ChatWindowProps,
+} from './ChatWindow';
 export { Chip, type ChipProps } from './Chip';
 export { DataTable, type DataTableProps } from './DataTable';
 export { DetailView, type DetailViewProps } from './DetailView';

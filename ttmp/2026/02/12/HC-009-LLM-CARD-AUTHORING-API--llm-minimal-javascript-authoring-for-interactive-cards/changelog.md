@@ -25,3 +25,8 @@ Executed HC-009 DSL/JS API implementation plan end-to-end: added engine action/s
 - /home/manuel/code/wesen/2026-02-12--hypercard-react/packages/engine/src/api/actionRegistry.ts — Registry action wiring and payload mapping abstraction
 - /home/manuel/code/wesen/2026-02-12--hypercard-react/packages/engine/src/api/selectorRegistry.ts — Domain-data selector registry abstraction
 
+
+## 2026-02-17
+
+Bulk close through HC-034 per cleanup reset
+

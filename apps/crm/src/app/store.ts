@@ -1,4 +1,4 @@
-import { createAppStore, streamingChatReducer } from '@hypercard/engine';
+import { chatSessionReducer, createAppStore, timelineReducer } from '@hypercard/engine';
 import { activitiesReducer } from '../features/activities/activitiesSlice';
 import { companiesReducer } from '../features/companies/companiesSlice';
 import { contactsReducer } from '../features/contacts/contactsSlice';
@@ -9,7 +9,8 @@ export const { store, createStore: createCrmStore } = createAppStore({
   companies: companiesReducer,
   deals: dealsReducer,
   activities: activitiesReducer,
-  streamingChat: streamingChatReducer,
+  timeline: timelineReducer,
+  chatSession: chatSessionReducer,
 });
 
 export type RootState = ReturnType<typeof store.getState>;

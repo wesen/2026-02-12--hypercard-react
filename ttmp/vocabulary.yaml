@@ -11,6 +11,32 @@ topics:
       description: Architecture design and structure
     - slug: code-quality
       description: Code quality reviews and cleanup
+    - slug: dsl
+      description: Domain-specific language related work
+    - slug: frontend
+      description: Frontend runtime, UI, and browser integration work
+    - slug: inventory
+      description: Inventory domain and operations
+    - slug: sqlite
+      description: SQLite schema, persistence, and query work
+    - slug: debugging
+      description: Developer debugging tools and observability features
+    - slug: ux
+      description: User experience improvements and polish
+    - slug: storybook
+      description: Storybook stories and component previews
+    - slug: cleanup
+      description: Code cleanup and simplification work
+    - slug: css
+      description: Styling, theming, and CSS architecture
+    - slug: state-management
+      description: State architecture and management patterns
+    - slug: vite
+      description: Vite build tooling and configuration
+    - slug: windowing
+      description: Desktop and window manager architecture, behavior, and performance work
+    - slug: design-system
+      description: Token, parts, theming, and reusable UI styling system work
 docTypes:
     - slug: design-doc
       description: Structured rationale and architecture notes

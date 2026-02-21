@@ -13,6 +13,10 @@ function shouldRedact(key: string): boolean {
 }
 
 export function sanitizeDebugValue(value: unknown): unknown {
+  if (typeof value === 'function') {
+    return `<function:${value.name || 'anonymous'}>`;
+  }
+
   if (typeof value === 'string') {
     return value.length > MAX_STRING
       ? `${value.slice(0, MAX_STRING)}...<truncated:${value.length - MAX_STRING}>`

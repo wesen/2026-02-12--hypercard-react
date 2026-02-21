@@ -13,3 +13,8 @@ Implemented HyperCardTheme provider, integrated into shell + Storybook. All task
 
 - /home/manuel/code/wesen/2026-02-12--hypercard-react/packages/engine/src/theme/HyperCardTheme.tsx — New component
 
+
+## 2026-02-17
+
+Bulk close through HC-034 per cleanup reset
+

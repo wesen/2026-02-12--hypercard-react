@@ -1,7 +1,7 @@
 ---
 Title: LLM Prompting Spec and JS Sandbox for Card Generation
 Ticket: HC-015-PROMPTING-DOC
-Status: active
+Status: complete
 Topics:
     - react
     - rtk-toolkit
@@ -24,10 +24,11 @@ RelatedFiles:
       Note: Primary prompting specification for foolproof LLM DSL/JS generation
 ExternalSources: []
 Summary: Ticket index for HC-015 covering a foolproof LLM prompting protocol and a practical JS card sandbox plan for manual generated-code validation.
-LastUpdated: 2026-02-12T17:19:51-05:00
+LastUpdated: 2026-02-17T07:40:34.176277626-05:00
 WhatFor: Capture and operationalize robust LLM generation prompts plus sandbox-driven validation workflow for HyperCard DSL/JS.
 WhenToUse: Use as the entry point when preparing prompt templates, reviewing generation safety constraints, or planning sandbox implementation.
 ---
+
 
 
 # LLM Prompting Spec and JS Sandbox for Card Generation
