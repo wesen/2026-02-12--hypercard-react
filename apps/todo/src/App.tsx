@@ -1,18 +1,6 @@
-import { HyperCardShell } from '@hypercard/engine';
-import { todoSharedActions, todoSharedSelectors } from './app/cardRuntime';
+import { DesktopShell } from '@hypercard/engine/desktop-react';
 import { STACK } from './domain/stack';
 
 export function App() {
-  return (
-    <HyperCardShell
-      stack={STACK}
-      sharedSelectors={todoSharedSelectors}
-      sharedActions={todoSharedActions}
-      navShortcuts={[
-        { card: 'home', icon: '🏠' },
-        { card: 'browse', icon: '📋' },
-        { card: 'inProgress', icon: '🔥' },
-      ]}
-    />
-  );
+  return <DesktopShell stack={STACK} />;
 }

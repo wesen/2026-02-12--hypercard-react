@@ -17,7 +17,7 @@ export interface ChatSidebarProps {
 
 /**
  * A sidebar panel wrapping StreamingChatView with collapse/expand.
- * Designed for use in LayoutSplit's side slot.
+ * Designed for use as a desktop companion panel.
  */
 export function ChatSidebar({
   messages,

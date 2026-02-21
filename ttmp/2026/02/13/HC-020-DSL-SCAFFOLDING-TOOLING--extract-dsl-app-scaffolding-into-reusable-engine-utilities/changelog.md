@@ -15,3 +15,8 @@ Completed all tasks: extracted debug/store/stories/app utilities into engine, mi
 - /home/manuel/code/wesen/2026-02-12--hypercard-react/packages/engine/src/app/generateCardStories.tsx — createStoryHelpers for CSF-compatible per-card stories
 - /home/manuel/code/wesen/2026-02-12--hypercard-react/packages/engine/src/debug/StandardDebugPane.tsx — Generic debug pane with snapshotSelector
 
+
+## 2026-02-17
+
+Bulk close through HC-034 per cleanup reset
+

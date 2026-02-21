@@ -1,12 +1,30 @@
 import { configureStore, type Reducer } from '@reduxjs/toolkit';
-import { hypercardRuntimeReducer } from '../cards/runtimeStateSlice';
 import { debugReducer } from '../debug/debugSlice';
-import { navigationReducer } from '../features/navigation/navigationSlice';
+import { initDiagnostics } from '../diagnostics/diagnosticsStore';
+import { createReduxPerfMiddleware } from '../diagnostics/reduxPerfMiddleware';
+import { startFrameMonitor } from '../diagnostics/frameMonitor';
+import { pluginCardRuntimeReducer } from '../features/pluginCardRuntime/pluginCardRuntimeSlice';
 import { notificationsReducer } from '../features/notifications/notificationsSlice';
+import { windowingReducer } from '../desktop/core/state/windowingSlice';
+import { createArtifactProjectionMiddleware } from '../hypercard/artifacts/artifactProjectionMiddleware';
+import { hypercardArtifactsReducer } from '../hypercard/artifacts/artifactsSlice';
+
+/** Options for `createAppStore`. */
+export interface CreateAppStoreOptions {
+  /** Enable Redux throughput/FPS diagnostics middleware. Default: false. */
+  enableReduxDiagnostics?: boolean;
+  /** Rolling window duration in ms for diagnostics aggregation. Default: 5000. */
+  diagnosticsWindowMs?: number;
+}
 
 /**
  * Creates a Redux store factory pre-wired with all HyperCard engine reducers
- * (hypercardRuntime, navigation, notifications, debug).
+ * (pluginCardRuntime, windowing, notifications, debug).
+ *
+ * Optionally enables Redux throughput/FPS diagnostics when
+ * `options.enableReduxDiagnostics` is true (intended for dev-mode only).
+ * Diagnostics data is stored outside of Redux in a module-level store
+ * to avoid polluting the dispatch/render cycle it measures.
  *
  * Returns both a singleton store and a createStore() factory for Storybook.
  *
@@ -17,18 +35,56 @@ import { notificationsReducer } from '../features/notifications/notificationsSli
  *   companies: companiesReducer,
  * });
  * ```
+ *
+ * @example
+ * ```ts
+ * // With diagnostics enabled (dev mode):
+ * const { store, createStore } = createAppStore(
+ *   { inventory: inventoryReducer },
+ *   { enableReduxDiagnostics: import.meta.env.DEV },
+ * );
+ * ```
  */
-export function createAppStore<T extends Record<string, Reducer>>(domainReducers: T) {
+export function createAppStore<T extends Record<string, Reducer>>(
+  domainReducers: T,
+  options: CreateAppStoreOptions = {},
+) {
+  const enableDiag = options.enableReduxDiagnostics === true;
+
   const reducer = {
-    hypercardRuntime: hypercardRuntimeReducer,
-    navigation: navigationReducer,
+    pluginCardRuntime: pluginCardRuntimeReducer,
+    windowing: windowingReducer,
     notifications: notificationsReducer,
     debug: debugReducer,
+    hypercardArtifacts: hypercardArtifactsReducer,
     ...domainReducers,
   };
 
+  // Initialise module-level diagnostics storage when enabled
+  if (enableDiag) {
+    initDiagnostics({ windowMs: options.diagnosticsWindowMs ?? 5000 });
+  }
+
+  const perfMiddleware = enableDiag
+    ? createReduxPerfMiddleware({ windowMs: options.diagnosticsWindowMs ?? 5000 })
+    : null;
+
   function createStore() {
-    return configureStore({ reducer });
+    const artifactProjectionMiddleware = createArtifactProjectionMiddleware();
+    const store = configureStore({
+      reducer,
+      middleware: (getDefault) =>
+        perfMiddleware
+          ? getDefault().concat(artifactProjectionMiddleware.middleware, perfMiddleware)
+          : getDefault().concat(artifactProjectionMiddleware.middleware),
+    });
+
+    // Start frame monitor when diagnostics are enabled
+    if (enableDiag && typeof requestAnimationFrame !== 'undefined') {
+      startFrameMonitor();
+    }
+
+    return store;
   }
 
   const store = createStore();

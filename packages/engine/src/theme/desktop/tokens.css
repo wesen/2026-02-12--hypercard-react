@@ -1,0 +1,125 @@
+/* ─── HyperCard Engine ─ Base Tokens ──────────────────────────────────── */
+/* Usage: wrap your app in <div data-widget="hypercard"> to scope tokens    */
+
+[data-widget="hypercard"] {
+  /* ── Layout ── */
+  --hc-width: 100%;
+  --hc-max-width: 96vw;
+  --hc-height: 92vh;
+  --hc-font-family: "Geneva", "Chicago", "Monaco", monospace;
+  --hc-font-size: 11px;
+  --hc-border-radius: 0px;
+  --hc-ai-panel-width: 270px;
+  --hc-drawer-max-height: 200px;
+
+  /* ── Color palette ── */
+  --hc-color-bg: #fff;
+  --hc-color-fg: #000;
+  --hc-color-border: #000;
+  --hc-color-muted: #777;
+  --hc-color-accent: #000;
+  --hc-color-alt: #f5f4ed;
+  --hc-color-ai-bg: #f0efe8;
+  --hc-color-row-even: #eee;
+  --hc-color-row-odd: #fff;
+  --hc-color-row-hover: #e0e0e0;
+  --hc-color-error: #a00;
+  --hc-color-warning: #960;
+  --hc-color-success: #060;
+  --hc-color-link: #006;
+  --hc-color-highlight: #ffffcc;
+  --hc-color-tab-bg: #ddd;
+  --hc-color-tab-inactive: #ccc;
+  --hc-color-desktop-bg: #bfc8d8;
+  --hc-color-desktop-grid: rgba(255, 255, 255, 0.25);
+
+  /* ── Button ── */
+  --hc-btn-bg: #fff;
+  --hc-btn-fg: #000;
+  --hc-btn-border: 2px solid #000;
+  --hc-btn-padding: 3px 10px;
+  --hc-btn-shadow: 1px 1px 0 #000;
+  --hc-btn-hover-bg: #f0f0f0;
+  --hc-btn-active-bg: #000;
+  --hc-btn-active-fg: #fff;
+  --hc-btn-primary-bg: #000;
+  --hc-btn-primary-fg: #fff;
+  --hc-btn-danger-border: 2px solid #a00;
+  --hc-btn-danger-fg: #a00;
+  --hc-btn-danger-bg: #fff;
+
+  /* ── Chip ── */
+  --hc-chip-bg: #000;
+  --hc-chip-fg: #fff;
+  --hc-chip-border: none;
+  --hc-chip-padding: 2px 8px;
+
+  /* ── Fields ── */
+  --hc-field-bg: #fff;
+  --hc-field-border: 2px solid #000;
+  --hc-field-padding: 3px 6px;
+  --hc-field-font-size: 12px;
+
+  /* ── Toast ── */
+  --hc-toast-bg: #000;
+  --hc-toast-fg: #fff;
+  --hc-toast-shadow: 2px 2px 0 #000;
+
+  /* ── Windowing shell ── */
+  --hc-desktop-menubar-height: 28px;
+  --hc-desktop-menubar-z: 1000;
+  --hc-window-shadow: 3px 3px 0 #000;
+  --hc-window-border-radius: 3px;
+  --hc-window-title-bg: #fff;
+  --hc-window-title-focused-bg: #fff;
+  --hc-window-title-stripe-fg: var(--hc-color-fg);
+  --hc-window-title-stripe-bg: var(--hc-color-bg);
+  --hc-window-body-bg: #fff;
+  --hc-window-body-padding: 0;
+  --hc-menu-hover-bg: var(--hc-color-fg);
+  --hc-menu-hover-fg: var(--hc-color-bg);
+  --hc-icon-selected-bg: var(--hc-color-fg);
+  --hc-icon-selected-fg: var(--hc-color-bg);
+
+  /* ── Apply base ── */
+  font-family: var(--hc-font-family);
+  font-size: var(--hc-font-size);
+  color: var(--hc-color-fg);
+  background: var(--hc-color-bg);
+  width: var(--hc-width);
+  max-width: var(--hc-max-width);
+  height: var(--hc-height);
+  margin: 8px auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Responsive breakpoints for desktop shell sizing */
+@media (min-width: 1200px) {
+  [data-widget="hypercard"] {
+    --hc-max-width: 1140px;
+    --hc-height: 94vh;
+  }
+}
+@media (min-width: 1600px) {
+  [data-widget="hypercard"] {
+    --hc-max-width: 1480px;
+    --hc-height: 95vh;
+  }
+}
+@media (min-width: 1920px) {
+  [data-widget="hypercard"] {
+    --hc-max-width: 1800px;
+    --hc-height: 96vh;
+  }
+}
+@media (max-width: 768px) {
+  [data-widget="hypercard"] {
+    --hc-max-width: 100%;
+    --hc-height: 100vh;
+    margin: 0;
+  }
+}
+

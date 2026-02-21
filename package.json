@@ -8,11 +8,13 @@
   "scripts": {
     "dev": "npm run dev -w apps/inventory",
     "build": "npm run build -w packages/engine && npm run build -w apps/inventory && npm run build -w apps/todo && npm run build -w apps/crm && npm run build -w apps/book-tracker-debug",
-    "storybook": "npx storybook dev -p 6006 --config-dir apps/inventory/.storybook",
+    "storybook": "npm run storybook -w apps/inventory",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "typecheck": "tsc --build",
-    "test": "npm run test -w packages/engine"
+    "test": "npm run storybook:check && npm run test -w packages/engine",
+    "build-storybook": "npm run build-storybook -w apps/inventory",
+    "storybook:check": "node scripts/storybook/check-taxonomy.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.15",

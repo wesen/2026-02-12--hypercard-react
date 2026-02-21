@@ -10,3 +10,4 @@ coverage/
 storybook-static/
 *.tsbuildinfo
 .idea/
+pnpm-lock.yaml

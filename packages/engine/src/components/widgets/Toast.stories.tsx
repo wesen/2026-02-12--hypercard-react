@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { Toast } from './Toast';
 
 const meta = {
-  title: 'Widgets/Toast',
+  title: 'Engine/Widgets/Toast',
   component: Toast,
   args: { message: 'Item saved ✅', onDone: () => {} },
 } satisfies Meta<typeof Toast>;

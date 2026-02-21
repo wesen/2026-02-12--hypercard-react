@@ -6,35 +6,35 @@
 - [ ] [Phase 0] Capture baseline shell behavior screenshots for inventory/todo/crm/book-tracker apps.
 - [ ] [Phase 0] Capture baseline test status (npm run test, typecheck, lint) and store outputs in ticket notes.
 - [ ] [Phase 0] Finalize explicit legacy deletion inventory (files, exports, CSS parts).
-- [ ] [Phase 1] Create windowing state module skeleton in packages/engine/src/features/windowing/.
-- [ ] [Phase 1] Implement WindowInstance + desktop/session state types.
-- [ ] [Phase 1] Implement openWindow reducer with dedupe policy + deterministic window IDs.
-- [ ] [Phase 1] Implement focusWindow reducer with monotonic zCounter updates.
-- [ ] [Phase 1] Implement closeWindow reducer with deterministic fallback focus behavior.
-- [ ] [Phase 1] Implement moveWindow reducer with viewport clamp policy.
-- [ ] [Phase 1] Implement resizeWindow reducer with min width/height constraints.
-- [ ] [Phase 1] Implement desktop state reducers (activeMenuId, selectedIconId).
-- [ ] [Phase 1] Implement per-session nav reducers (sessionNavGo, sessionNavBack, sessionNavHome).
-- [ ] [Phase 1] Add selectors for ordered windows, focused window, active menu, selected icon, session nav.
-- [ ] [Phase 1] Add unit tests for all windowing reducers and selector invariants.
-- [ ] [Phase 2] Build DesktopMenuBar component with typed menu sections and command IDs.
-- [ ] [Phase 2] Build DesktopIconLayer component with single-select + double-open + keyboard open behavior.
-- [ ] [Phase 2] Build WindowLayer component rendering windows in deterministic z order.
-- [ ] [Phase 2] Build WindowSurface + WindowTitleBar + WindowResizeHandle components.
-- [ ] [Phase 2] Implement pointer interaction controller (drag/resize) with listener cleanup guarantees.
+- [x] [Phase 1] Create windowing state module skeleton in packages/engine/src/features/windowing/.
+- [x] [Phase 1] Implement WindowInstance + desktop/session state types.
+- [x] [Phase 1] Implement openWindow reducer with dedupe policy + deterministic window IDs.
+- [x] [Phase 1] Implement focusWindow reducer with monotonic zCounter updates.
+- [x] [Phase 1] Implement closeWindow reducer with deterministic fallback focus behavior.
+- [x] [Phase 1] Implement moveWindow reducer with viewport clamp policy.
+- [x] [Phase 1] Implement resizeWindow reducer with min width/height constraints.
+- [x] [Phase 1] Implement desktop state reducers (activeMenuId, selectedIconId).
+- [x] [Phase 1] Implement per-session nav reducers (sessionNavGo, sessionNavBack, sessionNavHome).
+- [x] [Phase 1] Add selectors for ordered windows, focused window, active menu, selected icon, session nav.
+- [x] [Phase 1] Add unit tests for all windowing reducers and selector invariants.
+- [x] [Phase 2] Build DesktopMenuBar component with typed menu sections and command IDs.
+- [x] [Phase 2] Build DesktopIconLayer component with single-select + double-open + keyboard open behavior.
+- [x] [Phase 2] Build WindowLayer component rendering windows in deterministic z order.
+- [x] [Phase 2] Build WindowSurface + WindowTitleBar + WindowResizeHandle components.
+- [x] [Phase 2] Implement pointer interaction controller (drag/resize) with listener cleanup guarantees.
 - [ ] [Phase 2] Add accessibility roles and keyboard interactions for menubar/menu/menuitem/icon/window.
-- [ ] [Phase 2] Add Storybook stories for desktop primitives (idle, 2-window overlap, dense window set).
-- [ ] [Phase 3] Rewrite HyperCardShell.tsx to orchestrate DesktopMenuBar, DesktopIconLayer, WindowLayer.
-- [ ] [Phase 3] Remove legacy layoutMode branching and split/drawer/cardChat shell logic.
-- [ ] [Phase 3] Replace navShortcuts/top nav model with desktop menu/icon launch model.
-- [ ] [Phase 3] Add command router for menu/icon/window command dispatch.
-- [ ] [Phase 4] Implement CardSessionHost for per-window card rendering.
-- [ ] [Phase 4] Implement WindowContentHost for card/app/dialog content resolution.
-- [ ] [Phase 4] Introduce session-aware runtime card key derivation (cardId::cardSessionId).
-- [ ] [Phase 4] Update runtime context creation to route nav.go/nav.back by target window session.
-- [ ] [Phase 4] Update runtime debug metadata to include window/session identifiers.
+- [x] [Phase 2] Add Storybook stories for desktop primitives (idle, 2-window overlap, dense window set).
+- [x] [Phase 3] Rewrite HyperCardShell.tsx to orchestrate DesktopMenuBar, DesktopIconLayer, WindowLayer.
+- [x] [Phase 3] Remove legacy layoutMode branching and split/drawer/cardChat shell logic.
+- [x] [Phase 3] Replace navShortcuts/top nav model with desktop menu/icon launch model.
+- [x] [Phase 3] Add command router for menu/icon/window command dispatch.
+- [x] [Phase 4] Implement CardSessionHost for per-window card rendering.
+- [x] [Phase 4] Implement WindowContentHost for card/app/dialog content resolution.
+- [x] [Phase 4] Introduce session-aware runtime card key derivation (cardId::cardSessionId).
+- [x] [Phase 4] Update runtime context creation to route nav.go/nav.back by target window session.
+- [x] [Phase 4] Update runtime debug metadata to include window/session identifiers.
 - [ ] [Phase 4] Add integration tests for duplicate same-card windows with isolated local state.
-- [ ] [Phase 5] Update apps/inventory/src/App.tsx to new desktop shell configuration.
+- [x] [Phase 5] Update apps/inventory/src/App.tsx to new desktop shell configuration.
 - [ ] [Phase 5] Update apps/todo/src/App.tsx to new desktop shell configuration.
 - [ ] [Phase 5] Update apps/crm/src/App.tsx to new desktop shell configuration.
 - [ ] [Phase 5] Update apps/book-tracker-debug/src/App.tsx to new desktop shell configuration.
@@ -54,3 +54,17 @@
 - [ ] [Phase 7] Perform manual UX verification checklist (mouse + keyboard + accessibility).
 - [ ] [Gate] Verify no compatibility wrappers, no deprecated shell APIs, and no dead legacy files remain.
 - [ ] [Gate] Update HC-029 docs and changelog with final implementation outcomes and follow-up risks.
+- [x] [CSS-T1] Add new CSS tokens to base.css (--hc-window-border-radius, --hc-window-title-stripe-fg/bg, --hc-menu-hover-bg/fg, --hc-icon-selected-bg/fg, --hc-desktop-menubar-z)
+- [x] [CSS-T1] Title bar stripes via ::before/::after pseudo-elements on focused title bar
+- [x] [CSS-T1] Menu item hover inversion (black bg / white text) and menu button open-state inversion
+- [x] [CSS-T1] Icon selection inversion (black bg, glyph filter, label color swap)
+- [x] [CSS-T1] Window frame border-radius (3px) and overflow:hidden
+- [x] [CSS-T1] Remove default 10px padding from windowing-window-body (cards manage own padding)
+- [x] [CSS-T2] Add windowing-desktop-shell part to parts.ts and root CSS rule
+- [x] [CSS-T2] Add menu separator type to types.ts and render in DesktopMenuBar
+- [x] [CSS-T2] Add dialog window variant (isDialog/isResizable on DesktopWindowDef, data-variant=dialog CSS)
+- [x] [CSS-T2] Increase resize handle to 16x16
+- [x] [CSS-T3] Add window open animation keyframe (hc-window-open, 120ms scale)
+- [x] [CSS-T3] Add webkit scrollbar styling approximation for windowing-window-body
+- [x] [CSS-T3] Add keyboard focus ring for windowing-window (:focus-visible)
+- [x] [CSS-T3] Update Storybook stories to verify all CSS improvements visually
