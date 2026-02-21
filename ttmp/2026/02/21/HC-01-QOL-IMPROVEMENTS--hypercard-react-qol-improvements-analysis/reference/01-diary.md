@@ -455,3 +455,77 @@ The Issue 1 implementation was completed with a focused code commit and targeted
 - Threshold currently uses `AUTO_SCROLL_THRESHOLD_PX = 32`.
 - Follow mode is only auto-disabled when currently active and log scroll position moves away from bottom.
 - Follow mode remains explicitly toggleable via existing toolbar button.
+
+## Step 6: Implement Issue 2 (copy payload from event viewer)
+
+I implemented payload copy in the event viewer’s expanded payload section, including user feedback and a clipboard fallback path. This keeps the debug workflow fast when developers need to move raw event payloads into bug reports, tests, or notes.
+
+The implementation was committed as a focused code slice with targeted tests for clipboard behavior and no regressions in existing debug tests.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 5)
+
+**Assistant interpretation:** Continue the one-by-one implementation loop after Issue 1 by delivering the next high-value event-viewer feature with tests and commit discipline.
+
+**Inferred user intent:** Maintain steady, traceable progress across issues while preserving quality checks and diary detail.
+
+**Commit (code):** `2a292b9` — "feat(event-viewer): add payload copy with clipboard fallback"
+
+### What I did
+
+- Added payload copy action in expanded entries:
+  - `packages/engine/src/chat/debug/EventViewerWindow.tsx`
+  - Added `Copy Payload` control, `Copied`/`Copy failed` feedback, and feedback timeout cleanup.
+- Added shared clipboard helper:
+  - `packages/engine/src/chat/debug/clipboard.ts`
+  - Uses `navigator.clipboard.writeText` when available.
+  - Falls back to `document.execCommand('copy')` via hidden textarea when needed.
+- Added tests:
+  - `packages/engine/src/chat/debug/clipboard.test.ts`
+  - Covers modern clipboard path, fallback path, and unavailable-clipboard failure.
+- Ran targeted tests:
+  - `npm run test -w packages/engine -- src/chat/debug/clipboard.test.ts src/chat/debug/EventViewerWindow.test.ts src/chat/debug/eventBus.test.ts`
+
+### Why
+
+- Payload copy is a frequent developer workflow in event-debugging windows and should be one click.
+- A fallback path avoids browser-API availability differences blocking this flow.
+
+### What worked
+
+- All targeted tests passed.
+- Existing event bus and Issue 1 tests remained green.
+- The change stayed isolated to debug event-viewer subsystem.
+
+### What didn't work
+
+- No blocking failures in this step.
+
+### What I learned
+
+- Keeping clipboard logic in a dedicated helper file made testing straightforward in non-DOM test environment via explicit global stubs.
+
+### What was tricky to build
+
+- The tricky part was preserving node-environment testability while adding browser clipboard behavior, handled by separating logic and using explicit `navigator`/`document` guards.
+
+### What warrants a second pair of eyes
+
+- Confirm whether we also want a separate `Copy JSON` action now, or keep YAML-only until there is concrete demand.
+
+### What should be done in the future
+
+- If needed, add a second copy button for canonical JSON output and extend tests accordingly.
+
+### Code review instructions
+
+- Review payload action UI and feedback in `packages/engine/src/chat/debug/EventViewerWindow.tsx`.
+- Review clipboard compatibility behavior in `packages/engine/src/chat/debug/clipboard.ts`.
+- Re-run targeted tests with:
+  - `npm run test -w packages/engine -- src/chat/debug/clipboard.test.ts src/chat/debug/EventViewerWindow.test.ts src/chat/debug/eventBus.test.ts`
+
+### Technical details
+
+- Copy feedback states are stored per entry ID and auto-cleared after ~1.4s.
+- Primary copy format is YAML payload text already rendered in the expanded pane.

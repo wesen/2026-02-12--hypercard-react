@@ -44,22 +44,22 @@
 ### Docs and Commit
 
 - [x] Update design/doc notes if behavior deviates from plan
-- [ ] Append detailed diary step for Issue 1
+- [x] Append detailed diary step for Issue 1
 - [x] Commit Issue 1 implementation
 
 ## Issue 2: Copy Event Payload from Event Viewer
 
 ### Implementation
 
-- [ ] Add copy control(s) in expanded event payload area
-- [ ] Support copy of YAML payload (primary)
+- [x] Add copy control(s) in expanded event payload area
+- [x] Support copy of YAML payload (primary)
 - [ ] Optional: support copy of JSON payload (secondary)
-- [ ] Add success/error feedback state in UI
-- [ ] Add clipboard fallback path if browser API unavailable
+- [x] Add success/error feedback state in UI
+- [x] Add clipboard fallback path if browser API unavailable
 
 ### Tests
 
-- [ ] Add tests for clipboard helper behavior
+- [x] Add tests for clipboard helper behavior
 - [ ] Add tests for copied payload formatting (YAML/JSON)
 
 ### Validation
@@ -69,7 +69,7 @@
 
 ### Docs and Commit
 
-- [ ] Append detailed diary step for Issue 2
+- [x] Append detailed diary step for Issue 2
 - [ ] Check off Issue 2 tasks and commit
 
 ## Issue 3: Token Display Semantics (Header Totals + Footer Last Message)
