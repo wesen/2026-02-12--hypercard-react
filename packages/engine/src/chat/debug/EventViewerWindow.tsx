@@ -5,6 +5,7 @@ import { SyntaxHighlight } from './SyntaxHighlight';
 import { toYaml } from './yamlFormat';
 
 const MAX_ENTRIES = 500;
+const AUTO_SCROLL_THRESHOLD_PX = 32;
 const ALL_FAMILIES = ['llm', 'tool', 'hypercard', 'timeline', 'ws', 'other'] as const;
 type Family = (typeof ALL_FAMILIES)[number];
 
@@ -30,6 +31,23 @@ export interface EventViewerWindowProps {
   conversationId: string;
   /** Optional initial entries for storybook/testing */
   initialEntries?: EventLogEntry[];
+}
+
+export interface AutoScrollMetrics {
+  scrollTop: number;
+  clientHeight: number;
+  scrollHeight: number;
+  thresholdPx?: number;
+}
+
+export function isNearBottom({
+  scrollTop,
+  clientHeight,
+  scrollHeight,
+  thresholdPx = AUTO_SCROLL_THRESHOLD_PX,
+}: AutoScrollMetrics): boolean {
+  const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
+  return distanceFromBottom <= thresholdPx;
 }
 
 export function EventViewerWindow({ conversationId, initialEntries }: EventViewerWindowProps) {
@@ -93,6 +111,15 @@ export function EventViewerWindow({ conversationId, initialEntries }: EventViewe
     setExpandedIds(new Set());
   }, []);
 
+  const handleLogScroll = useCallback(() => {
+    if (!autoScroll || !logRef.current) {
+      return;
+    }
+    if (!isNearBottom(logRef.current)) {
+      setAutoScroll(false);
+    }
+  }, [autoScroll]);
+
   const togglePause = useCallback(() => setPaused((p) => !p), []);
   const toggleAutoScroll = useCallback(() => setAutoScroll((a) => !a), []);
 
@@ -140,6 +167,7 @@ export function EventViewerWindow({ conversationId, initialEntries }: EventViewe
       <div
         ref={logRef}
         data-part="event-viewer-log"
+        onScroll={handleLogScroll}
         style={{ flex: 1, overflow: 'auto', padding: '4px 0' }}
       >
         {visible.length === 0 && (
