@@ -138,3 +138,13 @@ Fixed Storybook startup regression: root shared .storybook config now has matchi
 - /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/package.json — Root Storybook dependency alignment
 - /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/ttmp/2026/02/21/HC-01-QOL-IMPROVEMENTS--hypercard-react-qol-improvements-analysis/reference/01-diary.md — Step 13 troubleshooting diary
 
+
+## 2026-02-21
+
+Event viewer controls clarified: replaced ambiguous pinned/free toggle with explicit Hold and Follow Stream actions so live tailing can be resumed intentionally (commit 3c64b69).
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/packages/engine/src/chat/debug/EventViewerWindow.tsx — Follow stream and hold controls
+- /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/ttmp/2026/02/21/HC-01-QOL-IMPROVEMENTS--hypercard-react-qol-improvements-analysis/reference/01-diary.md — Step 14 diary entry
+

@@ -22,7 +22,7 @@ RelatedFiles:
       Note: Primary analysis artifact documented in this diary
 ExternalSources: []
 Summary: Chronological investigation diary for HC-01-QOL-IMPROVEMENTS.
-LastUpdated: 2026-02-21T17:43:29-05:00
+LastUpdated: 2026-02-21T17:45:11-05:00
 WhatFor: Capture exact investigation actions, findings, failures, and delivery steps for future continuation/review.
 WhenToUse: Use while implementing or reviewing the HC-01-QOL-IMPROVEMENTS analysis and follow-up changes.
 ---
@@ -1077,3 +1077,78 @@ I fixed this by adding the Storybook packages to root `devDependencies`, then ve
 - Root-level dependency alignment fixed both:
   - addon resolution warnings
   - preview runtime import failure from virtual builder file.
+
+## Step 14: Add explicit Follow Stream control and clarify pinned behavior
+
+I implemented an explicit `Follow Stream` control in the event viewer so live tailing can be resumed directly after a user scrolls up or holds position. This addresses the ambiguity of the previous `Pinned/Free` label and makes the action intent clear.
+
+I kept the underlying auto-scroll mechanics unchanged and only improved the user-facing control model and wording.
+
+### Prompt Context
+
+**User prompt (verbatim):** "follow stream add button in the event viewer, so we can resume live tailing . what's the pinned thing for?"
+
+**Assistant interpretation:** Add an explicit resume-live-tail button in the event viewer and explain what the old pinned state represented.
+
+**Inferred user intent:** Make event viewer tailing controls obvious and reduce confusion around current scroll-follow terminology.
+
+**Commit (code):** `3c64b69` — "feat(event-viewer): add explicit follow stream control"
+
+### What I did
+
+- Updated toolbar controls in `packages/engine/src/chat/debug/EventViewerWindow.tsx`:
+  - Replaced ambiguous `📌 Pinned / 📌 Free` toggle text.
+  - Added explicit `▶ Follow Stream` action when auto-scroll is off.
+  - Added explicit `⏸ Hold` action when auto-scroll is on.
+  - Added button titles explaining intent.
+- Kept auto-disable-on-scroll behavior unchanged:
+  - scrolling away from bottom still disables follow mode.
+- Ran targeted tests:
+  - `npm run test -w packages/engine -- src/chat/debug/EventViewerWindow.test.ts src/chat/debug/eventBus.test.ts src/chat/debug/clipboard.test.ts`
+  - Result: all passing.
+
+### Why
+
+- The old pin label encoded state but not user intent.
+- `Follow Stream` makes the primary recovery action obvious after manual scroll inspection.
+
+### What worked
+
+- Existing test suite for event viewer debug paths stayed green.
+- Behavior now matches expected terminal/live-tail mental model.
+
+### What didn't work
+
+- File-scoped biome check reports pre-existing lint debt in this file (for example missing explicit `type="button"` in older buttons and existing formatting/style rules), not introduced by this change.
+- Resolution:
+  - Left broader lint cleanup out-of-scope for this focused UX patch.
+
+### What I learned
+
+- For streaming UIs, state labels (`Pinned`) are weaker than action labels (`Follow Stream`) for usability.
+
+### What was tricky to build
+
+- Needed to preserve previous behavior invariants while changing control semantics, so this stayed as a thin UI-layer update over the same `autoScroll` state.
+
+### What warrants a second pair of eyes
+
+- Confirm if you want to keep both `Hold` and scroll-up as ways to stop following, or rely only on scroll-up.
+
+### What should be done in the future
+
+- Optionally add a compact status chip (for example `LIVE`/`HOLD`) if operators need stronger at-a-glance stream state.
+
+### Code review instructions
+
+- Review control changes in `packages/engine/src/chat/debug/EventViewerWindow.tsx`.
+- Verify toolbar behavior manually:
+  - start following -> click `Hold` -> scroll/read history -> click `Follow Stream` -> view jumps to newest and resumes tailing.
+- Re-run the targeted tests listed above.
+
+### Technical details
+
+- New callbacks:
+  - `followStream()` sets `autoScroll=true` and scrolls to end anchor.
+  - `holdPosition()` sets `autoScroll=false`.
+- Previous `Pinned` concept corresponded to auto-scroll being enabled (viewport pinned to newest event).
