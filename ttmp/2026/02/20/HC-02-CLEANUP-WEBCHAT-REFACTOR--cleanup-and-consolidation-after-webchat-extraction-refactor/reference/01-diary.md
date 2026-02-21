@@ -1366,3 +1366,17 @@ Both commands passed.
 
 ### Follow-up
 - If we need totals to survive full page reload from historical snapshots, add snapshot-based token hydration (currently totals are accumulated from live SEM metadata during runtime).
+
+## 2026-02-21
+
+Follow-up review-fix pass for pending-response UX race:
+- Fixed send guard in `ChatWindow` so pending-first-response (`showPendingResponseSpinner`) now blocks submit just like streaming/submitting state.
+- Updated composer UI to reflect lock state (`Waiting…`, disabled input/button).
+- Extended pending spinner cleanup in `ChatConversationWindow` to clear when connection status transitions to `closed` (not only `error`) to prevent stuck spinner on disconnect.
+
+### Validation
+- `npm run typecheck -w packages/engine`
+- `npm run test -w packages/engine -- src/chat/sem/semRegistry.test.ts src/chat/ws/wsManager.test.ts src/chat/runtime/registerChatModules.test.ts src/chat/state/chatSessionSlice.test.ts src/chat/state/selectors.test.ts`
+
+### Commit
+- `a3ca107` — `fix(chat): block sends while awaiting first response and clear on close`

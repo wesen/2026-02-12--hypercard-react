@@ -157,3 +157,12 @@ Implemented F10: restored runtime chat stats by wiring SEM LLM metadata into `ch
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/chat/sem/semRegistry.test.ts — Metadata behavior regression coverage
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/chat/state/chatSessionSlice.test.ts — Usage accumulation tests
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/chat/state/selectors.test.ts — Token total selector tests
+
+## 2026-02-21
+
+Fixed two post-review pending-response UX defects: blocked sends during pre-first-frame pending phase, and cleared pending spinner when websocket closes before first inbound entity.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/widgets/ChatWindow.tsx — Pending state now gates send/input/button behavior
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/chat/components/ChatConversationWindow.tsx — Pending spinner cleared on `connectionStatus === closed`
