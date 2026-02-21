@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useLayoutEffect } fr
 import type { EventLogEntry } from './eventBus';
 import { subscribeConversationEvents } from './eventBus';
 import { SyntaxHighlight } from './SyntaxHighlight';
+import { copyTextToClipboard } from './clipboard';
 import { toYaml } from './yamlFormat';
 
 const MAX_ENTRIES = 500;
@@ -60,6 +61,7 @@ export function EventViewerWindow({ conversationId, initialEntries }: EventViewe
   const [paused, setPaused] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [copyFeedbackById, setCopyFeedbackById] = useState<Record<string, 'copied' | 'error'>>({});
   const logRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const pausedRef = useRef(paused);
@@ -122,6 +124,28 @@ export function EventViewerWindow({ conversationId, initialEntries }: EventViewe
 
   const togglePause = useCallback(() => setPaused((p) => !p), []);
   const toggleAutoScroll = useCallback(() => setAutoScroll((a) => !a), []);
+  const copyPayload = useCallback((entryId: string, payloadText: string) => {
+    copyTextToClipboard(payloadText)
+      .then(() => {
+        setCopyFeedbackById((prev) => ({ ...prev, [entryId]: 'copied' }));
+      })
+      .catch(() => {
+        setCopyFeedbackById((prev) => ({ ...prev, [entryId]: 'error' }));
+      })
+      .finally(() => {
+        setTimeout(() => {
+          setCopyFeedbackById((prev) => {
+            const current = prev[entryId];
+            if (!current) {
+              return prev;
+            }
+            const next = { ...prev };
+            delete next[entryId];
+            return next;
+          });
+        }, 1400);
+      });
+  }, []);
 
   return (
     <div data-part="event-viewer" style={{ display: 'flex', flexDirection: 'column', height: '100%', fontFamily: 'monospace', fontSize: '12px' }}>
@@ -177,7 +201,10 @@ export function EventViewerWindow({ conversationId, initialEntries }: EventViewe
               : `All ${entries.length} events are filtered out`}
           </div>
         )}
-        {visible.map((entry) => (
+        {visible.map((entry) => {
+          const payloadYaml = toYaml(entry.rawPayload as Record<string, unknown>);
+          const copyFeedback = copyFeedbackById[entry.id];
+          return (
           <div
             key={entry.id}
             data-part="event-viewer-entry"
@@ -218,8 +245,19 @@ export function EventViewerWindow({ conversationId, initialEntries }: EventViewe
             </div>
             {expandedIds.has(entry.id) && (
               <div style={{ margin: '0 8px 4px 86px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 6px' }}>
+                  <button
+                    type="button"
+                    onClick={() => copyPayload(entry.id, payloadYaml)}
+                    style={copyBtnStyle}
+                  >
+                    Copy Payload
+                  </button>
+                  {copyFeedback === 'copied' && <span style={copyFeedbackOkStyle}>Copied</span>}
+                  {copyFeedback === 'error' && <span style={copyFeedbackErrorStyle}>Copy failed</span>}
+                </div>
                 <SyntaxHighlight
-                  code={toYaml(entry.rawPayload as Record<string, unknown>)}
+                  code={payloadYaml}
                   language="yaml"
                   variant="dark"
                   style={{ fontSize: 11, maxHeight: 300, userSelect: 'text' }}
@@ -227,7 +265,8 @@ export function EventViewerWindow({ conversationId, initialEntries }: EventViewe
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
         <div ref={endRef} />
       </div>
     </div>
@@ -242,6 +281,26 @@ const controlBtnStyle: React.CSSProperties = {
   background: '#222',
   color: '#aaa',
   cursor: 'pointer',
+};
+
+const copyBtnStyle: React.CSSProperties = {
+  padding: '1px 7px',
+  fontSize: '10px',
+  borderRadius: '3px',
+  border: '1px solid #4b5563',
+  background: '#1f2937',
+  color: '#e5e7eb',
+  cursor: 'pointer',
+};
+
+const copyFeedbackOkStyle: React.CSSProperties = {
+  color: '#10b981',
+  fontSize: '10px',
+};
+
+const copyFeedbackErrorStyle: React.CSSProperties = {
+  color: '#ef4444',
+  fontSize: '10px',
 };
 
 function formatTimestamp(ts: number): string {
