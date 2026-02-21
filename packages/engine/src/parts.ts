@@ -73,6 +73,44 @@ export const PARTS = {
   windowingWindowTitle: 'windowing-window-title',
   windowingWindowBody: 'windowing-window-body',
   windowingResizeHandle: 'windowing-resize-handle',
+  // macOS-style form controls
+  checkbox: 'checkbox',
+  checkboxMark: 'checkbox-mark',
+  radioButton: 'radio-button',
+  radioButtonDot: 'radio-button-dot',
+  // ListBox
+  listBox: 'list-box',
+  listBoxItem: 'list-box-item',
+  // DropdownMenu
+  dropdownMenu: 'dropdown-menu',
+  dropdownMenuTrigger: 'dropdown-menu-trigger',
+  dropdownMenuPanel: 'dropdown-menu-panel',
+  dropdownMenuItem: 'dropdown-menu-item',
+  // ContextMenu
+  contextMenu: 'context-menu',
+  contextMenuItem: 'context-menu-item',
+  contextMenuSeparator: 'context-menu-separator',
+  // AlertDialog
+  alertDialog: 'alert-dialog',
+  alertDialogIcon: 'alert-dialog-icon',
+  alertDialogMessage: 'alert-dialog-message',
+  // ToolPalette
+  toolPalette: 'tool-palette',
+  toolPaletteItem: 'tool-palette-item',
+  // ProgressBar
+  progressBar: 'progress-bar',
+  progressBarFill: 'progress-bar-fill',
+  // TabControl
+  tabControl: 'tab-control',
+  // DisclosureTriangle
+  disclosureTriangle: 'disclosure-triangle',
+  disclosureTriangleArrow: 'disclosure-triangle-arrow',
+  disclosureTriangleContent: 'disclosure-triangle-content',
+  // HaloTarget
+  haloTarget: 'halo-target',
+  haloHandle: 'halo-handle',
+  haloLabel: 'halo-label',
+  haloBorder: 'halo-border',
 } as const;
 
 export type PartName = (typeof PARTS)[keyof typeof PARTS];

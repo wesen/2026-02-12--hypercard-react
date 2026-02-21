@@ -683,6 +683,33 @@ Before considering this phase complete:
 - Runtime card editor/debug windows open and operate from Inventory using engine-hosted components.
 - Engine and Inventory typecheck/build pass for touched packages.
 
+### 11.5 Execution status update (2026-02-17)
+
+Implementation has been executed as a hard cutover (commit `a7ed70f`):
+
+1. Added reusable engine subsystem at `packages/engine/src/hypercard-chat` with explicit module split:
+   - `artifacts` (slice/selectors/runtime/projection + sem field helpers)
+   - `widgets` (timeline + artifact panel widgets)
+   - `event-viewer` (event bus + viewer window)
+   - `runtime-card-tools` (editor launch + code editor + runtime card debug window)
+   - `windowAdapters` contract and factory helpers
+2. Exported subsystem from engine barrel:
+   - `packages/engine/src/hypercard-chat/index.ts`
+   - `packages/engine/src/index.ts`
+3. Cut Inventory to engine-owned implementation:
+   - `InventoryChatWindow` now imports moved logic/components from `@hypercard/engine`
+   - `App.tsx` now renders `EventViewerWindow` and `CodeEditorWindow` from engine
+   - `store.ts` now sources `artifactsReducer` from engine
+4. Kept Inventory-only glue where appropriate:
+   - `RuntimeCardDebugWindow` in Inventory reduced to a thin wrapper that passes stack metadata and editor-launch callback to engine `RuntimeCardDebugWindow`.
+5. Removed Inventory-owned duplicate implementations for moved modules (artifact runtime/slice/selectors, timeline projection, event bus/viewer, code editor launch/window, syntax/yaml utils).
+6. Updated Inventory tests/stories to import moved APIs from `@hypercard/engine`.
+
+Validation run after cutover:
+- `npm run typecheck` (pass)
+- `npm run test -w packages/engine` (pass)
+- `npm run build -w apps/inventory` (pass)
+
 ## References
 
 - Inventory chat system:

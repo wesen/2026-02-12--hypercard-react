@@ -65,6 +65,49 @@
   --hc-toast-fg: #fff;
   --hc-toast-shadow: 2px 2px 0 #000;
 
+  /* ── Patterns (dither / stripe) ── */
+  --hc-pattern-stripe: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3Crect width='2' height='2' fill='%23fff'/%3E%3Crect width='1' height='1' fill='%23000'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%23000'/%3E%3C/svg%3E");
+  --hc-pattern-desktop: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%23a8a8a8'/%3E%3Crect width='1' height='1' fill='%23fff'/%3E%3Crect x='2' y='2' width='1' height='1' fill='%23fff'/%3E%3C/svg%3E");
+
+  /* ── Checkbox / RadioButton ── */
+  --hc-check-size: 14px;
+  --hc-check-border: 2px solid var(--hc-color-border);
+  --hc-check-bg: var(--hc-color-bg);
+  --hc-check-mark-color: var(--hc-color-fg);
+
+  /* ── ListBox ── */
+  --hc-listbox-selected-bg: var(--hc-color-fg);
+  --hc-listbox-selected-fg: var(--hc-color-bg);
+
+  /* ── DropdownMenu ── */
+  --hc-dropdown-shadow: 1px 1px 0 var(--hc-color-border);
+  --hc-dropdown-panel-shadow: 2px 2px 0 var(--hc-color-border);
+
+  /* ── ContextMenu ── */
+  --hc-context-menu-shadow: 2px 2px 0 var(--hc-color-border);
+  --hc-context-menu-min-width: 170px;
+
+  /* ── AlertDialog ── */
+  --hc-alert-shadow: 3px 3px 0 var(--hc-color-border);
+  --hc-alert-border: 3px solid var(--hc-color-border);
+  --hc-alert-max-width: 300px;
+
+  /* ── ProgressBar ── */
+  --hc-progress-height: 16px;
+  --hc-progress-border: 2px solid var(--hc-color-border);
+
+  /* ── ToolPalette ── */
+  --hc-tool-size: 27px;
+  --hc-tool-columns: 2;
+
+  /* ── DisclosureTriangle ── */
+  --hc-disclosure-arrow-size: 10px;
+
+  /* ── HaloTarget ── */
+  --hc-halo-handle-size: 20px;
+  --hc-halo-border: 2px dashed #555;
+  --hc-halo-label-bg: #ff0;
+
   /* ── Windowing shell ── */
   --hc-desktop-menubar-height: 28px;
   --hc-desktop-menubar-z: 1000;

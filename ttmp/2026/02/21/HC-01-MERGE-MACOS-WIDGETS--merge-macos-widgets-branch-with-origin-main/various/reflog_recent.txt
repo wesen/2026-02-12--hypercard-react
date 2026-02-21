@@ -1,0 +1,11 @@
+9aa2906 HEAD@{2026-02-21 13:18:32 -0500} reset: moving to HEAD
+9aa2906 HEAD@{2026-02-21 13:17:47 -0500} rebase (abort): returning to refs/heads/task/add-more-macos-widgets
+c8485c2 HEAD@{2026-02-21 13:17:43 -0500} rebase (start): checkout origin/main
+9aa2906 HEAD@{2026-02-18 08:09:32 -0500} commit: HC-52: Diary + analysis docs + task tracking for macOS widget implementation
+9bafdaa HEAD@{2026-02-18 08:07:57 -0500} commit: HC-52: Phase 5 — macOS1 Showcase story + barrel exports for all new widgets
+911a852 HEAD@{2026-02-18 08:06:37 -0500} commit: HC-52: Phase 4 — ToolPalette, TabControl, HaloTarget + stories
+c93cd84 HEAD@{2026-02-18 08:05:19 -0500} commit: HC-52: Phase 3 — ListBox, DropdownMenu, ContextMenu, AlertDialog + stories
+ea92da3 HEAD@{2026-02-18 08:04:01 -0500} commit: HC-52: Phase 1-2 — Foundation (tokens, parts, CSS) + Checkbox, RadioButton, ProgressBar, DisclosureTriangle, Btn isDefault
+92e3a34 HEAD@{2026-02-18 07:32:40 -0500} reset: moving to task/hypercard-add-webchat
+9f01856 HEAD@{2026-02-18 07:32:25 -0500} reset: moving to HEAD
+9f01856 HEAD@{2026-02-18 07:32:25 -0500} 

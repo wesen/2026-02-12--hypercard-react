@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { toYaml } from './yamlFormat';
+import { toYaml } from '@hypercard/engine';
 
 describe('toYaml', () => {
   it('formats scalars', () => {

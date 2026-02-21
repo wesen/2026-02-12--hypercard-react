@@ -1,0 +1,194 @@
+On branch task/add-more-macos-widgets
+Your branch is up to date with 'origin/task/add-more-macos-widgets'.
+
+You have unmerged paths.
+  (fix conflicts and run "git commit")
+  (use "git merge --abort" to abort the merge)
+
+Changes to be committed:
+	modified:   apps/crm/src/app/store.ts
+	modified:   apps/crm/src/chat/crmChatResponses.ts
+	deleted:    apps/inventory/src/features/chat/RuntimeCardDebugWindow.tsx
+	deleted:    apps/inventory/src/features/chat/artifactsSlice.test.ts
+	deleted:    apps/inventory/src/features/chat/chatSlice.test.ts
+	deleted:    apps/inventory/src/features/chat/chatSlice.ts
+	deleted:    apps/inventory/src/features/chat/eventBus.test.ts
+	deleted:    apps/inventory/src/features/chat/selectors.ts
+	deleted:    apps/inventory/src/features/chat/stories/CodeEditorWindow.stories.tsx
+	deleted:    apps/inventory/src/features/chat/stories/ModelStats.stories.tsx
+	deleted:    apps/inventory/src/features/chat/webchatClient.ts
+	modified:   go-inventory-chat/internal/pinoweb/hypercard_events.go
+	modified:   package-lock.json
+	modified:   packages/engine/package.json
+	modified:   packages/engine/src/app/createAppStore.ts
+	deleted:    packages/engine/src/chat/chatApi.ts
+	deleted:    packages/engine/src/chat/chatSlice.ts
+	new file:   packages/engine/src/chat/components/ChatConversationWindow.tsx
+	new file:   packages/engine/src/chat/components/StatsFooter.tsx
+	renamed:    apps/inventory/src/features/chat/utils/yamlFormat.test.ts -> packages/engine/src/chat/debug/yamlFormat.test.ts
+	modified:   packages/engine/src/chat/index.ts
+	deleted:    packages/engine/src/chat/mocks/fakeStreamService.ts
+	new file:   packages/engine/src/chat/renderers/builtin/GenericRenderer.tsx
+	new file:   packages/engine/src/chat/renderers/builtin/LogRenderer.tsx
+	new file:   packages/engine/src/chat/renderers/builtin/MessageRenderer.tsx
+	new file:   packages/engine/src/chat/renderers/builtin/StatusRenderer.tsx
+	new file:   packages/engine/src/chat/renderers/builtin/ToolCallRenderer.tsx
+	new file:   packages/engine/src/chat/renderers/builtin/ToolResultRenderer.tsx
+	new file:   packages/engine/src/chat/renderers/builtin/index.ts
+	new file:   packages/engine/src/chat/renderers/rendererRegistry.ts
+	new file:   packages/engine/src/chat/renderers/types.ts
+	new file:   packages/engine/src/chat/runtime/conversationManager.ts
+	new file:   packages/engine/src/chat/runtime/http.ts
+	new file:   packages/engine/src/chat/runtime/moduleBootstrap.ts
+	new file:   packages/engine/src/chat/runtime/registerChatModules.test.ts
+	new file:   packages/engine/src/chat/runtime/registerChatModules.ts
+	new file:   packages/engine/src/chat/runtime/useConversation.ts
+	new file:   packages/engine/src/chat/sem/pb/proto/sem/base/agent_pb.ts
+	new file:   packages/engine/src/chat/sem/pb/proto/sem/base/debugger_pb.ts
+	new file:   packages/engine/src/chat/sem/pb/proto/sem/base/llm_pb.ts
+	new file:   packages/engine/src/chat/sem/pb/proto/sem/base/log_pb.ts
+	new file:   packages/engine/src/chat/sem/pb/proto/sem/base/metadata_pb.ts
+	new file:   packages/engine/src/chat/sem/pb/proto/sem/base/tool_pb.ts
+	new file:   packages/engine/src/chat/sem/pb/proto/sem/base/ws_pb.ts
+	new file:   packages/engine/src/chat/sem/pb/proto/sem/domain/team_analysis_pb.ts
+	new file:   packages/engine/src/chat/sem/pb/proto/sem/team/team_selection_pb.ts
+	new file:   packages/engine/src/chat/sem/pb/proto/sem/timeline/message_pb.ts
+	new file:   packages/engine/src/chat/sem/pb/proto/sem/timeline/status_pb.ts
+	new file:   packages/engine/src/chat/sem/pb/proto/sem/timeline/team_analysis_pb.ts
+	new file:   packages/engine/src/chat/sem/pb/proto/sem/timeline/tool_pb.ts
+	new file:   packages/engine/src/chat/sem/pb/proto/sem/timeline/transport_pb.ts
+	renamed:    apps/inventory/src/features/chat/semHelpers.ts -> packages/engine/src/chat/sem/semHelpers.ts
+	new file:   packages/engine/src/chat/sem/semRegistry.test.ts
+	new file:   packages/engine/src/chat/sem/semRegistry.ts
+	new file:   packages/engine/src/chat/sem/timelineMapper.test.ts
+	new file:   packages/engine/src/chat/sem/timelineMapper.ts
+	new file:   packages/engine/src/chat/sem/timelinePropsRegistry.ts
+	new file:   packages/engine/src/chat/state/chatSessionSlice.test.ts
+	new file:   packages/engine/src/chat/state/chatSessionSlice.ts
+	new file:   packages/engine/src/chat/state/selectors.test.ts
+	new file:   packages/engine/src/chat/state/selectors.ts
+	new file:   packages/engine/src/chat/state/suggestions.ts
+	new file:   packages/engine/src/chat/state/timelineSlice.test.ts
+	new file:   packages/engine/src/chat/state/timelineSlice.ts
+	deleted:    packages/engine/src/chat/useChatStream.ts
+	new file:   packages/engine/src/chat/utils/guards.ts
+	new file:   packages/engine/src/chat/utils/number.ts
+	new file:   packages/engine/src/chat/ws/wsManager.test.ts
+	new file:   packages/engine/src/chat/ws/wsManager.ts
+	deleted:    packages/engine/src/components/shell/windowing/ChatWindowDesktop.stories.tsx
+	modified:   packages/engine/src/components/shell/windowing/PluginCardSessionHost.tsx
+	modified:   packages/engine/src/components/shell/windowing/useDesktopShellController.tsx
+	new file:   packages/engine/src/components/widgets/ChatConversationWindow.stories.tsx
+	new file:   packages/engine/src/components/widgets/ChatTimelineRenderers.stories.tsx
+	modified:   packages/engine/src/components/widgets/ChatWindow.tsx
+	new file:   packages/engine/src/components/widgets/EventViewerWindow.stories.tsx
+	new file:   packages/engine/src/components/widgets/RuntimeCardDebugWindow.stories.tsx
+	modified:   packages/engine/src/components/widgets/index.ts
+	new file:   packages/engine/src/hypercard/artifacts/artifactProjectionMiddleware.test.ts
+	new file:   packages/engine/src/hypercard/artifacts/artifactProjectionMiddleware.ts
+	new file:   packages/engine/src/hypercard/artifacts/artifactRuntime.test.ts
+	new file:   packages/engine/src/hypercard/artifacts/artifactRuntime.ts
+	new file:   packages/engine/src/hypercard/index.ts
+	new file:   packages/engine/src/hypercard/timeline/hypercardCard.test.ts
+	new file:   packages/engine/src/hypercard/timeline/hypercardCard.tsx
+	new file:   packages/engine/src/hypercard/timeline/hypercardWidget.test.ts
+	new file:   packages/engine/src/hypercard/timeline/hypercardWidget.tsx
+	new file:   packages/engine/src/hypercard/timeline/registerHypercardTimeline.ts
+	modified:   packages/engine/src/plugin-runtime/runtimeCardRegistry.test.ts
+	modified:   packages/engine/src/plugin-runtime/runtimeCardRegistry.ts
+	new file:   ttmp/2026/02/20/HC-01-EXTRACT-WEBCHAT--extract-and-clean-up-webchat-from-hypercard-inventory-app/.meta/sources.yaml
+	new file:   ttmp/2026/02/20/HC-01-EXTRACT-WEBCHAT--extract-and-clean-up-webchat-from-hypercard-inventory-app/README.md
+	new file:   ttmp/2026/02/20/HC-01-EXTRACT-WEBCHAT--extract-and-clean-up-webchat-from-hypercard-inventory-app/changelog.md
+	new file:   ttmp/2026/02/20/HC-01-EXTRACT-WEBCHAT--extract-and-clean-up-webchat-from-hypercard-inventory-app/design-doc/01-implementation-plan-extract-webchat-to-engine.md
+	new file:   ttmp/2026/02/20/HC-01-EXTRACT-WEBCHAT--extract-and-clean-up-webchat-from-hypercard-inventory-app/design-doc/02-analysis-project-suggestions-as-timeline-entities.md
+	new file:   ttmp/2026/02/20/HC-01-EXTRACT-WEBCHAT--extract-and-clean-up-webchat-from-hypercard-inventory-app/design-doc/03-structured-runtime-error-state-for-chat.md
+	new file:   ttmp/2026/02/20/HC-01-EXTRACT-WEBCHAT--extract-and-clean-up-webchat-from-hypercard-inventory-app/design-doc/04-postmortem-webchat-extraction-hard-cutover.md
+	new file:   ttmp/2026/02/20/HC-01-EXTRACT-WEBCHAT--extract-and-clean-up-webchat-from-hypercard-inventory-app/index.md
+	new file:   ttmp/2026/02/20/HC-01-EXTRACT-WEBCHAT--extract-and-clean-up-webchat-from-hypercard-inventory-app/reference/01-diary.md
+	new file:   ttmp/2026/02/20/HC-01-EXTRACT-WEBCHAT--extract-and-clean-up-webchat-from-hypercard-inventory-app/reference/02-conversation-scoped-timeline-reducer-semantics-and-version-gating.md
+	new file:   ttmp/2026/02/20/HC-01-EXTRACT-WEBCHAT--extract-and-clean-up-webchat-from-hypercard-inventory-app/sources/local/chatgpt-pro-webchat-cleanup.md
+	new file:   ttmp/2026/02/20/HC-01-EXTRACT-WEBCHAT--extract-and-clean-up-webchat-from-hypercard-inventory-app/tasks.md
+	new file:   ttmp/2026/02/20/HC-01-EXTRACT-WEBCHAT--extract-and-clean-up-webchat-from-hypercard-inventory-app/various/img.png
+	new file:   ttmp/2026/02/20/HC-01-EXTRACT-WEBCHAT--extract-and-clean-up-webchat-from-hypercard-inventory-app/various/img_1.png
+	new file:   ttmp/2026/02/20/HC-01-EXTRACT-WEBCHAT--extract-and-clean-up-webchat-from-hypercard-inventory-app/various/notes.md
+	new file:   ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/README.md
+	new file:   ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/changelog.md
+	new file:   ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/design-doc/01-exhaustive-legacy-and-consolidation-assessment-after-hc-01.md
+	new file:   ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/design-doc/02-f4-suggestions-as-timeline-entities-and-starter-consumption.md
+	new file:   ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/design-doc/03-f8-artifact-runtime-cleanup-analysis-and-wiring-plan.md
+	new file:   ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/index.md
+	new file:   ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/reference/01-diary.md
+	new file:   ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/tasks.md
+	new file:   ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/various/01-hc01-touched-files-existing.txt
+	new file:   ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/various/02-hc01-touched-files-removed.txt
+	new file:   ttmp/2026/02/20/HC-51-BACKEND-TIMELINEV2-SERVER--port-hypercard-inventory-backend-to-timelinev2/README.md
+	new file:   ttmp/2026/02/20/HC-51-BACKEND-TIMELINEV2-SERVER--port-hypercard-inventory-backend-to-timelinev2/changelog.md
+	new file:   ttmp/2026/02/20/HC-51-BACKEND-TIMELINEV2-SERVER--port-hypercard-inventory-backend-to-timelinev2/design-doc/01-timelinev2-backend-port-plan.md
+	new file:   ttmp/2026/02/20/HC-51-BACKEND-TIMELINEV2-SERVER--port-hypercard-inventory-backend-to-timelinev2/design-doc/02-postmortem-timelinev2-backend-cutover-incident.md
+	new file:   ttmp/2026/02/20/HC-51-BACKEND-TIMELINEV2-SERVER--port-hypercard-inventory-backend-to-timelinev2/index.md
+	new file:   ttmp/2026/02/20/HC-51-BACKEND-TIMELINEV2-SERVER--port-hypercard-inventory-backend-to-timelinev2/reference/01-diary.md
+	new file:   ttmp/2026/02/20/HC-51-BACKEND-TIMELINEV2-SERVER--port-hypercard-inventory-backend-to-timelinev2/tasks.md
+	new file:   ttmp/2026/02/20/HC-52-CUSTOMKIND-KIND-CUTOVER--remove-customkind-remap-by-moving-to-first-class-hypercard-timeline-kinds/README.md
+	new file:   ttmp/2026/02/20/HC-52-CUSTOMKIND-KIND-CUTOVER--remove-customkind-remap-by-moving-to-first-class-hypercard-timeline-kinds/changelog.md
+	new file:   ttmp/2026/02/20/HC-52-CUSTOMKIND-KIND-CUTOVER--remove-customkind-remap-by-moving-to-first-class-hypercard-timeline-kinds/design-doc/01-customkind-decommission-plan-and-kind-cutover-analysis.md
+	new file:   ttmp/2026/02/20/HC-52-CUSTOMKIND-KIND-CUTOVER--remove-customkind-remap-by-moving-to-first-class-hypercard-timeline-kinds/index.md
+	new file:   ttmp/2026/02/20/HC-52-CUSTOMKIND-KIND-CUTOVER--remove-customkind-remap-by-moving-to-first-class-hypercard-timeline-kinds/playbooks/01-kind-cutover-validation-playbook.md
+	new file:   ttmp/2026/02/20/HC-52-CUSTOMKIND-KIND-CUTOVER--remove-customkind-remap-by-moving-to-first-class-hypercard-timeline-kinds/reference/01-diary.md
+	new file:   ttmp/2026/02/20/HC-52-CUSTOMKIND-KIND-CUTOVER--remove-customkind-remap-by-moving-to-first-class-hypercard-timeline-kinds/tasks.md
+
+Unmerged paths:
+  (use "git add/rm <file>..." as appropriate to mark resolution)
+	both modified:   apps/inventory/src/App.tsx
+	both modified:   apps/inventory/src/app/store.ts
+	both deleted:    apps/inventory/src/features/chat/CodeEditorWindow.tsx
+	both deleted:    apps/inventory/src/features/chat/EventViewerWindow.tsx
+	deleted by them: apps/inventory/src/features/chat/InventoryChatWindow.timeline.test.ts
+	deleted by them: apps/inventory/src/features/chat/InventoryChatWindow.tsx
+	deleted by them: apps/inventory/src/features/chat/artifactRuntime.test.ts
+	both deleted:    apps/inventory/src/features/chat/artifactsSelectors.ts
+	both deleted:    apps/inventory/src/features/chat/artifactsSlice.ts
+	both deleted:    apps/inventory/src/features/chat/eventBus.ts
+	deleted by them: apps/inventory/src/features/chat/stories/EventViewer.stories.tsx
+	deleted by them: apps/inventory/src/features/chat/stories/InventoryArtifactPanelWidgets.stories.tsx
+	deleted by them: apps/inventory/src/features/chat/stories/InventoryTimelineWidget.stories.tsx
+	deleted by them: apps/inventory/src/features/chat/stories/PerRoundTimeline.stories.tsx
+	deleted by them: apps/inventory/src/features/chat/stories/SyntaxHighlight.stories.tsx
+	both deleted:    apps/inventory/src/features/chat/utils/SyntaxHighlight.tsx
+	both deleted:    apps/inventory/src/features/chat/utils/yamlFormat.ts
+	added by them:   packages/engine/src/chat/debug/EventViewerWindow.tsx
+	added by them:   packages/engine/src/chat/debug/SyntaxHighlight.tsx
+	both modified:   packages/engine/src/chat/debug/eventBus.test.ts
+	added by them:   packages/engine/src/chat/debug/eventBus.ts
+	added by them:   packages/engine/src/chat/debug/yamlFormat.ts
+	deleted by them: packages/engine/src/components/widgets/ChatWindow.interaction.stories.tsx
+	deleted by them: packages/engine/src/components/widgets/ChatWindow.stories.tsx
+	deleted by them: packages/engine/src/components/widgets/ChatWindow.widgets.stories.tsx
+	both modified:   packages/engine/src/components/widgets/CodeEditorWindow.stories.tsx
+	deleted by them: packages/engine/src/hypercard-chat/artifacts/artifactRuntime.ts
+	added by us:     packages/engine/src/hypercard-chat/artifacts/artifactsSelectors.ts
+	added by us:     packages/engine/src/hypercard-chat/artifacts/artifactsSlice.ts
+	deleted by them: packages/engine/src/hypercard-chat/artifacts/timelineProjection.ts
+	added by us:     packages/engine/src/hypercard-chat/event-viewer/EventViewerWindow.tsx
+	added by us:     packages/engine/src/hypercard-chat/event-viewer/eventBus.ts
+	added by us:     packages/engine/src/hypercard-chat/runtime-card-tools/CodeEditorWindow.tsx
+	added by us:     packages/engine/src/hypercard-chat/utils/syntaxHighlight.tsx
+	added by us:     packages/engine/src/hypercard-chat/utils/yamlFormat.ts
+	deleted by them: packages/engine/src/hypercard-chat/widgets/ArtifactPanelWidgets.tsx
+	deleted by them: packages/engine/src/hypercard-chat/widgets/TimelineWidget.tsx
+	added by them:   packages/engine/src/hypercard/artifacts/artifactsSelectors.ts
+	both modified:   packages/engine/src/hypercard/artifacts/artifactsSlice.test.ts
+	added by them:   packages/engine/src/hypercard/artifacts/artifactsSlice.ts
+	both modified:   packages/engine/src/hypercard/debug/RuntimeCardDebugWindow.tsx
+	added by them:   packages/engine/src/hypercard/editor/CodeEditorWindow.tsx
+	deleted by us:   packages/engine/src/hypercard/editor/editorLaunch.ts
+	both modified:   packages/engine/src/index.ts
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   go-inventory-chat/go.mod
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	ttmp/2026/02/21/
+

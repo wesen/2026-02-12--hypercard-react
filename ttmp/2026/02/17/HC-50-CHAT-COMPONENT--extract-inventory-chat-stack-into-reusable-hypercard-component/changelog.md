@@ -34,3 +34,21 @@ Execution kickoff: updated HC-50 implementation plan for artifact/card/editor ha
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/17/HC-50-CHAT-COMPONENT--extract-inventory-chat-stack-into-reusable-hypercard-component/reference/01-diary.md — Added Step 5 implementation kickoff diary entry
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/17/HC-50-CHAT-COMPONENT--extract-inventory-chat-stack-into-reusable-hypercard-component/tasks.md — Added detailed execution task list for implementation
 
+
+## 2026-02-17
+
+Implemented hard cutover of artifact/timeline/event-viewer/runtime-card tooling into engine subsystem (commit a7ed70f), switched Inventory to engine imports, removed duplicated local chat tooling files, and passed typecheck/test/build validation gates.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/InventoryChatWindow.tsx — Cutover to engine artifact/event/widget APIs
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/apps/inventory/src/features/chat/RuntimeCardDebugWindow.tsx — Inventory stack wrapper around engine debug window
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/index.ts — Subsystem module export surface
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard-chat/windowAdapters.ts — Window adapter contract split
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/17/HC-50-CHAT-COMPONENT--extract-inventory-chat-stack-into-reusable-hypercard-component/reference/01-diary.md — Step 6 implementation diary
+
+
+## 2026-02-17
+
+Ticket closed
+

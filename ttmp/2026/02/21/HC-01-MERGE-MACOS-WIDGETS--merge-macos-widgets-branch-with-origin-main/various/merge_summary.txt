@@ -1,0 +1,9 @@
+root_dir=/home/manuel/workspaces/2026-02-18/add-more-macos-widgets/2026-02-12--hypercard-react
+left_branch=HEAD
+target_branch=origin/main
+left_sha=9aa290665f6407ca6ccba9990545c0686efcbdce
+target_sha=c8485c2b82ccac5aa009736003c8925ee8c51424
+merge_base_sha=b1e64e25ec8f4b428191dbf16462b46681f50224
+left_only_commits=10
+right_only_commits=75
+snapshot_utc=2026-02-21T18:23:59Z

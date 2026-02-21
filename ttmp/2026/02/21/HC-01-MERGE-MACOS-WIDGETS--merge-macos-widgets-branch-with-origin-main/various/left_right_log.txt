@@ -1,0 +1,89 @@
+>   c8485c2 (origin/main, task/extract-chat-from-inventory, main) Merge pull request #1 from wesen/task/extract-chat-from-inventory
+|\  
+| > 674b91b docs(hc-02): log pending-response UX follow-up fixes
+| > a3ca107 fix(chat): block sends while awaiting first response and clear on close
+| > 0bbc6a7 docs(hc-02): record F10 implementation in diary and changelog
+| > e6743fe docs(hc-02): check off F10 stats bar task
+| > 432549d feat(chat): restore model and token stats in footer/header
+| > 42fa00b docs(hc-02): add F10 chat runtime stats UI task
+| > 8983086 feat(chat): show pending dots until first inbound response
+| > baceee2 fix(chat): ignore empty message placeholders from timeline upsert
+| > 96b556c refactor(chat): gate llm message entities on non-empty content
+| > 0224d88 docs(hc-02,hc-52): record F8 completion and HC-52 hard cutover
+| > ed12be9 feat(hc-52): cut over timeline projection to first-class hypercard kinds
+| > 6f49bd8 refactor(hypercard): complete F8 artifact projection wiring and injection status flow
+| > cfba977 docs(hc-02): add deep F8 artifact runtime cleanup analysis and task slices
+| > e6d2fc8 docs(hc-02): record task 19 artifact-open fix and close task
+| > f926c49 fix(chat): restore artifact open for remapped timeline tool results
+| > 7791a1a docs(hc-52): add customKind decommission analysis and phased cutover plan
+| > 03a0c6d docs(hc-02): log artifact-open failure analysis and add fix task
+| > 88a7ffa docs(hc-02): record F5/F6 implementation and task closure
+| > 8b8d2b8 refactor(chat): complete F5/F6 bootstrap and module decoupling
+| > e9d3c9b docs(hc-02): record renderer debug mode task and closure
+| > 33748ac feat(chat): add renderer debug mode toggle and context
+| > 1eafb37 docs(hc-02): track header action restoration and close task
+| > 56360b4 fix(inventory): restore chat header event/debug actions
+| > b911f37 docs(hc-02): track and close icon double-click routing bug
+| > 6c33288 fix(desktop): route icon double-click commands through shell pipeline
+| > 0c50d78 docs(hc-02): record starter suggestions persistence hotfix
+| > 43f31aa fix(chat): consume starter suggestions on first send reliably
+| > 9e9aed4 docs(hc-02): record F4 execution and close task
+| > 634fd16 feat(chat): project suggestions as timeline artifacts
+| > ab5b5b7 docs(hc-02): add F4 suggestions timeline design
+| > 327c78b docs(hc-02): mark F3 done and record async send contract change
+| > 90621f0 fix(chat): make ChatWindow send async-aware with local error state
+| > 7084222 docs(hc-02): record F1/F2 execution and F9 cleanup in diary
+| > cbab202 refactor(hc-02): remove unused chatApi and fake stream service
+| > 756ec76 docs(hc-02): expand cleanup backlog with explicit F3-F9 tasks
+| > 634565a fix(hc-02): wire artifact actions and add event viewer launch path
+| > 18d79cd docs(ticket): add HC-02 exhaustive webchat refactor cleanup assessment
+| > 450436e docs(ticket): record remarkable upload for HC-51 postmortem
+| > 6d90933 docs(ticket): record remarkable upload for HC-01 postmortem
+| > 8732f44 docs(postmortem): add HC-01 and HC-51 technical postmortems
+| > 44f6cee docs(ticket): add HC-51 backend timelinev2 migration analysis and diary
+| > f833702 fix(backend): migrate hypercard timeline handlers to TimelineEntityV2
+| > 5037e9e docs(ticket): record verification unblocking and 8.5 closure
+| > bdb614d fix(crm): align chat store and response types with engine exports
+| > 606f58f docs(ticket): record phase-9 completion and architecture decision
+| > e9d8031 feat(engine): add structured chat errors and module bootstrap contract
+| > e663ce5 docs(ticket): capture phase-8 test and story migration progress
+| > 05dc318 chore(stories): replace legacy chatwindow story set
+| > bfdc46c test(engine): add chat session slice reducer coverage
+| > ff51a4d test(engine): migrate chat/hypercard utility tests from inventory
+| > 2c89ccd docs(ticket): record phase-7 hard cutover and cleanup
+| > df8ef49 refactor(inventory): hard-cut to engine chat and remove legacy chat feature
+| > 19361c2 docs(ticket): log phase-6 editor/runtime debug extraction
+| > d0e758d feat(engine): migrate hypercard runtime debug and editor windows
+| > 4c629a5 docs(ticket): mark phase-6 debug extraction progress
+| > e8fbc61 feat(engine): migrate chat debug viewer and syntax utilities
+| > e78e504 docs(ticket): add explicit legacy story cleanup task
+| > 7f07297 docs(ticket): add post-cleanup unification task and widget notes
+| > dc59150 docs(ticket): add structured error-state design and phase-9 tasks
+| > 1352d26 docs(ticket): add projector-meta fallback for suggestions
+| > 2682e62 docs(ticket): analyze suggestions as timeline entities
+| > 5e1e1dd docs(ticket): add reducer scoping and version-gating reference
+| > c72f96d docs(ticket): complete phase-5 tracking and global bootstrap diary
+| > fd931ff feat(engine): extract hypercard timeline module with global bootstrap
+| > f8c4cf2 docs(ticket): mark phase-4 complete and capture shell conversion
+| > 6e07ad1 feat(engine): convert ChatWindow to renderer timeline shell
+| > 40055d3 docs(ticket): mark phase-3 complete and log renderer migration
+| > 27758b7 feat(engine): add timeline renderer registry and builtin renderers
+| > 537601a docs(ticket): mark phase-2 complete and record runtime changes
+| > a788974 feat(engine): add websocket runtime and conversation manager
+| > 475b411 docs(ticket): mark phase-1 complete and log implementation
+| > a813f39 feat(engine): scaffold chat sem + conversation-scoped timeline state
+| > fba3860 docs(ticket): add HC-01 plan and phase-4 renderer-only direction
+| > e1dc75a :fire: Remove old chat slice
+| | < 9aa2906 (HEAD -> task/add-more-macos-widgets, origin/task/add-more-macos-widgets) HC-52: Diary + analysis docs + task tracking for macOS widget implementation
+| | < 9bafdaa HC-52: Phase 5 — macOS1 Showcase story + barrel exports for all new widgets
+| | < 911a852 HC-52: Phase 4 — ToolPalette, TabControl, HaloTarget + stories
+| | < c93cd84 HC-52: Phase 3 — ListBox, DropdownMenu, ContextMenu, AlertDialog + stories
+| | < ea92da3 HC-52: Phase 1-2 — Foundation (tokens, parts, CSS) + Checkbox, RadioButton, ProgressBar, DisclosureTriangle, Btn isDefault
+| | < 92e3a34 docs(HC-50): persist ticket close status update
+| | < 3a0ce65 fix(storybook): exclude ChatWindow helper exports from story registration
+| | < 764c651 fix(storybook): add ChatWindow component metadata to story modules
+| | < 86dfe88 docs(HC-50): record cutover execution, diary, and task completion
+| | < a7ed70f feat(HC-50): hard-cutover chat artifact tooling into engine subsystem
+| |/  
+| o b1e64e2 (origin/task/hypercard-add-webchat) Update project README with desktop framework, import map, contributions, and doc links
+o 9f01856 :art: Add windowing analysis

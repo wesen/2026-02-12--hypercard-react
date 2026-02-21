@@ -1,0 +1,15 @@
+apps/inventory/src/App.tsx
+apps/inventory/src/app/store.ts
+apps/inventory/src/features/chat/InventoryChatWindow.timeline.test.ts
+apps/inventory/src/features/chat/InventoryChatWindow.tsx
+apps/inventory/src/features/chat/artifactRuntime.test.ts
+apps/inventory/src/features/chat/stories/EventViewer.stories.tsx
+apps/inventory/src/features/chat/stories/InventoryArtifactPanelWidgets.stories.tsx
+apps/inventory/src/features/chat/stories/InventoryTimelineWidget.stories.tsx
+apps/inventory/src/features/chat/stories/PerRoundTimeline.stories.tsx
+apps/inventory/src/features/chat/stories/SyntaxHighlight.stories.tsx
+packages/engine/src/components/widgets/ChatWindow.interaction.stories.tsx
+packages/engine/src/components/widgets/ChatWindow.stories.tsx
+packages/engine/src/components/widgets/ChatWindow.widgets.stories.tsx
+packages/engine/src/components/widgets/index.ts
+packages/engine/src/index.ts

@@ -1,0 +1,4 @@
+   79 ttmp/2026/02/21/HC-01-MERGE-MACOS-WIDGETS--merge-macos-widgets-branch-with-origin-main/various/files_ours_since_merge_base.txt
+  155 ttmp/2026/02/21/HC-01-MERGE-MACOS-WIDGETS--merge-macos-widgets-branch-with-origin-main/various/files_theirs_since_merge_base.txt
+   15 ttmp/2026/02/21/HC-01-MERGE-MACOS-WIDGETS--merge-macos-widgets-branch-with-origin-main/various/files_overlap_since_merge_base.txt
+  249 total
