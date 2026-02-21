@@ -128,3 +128,16 @@ Completed deep F8 analysis: documented artifact-runtime topology, keep/wire/remo
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/reference/01-diary.md — Diary step for F8 analysis
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/tasks.md — F8 sub-task backlog expansion
 
+
+## 2026-02-20
+
+Implemented F8 cleanup tranche: added ingestion-time artifact projection middleware, removed renderer click-time artifact backfill, wired runtime-card injection outcome statuses, and added focused middleware/runtime regression tests.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/app/createAppStore.ts — F8 middleware registration
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/components/shell/windowing/PluginCardSessionHost.tsx — F8 injection status wiring
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard/artifacts/artifactProjectionMiddleware.ts — F8 core ingestion projector
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard/artifacts/artifactsSlice.ts — F8 artifact state lifecycle
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/plugin-runtime/runtimeCardRegistry.ts — F8 injection report helper
+

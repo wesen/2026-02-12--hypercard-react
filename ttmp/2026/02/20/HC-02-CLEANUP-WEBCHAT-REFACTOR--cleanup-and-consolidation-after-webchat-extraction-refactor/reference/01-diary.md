@@ -18,6 +18,8 @@ RelatedFiles:
         F6 explicit inventory registration of hypercard timeline module
     - Path: apps/inventory/src/domain/pluginBundle.vm.js
       Note: Artifact lookup behavior in reportViewer/itemViewer analyzed
+    - Path: packages/engine/src/app/createAppStore.ts
+      Note: F8 middleware wiring into default store pipeline
     - Path: packages/engine/src/chat/components/ChatConversationWindow.tsx
       Note: |-
         F4 implementation details (starter suggestion lifecycle)
@@ -47,28 +49,38 @@ RelatedFiles:
       Note: F4 shared suggestion helpers
     - Path: packages/engine/src/chat/state/timelineSlice.ts
       Note: F4 reducers for upsert/consume suggestions
+    - Path: packages/engine/src/components/shell/windowing/PluginCardSessionHost.tsx
+      Note: F8 runtime injection result dispatch wiring
     - Path: packages/engine/src/components/shell/windowing/useDesktopShellController.tsx
       Note: Fix non-card icon double-click routing through shell command pipeline
+    - Path: packages/engine/src/hypercard/artifacts/artifactProjectionMiddleware.ts
+      Note: F8 ingestion-time artifact projection middleware implementation
     - Path: packages/engine/src/hypercard/artifacts/artifactRuntime.test.ts
       Note: Regression tests for TimelineV2 extraction and id normalization
     - Path: packages/engine/src/hypercard/artifacts/artifactRuntime.ts
       Note: |-
         Artifact extraction/open payload normalization path analyzed
         Task 19 fix for TimelineV2 extraction and artifact id normalization
+    - Path: packages/engine/src/hypercard/artifacts/artifactsSlice.ts
+      Note: F8 injection status state updates
     - Path: packages/engine/src/hypercard/timeline/hypercardCard.test.ts
       Note: F6 explicit hypercard module registration in tests
     - Path: packages/engine/src/hypercard/timeline/hypercardCard.tsx
       Note: |-
         Debug-mode full-content rendering for card entities
         Open-time artifact backfill for remapped timeline entities
+        F8 renderer-side backfill removal
     - Path: packages/engine/src/hypercard/timeline/hypercardWidget.test.ts
       Note: F6 explicit hypercard module registration in tests
     - Path: packages/engine/src/hypercard/timeline/hypercardWidget.tsx
       Note: |-
         Debug-mode full-content rendering for widget entities
         Open-time artifact backfill for remapped timeline entities
+        F8 renderer-side backfill removal
     - Path: packages/engine/src/hypercard/timeline/registerHypercardTimeline.ts
       Note: F4 SEM handler migration from session to timeline
+    - Path: packages/engine/src/plugin-runtime/runtimeCardRegistry.ts
+      Note: F8 injection report API for status tracking
     - Path: ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/design-doc/01-exhaustive-legacy-and-consolidation-assessment-after-hc-01.md
       Note: Primary output of investigation documented in diary
     - Path: ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/tasks.md
@@ -88,6 +100,7 @@ LastUpdated: 2026-02-20T16:24:04.03865615-05:00
 WhatFor: Preserve detailed investigation history for HC-02 cleanup scope derivation from HC-01 touched files.
 WhenToUse: Use when reviewing why each cleanup task exists and how findings were derived from concrete code evidence.
 ---
+
 
 
 
@@ -1222,3 +1235,87 @@ I mapped every artifact-runtime path (SEM ingestion, timeline projection, render
   2. timeline-upsert projection parsing,
   3. renderer click-time store backfill.
 - Proposed target: single ingestion projector + pure renderer open path.
+
+## Step 16: Execute F8 implementation tranche and close F8.x tasks
+
+This step implemented the actual F8 runtime cleanup plan in code. The key shift was moving artifact projection to ingestion-time middleware and removing renderer click-time state repair behavior.
+
+I also wired runtime-card injection outcomes into artifact state so debug/status information reflects real injection results instead of staying perpetually pending.
+
+### Prompt Context
+
+**User prompt (verbatim):** "Ok, do F8, then HC-52"
+
+**Assistant interpretation:** Implement all pending F8 cleanup slices in HC-02 first, then perform HC-52 timeline-kind cutover.
+
+**Inferred user intent:** Complete both tactical artifact-runtime consolidation and strategic kind-contract migration without pausing between tickets.
+
+**Commit (code):** `6f49bd8` — "refactor(hypercard): complete F8 artifact projection wiring and injection status flow"
+
+### What I did
+- Added ingestion-time artifact projection middleware:
+  - `packages/engine/src/hypercard/artifacts/artifactProjectionMiddleware.ts`
+  - listens to `timeline.addEntity`, `timeline.upsertEntity`, `timeline.applySnapshot`
+  - projects artifacts from timeline entities and upserts artifact store
+  - registers runtime cards when runtime card fields are present
+- Wired middleware into app store:
+  - `packages/engine/src/app/createAppStore.ts`
+- Removed renderer click-time artifact backfill:
+  - `packages/engine/src/hypercard/timeline/hypercardWidget.tsx`
+  - `packages/engine/src/hypercard/timeline/hypercardCard.tsx`
+- Removed duplicate handler-side artifact side effects (projection now centralized):
+  - `packages/engine/src/hypercard/timeline/hypercardWidget.tsx`
+  - `packages/engine/src/hypercard/timeline/hypercardCard.tsx`
+- Wired runtime injection result lifecycle:
+  - `packages/engine/src/plugin-runtime/runtimeCardRegistry.ts` (`injectPendingCardsWithReport`)
+  - `packages/engine/src/components/shell/windowing/PluginCardSessionHost.tsx` dispatches injection success/failure outcomes
+  - `packages/engine/src/hypercard/artifacts/artifactsSlice.ts` tracks `injectionStatus/injectionError` updates by runtime card id
+- Added and updated tests:
+  - `packages/engine/src/hypercard/artifacts/artifactProjectionMiddleware.test.ts`
+  - `packages/engine/src/hypercard/artifacts/artifactsSlice.test.ts`
+  - `packages/engine/src/hypercard/artifacts/artifactRuntime.test.ts`
+  - `packages/engine/src/hypercard/timeline/hypercardWidget.test.ts`
+  - `packages/engine/src/hypercard/timeline/hypercardCard.test.ts`
+  - `packages/engine/src/plugin-runtime/runtimeCardRegistry.test.ts`
+
+### Why
+- Artifact projection should happen when entities enter state, not when user clicks a button.
+- Centralized projection avoids divergence between direct SEM, projected timeline upserts, and snapshot hydration.
+- Injection status fields are only useful if wired to actual injection outcomes.
+
+### What worked
+- Targeted test suite passed for middleware, runtime, and timeline handler paths.
+- Engine typecheck passed.
+- F8 and F8.1-F8.5 tasks were checked off after implementation + HC-52 cutover.
+
+### What didn't work
+- N/A
+
+### What I learned
+- Listener middleware provides a clean ingestion seam for projection side effects without re-coupling generic chat SEM handlers to hypercard concerns.
+
+### What was tricky to build
+- Ensuring snapshot hydration and live upserts both trigger identical projection behavior required handling both `upsertEntity` and `applySnapshot` action paths.
+
+### What warrants a second pair of eyes
+- Confirm middleware-based projection is acceptable for any consumers using custom stores that bypass `createAppStore`.
+
+### What should be done in the future
+- Consider documenting middleware requirement explicitly for external host integrations.
+
+### Code review instructions
+- Start with:
+  - `packages/engine/src/hypercard/artifacts/artifactProjectionMiddleware.ts`
+  - `packages/engine/src/app/createAppStore.ts`
+  - `packages/engine/src/hypercard/timeline/hypercardWidget.tsx`
+  - `packages/engine/src/hypercard/timeline/hypercardCard.tsx`
+  - `packages/engine/src/components/shell/windowing/PluginCardSessionHost.tsx`
+  - `packages/engine/src/plugin-runtime/runtimeCardRegistry.ts`
+- Validate with:
+  - `pnpm exec vitest run packages/engine/src/hypercard/artifacts/artifactProjectionMiddleware.test.ts packages/engine/src/hypercard/timeline/hypercardWidget.test.ts packages/engine/src/hypercard/timeline/hypercardCard.test.ts packages/engine/src/plugin-runtime/runtimeCardRegistry.test.ts`
+  - `pnpm exec tsc -p packages/engine/tsconfig.json --noEmit`
+
+### Technical details
+- Projection trigger coverage:
+  - live events: `timeline.upsertEntity` / `timeline.addEntity`
+  - hydration: `timeline.applySnapshot`

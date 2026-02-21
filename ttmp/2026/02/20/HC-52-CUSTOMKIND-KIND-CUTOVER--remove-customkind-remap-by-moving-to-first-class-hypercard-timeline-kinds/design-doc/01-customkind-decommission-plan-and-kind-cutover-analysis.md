@@ -13,19 +13,32 @@ Intent: long-term
 Owners: []
 RelatedFiles:
     - Path: go-inventory-chat/internal/pinoweb/hypercard_events.go
-      Note: Backend timeline projector currently injecting customKind
+      Note: |-
+        Backend timeline projector currently injecting customKind
+        Cut over timeline upsert kinds to first-class hypercard kind names
     - Path: packages/engine/src/chat/sem/semRegistry.ts
       Note: Current timeline and tool_result projection routing behavior
+    - Path: packages/engine/src/chat/sem/timelineMapper.test.ts
+      Note: First-class kind cutover and legacy-remap removal coverage
     - Path: packages/engine/src/chat/sem/timelineMapper.ts
-      Note: Current customKind-to-hypercard remap logic targeted for removal
+      Note: |-
+        Current customKind-to-hypercard remap logic targeted for removal
+        Removed legacy customKind remap dependency and added first-class kind mapping
+    - Path: packages/engine/src/hypercard/artifacts/artifactRuntime.test.ts
+      Note: First-class timeline extraction tests and legacy-path behavior checks
     - Path: packages/engine/src/hypercard/artifacts/artifactRuntime.ts
-      Note: Artifact extraction/open path that must move away from customKind dependency
+      Note: |-
+        Artifact extraction/open path that must move away from customKind dependency
+        First-class timeline kind artifact extraction and hard-cutover removal of legacy tool_result path
+    - Path: packages/engine/src/hypercard/timeline/registerHypercardTimeline.ts
+      Note: Register renderers for first-class kind names
 ExternalSources: []
 Summary: ""
 LastUpdated: 2026-02-20T18:58:31.372682105-05:00
 WhatFor: ""
 WhenToUse: ""
 ---
+
 
 
 # CustomKind Decommission Plan and Kind Cutover Analysis
@@ -35,6 +48,15 @@ WhenToUse: ""
 This ticket plans a structural cleanup: stop encoding hypercard artifact type in `tool_result.props.customKind`, and move to first-class timeline entity kinds (`hypercard.widget.v1`, `hypercard.card.v2`) emitted by the backend projector.
 
 The current approach works but introduces an extra translation hop (`tool_result` -> frontend `timelineMapper` remap -> renderer kind), creates coupling between generic tool semantics and hypercard artifact semantics, and has already contributed to artifact-open regressions on replay paths. The target state removes that remap dependency and makes timeline kinds authoritative.
+
+### Implementation Status (2026-02-21)
+
+The cutover has now been implemented as a hard cutover:
+
+- backend timeline projector emits `kind=hypercard.widget.v1` / `kind=hypercard.card.v2` (no `tool_result` remap for hypercard),
+- frontend timeline mapper remaps first-class kinds to hypercard render entities,
+- legacy `tool_result + customKind` remap dependency was removed from timeline mapper,
+- artifact extraction now supports first-class hypercard timeline kinds directly.
 
 ## Problem Statement
 
@@ -71,16 +93,11 @@ Adopt first-class timeline kinds for hypercard artifacts end-to-end.
 
 ### Compatibility strategy
 
-Roll out in two stages:
+Decision applied: hard cutover (no compatibility window remap for legacy `tool_result + customKind`).
 
-1. Dual-accept frontend:
-   - Accept first-class hypercard kinds.
-   - Keep legacy `tool_result + customKind` parsing for historical sessions.
-2. Backend cutover:
-   - Emit first-class kinds.
-   - Optionally keep legacy shape only where replay compatibility requires it.
-3. Removal stage:
-   - Delete `customKind` remap and legacy-only tests after soak period.
+- Old timeline rows remain as generic `tool_result` entries.
+- Hypercard-specific rendering/artifact projection now requires first-class timeline kinds.
+- This was chosen to avoid prolonged dual-path complexity and complete customKind decommissioning in one tranche.
 
 ## Design Decisions
 

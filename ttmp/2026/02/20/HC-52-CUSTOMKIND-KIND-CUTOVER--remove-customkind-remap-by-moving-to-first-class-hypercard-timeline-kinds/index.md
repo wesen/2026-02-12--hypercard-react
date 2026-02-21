@@ -11,13 +11,16 @@ Topics:
 DocType: index
 Intent: long-term
 Owners: []
-RelatedFiles: []
+RelatedFiles:
+    - Path: ttmp/2026/02/20/HC-52-CUSTOMKIND-KIND-CUTOVER--remove-customkind-remap-by-moving-to-first-class-hypercard-timeline-kinds/playbooks/01-kind-cutover-validation-playbook.md
+      Note: Manual+automated validation sequence for cutover
 ExternalSources: []
 Summary: ""
 LastUpdated: 2026-02-20T18:58:26.057019518-05:00
 WhatFor: ""
 WhenToUse: ""
 ---
+
 
 # Remove customKind remap by moving to first-class hypercard timeline kinds
 
