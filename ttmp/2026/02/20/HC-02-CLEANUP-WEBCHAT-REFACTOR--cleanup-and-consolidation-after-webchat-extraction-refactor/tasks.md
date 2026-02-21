@@ -12,6 +12,11 @@
 - [x] F6: Decouple `registerChatModules` defaults so generic chat runtime does not auto-register hypercard module unless requested
 - [ ] F7: Remove or finalize compatibility-only error pathways (`lastError`, `setStreamError`, fallback selector semantics) after structured error migration
 - [ ] F8: Resolve artifact runtime cleanup by either wiring or removing leftover utility pathways (including `buildArtifactOpenWindowPayload` integration checks)
+- [ ] F8.1: Consolidate artifact projection into a single ingestion helper (`extract` + `upsert` + runtime-card registration) and remove duplicate inline logic in widget/card handlers
+- [ ] F8.2: Move remapped-timeline artifact fallback wiring from renderer click handlers to ingestion/reconciliation path; keep renderers as pure consumers
+- [ ] F8.3: Wire runtime-card injection lifecycle to artifact state (`injectionStatus` / `injectionError`) or remove those fields if not maintained
+- [ ] F8.4: Add integration tests for artifact open/edit contract (click -> normalized window param -> plugin viewer lookup) across direct and projected paths
+- [ ] F8.5: After HC-52 cutover, remove legacy `tool_result + customKind` branches from artifact runtime and tests
 - [x] F9: Remove dead/unused webchat refactor leftovers (`fakeStreamService.ts`, `chatApi.ts`) after confirming zero runtime usage
 - [ ] Remove unused singleton export `wsManager` or route runtime to consistently use singleton and document the contract
 - [ ] Clarify registry lifecycle API surface: keep and test unregister/clear APIs or remove them from public exports

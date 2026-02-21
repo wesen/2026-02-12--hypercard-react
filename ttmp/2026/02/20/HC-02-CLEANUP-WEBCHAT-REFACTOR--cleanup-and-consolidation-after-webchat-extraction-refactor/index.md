@@ -13,6 +13,8 @@ Owners: []
 RelatedFiles:
     - Path: ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/design-doc/01-exhaustive-legacy-and-consolidation-assessment-after-hc-01.md
       Note: Exhaustive cleanup assessment report
+    - Path: ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/design-doc/03-f8-artifact-runtime-cleanup-analysis-and-wiring-plan.md
+      Note: F8 deep analysis and cleanup/wiring plan
     - Path: ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/reference/01-diary.md
       Note: Detailed investigation diary
     - Path: ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/various/01-hc01-touched-files-existing.txt
@@ -25,6 +27,7 @@ LastUpdated: 2026-02-20T16:24:03.826392976-05:00
 WhatFor: Track post-HC-01 cleanup and consolidation work by converting exhaustive leftover assessment findings into an execution backlog.
 WhenToUse: Use for planning and implementing the next cleanup tranche after the webchat extraction hard cutover.
 ---
+
 
 
 # Cleanup and consolidation after webchat extraction refactor

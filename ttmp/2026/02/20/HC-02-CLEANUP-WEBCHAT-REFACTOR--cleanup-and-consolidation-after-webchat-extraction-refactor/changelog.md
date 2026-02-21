@@ -117,3 +117,14 @@ Implemented Task #19: artifact open/edit now works for remapped timeline tool_re
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard/timeline/hypercardCard.tsx — Renderer-side artifact backfill before open
 - /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/packages/engine/src/hypercard/timeline/hypercardWidget.tsx — Renderer-side artifact backfill before open
 
+
+## 2026-02-20
+
+Completed deep F8 analysis: documented artifact-runtime topology, keep/wire/remove matrix, and phased cleanup plan; added explicit F8.1-F8.5 tasks for projection consolidation, ingestion wiring, injection-status lifecycle, integration tests, and post-HC-52 cleanup.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/design-doc/03-f8-artifact-runtime-cleanup-analysis-and-wiring-plan.md — F8 deep analysis and implementation plan
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/reference/01-diary.md — Diary step for F8 analysis
+- /home/manuel/workspaces/2026-02-14/hypercard-add-webchat/2026-02-12--hypercard-react/ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/tasks.md — F8 sub-task backlog expansion
+

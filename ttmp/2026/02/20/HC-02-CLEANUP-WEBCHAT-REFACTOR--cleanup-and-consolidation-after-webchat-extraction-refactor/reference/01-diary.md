@@ -1144,3 +1144,81 @@ Then, fix the short term bug for opening the artifacts."
 - Timeline extraction now supports:
   - `timeline.upsert -> entity.kind=tool_result -> entity.toolResult` (legacy)
   - `timeline.upsert -> entity.kind=tool_result -> entity.props` (TimelineV2)
+
+## Step 15: F8 deep analysis and cleanup/wiring plan document
+
+This step focused on `F8` architecture analysis after the short-term bugfix landed. The objective was to determine what should be removed versus preserved and wired more centrally, rather than continuing to patch behavior at renderer level.
+
+I mapped every artifact-runtime path (SEM ingestion, timeline projection, renderer open fallback, runtime-card injection, plugin lookup) and turned findings into a dedicated design doc plus actionable `F8.x` tasks.
+
+### Prompt Context
+
+**User prompt (verbatim):** "Explain F8"
+
+**Assistant interpretation:** Clarify the meaning and scope of task F8 in the cleanup backlog.
+
+**Inferred user intent:** Understand what remains to be done beyond immediate bug fixes.
+
+**User prompt (verbatim):** "Ok, do a deep analysis for F8 and write a document for it. What is stuff that could still be useful and wired in?"
+
+**Assistant interpretation:** Produce a detailed F8 analysis artifact and explicitly identify reusable utility paths that should be retained and properly wired.
+
+**Inferred user intent:** Move from ad-hoc fixes to a deliberate consolidation plan for artifact runtime behavior.
+
+**Commit (code):** N/A (documentation and task breakdown only)
+
+### What I did
+- Added design doc:
+  - `design-doc/03-f8-artifact-runtime-cleanup-analysis-and-wiring-plan.md`
+- Documented:
+  - current three-path behavior topology,
+  - duplication points,
+  - remaining gaps after Task #19,
+  - keep/wire/remove matrix for artifact utilities,
+  - phased cleanup plan.
+- Added explicit backlog tasks:
+  - `F8.1` through `F8.5` in `tasks.md`.
+
+### Why
+- F8 was too broad as a single line item; actionable slices were needed.
+- Several components are valuable but underwired (for example, runtime injection statuses, timeline-entity extractor, canonical open payload utility).
+
+### What worked
+- Clear mapping emerged for where behavior currently lives and where coupling remains.
+- Useful utility pathways were identifiable without code churn.
+
+### What didn't work
+- N/A
+
+### What I learned
+- Task #19 fixed user-facing open failures, but renderer click-time backfill is still a resilience workaround, not the final architecture.
+- `injectionStatus` fields in artifacts are effectively half-wired: present in state/debug UI, but not updated from actual injection outcomes.
+
+### What was tricky to build
+- Distinguishing "transitional but required" (`tool_result + customKind` compatibility parsing) from "legacy we should remove" required checking live ingestion, timeline replay, and planned HC-52 kind cutover together.
+
+### What warrants a second pair of eyes
+- Whether to keep or remove artifact injection status fields (`injectionStatus`, `injectionError`) if full wiring is deferred.
+- Whether normalization should be enforced at artifact-slice boundary in addition to ingress.
+
+### What should be done in the future
+- Execute `F8.1`..`F8.5` as the artifact-runtime consolidation tranche.
+
+### Code review instructions
+- Read:
+  - `ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/design-doc/03-f8-artifact-runtime-cleanup-analysis-and-wiring-plan.md`
+  - `ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/tasks.md`
+- Validate that the keep/wire/remove matrix is consistent with current code paths:
+  - `packages/engine/src/hypercard/artifacts/artifactRuntime.ts`
+  - `packages/engine/src/hypercard/timeline/hypercardWidget.tsx`
+  - `packages/engine/src/hypercard/timeline/hypercardCard.tsx`
+  - `packages/engine/src/components/shell/windowing/PluginCardSessionHost.tsx`
+  - `packages/engine/src/plugin-runtime/runtimeCardRegistry.ts`
+  - `apps/inventory/src/domain/pluginBundle.vm.js`
+
+### Technical details
+- Identified three active ingestion/open paths:
+  1. direct SEM upsert,
+  2. timeline-upsert projection parsing,
+  3. renderer click-time store backfill.
+- Proposed target: single ingestion projector + pure renderer open path.
