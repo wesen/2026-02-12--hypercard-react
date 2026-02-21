@@ -32,7 +32,7 @@ function buildChatWindowPayload(options?: { dedupeKey?: string }): OpenWindowPay
   const convId = newConversationId();
   return {
     id: `window:chat:${convId}`,
-    title: '💬 Inventory Chat',
+    title: 'Inventory Chat',
     icon: '💬',
     bounds: {
       x: 340 + Math.round(Math.random() * 60),
@@ -100,7 +100,7 @@ function buildEventViewerWindowPayload(convId: string): OpenWindowPayload {
   const shortId = convId.slice(0, 8);
   return {
     id: `window:event-viewer:${convId}`,
-    title: `🧭 Event Viewer (${shortId})`,
+    title: `Event Viewer (${shortId})`,
     icon: '🧭',
     bounds: { x: 780, y: 40, w: 560, h: 420 },
     content: {
@@ -114,7 +114,7 @@ function buildEventViewerWindowPayload(convId: string): OpenWindowPayload {
 function buildRuntimeDebugWindowPayload(): OpenWindowPayload {
   return {
     id: 'window:runtime-debug',
-    title: '🔧 Stacks & Cards',
+    title: 'Stacks & Cards',
     icon: '🔧',
     bounds: { x: 80, y: 30, w: 560, h: 480 },
     content: { kind: 'app', appKey: 'runtime-card-debug' },
@@ -203,7 +203,7 @@ export function App() {
               create: () =>
                 ({
                   id: 'window:redux-perf:dev',
-                  title: '📈 Redux Perf',
+                  title: 'Redux Perf',
                   icon: '📈',
                   bounds: { x: 900, y: 40, w: 420, h: 320 },
                   content: { kind: 'app', appKey: REDUX_PERF_APP_KEY },
@@ -304,7 +304,7 @@ export function App() {
               ctx.dispatch(
                 openWindow({
                   id: 'window:redux-perf:dev',
-                  title: '📈 Redux Perf',
+                  title: 'Redux Perf',
                   icon: '📈',
                   bounds: { x: 900, y: 40, w: 420, h: 320 },
                   content: { kind: 'app', appKey: REDUX_PERF_APP_KEY },

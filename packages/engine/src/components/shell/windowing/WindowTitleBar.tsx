@@ -9,7 +9,16 @@ export interface WindowTitleBarProps {
   onPointerDown?: (event: PointerEvent<HTMLDivElement>) => void;
 }
 
+export function shouldPrefixWindowIcon(title: string, icon?: string): boolean {
+  if (!icon) {
+    return false;
+  }
+  return !title.trimStart().startsWith(icon);
+}
+
 export function WindowTitleBar({ title, icon, focused, onClose, onPointerDown }: WindowTitleBarProps) {
+  const prefixIcon = shouldPrefixWindowIcon(title, icon) ? `${icon} ` : '';
+
   return (
     <div
       data-part={PARTS.windowingWindowTitleBar}
@@ -26,7 +35,7 @@ export function WindowTitleBar({ title, icon, focused, onClose, onPointerDown }:
         }}
       />
       <div data-part={PARTS.windowingWindowTitle}>
-        {icon ? `${icon} ` : ''}
+        {prefixIcon}
         {title}
       </div>
     </div>
