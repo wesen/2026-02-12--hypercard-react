@@ -158,3 +158,13 @@ Suggestion-click UX fix completed: clicking a suggestion now hides suggestion ch
 - /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/packages/engine/src/chat/components/ChatConversationWindow.tsx — Consume starter+assistant suggestions on suggestion send
 - /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/packages/engine/src/chat/state/timelineSlice.ts — Clear consumed flag when new suggestions are upserted
 - /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/packages/engine/src/chat/state/timelineSlice.test.ts — Reducer test for consumed-state reset
+
+
+## 2026-02-21
+
+Event viewer follow-up implemented: added toggles to hide `llm.delta` and `llm.thinking.delta` events, plus `Export YAML` download for currently visible events (commit 34dad4c).
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/packages/engine/src/chat/debug/EventViewerWindow.tsx — Event-type visibility toggles and YAML export action
+- /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/packages/engine/src/chat/debug/EventViewerWindow.test.ts — Added helper-level tests for delta filtering and export payload generation

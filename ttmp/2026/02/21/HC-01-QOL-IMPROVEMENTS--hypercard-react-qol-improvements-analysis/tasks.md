@@ -205,6 +205,6 @@
 - [x] Consume both starter and assistant suggestion entities on suggestion-send
 - [x] Ensure new suggestion upserts clear prior consumed state
 - [x] Add reducer test for consumed-state reset on next suggestion block
-- [ ] Add Event Viewer toggles to hide `llm.delta` and `llm.thinking.delta` events
-- [ ] Add Event Viewer `Export YAML` action for currently visible events
-- [ ] Add/adjust tests for event-type filtering and YAML export behavior
+- [x] Add Event Viewer toggles to hide `llm.delta` and `llm.thinking.delta` events
+- [x] Add Event Viewer `Export YAML` action for currently visible events
+- [x] Add/adjust tests for event-type filtering and YAML export behavior

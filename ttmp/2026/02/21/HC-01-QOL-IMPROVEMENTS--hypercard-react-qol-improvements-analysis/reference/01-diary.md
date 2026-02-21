@@ -1232,3 +1232,91 @@ I also fixed the state edge so suggestions can reappear when the next suggestion
   - `STARTER_SUGGESTIONS_ENTITY_ID`
   - `ASSISTANT_SUGGESTIONS_ENTITY_ID`
 - Upsert now drops stale `consumedAt` via destructuring before rebuilding suggestion props.
+
+## Step 16: Add delta/thinking-delta hide toggles and visible-events YAML export
+
+After finishing the suggestion fix, I implemented the next requested Event Viewer QoL feature set: per-event-type visibility toggles for noisy deltas and a one-click YAML export of the currently visible event list.
+
+The export intentionally uses the filtered view (what the operator currently sees) so the downloaded artifact matches on-screen diagnostics context.
+
+### Prompt Context
+
+**User prompt (verbatim):** "allow hiding delta/thinking delta events in the event viewer. also add a "export to yaml" button to download the non-filtered (thus visible) events to a file."
+
+**Assistant interpretation:** Add controls to hide `llm.delta` and `llm.thinking.delta` events in the Event Viewer, and add YAML file download for the visible event subset.
+
+**Inferred user intent:** Reduce Event Viewer noise during live debugging and enable easy extraction of a curated event trace for sharing/debug follow-up.
+
+**Commit (code):** `34dad4c` — "feat(event-viewer): add delta toggles and visible-yaml export"
+
+### What I did
+
+- Updated Event Viewer behavior in:
+  - `packages/engine/src/chat/debug/EventViewerWindow.tsx`
+- Added new helper exports:
+  - `isEntryHiddenByEventType(...)`
+  - `filterVisibleEntries(...)`
+  - `buildVisibleEventsYamlExport(...)`
+- Added toolbar controls:
+  - checkbox: `hide llm.delta`
+  - checkbox: `hide llm.thinking.delta`
+  - button: `⬇ Export YAML`
+- YAML export now downloads a file containing:
+  - `conversationId`
+  - `exportedAt`
+  - `eventCount`
+  - array of visible events with metadata + payload
+- Added tests in:
+  - `packages/engine/src/chat/debug/EventViewerWindow.test.ts`
+  - tests cover:
+    - event-type hide logic
+    - combined family + event-type visibility filtering
+    - YAML export filename/content construction
+- Ran targeted tests:
+  - `npm run test -w packages/engine -- src/chat/debug/EventViewerWindow.test.ts src/chat/debug/eventBus.test.ts src/chat/debug/clipboard.test.ts`
+  - `npm run test -w packages/engine -- src/chat/debug/EventViewerWindow.test.ts`
+
+### Why
+
+- `llm.delta` and `llm.thinking.delta` can dominate the event stream and obscure higher-level lifecycle events.
+- Exporting visible events allows quick sharing of a cleaned debug timeline without extra manual copy steps.
+
+### What worked
+
+- New tests pass.
+- Existing debug event bus and clipboard tests remain green.
+- Export mechanism uses visible entries directly, matching expected “export what I currently see” behavior.
+
+### What didn't work
+
+- No new blockers in this step.
+
+### What I learned
+
+- Keeping event filtering and export shaping as pure helpers made this feature easy to validate with non-DOM unit tests.
+
+### What was tricky to build
+
+- The subtle requirement was export scope: “non-filtered (thus visible)” means applying all active viewer filters first, then exporting only that derived list.
+
+### What warrants a second pair of eyes
+
+- Confirm whether you want `llm.delta` and `llm.thinking.delta` toggles persisted across window reopen/session restart.
+
+### What should be done in the future
+
+- If needed, add alternative export formats (`.json`) and include an option to export raw full history instead of visible subset.
+
+### Code review instructions
+
+- Review helper and toolbar changes in `packages/engine/src/chat/debug/EventViewerWindow.tsx`.
+- Review new test cases in `packages/engine/src/chat/debug/EventViewerWindow.test.ts`.
+- Re-run targeted tests listed above.
+
+### Technical details
+
+- Current hide toggles target exact event types:
+  - `llm.delta`
+  - `llm.thinking.delta`
+- Export filename format:
+  - `events-<conversationId-safe>-<ISO-timestamp>.yaml`
