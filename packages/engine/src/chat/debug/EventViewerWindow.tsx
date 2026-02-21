@@ -55,6 +55,63 @@ export function isNearBottom({
   return distanceFromBottom <= thresholdPx;
 }
 
+export interface EventTypeVisibilityOptions {
+  hideLlmDelta: boolean;
+  hideThinkingDelta: boolean;
+}
+
+export function isEntryHiddenByEventType(eventType: string, options: EventTypeVisibilityOptions): boolean {
+  if (options.hideLlmDelta && eventType === 'llm.delta') return true;
+  if (options.hideThinkingDelta && eventType === 'llm.thinking.delta') return true;
+  return false;
+}
+
+export function filterVisibleEntries(
+  entries: EventLogEntry[],
+  filters: Record<string, boolean>,
+  options: EventTypeVisibilityOptions,
+): EventLogEntry[] {
+  return entries.filter((entry) => {
+    if (filters[entry.family] === false) return false;
+    return !isEntryHiddenByEventType(entry.eventType, options);
+  });
+}
+
+export interface VisibleEventsYamlExport {
+  fileName: string;
+  yaml: string;
+}
+
+function toFileSafeSegment(value: string): string {
+  const normalized = value.trim().replace(/[^a-zA-Z0-9_-]+/g, '-').replace(/^-+|-+$/g, '');
+  return normalized || 'conversation';
+}
+
+export function buildVisibleEventsYamlExport(
+  conversationId: string,
+  visibleEntries: EventLogEntry[],
+  exportedAtMs = Date.now(),
+): VisibleEventsYamlExport {
+  const exportedAt = new Date(exportedAtMs).toISOString();
+  const timestamp = exportedAt.replace(/[:.]/g, '-');
+  const fileName = `events-${toFileSafeSegment(conversationId)}-${timestamp}.yaml`;
+  const yaml = toYaml({
+    conversationId,
+    exportedAt,
+    eventCount: visibleEntries.length,
+    events: visibleEntries.map((entry) => ({
+      timestamp: new Date(entry.timestamp).toISOString(),
+      eventType: entry.eventType,
+      eventId: entry.eventId,
+      family: entry.family,
+      summary: entry.summary,
+      payload: entry.rawPayload,
+    })),
+  } as Record<string, unknown>);
+
+  return { fileName, yaml };
+}
+
 export function EventViewerWindow({ conversationId, initialEntries }: EventViewerWindowProps) {
   const [entries, setEntries] = useState<EventLogEntry[]>(() => initialEntries ?? getConversationEvents(conversationId));
   const [filters, setFilters] = useState<Record<string, boolean>>(() => {
@@ -64,8 +121,11 @@ export function EventViewerWindow({ conversationId, initialEntries }: EventViewe
   });
   const [paused, setPaused] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
+  const [hideLlmDelta, setHideLlmDelta] = useState(false);
+  const [hideThinkingDelta, setHideThinkingDelta] = useState(false);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [copyFeedbackById, setCopyFeedbackById] = useState<Record<string, 'copied' | 'error'>>({});
+  const [exportFeedback, setExportFeedback] = useState<'ok' | 'error' | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const pausedRef = useRef(paused);
@@ -76,6 +136,7 @@ export function EventViewerWindow({ conversationId, initialEntries }: EventViewe
     setEntries(initialEntries ?? getConversationEvents(conversationId));
     setExpandedIds(new Set());
     setCopyFeedbackById({});
+    setExportFeedback(null);
   }, [conversationId, initialEntries]);
 
   useEffect(() => {
@@ -97,9 +158,14 @@ export function EventViewerWindow({ conversationId, initialEntries }: EventViewe
     }
   }, [entryCount, autoScroll]);
 
+  const visibilityOptions = useMemo<EventTypeVisibilityOptions>(
+    () => ({ hideLlmDelta, hideThinkingDelta }),
+    [hideLlmDelta, hideThinkingDelta],
+  );
+
   const visible = useMemo(
-    () => entries.filter((e) => filters[e.family] !== false),
-    [entries, filters],
+    () => filterVisibleEntries(entries, filters, visibilityOptions),
+    [entries, filters, visibilityOptions],
   );
 
   const toggleFilter = useCallback((family: string) => {
@@ -167,6 +233,25 @@ export function EventViewerWindow({ conversationId, initialEntries }: EventViewe
         }, 1400);
       });
   }, []);
+  const exportVisibleToYaml = useCallback(() => {
+    try {
+      const { fileName, yaml } = buildVisibleEventsYamlExport(conversationId, visible);
+      const blob = new Blob([yaml], { type: 'text/yaml;charset=utf-8' });
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+      setExportFeedback('ok');
+    } catch {
+      setExportFeedback('error');
+    } finally {
+      setTimeout(() => setExportFeedback(null), 1400);
+    }
+  }, [conversationId, visible]);
 
   return (
     <div data-part="event-viewer" style={{ display: 'flex', flexDirection: 'column', height: '100%', fontFamily: 'monospace', fontSize: '12px' }}>
@@ -193,19 +278,40 @@ export function EventViewerWindow({ conversationId, initialEntries }: EventViewe
             {FAMILY_LABELS[family]}
           </button>
         ))}
+        <label style={toggleLabelStyle} title="Hide llm.delta events">
+          <input
+            type="checkbox"
+            checked={hideLlmDelta}
+            onChange={(event) => setHideLlmDelta(event.target.checked)}
+          />
+          hide llm.delta
+        </label>
+        <label style={toggleLabelStyle} title="Hide llm.thinking.delta events">
+          <input
+            type="checkbox"
+            checked={hideThinkingDelta}
+            onChange={(event) => setHideThinkingDelta(event.target.checked)}
+          />
+          hide llm.thinking.delta
+        </label>
         <span style={{ flex: 1 }} />
-        <button onClick={togglePause} style={controlBtnStyle}>
+        <button type="button" onClick={exportVisibleToYaml} style={controlBtnStyle} title="Download currently visible events as YAML">
+          ⬇ Export YAML
+        </button>
+        {exportFeedback === 'ok' && <span style={copyFeedbackOkStyle}>Exported</span>}
+        {exportFeedback === 'error' && <span style={copyFeedbackErrorStyle}>Export failed</span>}
+        <button type="button" onClick={togglePause} style={controlBtnStyle}>
           {paused ? '▶ Resume' : '⏸ Pause'}
         </button>
-        <button onClick={clearLog} style={controlBtnStyle}>
+        <button type="button" onClick={clearLog} style={controlBtnStyle}>
           🗑 Clear
         </button>
         {autoScroll ? (
-          <button onClick={holdPosition} style={controlBtnStyle} title="Stop auto-scrolling and hold current position">
+          <button type="button" onClick={holdPosition} style={controlBtnStyle} title="Stop auto-scrolling and hold current position">
             ⏸ Hold
           </button>
         ) : (
-          <button onClick={followStream} style={controlBtnStyle} title="Resume live tailing (auto-scroll to newest event)">
+          <button type="button" onClick={followStream} style={controlBtnStyle} title="Resume live tailing (auto-scroll to newest event)">
             ▶ Follow Stream
           </button>
         )}
@@ -308,6 +414,14 @@ const controlBtnStyle: React.CSSProperties = {
   background: '#222',
   color: '#aaa',
   cursor: 'pointer',
+};
+
+const toggleLabelStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 4,
+  color: '#9ca3af',
+  fontSize: '10px',
 };
 
 const copyBtnStyle: React.CSSProperties = {
