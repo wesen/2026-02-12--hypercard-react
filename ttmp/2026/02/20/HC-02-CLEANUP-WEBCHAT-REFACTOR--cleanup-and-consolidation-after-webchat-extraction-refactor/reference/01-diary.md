@@ -35,8 +35,12 @@ RelatedFiles:
       Note: F5/F6 bootstrap split (default modules + explicit hypercard opt-in)
     - Path: packages/engine/src/chat/sem/semRegistry.ts
       Note: Tool result projection path analyzed for missing artifact upsert side effects
+    - Path: packages/engine/src/chat/sem/timelineMapper.test.ts
+      Note: Regression test for quoted artifact id remap
     - Path: packages/engine/src/chat/sem/timelineMapper.ts
-      Note: CustomKind remap path analyzed for artifactId extraction behavior
+      Note: |-
+        CustomKind remap path analyzed for artifactId extraction behavior
+        Quoted artifact id normalization during remap
     - Path: packages/engine/src/chat/state/selectors.ts
       Note: F4 selector migration to timeline state
     - Path: packages/engine/src/chat/state/suggestions.ts
@@ -45,16 +49,24 @@ RelatedFiles:
       Note: F4 reducers for upsert/consume suggestions
     - Path: packages/engine/src/components/shell/windowing/useDesktopShellController.tsx
       Note: Fix non-card icon double-click routing through shell command pipeline
+    - Path: packages/engine/src/hypercard/artifacts/artifactRuntime.test.ts
+      Note: Regression tests for TimelineV2 extraction and id normalization
     - Path: packages/engine/src/hypercard/artifacts/artifactRuntime.ts
-      Note: Artifact extraction/open payload normalization path analyzed
+      Note: |-
+        Artifact extraction/open payload normalization path analyzed
+        Task 19 fix for TimelineV2 extraction and artifact id normalization
     - Path: packages/engine/src/hypercard/timeline/hypercardCard.test.ts
       Note: F6 explicit hypercard module registration in tests
     - Path: packages/engine/src/hypercard/timeline/hypercardCard.tsx
-      Note: Debug-mode full-content rendering for card entities
+      Note: |-
+        Debug-mode full-content rendering for card entities
+        Open-time artifact backfill for remapped timeline entities
     - Path: packages/engine/src/hypercard/timeline/hypercardWidget.test.ts
       Note: F6 explicit hypercard module registration in tests
     - Path: packages/engine/src/hypercard/timeline/hypercardWidget.tsx
-      Note: Debug-mode full-content rendering for widget entities
+      Note: |-
+        Debug-mode full-content rendering for widget entities
+        Open-time artifact backfill for remapped timeline entities
     - Path: packages/engine/src/hypercard/timeline/registerHypercardTimeline.ts
       Note: F4 SEM handler migration from session to timeline
     - Path: ttmp/2026/02/20/HC-02-CLEANUP-WEBCHAT-REFACTOR--cleanup-and-consolidation-after-webchat-extraction-refactor/design-doc/01-exhaustive-legacy-and-consolidation-assessment-after-hc-01.md
@@ -76,6 +88,7 @@ LastUpdated: 2026-02-20T16:24:04.03865615-05:00
 WhatFor: Preserve detailed investigation history for HC-02 cleanup scope derivation from HC-01 touched files.
 WhenToUse: Use when reviewing why each cleanup task exists and how findings were derived from concrete code evidence.
 ---
+
 
 
 
@@ -1042,3 +1055,92 @@ Root cause analysis indicates a gap between timeline remapping and artifact-stor
 ## Related
 
 <!-- Link to related documents or resources -->
+
+## Step 14: Fix remapped timeline artifact open/edit regression (Task #19)
+
+This step implemented the short-term production fix for the `Artifact not found` failure when opening widgets/cards projected from remapped `timeline.upsert` tool results. The goal was to make open/edit resilient even when only timeline-projected payloads are available.
+
+The patch focused on two concrete failure modes observed in live data: quoted artifact IDs and missing artifact-store population on remapped entity paths. I fixed both while keeping the current architecture intact.
+
+### Prompt Context
+
+**User prompt (verbatim):** "ok, make a ticket for this cleanup away from custom_kind and write a detailed implementation plan and analysis in that ticket, for later. 
+
+Then, fix the short term bug for opening the artifacts."
+
+**Assistant interpretation:** Create a separate long-term cleanup ticket, then immediately patch artifact open/edit in current HC-02 runtime.
+
+**Inferred user intent:** Unblock active chat UX now while deferring larger semantic contract cleanup to a dedicated track.
+
+**Commit (code):** `f926c49` — "fix(chat): restore artifact open for remapped timeline tool results"
+
+### What I did
+- Updated artifact runtime normalization and extraction:
+  - `packages/engine/src/hypercard/artifacts/artifactRuntime.ts`
+  - added `normalizeArtifactId(...)` to strip quote wrappers.
+  - extended `extractArtifactUpsertFromSem('timeline.upsert', ...)` to support TimelineV2 shape (`entity.props`) in addition to legacy (`entity.toolResult`).
+  - added `extractArtifactUpsertFromTimelineEntity(...)` so renderers can recover artifact upserts directly from timeline entity props.
+- Updated widget/card renderers to backfill artifact store on open:
+  - `packages/engine/src/hypercard/timeline/hypercardWidget.tsx`
+  - `packages/engine/src/hypercard/timeline/hypercardCard.tsx`
+  - before opening, each renderer now extracts artifact upsert from current timeline entity and dispatches `upsertArtifact(...)`.
+- Added artifact ID normalization in remap path:
+  - `packages/engine/src/chat/sem/timelineMapper.ts`
+  - quoted IDs now normalize during tool-result remap.
+- Added regression tests:
+  - `packages/engine/src/hypercard/artifacts/artifactRuntime.test.ts`
+    - quoted-id open payload normalization.
+    - TimelineV2 `entity.props` extraction.
+    - remapped timeline entity extraction fallback.
+  - `packages/engine/src/chat/sem/timelineMapper.test.ts`
+    - quoted artifact-id normalization assertion.
+
+### Why
+- Remapped timeline entities can render correctly but still fail open/edit if artifact store never receives a matching record.
+- Quoted artifact IDs (for example `"sales-summary-2026-02-20"`) break lookup by key and produce false “not found” errors.
+
+### What worked
+- Targeted tests passed:
+  - `pnpm exec vitest run packages/engine/src/hypercard/artifacts/artifactRuntime.test.ts packages/engine/src/chat/sem/timelineMapper.test.ts`
+- Engine typecheck passed:
+  - `pnpm exec tsc -p packages/engine/tsconfig.json --noEmit`
+- Task #19 was checked off.
+
+### What didn't work
+- N/A
+
+### What I learned
+- TimelineV2 `timeline.upsert` parsing must read `entity.props`; legacy `entity.toolResult` handling alone is insufficient.
+- Open-time artifact backfill from timeline entity props is an effective short-term resilience layer.
+
+### What was tricky to build
+- The remapped entity shape differs from direct lifecycle event shape. To avoid brittle assumptions, extraction had to support:
+  - legacy `entity.toolResult`
+  - TimelineV2 `entity.props`
+  - remapped timeline entity `e.props` at render time.
+
+### What warrants a second pair of eyes
+- Confirm that open-time backfill doesn’t mask deeper ingestion architecture issues in future refactors.
+- Validate no unexpected key normalization collisions from quote stripping.
+
+### What should be done in the future
+- Execute HC-52 custom-kind decommission plan so this path no longer depends on `tool_result + customKind` semantics.
+
+### Code review instructions
+- Start with:
+  - `packages/engine/src/hypercard/artifacts/artifactRuntime.ts`
+  - `packages/engine/src/hypercard/timeline/hypercardWidget.tsx`
+  - `packages/engine/src/hypercard/timeline/hypercardCard.tsx`
+  - `packages/engine/src/chat/sem/timelineMapper.ts`
+- Validate with:
+  - `pnpm exec vitest run packages/engine/src/hypercard/artifacts/artifactRuntime.test.ts packages/engine/src/chat/sem/timelineMapper.test.ts`
+  - `pnpm exec tsc -p packages/engine/tsconfig.json --noEmit`
+
+### Technical details
+- Normalization handles raw IDs like:
+  - `"sales-summary-2026-02-20"`
+  - `'sales-summary-2026-02-20'`
+  - ` "sales-summary-2026-02-20" `
+- Timeline extraction now supports:
+  - `timeline.upsert -> entity.kind=tool_result -> entity.toolResult` (legacy)
+  - `timeline.upsert -> entity.kind=tool_result -> entity.props` (TimelineV2)
