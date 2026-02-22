@@ -35,7 +35,7 @@ describe('registerChatModules', () => {
     resetChatModulesRegistrationForTest();
   });
 
-  it('registers default handlers and supports late hypercard registration', () => {
+  it('registers default handlers and keeps hypercard suggestion projection backend-driven', () => {
     ensureChatModulesRegistered();
     ensureChatModulesRegistered();
 
@@ -49,6 +49,11 @@ describe('registerChatModules', () => {
           id: 'msg-1',
           data: {
             cumulative: 'hello',
+          },
+          metadata: {
+            usage: {
+              outputTokens: 2,
+            },
           },
         },
       },
@@ -70,8 +75,8 @@ describe('registerChatModules', () => {
     );
 
     const state = store.getState();
-    expect(state.timeline.byConvId['conv-1'].byId['msg-1'].kind).toBe('message');
-    expect(state.timeline.byConvId['conv-1'].byId[ASSISTANT_SUGGESTIONS_ENTITY_ID]).toBeUndefined();
+    expect(state.chatSession.byConvId['conv-1'].streamOutputTokens).toBe(2);
+    expect(state.timeline.byConvId['conv-1']).toBeUndefined();
 
     registerHypercardTimelineChatModule();
 
@@ -90,11 +95,12 @@ describe('registerChatModules', () => {
     );
 
     const withHypercard = store.getState();
+    expect(withHypercard.timeline.byConvId['conv-1']).toBeUndefined();
     expect(
       readSuggestionsEntityProps(
-        withHypercard.timeline.byConvId['conv-1'].byId[ASSISTANT_SUGGESTIONS_ENTITY_ID]
-      )?.items
-    ).toEqual(['Open card now']);
+        withHypercard.timeline.byConvId['conv-1']?.byId[ASSISTANT_SUGGESTIONS_ENTITY_ID]
+      )
+    ).toBeNull();
   });
 
   it('exposes module contract registration and applies modules once', () => {

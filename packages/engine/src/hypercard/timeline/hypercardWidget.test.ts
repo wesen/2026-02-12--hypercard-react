@@ -23,7 +23,7 @@ function createStore() {
   });
 }
 
-describe('hypercard widget handlers', () => {
+describe('hypercard widget timeline projection', () => {
   beforeEach(() => {
     clearSemHandlers();
     resetChatModulesRegistrationForTest();
@@ -31,23 +31,33 @@ describe('hypercard widget handlers', () => {
     ensureChatModulesRegistered();
   });
 
-  it('upserts hypercard_widget entity and artifact for hypercard.widget.v1', async () => {
+  it('maps timeline.upsert hypercard.widget.v1 into widget entity and artifact', async () => {
     const store = createStore();
 
     handleSem(
       {
         sem: true,
         event: {
-          type: 'hypercard.widget.v1',
+          type: 'timeline.upsert',
           id: 'evt-widget',
           data: {
-            itemId: 'widget-123',
-            title: 'Low Stock Widget',
-            widgetType: 'itemViewer',
-            data: {
-              artifact: {
-                id: 'artifact-widget-1',
-                data: { sku: 'WA-100' },
+            convId: 'conv-widget',
+            version: '17',
+            entity: {
+              id: 'evt-widget:result',
+              kind: 'hypercard.widget.v1',
+              createdAtMs: '1700',
+              updatedAtMs: '1701',
+              props: {
+                itemId: 'widget-123',
+                title: 'Low Stock Widget',
+                widgetType: 'itemViewer',
+                data: {
+                  artifact: {
+                    id: 'artifact-widget-1',
+                    data: { sku: 'WA-100' },
+                  },
+                },
               },
             },
           },

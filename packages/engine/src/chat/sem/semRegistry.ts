@@ -17,15 +17,6 @@ import {
   type LlmInferenceMetadataV1,
   LlmInferenceMetadataV1Schema,
 } from './pb/proto/sem/base/metadata_pb';
-import {
-  type ToolDelta,
-  ToolDeltaSchema,
-  ToolDoneSchema,
-  type ToolResult,
-  ToolResultSchema,
-  type ToolStart,
-  ToolStartSchema,
-} from './pb/proto/sem/base/tool_pb';
 import { type TimelineUpsertV2, TimelineUpsertV2Schema } from './pb/proto/sem/timeline/transport_pb';
 import { chatSessionSlice, type TurnStats } from '../state/chatSessionSlice';
 import { type TimelineEntity, timelineSlice } from '../state/timelineSlice';
@@ -47,8 +38,6 @@ export interface SemContext {
 }
 
 type Handler = (ev: SemEvent, ctx: SemContext) => void;
-type LlmStreamKind = 'llm' | 'thinking';
-type LlmStreamState = { role: string; emitted: boolean };
 type TimelineMessageState = { emitted: boolean };
 type UsageSnapshot = {
   inputTokens: number;
@@ -59,7 +48,6 @@ type UsageSnapshot = {
 };
 
 const handlers = new Map<string, Handler>();
-const llmStreamStates = new Map<string, LlmStreamState>();
 const timelineMessageStates = new Map<string, TimelineMessageState>();
 const activeStreamsByConv = new Map<string, Set<string>>();
 const llmUsageSnapshots = new Map<string, UsageSnapshot>();
@@ -70,7 +58,6 @@ export function registerSem(type: string, handler: Handler) {
 
 export function clearSemHandlers() {
   handlers.clear();
-  llmStreamStates.clear();
   timelineMessageStates.clear();
   activeStreamsByConv.clear();
   llmUsageSnapshots.clear();
@@ -267,90 +254,6 @@ function applyLlmMetadata(
   }
 }
 
-function defaultRoleForStream(kind: LlmStreamKind): string {
-  return kind === 'thinking' ? 'thinking' : 'assistant';
-}
-
-function llmStreamKey(ctx: SemContext, ev: SemEvent, kind: LlmStreamKind): string {
-  return `${ctx.convId}:${kind}:${ev.id}`;
-}
-
-function ensureLlmStreamState(ctx: SemContext, ev: SemEvent, kind: LlmStreamKind): {
-  key: string;
-  state: LlmStreamState;
-} {
-  const key = llmStreamKey(ctx, ev, kind);
-  const existing = llmStreamStates.get(key);
-  if (existing) {
-    return { key, state: existing };
-  }
-  const state: LlmStreamState = { role: defaultRoleForStream(kind), emitted: false };
-  llmStreamStates.set(key, state);
-  return { key, state };
-}
-
-function isNonEmptyText(value: unknown): value is string {
-  return typeof value === 'string' && value.trim().length > 0;
-}
-
-function setLlmStreamRole(ctx: SemContext, ev: SemEvent, kind: LlmStreamKind, role: unknown) {
-  const { state } = ensureLlmStreamState(ctx, ev, kind);
-  if (isNonEmptyText(role)) {
-    state.role = role;
-  }
-}
-
-function upsertLlmStreamText(
-  ctx: SemContext,
-  ev: SemEvent,
-  kind: LlmStreamKind,
-  text: unknown,
-  streaming: boolean
-) {
-  const { key, state } = ensureLlmStreamState(ctx, ev, kind);
-  if (!isNonEmptyText(text)) {
-    if (!streaming) {
-      if (state.emitted) {
-        upsertEntity(ctx, {
-          id: ev.id,
-          kind: 'message',
-          createdAt: createdAtFromEvent(ev),
-          updatedAt: Date.now(),
-          props: { role: state.role, streaming: false },
-        });
-      }
-      llmStreamStates.delete(key);
-    }
-    return;
-  }
-
-  upsertEntity(ctx, {
-    id: ev.id,
-    kind: 'message',
-    createdAt: createdAtFromEvent(ev),
-    updatedAt: Date.now(),
-    props: { role: state.role, content: text, streaming },
-  });
-  state.emitted = true;
-  if (!streaming) {
-    llmStreamStates.delete(key);
-  }
-}
-
-function closeLlmStream(ctx: SemContext, ev: SemEvent, kind: LlmStreamKind) {
-  const { key, state } = ensureLlmStreamState(ctx, ev, kind);
-  if (state.emitted) {
-    upsertEntity(ctx, {
-      id: ev.id,
-      kind: 'message',
-      createdAt: createdAtFromEvent(ev),
-      updatedAt: Date.now(),
-      props: { role: state.role, streaming: false },
-    });
-  }
-  llmStreamStates.delete(key);
-}
-
 function timelineMessageStateKey(convId: string, entityId: string): string {
   return `${convId}:${entityId}`;
 }
@@ -423,8 +326,7 @@ export function registerDefaultSemHandlers() {
   });
 
   registerSem('llm.start', (ev, ctx) => {
-    const data = decodeProto<LlmStart>(LlmStartSchema, ev.data);
-    setLlmStreamRole(ctx, ev, 'llm', data?.role);
+    decodeProto<LlmStart>(LlmStartSchema, ev.data);
     markStreamStarted(ctx, ev.id);
     applyLlmMetadata(ctx, ev);
   });
@@ -432,13 +334,11 @@ export function registerDefaultSemHandlers() {
   registerSem('llm.delta', (ev, ctx) => {
     const data = decodeProto<LlmDelta>(LlmDeltaSchema, ev.data);
     markStreamStarted(ctx, ev.id);
-    upsertLlmStreamText(ctx, ev, 'llm', data?.cumulative, true);
     applyLlmMetadata(ctx, ev, { textForEstimate: data?.cumulative });
   });
 
   registerSem('llm.final', (ev, ctx) => {
     const data = decodeProto<LlmFinal>(LlmFinalSchema, ev.data);
-    upsertLlmStreamText(ctx, ev, 'llm', data?.text, false);
     markStreamEnded(ctx, ev.id);
     applyLlmMetadata(ctx, ev, {
       finalize: true,
@@ -448,8 +348,7 @@ export function registerDefaultSemHandlers() {
   });
 
   registerSem('llm.thinking.start', (ev, ctx) => {
-    const data = decodeProto<LlmStart>(LlmStartSchema, ev.data);
-    setLlmStreamRole(ctx, ev, 'thinking', data?.role);
+    decodeProto<LlmStart>(LlmStartSchema, ev.data);
     markStreamStarted(ctx, ev.id);
     applyLlmMetadata(ctx, ev);
   });
@@ -457,67 +356,19 @@ export function registerDefaultSemHandlers() {
   registerSem('llm.thinking.delta', (ev, ctx) => {
     const data = decodeProto<LlmDelta>(LlmDeltaSchema, ev.data);
     markStreamStarted(ctx, ev.id);
-    upsertLlmStreamText(ctx, ev, 'thinking', data?.cumulative, true);
     applyLlmMetadata(ctx, ev, { textForEstimate: data?.cumulative });
   });
 
   registerSem('llm.thinking.final', (ev, ctx) => {
-    const _data = decodeProto(LlmDoneSchema, ev.data);
-    closeLlmStream(ctx, ev, 'thinking');
+    decodeProto(LlmDoneSchema, ev.data);
     markStreamEnded(ctx, ev.id);
     applyLlmMetadata(ctx, ev);
   });
 
   registerSem('llm.thinking.summary', (ev, ctx) => {
     const data = decodeProto<LlmFinal>(LlmFinalSchema, ev.data);
-    upsertLlmStreamText(ctx, ev, 'thinking', data?.text, false);
     markStreamEnded(ctx, ev.id);
     applyLlmMetadata(ctx, ev, { finalize: true, textForEstimate: data?.text });
-  });
-
-  registerSem('tool.start', (ev, ctx) => {
-    const data = decodeProto<ToolStart>(ToolStartSchema, ev.data);
-    addEntity(ctx, {
-      id: ev.id,
-      kind: 'tool_call',
-      createdAt: createdAtFromEvent(ev),
-      props: { name: data?.name, input: data?.input },
-    });
-  });
-
-  registerSem('tool.delta', (ev, ctx) => {
-    const data = decodeProto<ToolDelta>(ToolDeltaSchema, ev.data);
-    upsertEntity(ctx, {
-      id: ev.id,
-      kind: 'tool_call',
-      createdAt: createdAtFromEvent(ev),
-      updatedAt: Date.now(),
-      props: { ...(data?.patch ?? {}) },
-    });
-  });
-
-  registerSem('tool.result', (ev, ctx) => {
-    const data = decodeProto<ToolResult>(ToolResultSchema, ev.data);
-    const customKind = data?.customKind;
-    const id = customKind ? `${ev.id}:custom` : `${ev.id}:result`;
-    upsertEntity(ctx, {
-      id,
-      kind: 'tool_result',
-      createdAt: createdAtFromEvent(ev),
-      updatedAt: Date.now(),
-      props: { result: data?.result, customKind },
-    });
-  });
-
-  registerSem('tool.done', (ev, ctx) => {
-    const _data = decodeProto(ToolDoneSchema, ev.data);
-    upsertEntity(ctx, {
-      id: ev.id,
-      kind: 'tool_call',
-      createdAt: createdAtFromEvent(ev),
-      updatedAt: Date.now(),
-      props: { done: true },
-    });
   });
 
   registerSem('log', (ev, ctx) => {

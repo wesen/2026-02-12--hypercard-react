@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { chatSessionSlice } from '../state/chatSessionSlice';
+import { ASSISTANT_SUGGESTIONS_ENTITY_ID, readSuggestionsEntityProps } from '../state/suggestions';
 import { timelineSlice } from '../state/timelineSlice';
 import {
   clearSemHandlers,
@@ -49,7 +50,7 @@ describe('semRegistry', () => {
     );
   });
 
-  it('routes default handlers into conversation-scoped timeline actions', () => {
+  it('routes timeline.upsert entities into conversation-scoped timeline state', () => {
     const store = createStore();
     registerDefaultSemHandlers();
 
@@ -57,10 +58,22 @@ describe('semRegistry', () => {
       {
         sem: true,
         event: {
-          type: 'llm.delta',
+          type: 'timeline.upsert',
           id: 'msg-1',
           data: {
-            cumulative: 'Assistant text',
+            convId: 'conv-1',
+            version: '1',
+            entity: {
+              id: 'msg-1',
+              kind: 'message',
+              createdAtMs: '1',
+              updatedAtMs: '1',
+              props: {
+                role: 'assistant',
+                content: 'Assistant text',
+                streaming: true,
+              },
+            },
           },
         },
       },
@@ -71,10 +84,22 @@ describe('semRegistry', () => {
       {
         sem: true,
         event: {
-          type: 'llm.thinking.delta',
+          type: 'timeline.upsert',
           id: 'msg-1',
           data: {
-            cumulative: 'Thinking text',
+            convId: 'conv-2',
+            version: '1',
+            entity: {
+              id: 'msg-1',
+              kind: 'message',
+              createdAtMs: '1',
+              updatedAtMs: '1',
+              props: {
+                role: 'thinking',
+                content: 'Thinking text',
+                streaming: true,
+              },
+            },
           },
         },
       },
@@ -341,5 +366,77 @@ describe('semRegistry', () => {
         tps: 2,
       })
     );
+  });
+
+  it('restores assistant suggestions visibility when backend sends a new block', () => {
+    const store = createStore();
+    registerDefaultSemHandlers();
+
+    handleSem(
+      {
+        sem: true,
+        event: {
+          type: 'timeline.upsert',
+          id: ASSISTANT_SUGGESTIONS_ENTITY_ID,
+          data: {
+            convId: 'conv-suggestions',
+            version: '10',
+            entity: {
+              id: ASSISTANT_SUGGESTIONS_ENTITY_ID,
+              kind: 'suggestions',
+              createdAtMs: '1000',
+              updatedAtMs: '1000',
+              props: {
+                source: 'assistant',
+                consumedAt: null,
+                items: ['Open card'],
+              },
+            },
+          },
+        },
+      },
+      { convId: 'conv-suggestions', dispatch: store.dispatch }
+    );
+
+    store.dispatch(
+      timelineSlice.actions.consumeSuggestions({
+        convId: 'conv-suggestions',
+        entityId: ASSISTANT_SUGGESTIONS_ENTITY_ID,
+        consumedAt: 1234,
+      })
+    );
+
+    handleSem(
+      {
+        sem: true,
+        event: {
+          type: 'timeline.upsert',
+          id: ASSISTANT_SUGGESTIONS_ENTITY_ID,
+          data: {
+            convId: 'conv-suggestions',
+            version: '11',
+            entity: {
+              id: ASSISTANT_SUGGESTIONS_ENTITY_ID,
+              kind: 'suggestions',
+              createdAtMs: '1000',
+              updatedAtMs: '1100',
+              props: {
+                source: 'assistant',
+                consumedAt: null,
+                items: ['Open latest card'],
+              },
+            },
+          },
+        },
+      },
+      { convId: 'conv-suggestions', dispatch: store.dispatch }
+    );
+
+    const entity = store.getState().timeline.byConvId['conv-suggestions'].byId[ASSISTANT_SUGGESTIONS_ENTITY_ID];
+    expect(readSuggestionsEntityProps(entity)).toEqual({
+      source: 'assistant',
+      items: ['Open latest card'],
+      consumedAt: undefined,
+    });
   });
 });

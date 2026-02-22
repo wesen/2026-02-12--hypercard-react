@@ -25,7 +25,7 @@ function createStore() {
   });
 }
 
-describe('hypercard card handlers', () => {
+describe('hypercard card timeline projection', () => {
   beforeEach(() => {
     clearRuntimeCardRegistry();
     clearSemHandlers();
@@ -34,26 +34,37 @@ describe('hypercard card handlers', () => {
     ensureChatModulesRegistered();
   });
 
-  it('upserts hypercard_card entity and registers runtime card for hypercard.card.v2', async () => {
+  it('maps timeline.upsert hypercard.card.v2 and registers runtime card', async () => {
     const store = createStore();
 
     handleSem(
       {
         sem: true,
         event: {
-          type: 'hypercard.card.v2',
+          type: 'timeline.upsert',
           id: 'evt-card',
           data: {
-            itemId: 'card-123',
-            name: 'Low Stock Card',
-            data: {
-              artifact: {
-                id: 'artifact-card-1',
-                data: { sku: 'WA-100' },
-              },
-              card: {
-                id: 'runtime-low-stock',
-                code: '({ ui }) => ({ render() { return ui.text("low stock"); } })',
+            convId: 'conv-card',
+            version: '21',
+            entity: {
+              id: 'evt-card:result',
+              kind: 'hypercard.card.v2',
+              createdAtMs: '2100',
+              updatedAtMs: '2101',
+              props: {
+                itemId: 'card-123',
+                name: 'Low Stock Card',
+                title: 'Low Stock Card',
+                data: {
+                  artifact: {
+                    id: 'artifact-card-1',
+                    data: { sku: 'WA-100' },
+                  },
+                  card: {
+                    id: 'runtime-low-stock',
+                    code: '({ ui }) => ({ render() { return ui.text("low stock"); } })',
+                  },
+                },
               },
             },
           },
@@ -83,17 +94,29 @@ describe('hypercard card handlers', () => {
     expect(hasRuntimeCard('runtime-low-stock')).toBe(true);
   });
 
-  it('projects suggestions from hypercard.suggestions.v1 into timeline', () => {
+  it('projects backend timeline suggestions entity into selector state', () => {
     const store = createStore();
 
     handleSem(
       {
         sem: true,
         event: {
-          type: 'hypercard.suggestions.v1',
-          id: 'evt-suggestions',
+          type: 'timeline.upsert',
+          id: ASSISTANT_SUGGESTIONS_ENTITY_ID,
           data: {
-            suggestions: ['Open low stock card', 'Show margin report'],
+            convId: 'conv-card',
+            version: '22',
+            entity: {
+              id: ASSISTANT_SUGGESTIONS_ENTITY_ID,
+              kind: 'suggestions',
+              createdAtMs: '2200',
+              updatedAtMs: '2201',
+              props: {
+                source: 'assistant',
+                consumedAt: null,
+                items: ['Open low stock card', 'Show margin report'],
+              },
+            },
           },
         },
       },
