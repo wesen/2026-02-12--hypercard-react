@@ -133,3 +133,71 @@ The work also clarified the ring-buffer question: buffering exists and stores al
   - `timelineEntityFromProto(entity, snapshot.version)` applies same version to each entity in one snapshot.
 - Suggestions discrepancy:
   - frontend starter suggestions come from `ChatConversationWindow` local dispatch, while Go inventory timeline handlers do not register `hypercard.suggestions.*` projection.
+
+## Step 2: Refresh reMarkable Handoff Bundle
+
+After the documentation expansion was committed, this step refreshed the reMarkable handoff so onboarding material on-device matches the latest ticket analysis. This avoids intern confusion from stale PDFs.
+
+The step was intentionally narrow: upload updated docs, record it in changelog, and preserve continuity in the diary.
+
+### Prompt Context
+
+**User prompt (verbatim):** "continue"
+
+**Assistant interpretation:** Continue the HC-55 workflow from the prior completed state, including remaining operational handoff steps.
+
+**Inferred user intent:** Keep momentum and complete any obvious missing deliverables after the analysis/doc commit.
+
+**Commit (code):** N/A (documentation/ops-only step)
+
+### What I did
+
+- Checked `remarquee` command help and current auth status.
+- Uploaded a bundled PDF containing updated analysis + diary:
+  - `remarquee upload bundle ... --name HC-55-CHAT-HYDRATION-ROOTCAUSE-update --remote-dir /ai/2026/02/22/HC-55-CHAT-HYDRATION-ROOTCAUSE`
+- Appended changelog entry documenting refreshed upload.
+- Appended this diary step for traceability.
+
+### Why
+
+- The previous reMarkable upload predated the expanded Go/frontend discrepancy analysis.
+- Intern handoff quality requires device copy and repo copy to stay aligned.
+
+### What worked
+
+- Upload succeeded on first try with result:
+  - `OK: uploaded HC-55-CHAT-HYDRATION-ROOTCAUSE-update.pdf -> /ai/2026/02/22/HC-55-CHAT-HYDRATION-ROOTCAUSE`
+
+### What didn't work
+
+- N/A
+
+### What I learned
+
+- Keeping device handoff artifacts synchronized with ticket docs is low effort and prevents avoidable onboarding churn.
+
+### What was tricky to build
+
+- No implementation complexity; main risk was forgetting to update changelog/diary after successful upload.
+
+### What warrants a second pair of eyes
+
+- Verify the uploaded PDF opens correctly on device and includes both analysis and diary pages.
+
+### What should be done in the future
+
+- Continue uploading refreshed bundles whenever major ticket docs materially change.
+
+### Code review instructions
+
+- Confirm changelog includes refreshed upload entry:
+  - `ttmp/2026/02/21/HC-55-CHAT-HYDRATION-ROOTCAUSE--investigate-focus-triggered-chat-reconnect-and-hydration-root-cause/changelog.md`
+- Confirm diary includes Step 2 and command/result details:
+  - `ttmp/2026/02/21/HC-55-CHAT-HYDRATION-ROOTCAUSE--investigate-focus-triggered-chat-reconnect-and-hydration-root-cause/reference/01-diary.md`
+
+### Technical details
+
+- Command used:
+  - `remarquee upload bundle 2026-02-12--hypercard-react/ttmp/2026/02/21/HC-55-CHAT-HYDRATION-ROOTCAUSE--investigate-focus-triggered-chat-reconnect-and-hydration-root-cause/analysis/01-bug-report-focus-triggered-reconnect-and-timeline-hydration-instability.md 2026-02-12--hypercard-react/ttmp/2026/02/21/HC-55-CHAT-HYDRATION-ROOTCAUSE--investigate-focus-triggered-chat-reconnect-and-hydration-root-cause/reference/01-diary.md --name HC-55-CHAT-HYDRATION-ROOTCAUSE-update --remote-dir /ai/2026/02/22/HC-55-CHAT-HYDRATION-ROOTCAUSE`
+- Output:
+  - `OK: uploaded HC-55-CHAT-HYDRATION-ROOTCAUSE-update.pdf -> /ai/2026/02/22/HC-55-CHAT-HYDRATION-ROOTCAUSE`
