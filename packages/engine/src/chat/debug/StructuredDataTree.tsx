@@ -56,13 +56,7 @@ function TreeNode({ value, path, depth, maxDepth, defaultCollapsed }: TreeNodePr
 
   // primitives
   if (typeof value === 'string') {
-    return (
-      <ScalarLine
-        label={path}
-        value={value.length > 200 ? `"${value.slice(0, 200)}…"` : `"${value}"`}
-        color="#a5d6ff"
-      />
-    );
+    return <StringLine label={path} rawValue={value} />;
   }
   if (typeof value === 'number') return <ScalarLine label={path} value={String(value)} color="#79c0ff" />;
   if (typeof value === 'boolean') return <ScalarLine label={path} value={String(value)} color="#ff7b72" />;
@@ -140,6 +134,30 @@ function ScalarLine({ label, value, color }: { label: string; value: string; col
 }
 
 // ---------------------------------------------------------------------------
+// Expandable long string line
+// ---------------------------------------------------------------------------
+
+const STRING_TRUNCATE_THRESHOLD = 200;
+
+function StringLine({ label, rawValue }: { label: string; rawValue: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = rawValue.length > STRING_TRUNCATE_THRESHOLD;
+  const display = isLong && !expanded ? `"${rawValue.slice(0, STRING_TRUNCATE_THRESHOLD)}…"` : `"${rawValue}"`;
+
+  return (
+    <div style={{ paddingLeft: 4 }}>
+      <span style={keyStyle}>{label}: </span>
+      <span style={{ ...scalarStyle, color: '#a5d6ff' }}>{display}</span>
+      {isLong && (
+        <button type="button" onClick={() => setExpanded((e) => !e)} style={expandBtnStyle}>
+          {expanded ? '▲ less' : `▼ ${rawValue.length} chars`}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Collapsible branch
 // ---------------------------------------------------------------------------
 
@@ -195,4 +213,15 @@ const keyStyle: React.CSSProperties = {
 
 const scalarStyle: React.CSSProperties = {
   wordBreak: 'break-all',
+};
+
+const expandBtnStyle: React.CSSProperties = {
+  marginLeft: 6,
+  padding: '0 4px',
+  fontSize: 9,
+  border: 'none',
+  background: 'none',
+  color: '#6b7280',
+  cursor: 'pointer',
+  verticalAlign: 'baseline',
 };
