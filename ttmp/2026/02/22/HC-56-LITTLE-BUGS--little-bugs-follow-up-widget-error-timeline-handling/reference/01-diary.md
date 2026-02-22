@@ -55,7 +55,7 @@ close HC-01, HC-55. Then Make a new ticket for little bugs, and add an analysis 
 
 **Inferred user intent:** Maintain clean ticket boundaries while quickly resolving concrete runtime correctness gaps.
 
-**Commit (code):** pending
+**Commit (code):** `753cb0c` — "docs: close hc-01/hc-55 and open hc-56 little-bugs ticket"
 
 ### What I did
 
@@ -108,3 +108,89 @@ close HC-01, HC-55. Then Make a new ticket for little bugs, and add an analysis 
   - backend emits `hypercard.widget.error` SEM frame
   - backend timeline projection creates status entity only
   - frontend persisted widget render path expects `timeline.upsert` of widget kind (`hypercard.widget.v1` remapped).
+
+## Step 2: Implement `hypercard.widget.error` Projection and Remap
+
+This step implemented the bug fix end-to-end across backend projection and frontend timeline remapping. The goal was to preserve the backend-authoritative contract while still producing a renderable widget error entity for timeline UI.
+
+The fix keeps existing status entries and adds canonical widget-entity materialization for error events, then maps that entity to `status=error` on the frontend.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 1)
+
+**Assistant interpretation:** Implement the specific widget-error handling gap after creating the little-bugs ticket.
+
+**Inferred user intent:** Make this class of runtime failure visible in the timeline UI and fully traceable through tests.
+
+**Commit (code):** `460db7b` — "hypercard: persist and render widget.error timeline state"
+
+### What I did
+
+- Backend (`go-inventory-chat/internal/pinoweb/hypercard_events.go`):
+  - extended `registerResult` to propagate `error` into `ToolResultSnapshotV1.Error`
+  - added projection mapping:
+    - `hypercard.widget.error` -> timeline kind `hypercard.widget.v1`
+- Backend test (`go-inventory-chat/internal/pinoweb/hypercard_timeline_handlers_test.go`):
+  - added regression verifying one widget-error frame creates:
+    - `widget-call-1:status` (error status)
+    - `widget-call-1:result` (`hypercard.widget.v1` with error payload)
+- Frontend mapper (`packages/engine/src/chat/sem/timelineMapper.ts`):
+  - remap logic now detects error in props/result and maps to:
+    - `status: error`
+    - `detail: <error message>`
+  - success path remains `status: success`, `detail: ready`
+- Frontend test (`packages/engine/src/chat/sem/timelineMapper.test.ts`):
+  - added regression for hypercard widget error remap behavior.
+- Ran targeted validations:
+  - `go test ./2026-02-12--hypercard-react/go-inventory-chat/internal/pinoweb -count=1`
+  - `pnpm vitest packages/engine/src/chat/sem/timelineMapper.test.ts`
+  - `pnpm vitest packages/engine/src/hypercard/timeline/hypercardWidget.test.ts`
+
+### Why
+
+- After backend-authoritative timeline migration, direct frontend SEM handlers no longer materialize persisted widget entities.
+- Error events were visible as status text only, missing canonical widget entity updates.
+
+### What worked
+
+- Projection + remap now produce consistent timeline entities for widget error states.
+- Targeted Go and TS tests pass.
+
+### What didn't work
+
+- N/A
+
+### What I learned
+
+- Error events must flow through the same canonical kind pipeline as success events when UI entity semantics depend on remappers.
+
+### What was tricky to build
+
+- Avoiding architecture regression: the fix needed to stay within backend-authoritative projection rules instead of reintroducing direct frontend SEM mutation handlers.
+
+### What warrants a second pair of eyes
+
+- Whether `hypercard.card.error` should receive the same canonical projection treatment in a follow-up for strict symmetry.
+
+### What should be done in the future
+
+- Add one integration-level assertion in inventory app tests that a real widget parse failure renders a visible error-state widget row.
+
+### Code review instructions
+
+- Review backend projection changes first:
+  - `go-inventory-chat/internal/pinoweb/hypercard_events.go`
+  - `go-inventory-chat/internal/pinoweb/hypercard_timeline_handlers_test.go`
+- Review frontend remap behavior second:
+  - `packages/engine/src/chat/sem/timelineMapper.ts`
+  - `packages/engine/src/chat/sem/timelineMapper.test.ts`
+
+### Technical details
+
+- New event mapping path:
+  - incoming SEM `hypercard.widget.error`
+  - backend timeline projector upserts:
+    - status entity (`<id>:status`)
+    - result entity (`<id>:result`, kind `hypercard.widget.v1`, with `error` field)
+  - frontend remapper converts that result entity into `hypercard_widget` with error status/detail.

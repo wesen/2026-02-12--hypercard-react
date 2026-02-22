@@ -1,7 +1,7 @@
 ---
 Title: 'Little bugs follow-up: widget error timeline handling'
 Ticket: HC-56-LITTLE-BUGS
-Status: active
+Status: complete
 Topics:
     - chat
     - frontend
@@ -12,11 +12,12 @@ Intent: long-term
 Owners: []
 RelatedFiles: []
 ExternalSources: []
-Summary: ""
-LastUpdated: 2026-02-22T16:56:50.215085139-05:00
+Summary: Fixes little bug where `hypercard.widget.error` did not materialize a persisted widget error entity in timeline UI.
+LastUpdated: 2026-02-22T17:00:12.434605083-05:00
 WhatFor: Track and fix small correctness bugs after HC-01/HC-55 closure.
 WhenToUse: Use as the entry point for little bug follow-ups, starting with hypercard widget error projection.
 ---
+
 
 # Little bugs follow-up: widget error timeline handling
 
@@ -41,7 +42,7 @@ Primary scope for this ticket:
 
 ## Status
 
-Current status: **active**
+Current status: **complete**
 
 ## Topics
 
