@@ -275,3 +275,229 @@ Add tasks to the ticket, the nexecute the tasks one by one , committing as you g
   - 11.1 -> first-seen chronological ordering
   - 11.2 -> backend-projected persisted entities
   - 11.3 -> latest suggestions block displayed in UI
+
+## Step 4: Implement Canonical First-Seen Ordering in Backend Timeline Stores
+
+This step implemented the core ordering contract change in the backend storage layer so hydration snapshots are deterministic by first appearance instead of last update. That directly targets the timeline reorder seen after reconnect/hydrate.
+
+I changed both SQLite and in-memory timeline stores together to keep behavior consistent across runtime configurations.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 3)
+
+**Assistant interpretation:** Execute Task 1 by enforcing chronological first-seen ordering in snapshot reads.
+
+**Inferred user intent:** Remove backend/frontend ordering mismatch at the source.
+
+**Commit (code):** `82e3c99` — "timeline: return snapshots in first-seen entity order"
+
+### What I did
+
+- Updated SQLite snapshot queries to sort by `created_at_ms ASC, entity_id ASC` for both full and incremental snapshot reads.
+- Updated in-memory snapshot sort logic to use first-seen `createdAtMs` ordering.
+- Updated SQLite and in-memory store tests to assert first-seen ordering.
+- Ran tests:
+  - `go test ./pinocchio/pkg/persistence/chatstore -count=1`
+- Pre-commit hook additionally ran full pinocchio checks (`go test ./...`, generate/build/lint/vet) and passed.
+
+### Why
+
+- Existing full hydration ordered by entity last-write `version`, which can reorder previously displayed entities after reconnect.
+
+### What worked
+
+- Store tests passed with updated expectations.
+- Full repository pre-commit checks passed.
+
+### What didn't work
+
+- N/A
+
+### What I learned
+
+- `created_at_ms` was already persisted and stable per entity, so the ordering contract change did not require schema migrations.
+
+### What was tricky to build
+
+- Incremental snapshots historically implied "projection order" by version. Changing them to first-seen required consciously preserving the version filter (`version > since`) while sorting by created-at for UI order stability.
+
+### What warrants a second pair of eyes
+
+- Any consumers relying on incremental snapshot version-sort semantics (outside chat UI hydration) should be validated.
+
+### What should be done in the future
+
+- Validate incremental snapshot consumers against the new ordering contract.
+
+### Code review instructions
+
+- Review query/sort changes first:
+  - `/home/manuel/workspaces/2026-02-21/hypercard-qol/pinocchio/pkg/persistence/chatstore/timeline_store_sqlite.go`
+  - `/home/manuel/workspaces/2026-02-21/hypercard-qol/pinocchio/pkg/persistence/chatstore/timeline_store_memory.go`
+- Then verify updated tests:
+  - `/home/manuel/workspaces/2026-02-21/hypercard-qol/pinocchio/pkg/persistence/chatstore/timeline_store_sqlite_test.go`
+  - `/home/manuel/workspaces/2026-02-21/hypercard-qol/pinocchio/pkg/persistence/chatstore/timeline_store_memory_test.go`
+
+### Technical details
+
+- Old full snapshot order: `ORDER BY version ASC, entity_id ASC`
+- New full snapshot order: `ORDER BY created_at_ms ASC, entity_id ASC`
+
+## Step 5: Persist Hypercard Suggestions via Backend Timeline Projection
+
+This step made assistant suggestions part of backend timeline projection so they survive hydration and do not disappear when frontend-only state is replaced/merged.
+
+I intentionally projected all `hypercard.suggestions.*` event variants into one canonical timeline entity (`suggestions:assistant`) to enforce latest-block semantics.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 3)
+
+**Assistant interpretation:** Execute Task 2 by adding backend timeline handlers for suggestions and ensuring a single visible latest block.
+
+**Inferred user intent:** Keep suggestions aligned between live view and hydrated view, with no stale multi-block clutter.
+
+**Commit (code):** `b798ac2` — "go-inventory-chat: project hypercard suggestions into timeline"
+
+### What I did
+
+- Added timeline handlers for:
+  - `hypercard.suggestions.start`
+  - `hypercard.suggestions.update`
+  - `hypercard.suggestions.v1`
+- Each handler now upserts:
+  - `id: suggestions:assistant`
+  - `kind: suggestions`
+  - `props: { source: assistant, items: [...], consumedAt: null }`
+- Added regression test:
+  - `TestHypercardTimelineHandlers_SuggestionsProjectToSingleAssistantEntity`
+- Ran tests:
+  - `go test ./2026-02-12--hypercard-react/go-inventory-chat/internal/pinoweb -count=1`
+
+### Why
+
+- Suggestions previously arrived via raw SEM but were not persisted in backend timeline snapshot, causing hydrate mismatch.
+
+### What worked
+
+- Projection test confirms a single assistant suggestions entity is persisted and overwritten by the newest block.
+
+### What didn't work
+
+- First implementation passed `[]string` directly to `structpb.NewStruct`, which failed with:
+  - `proto: invalid type: []string`
+- Fixed by converting to `[]any` before struct construction.
+
+### What I learned
+
+- `structpb.NewStruct` requires JSON-compatible `[]any` for arrays; typed slices need explicit conversion.
+
+### What was tricky to build
+
+- Clearing consumed state correctly for new suggestion blocks required explicit `consumedAt: null` in projected props, otherwise generic prop merge can preserve old consumed markers.
+
+### What warrants a second pair of eyes
+
+- Confirm `consumedAt: null` behavior is consistent across all mappers and debug exports.
+
+### What should be done in the future
+
+- Add e2e validation around selecting a suggestion and receiving a new suggestion block.
+
+### Code review instructions
+
+- Review new suggestions timeline handlers:
+  - `go-inventory-chat/internal/pinoweb/hypercard_events.go`
+- Review regression test:
+  - `go-inventory-chat/internal/pinoweb/hypercard_timeline_handlers_test.go`
+
+### Technical details
+
+- Canonical entity id for assistant suggestions is now always `suggestions:assistant`.
+
+## Step 6: Make Backend Projection Authoritative on Frontend for Persisted Entities
+
+This step removed local frontend projection writes for persisted llm/tool/hypercard entities and shifted to consuming backend `timeline.upsert` as the authoritative path. Telemetry/session metadata updates remain from raw llm metadata events.
+
+I also updated tests to validate the new projection contract and added a regression test for suggestion re-visibility when a new backend suggestion block arrives.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 3)
+
+**Assistant interpretation:** Execute Tasks 3-5 by enforcing backend timeline authority and confirming latest-suggestions behavior with tests.
+
+**Inferred user intent:** Remove dual-projection drift and stabilize UI state across hydration/reconnect.
+
+**Commit (code):** `6a827ed` — "engine: make timeline.upsert authoritative for persisted entities"
+
+### What I did
+
+- In `semRegistry`:
+  - removed local timeline entity writes from direct `llm.*` handlers
+  - removed local timeline entity writes from direct `tool.*` handlers
+  - kept stream/session metadata handling and `timeline.upsert` processing
+- In hypercard module bootstrap:
+  - stopped registering direct hypercard SEM timeline mutators
+  - kept renderer registration
+- Updated tests:
+  - `semRegistry.test.ts`
+  - `registerChatModules.test.ts`
+  - `hypercardWidget.test.ts`
+  - `hypercardCard.test.ts`
+- Added regression test:
+  - assistant suggestions become visible again when backend sends a new block after previous consumption.
+- Ran tests:
+  - `pnpm vitest packages/engine/src/chat/sem/semRegistry.test.ts packages/engine/src/chat/runtime/registerChatModules.test.ts packages/engine/src/hypercard/timeline/hypercardWidget.test.ts packages/engine/src/hypercard/timeline/hypercardCard.test.ts`
+
+### Why
+
+- Dual projection paths caused semantic drift risk and inconsistent ordering/visibility after hydrate.
+
+### What worked
+
+- Updated tests now pass using backend `timeline.upsert` mapping path.
+- Suggestion re-visibility regression is covered.
+
+### What didn't work
+
+- Initial test updates failed in two places:
+  - `registerChatModules.test.ts` assumed local timeline conversation exists after `llm.delta`
+  - `hypercardCard.test.ts` expected card title from `name` while mapper defaults to `title` (or fallback)
+- Resolved by:
+  - asserting session telemetry instead of local timeline message creation
+  - including `title` in test timeline-upsert payload
+
+### What I learned
+
+- Existing tests captured prior hybrid projection behavior; switching authority to backend projection requires explicit test-contract updates.
+
+### What was tricky to build
+
+- Preserving chat telemetry while removing local persisted entity writes required separating "session/stream signals" from "timeline materialization" responsibilities in handlers.
+
+### What warrants a second pair of eyes
+
+- Confirm no user-visible latency regressions from relying on timeline.upsert path for message/tool materialization.
+
+### What should be done in the future
+
+- Add targeted UX check for first-token display timing under high latency.
+
+### Code review instructions
+
+- Start with semantic change:
+  - `packages/engine/src/chat/sem/semRegistry.ts`
+- Then module wiring:
+  - `packages/engine/src/hypercard/timeline/registerHypercardTimeline.ts`
+- Then contract tests:
+  - `packages/engine/src/chat/sem/semRegistry.test.ts`
+  - `packages/engine/src/chat/runtime/registerChatModules.test.ts`
+  - `packages/engine/src/hypercard/timeline/hypercardWidget.test.ts`
+  - `packages/engine/src/hypercard/timeline/hypercardCard.test.ts`
+
+### Technical details
+
+- Persisted timeline entities now enter frontend state via `timeline.upsert`.
+- Direct llm/tool handlers remain for stream/session metadata only.
