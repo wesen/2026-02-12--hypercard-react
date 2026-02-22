@@ -35,6 +35,7 @@ Primary scope for this ticket:
 
 - Analysis:
   - `analysis/01-hypercard-widget-error-timeline-handling-gap.md`
+  - `analysis/02-widget-open-edit-behavior-and-hydration-artifact-projection-gap.md`
 - Tasks:
   - `tasks.md`
 - Diary:

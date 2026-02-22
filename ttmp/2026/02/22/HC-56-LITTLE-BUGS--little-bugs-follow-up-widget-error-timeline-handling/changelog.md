@@ -26,3 +26,14 @@ Implemented widget-error projection/remap fix: backend now projects `hypercard.w
 - /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/packages/engine/src/chat/sem/timelineMapper.ts — Map widget/card errors to `status=error` and detailed message
 - /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/packages/engine/src/chat/sem/timelineMapper.test.ts — Added widget error remap regression test
 - /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/ttmp/2026/02/22/HC-56-LITTLE-BUGS--little-bugs-follow-up-widget-error-timeline-handling/tasks.md — Marked implementation tasks complete
+
+## 2026-02-22
+
+Fixed widget open/edit UX and hydration artifact projection mismatch (commit 23e6a8d): widget `Edit` now opens code editor window, and artifact projection middleware now handles `timeline.mergeSnapshot` so hydrated artifacts are available to report/item viewers.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/packages/engine/src/hypercard/timeline/hypercardWidget.tsx — Split Open vs Edit behavior for widgets
+- /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/packages/engine/src/hypercard/artifacts/artifactProjectionMiddleware.ts — Added `mergeSnapshot` projection path
+- /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/packages/engine/src/hypercard/artifacts/artifactProjectionMiddleware.test.ts — Added mergeSnapshot regression test
+- /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/ttmp/2026/02/22/HC-56-LITTLE-BUGS--little-bugs-follow-up-widget-error-timeline-handling/analysis/02-widget-open-edit-behavior-and-hydration-artifact-projection-gap.md — Added focused bug analysis

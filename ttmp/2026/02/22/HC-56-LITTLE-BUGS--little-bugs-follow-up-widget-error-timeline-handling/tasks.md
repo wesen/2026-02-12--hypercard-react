@@ -14,4 +14,7 @@
 
 - [x] Created ticket HC-56-LITTLE-BUGS
 - [x] Added analysis doc for `hypercard.widget.error` handling gap
+- [x] Added analysis doc for widget open/edit behavior and hydration artifact projection gap
 - [x] Added diary doc scaffold
+- [x] Fixed widget `Edit` action to open code editor instead of reusing `Open` behavior
+- [x] Fixed artifact projection middleware to process `timeline.mergeSnapshot`

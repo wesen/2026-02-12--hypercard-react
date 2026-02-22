@@ -194,3 +194,91 @@ The fix keeps existing status entries and adds canonical widget-entity materiali
     - status entity (`<id>:status`)
     - result entity (`<id>:result`, kind `hypercard.widget.v1`, with `error` field)
   - frontend remapper converts that result entity into `hypercard_widget` with error status/detail.
+
+## Step 3: Fix Widget Open/Edit Behavior and Hydration Artifact Projection
+
+This step addressed a second little bug report: widget `Edit` used the same action as `Open`, and hydrated artifact windows could fail with "Artifact not found" due to missing projection on merge-hydration actions.
+
+The implementation stayed within existing architecture by fixing action wiring in widget renderer and extending artifact projection middleware coverage for `mergeSnapshot`.
+
+### Prompt Context
+
+**User prompt (verbatim):** "Another bug: Hwne I have a hypercard_widget and I click open, I get a template failure. When I click edit, I get the same window (but I shoudl get a text editor). 
+
+event:
+  data:
+    error: |
+  yaml: unmarshal errors:
+    line 7: mapping key \"artifact\" already defined at line 3
+    itemId: \"c5250a0a-b817-429f-88b2-cd278a17c8c8:1\"
+  id: \"c5250a0a-b817-429f-88b2-cd278a17c8c8:1\"
+  seq: 1771797194807000000
+  type: hypercard.widget.error
+sem: true
+
+---
+
+Here I get a window \"Current Inventory Status\" that says \"Report Viwer\" and then \"Artifact not found: inventory-status-current\""
+
+**Assistant interpretation:** Fix widget action UX and investigate why artifact viewer fails after hydration for existing widget entities.
+
+**Inferred user intent:** Ensure widget controls behave correctly (`Open` vs `Edit`) and eliminate false missing-artifact failures.
+
+**Commit (code):** `23e6a8d` — "hypercard: fix widget open/edit and hydrate artifact projection"
+
+### What I did
+
+- Updated `HypercardWidgetRenderer`:
+  - `Edit` now opens code editor window (`buildCodeEditorWindowPayload`) instead of reusing `openArtifact`.
+  - `Open` remains artifact window action.
+- Updated artifact projection middleware:
+  - added `timeline.mergeSnapshot` handling so hydration merge entities project into artifacts slice.
+- Added test coverage for merge-snapshot artifact projection.
+- Ran targeted tests:
+  - `pnpm vitest packages/engine/src/hypercard/artifacts/artifactProjectionMiddleware.test.ts`
+  - `pnpm vitest packages/engine/src/hypercard/timeline/hypercardWidget.test.ts`
+
+### Why
+
+- `Edit` and `Open` being identical is an obvious UX bug.
+- Hydration path uses `mergeSnapshot`; without projection on that action, viewers can open against missing artifact slice state.
+
+### What worked
+
+- Targeted tests passed after middleware and widget renderer updates.
+- Merge-snapshot regression test now guards against hydration projection drift.
+
+### What didn't work
+
+- N/A
+
+### What I learned
+
+- Action parity bugs and projection-path coverage bugs can combine to look like template/runtime rendering failures from user perspective.
+
+### What was tricky to build
+
+- The artifact viewer failure looked template-related, but root cause was state projection timing/coverage (`mergeSnapshot` not handled) rather than template resolution itself.
+
+### What warrants a second pair of eyes
+
+- Consider adding explicit UI affordance when `Open` is unavailable but `Edit` is available (currently button visibility is heuristic by artifact/template presence).
+
+### What should be done in the future
+
+- Add integration-level check covering a real hydration cycle then widget-open click path in inventory app harness.
+
+### Code review instructions
+
+- Renderer behavior split:
+  - `packages/engine/src/hypercard/timeline/hypercardWidget.tsx`
+- Projection coverage:
+  - `packages/engine/src/hypercard/artifacts/artifactProjectionMiddleware.ts`
+  - `packages/engine/src/hypercard/artifacts/artifactProjectionMiddleware.test.ts`
+
+### Technical details
+
+- Middleware now listens to both snapshot actions:
+  - `timeline.applySnapshot`
+  - `timeline.mergeSnapshot`
+- Widget edit path uses code-editor app key window payload instead of artifact card payload.
