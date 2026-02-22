@@ -1,5 +1,5 @@
 import type { ChatConnectionStatus } from '../state/chatSessionSlice';
-import { emitConversationEvent } from '../debug/eventBus';
+import { clearConversationEventHistory, emitConversationEvent } from '../debug/eventBus';
 import { fetchTimelineSnapshot, submitPrompt } from './http';
 import { ensureChatModulesRegistered } from './registerChatModules';
 import { WsManager } from '../ws/wsManager';
@@ -65,6 +65,7 @@ export class ConversationManager {
 
     session.ws.disconnect();
     this.sessions.delete(convId);
+    clearConversationEventHistory(convId);
   }
 
   async send(prompt: string, convId: string, basePrefix = ''): Promise<void> {
