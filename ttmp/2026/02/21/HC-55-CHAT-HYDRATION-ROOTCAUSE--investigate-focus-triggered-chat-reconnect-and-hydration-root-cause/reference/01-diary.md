@@ -516,7 +516,7 @@ The test target is the exact sequence we care about after the architecture decis
 
 **Inferred user intent:** Ensure the focus-triggered remount path is observable and regression-tested, not only inferred from code reading.
 
-**Commit (code):** pending in current working commit
+**Commit (code):** `21a7643` — "ws: trace reconnect hydrate lifecycle and close hc-55"
 
 ### What I did
 
