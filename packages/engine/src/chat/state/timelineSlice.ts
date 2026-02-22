@@ -74,6 +74,54 @@ function ensureConversationTimeline(state: TimelineState, convId: string): Conve
   return state.byConvId[convId];
 }
 
+function upsertConversationEntity(conv: ConversationTimelineState, entity: TimelineEntity) {
+  const existing = conv.byId[entity.id];
+
+  if (!existing) {
+    conv.byId[entity.id] = entity;
+    conv.order.push(entity.id);
+    return;
+  }
+
+  const incomingVersion =
+    typeof entity.version === 'number' && Number.isFinite(entity.version) ? entity.version : 0;
+  const existingVersion =
+    typeof existing.version === 'number' && Number.isFinite(existing.version) ? existing.version : 0;
+
+  if (incomingVersion > 0) {
+    if (incomingVersion < existingVersion) {
+      return;
+    }
+
+    conv.byId[entity.id] = {
+      ...existing,
+      ...entity,
+      createdAt: entity.createdAt || existing.createdAt,
+      kind: entity.kind || existing.kind,
+      version: incomingVersion,
+      props: { ...(existing.props as Record<string, unknown>), ...(entity.props as Record<string, unknown>) },
+    };
+    return;
+  }
+
+  if (existingVersion > 0) {
+    conv.byId[entity.id] = {
+      ...existing,
+      updatedAt: entity.updatedAt ?? existing.updatedAt,
+      props: { ...(existing.props as Record<string, unknown>), ...(entity.props as Record<string, unknown>) },
+    };
+    return;
+  }
+
+  conv.byId[entity.id] = {
+    ...existing,
+    ...entity,
+    createdAt: existing.createdAt,
+    kind: entity.kind || existing.kind,
+    props: { ...(existing.props as Record<string, unknown>), ...(entity.props as Record<string, unknown>) },
+  };
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
     return value as Record<string, unknown>;
@@ -133,51 +181,7 @@ export const timelineSlice = createSlice({
     upsertEntity(state, action: PayloadAction<ConversationEntityPayload>) {
       const { convId, entity } = action.payload;
       const conv = ensureConversationTimeline(state, convId);
-      const existing = conv.byId[entity.id];
-
-      if (!existing) {
-        conv.byId[entity.id] = entity;
-        conv.order.push(entity.id);
-        return;
-      }
-
-      const incomingVersion =
-        typeof entity.version === 'number' && Number.isFinite(entity.version) ? entity.version : 0;
-      const existingVersion =
-        typeof existing.version === 'number' && Number.isFinite(existing.version) ? existing.version : 0;
-
-      if (incomingVersion > 0) {
-        if (incomingVersion < existingVersion) {
-          return;
-        }
-
-        conv.byId[entity.id] = {
-          ...existing,
-          ...entity,
-          createdAt: entity.createdAt || existing.createdAt,
-          kind: entity.kind || existing.kind,
-          version: incomingVersion,
-          props: { ...(existing.props as Record<string, unknown>), ...(entity.props as Record<string, unknown>) },
-        };
-        return;
-      }
-
-      if (existingVersion > 0) {
-        conv.byId[entity.id] = {
-          ...existing,
-          updatedAt: entity.updatedAt ?? existing.updatedAt,
-          props: { ...(existing.props as Record<string, unknown>), ...(entity.props as Record<string, unknown>) },
-        };
-        return;
-      }
-
-      conv.byId[entity.id] = {
-        ...existing,
-        ...entity,
-        createdAt: existing.createdAt,
-        kind: entity.kind || existing.kind,
-        props: { ...(existing.props as Record<string, unknown>), ...(entity.props as Record<string, unknown>) },
-      };
+      upsertConversationEntity(conv, entity);
     },
 
     upsertSuggestions(state, action: PayloadAction<UpsertSuggestionsPayload>) {
@@ -262,6 +266,16 @@ export const timelineSlice = createSlice({
       }
 
       state.byConvId[convId] = { byId, order };
+    },
+
+    mergeSnapshot(state, action: PayloadAction<ApplySnapshotPayload>) {
+      const { convId, entities } = action.payload;
+      const conv = ensureConversationTimeline(state, convId);
+
+      for (const entity of entities) {
+        if (!entity?.id) continue;
+        upsertConversationEntity(conv, entity);
+      }
     },
 
     clearConversation(state, action: PayloadAction<{ convId: string }>) {

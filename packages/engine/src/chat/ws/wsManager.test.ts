@@ -5,6 +5,7 @@ import {
   ensureChatModulesRegistered,
   resetChatModulesRegistrationForTest,
 } from '../runtime/registerChatModules';
+import { STARTER_SUGGESTIONS_ENTITY_ID } from '../state/suggestions';
 import { chatSessionSlice } from '../state/chatSessionSlice';
 import { timelineSlice } from '../state/timelineSlice';
 import { WsManager } from './wsManager';
@@ -142,6 +143,101 @@ describe('wsManager', () => {
     const state = store.getState();
     expect(fetchImpl).toHaveBeenCalledWith('/api/timeline?conv_id=conv-hydrate');
     expect(state.timeline.byConvId['conv-hydrate'].order).toEqual(['msg-buffered']);
+
+    manager.disconnect();
+  });
+
+  it('hydrates by merging snapshot without clearing existing timeline order', async () => {
+    const store = createStore();
+    const manager = new WsManager();
+    const sockets: MockWebSocket[] = [];
+
+    store.dispatch(
+      timelineSlice.actions.addEntity({
+        convId: 'conv-focus',
+        entity: {
+          id: STARTER_SUGGESTIONS_ENTITY_ID,
+          kind: 'suggestions',
+          createdAt: 10,
+          version: 1,
+          props: { source: 'starter', items: ['Summarize today sales'], consumedAt: 20 },
+        },
+      })
+    );
+    store.dispatch(
+      timelineSlice.actions.addEntity({
+        convId: 'conv-focus',
+        entity: {
+          id: 'user-1',
+          kind: 'message',
+          createdAt: 11,
+          version: 1,
+          props: { role: 'user', content: 'Summarize today sales' },
+        },
+      })
+    );
+    store.dispatch(
+      timelineSlice.actions.addEntity({
+        convId: 'conv-focus',
+        entity: {
+          id: 'assistant-1',
+          kind: 'message',
+          createdAt: 12,
+          version: 1,
+          props: { role: 'assistant', content: 'Initial summary' },
+        },
+      })
+    );
+
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        convId: 'conv-focus',
+        version: '99',
+        serverTimeMs: '0',
+        entities: [
+          {
+            id: 'assistant-1',
+            kind: 'message',
+            createdAtMs: '12',
+            updatedAtMs: '13',
+            props: { role: 'assistant', content: 'Hydrated summary' },
+          },
+          {
+            id: 'status-1',
+            kind: 'status',
+            createdAtMs: '14',
+            updatedAtMs: '14',
+            props: { text: 'Updating widget' },
+          },
+        ],
+      }),
+    }));
+
+    const connectPromise = manager.connect({
+      convId: 'conv-focus',
+      dispatch: store.dispatch,
+      wsFactory: (url) => {
+        const socket = new MockWebSocket(url);
+        sockets.push(socket);
+        return socket as unknown as WebSocket;
+      },
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+      location: { protocol: 'http:', host: 'localhost' },
+    });
+
+    expect(sockets).toHaveLength(1);
+    sockets[0].emitOpen();
+    await connectPromise;
+
+    const conv = store.getState().timeline.byConvId['conv-focus'];
+    expect(conv.order).toEqual([STARTER_SUGGESTIONS_ENTITY_ID, 'user-1', 'assistant-1', 'status-1']);
+    expect(conv.byId[STARTER_SUGGESTIONS_ENTITY_ID]).toBeDefined();
+    expect(conv.byId['assistant-1'].props).toEqual({
+      role: 'assistant',
+      content: 'Hydrated summary',
+    });
+    expect(fetchImpl).toHaveBeenCalledWith('/api/timeline?conv_id=conv-focus');
 
     manager.disconnect();
   });

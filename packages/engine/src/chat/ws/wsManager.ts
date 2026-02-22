@@ -58,7 +58,7 @@ function applyTimelineSnapshot(
   const entities = snapshot.entities
     .map((entity) => timelineEntityFromProto(entity, snapshot.version))
     .filter((entity): entity is TimelineEntity => entity !== null);
-  dispatch(timelineSlice.actions.applySnapshot({ convId, entities }));
+  dispatch(timelineSlice.actions.mergeSnapshot({ convId, entities }));
 }
 
 function toErrorMessage(error: unknown, fallback: string): string {
@@ -283,8 +283,6 @@ class WsManager {
   private async hydrate(args: ConnectArgs, nonce: number) {
     if (this.hydrated) return;
     if (nonce !== this.connectNonce) return;
-
-    args.dispatch(timelineSlice.actions.clearConversation({ convId: args.convId }));
 
     const fetchImpl = args.fetchImpl ?? fetch;
     try {

@@ -277,4 +277,77 @@ describe('timelineSlice', () => {
       items: ['new suggestion'],
     });
   });
+
+  it('merges snapshots without reordering existing timeline entities', () => {
+    const store = createStore();
+
+    store.dispatch(
+      timelineSlice.actions.addEntity({
+        convId: 'conv-merge',
+        entity: {
+          id: STARTER_SUGGESTIONS_ENTITY_ID,
+          kind: 'suggestions',
+          createdAt: 1,
+          version: 1,
+          props: { source: 'starter', items: ['Show status'] },
+        },
+      })
+    );
+
+    store.dispatch(
+      timelineSlice.actions.addEntity({
+        convId: 'conv-merge',
+        entity: {
+          id: 'user-1',
+          kind: 'message',
+          createdAt: 2,
+          version: 1,
+          props: { role: 'user', content: 'hello' },
+        },
+      })
+    );
+
+    store.dispatch(
+      timelineSlice.actions.addEntity({
+        convId: 'conv-merge',
+        entity: {
+          id: 'assistant-1',
+          kind: 'message',
+          createdAt: 3,
+          version: 1,
+          props: { role: 'assistant', content: 'initial' },
+        },
+      })
+    );
+
+    store.dispatch(
+      timelineSlice.actions.mergeSnapshot({
+        convId: 'conv-merge',
+        entities: [
+          {
+            id: 'assistant-1',
+            kind: 'message',
+            createdAt: 3,
+            version: 2,
+            props: { role: 'assistant', content: 'updated from snapshot' },
+          },
+          {
+            id: 'status-1',
+            kind: 'status',
+            createdAt: 4,
+            version: 2,
+            props: { text: 'done' },
+          },
+        ],
+      })
+    );
+
+    const conv = store.getState().timeline.byConvId['conv-merge'];
+    expect(conv.order).toEqual([STARTER_SUGGESTIONS_ENTITY_ID, 'user-1', 'assistant-1', 'status-1']);
+    expect(conv.byId[STARTER_SUGGESTIONS_ENTITY_ID]).toBeDefined();
+    expect(conv.byId['assistant-1'].props).toEqual({
+      role: 'assistant',
+      content: 'updated from snapshot',
+    });
+  });
 });
