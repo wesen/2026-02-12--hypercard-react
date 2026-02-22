@@ -168,3 +168,12 @@ Event viewer follow-up implemented: added toggles to hide `llm.delta` and `llm.t
 
 - /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/packages/engine/src/chat/debug/EventViewerWindow.tsx — Event-type visibility toggles and YAML export action
 - /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/packages/engine/src/chat/debug/EventViewerWindow.test.ts — Added helper-level tests for delta filtering and export payload generation
+
+## 2026-02-22
+
+Ticket status set to `complete` per user directive; follow-up bugfix work moved to HC-56-LITTLE-BUGS.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/ttmp/2026/02/21/HC-01-QOL-IMPROVEMENTS--hypercard-react-qol-improvements-analysis/index.md — Ticket closure status updated
+- /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/ttmp/2026/02/22/HC-56-LITTLE-BUGS--little-bugs-follow-up-widget-error-timeline-handling/index.md — Follow-up ticket created

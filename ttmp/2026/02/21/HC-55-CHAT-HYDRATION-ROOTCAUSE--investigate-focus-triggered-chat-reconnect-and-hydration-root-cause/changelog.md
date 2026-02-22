@@ -99,3 +99,11 @@ Added explicit websocket lifecycle instrumentation hooks and regression coverage
 - /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/packages/engine/src/chat/ws/wsManager.ts — Added `onLifecycle` tracing hooks for connect/hydrate/replay/disconnect phases
 - /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/packages/engine/src/chat/ws/wsManager.test.ts — Added remount lifecycle regression test and aligned live/buffered frame tests with backend-authoritative `timeline.upsert`
 - /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/ttmp/2026/02/21/HC-55-CHAT-HYDRATION-ROOTCAUSE--investigate-focus-triggered-chat-reconnect-and-hydration-root-cause/tasks.md — Marked final instrumentation task complete
+
+## 2026-02-22
+
+Ticket status set to `complete` per user directive after execution tasks were finished.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-21/hypercard-qol/2026-02-12--hypercard-react/ttmp/2026/02/21/HC-55-CHAT-HYDRATION-ROOTCAUSE--investigate-focus-triggered-chat-reconnect-and-hydration-root-cause/index.md — Ticket closure status updated
