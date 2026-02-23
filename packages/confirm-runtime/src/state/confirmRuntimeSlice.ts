@@ -36,6 +36,10 @@ export type ConfirmRuntimeAnyAction =
     };
 
 function upsertActiveRequest(state: ConfirmRuntimeState, request: ConfirmRequest) {
+  if (request.status && request.status !== 'pending') {
+    completeRequest(state, request.id, request.completedAt ?? new Date().toISOString());
+    return;
+  }
   state.activeById[request.id] = request;
   if (!state.activeOrder.includes(request.id)) {
     state.activeOrder.push(request.id);

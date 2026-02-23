@@ -2,6 +2,7 @@ import { initialConfirmRuntimeState, type ConfirmRuntimeState } from './confirmR
 
 export interface ConfirmRuntimeRootLike {
   confirmRuntime?: ConfirmRuntimeState;
+  [key: string]: unknown;
 }
 
 export function selectConfirmRuntime(state: ConfirmRuntimeRootLike): ConfirmRuntimeState {

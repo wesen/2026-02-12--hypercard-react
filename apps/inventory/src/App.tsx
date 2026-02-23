@@ -10,8 +10,11 @@ import {
   registerHypercardTimelineModule,
 } from '@hypercard/engine';
 import {
+  completeRequestById,
+  ConfirmApiError,
   ConfirmRequestWindowHost,
   createConfirmRuntime,
+  removeRequest,
   selectActiveConfirmRequestById,
   selectActiveConfirmRequests,
   type ConfirmApiClient,
@@ -326,18 +329,70 @@ function ConfirmRequestDesktopWindow({ requestId, apiClient }: { requestId: stri
     <ConfirmRequestWindowHost
       request={request}
       onSubmitResponse={(_id, payload) => {
-        void apiClient.submitResponse(request, payload).then((updated) => {
-          if (updated) {
-            dispatch(upsertRequest(updated));
-          }
-        });
+        void apiClient
+          .submitResponse(request, payload)
+          .then((updated) => {
+            if (updated) {
+              dispatch(upsertRequest(updated));
+            }
+          })
+          .catch(async (error: unknown) => {
+            if (error instanceof ConfirmApiError && error.status === 409) {
+              try {
+                const latest = await apiClient.getRequest(request.id);
+                if (latest.status && latest.status !== 'pending') {
+                  dispatch(
+                    completeRequestById({
+                      requestId: latest.id,
+                      completedAt: latest.completedAt ?? new Date().toISOString(),
+                    }),
+                  );
+                  dispatch(closeWindow(`window:confirm:${latest.id}`));
+                  return;
+                }
+              } catch {
+                // Fall through to local cleanup.
+              }
+
+              dispatch(removeRequest(request.id));
+              dispatch(closeWindow(`window:confirm:${request.id}`));
+              return;
+            }
+            console.error('confirm submit failed', error);
+          });
       }}
       onSubmitScriptEvent={(id, payload) => {
-        void apiClient.submitScriptEvent(id, payload).then((updated) => {
-          if (updated) {
-            dispatch(upsertRequest(updated));
-          }
-        });
+        void apiClient
+          .submitScriptEvent(id, payload)
+          .then((updated) => {
+            if (updated) {
+              dispatch(upsertRequest(updated));
+            }
+          })
+          .catch(async (error: unknown) => {
+            if (error instanceof ConfirmApiError && error.status === 409) {
+              try {
+                const latest = await apiClient.getRequest(id);
+                if (latest.status && latest.status !== 'pending') {
+                  dispatch(
+                    completeRequestById({
+                      requestId: latest.id,
+                      completedAt: latest.completedAt ?? new Date().toISOString(),
+                    }),
+                  );
+                  dispatch(closeWindow(`window:confirm:${latest.id}`));
+                  return;
+                }
+              } catch {
+                // Fall through to local cleanup.
+              }
+
+              dispatch(removeRequest(id));
+              dispatch(closeWindow(`window:confirm:${id}`));
+              return;
+            }
+            console.error('confirm script event submit failed', error);
+          });
       }}
     />
   );

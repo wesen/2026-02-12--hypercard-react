@@ -19,6 +19,7 @@ describe('confirmProtoAdapter', () => {
     expect(request?.widgetType).toBe('confirm');
     expect(request?.title).toBe('Deploy now?');
     expect(request?.input?.payload?.title).toBe('Deploy now?');
+    expect(request?.status).toBe('pending');
   });
 
   it('maps websocket event with embedded request', () => {
@@ -83,6 +84,7 @@ describe('confirmProtoAdapter', () => {
     expect(payload).toEqual({
       confirmOutput: {
         approved: true,
+        timestamp: expect.any(String),
         comment: 'ship it',
       },
     });
@@ -124,6 +126,7 @@ describe('confirmProtoAdapter', () => {
     expect(payload).toEqual({
       imageOutput: {
         selectedBool: true,
+        timestamp: expect.any(String),
         comment: 'approved',
       },
     });

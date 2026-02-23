@@ -5,9 +5,22 @@ function trimTrailingSlash(value: string): string {
   return value.endsWith('/') ? value.slice(0, -1) : value;
 }
 
+export class ConfirmApiError extends Error {
+  readonly status: number;
+  readonly body: string;
+
+  constructor(status: number, body: string) {
+    super(`confirm-api: request failed (${status})`);
+    this.name = 'ConfirmApiError';
+    this.status = status;
+    this.body = body;
+  }
+}
+
 async function parseJsonResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    throw new Error(`confirm-api: request failed (${response.status})`);
+    const body = await response.text();
+    throw new ConfirmApiError(response.status, body);
   }
   return (await response.json()) as T;
 }

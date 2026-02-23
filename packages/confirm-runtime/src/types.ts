@@ -1,4 +1,5 @@
 export type ConfirmWidgetType = 'confirm' | 'select' | 'form' | 'upload' | 'table' | 'image' | 'script';
+export type ConfirmRequestStatus = 'pending' | 'completed' | 'expired' | 'unknown';
 
 export interface ConfirmWidgetInput {
   title?: string;
@@ -36,9 +37,11 @@ export interface ConfirmRequest {
   id: string;
   sessionId: string;
   widgetType: ConfirmWidgetType;
+  status?: ConfirmRequestStatus;
   title?: string;
   message?: string;
   createdAt?: string;
+  completedAt?: string;
   updatedAt?: string;
   input?: ConfirmWidgetInput;
   scriptView?: ConfirmScriptView;

@@ -1,4 +1,11 @@
-import type { ConfirmRealtimeEvent, ConfirmRequest, ConfirmScriptView, ConfirmWidgetType, SubmitResponsePayload } from '../types';
+import type {
+  ConfirmRealtimeEvent,
+  ConfirmRequest,
+  ConfirmRequestStatus,
+  ConfirmScriptView,
+  ConfirmWidgetType,
+  SubmitResponsePayload,
+} from '../types';
 
 type RawRecord = Record<string, unknown>;
 
@@ -32,6 +39,13 @@ function asStringArray(value: unknown): string[] {
 
 function isWidgetType(value: unknown): value is ConfirmWidgetType {
   return typeof value === 'string' && KNOWN_WIDGET_TYPES.includes(value as ConfirmWidgetType);
+}
+
+function mapRequestStatus(value: unknown): ConfirmRequestStatus {
+  if (value === 'pending' || value === 'completed' || value === 'expired') {
+    return value;
+  }
+  return 'unknown';
 }
 
 function inputFieldForWidgetType(widgetType: ConfirmWidgetType): string {
@@ -137,9 +151,11 @@ export function mapUIRequestFromProto(raw: unknown): ConfirmRequest | null {
     id: requestId,
     sessionId,
     widgetType,
+    status: mapRequestStatus(request.status),
     title: title ?? scriptView?.title,
     message,
     createdAt: asString(request.createdAt),
+    completedAt: asString(request.completedAt),
     updatedAt: asString(request.updatedAt),
     input: {
       title,
@@ -185,9 +201,11 @@ function commentField(output: RawRecord): RawRecord {
 }
 
 function mapConfirmResponse(output: RawRecord): RawRecord {
+  const timestamp = asString(output.timestamp) ?? new Date().toISOString();
   return {
     confirmOutput: {
       approved: output.approved === true,
+      timestamp,
       ...commentField(output),
     },
   };
@@ -261,10 +279,12 @@ function mapTableResponse(output: RawRecord): RawRecord {
 }
 
 function mapImageResponse(output: RawRecord): RawRecord {
+  const timestamp = asString(output.timestamp) ?? new Date().toISOString();
   if (typeof output.selectedBool === 'boolean') {
     return {
       imageOutput: {
         selectedBool: output.selectedBool,
+        timestamp,
         ...commentField(output),
       },
     };
@@ -274,6 +294,7 @@ function mapImageResponse(output: RawRecord): RawRecord {
     return {
       imageOutput: {
         selectedString: output.selectedString,
+        timestamp,
         ...commentField(output),
       },
     };
@@ -286,6 +307,7 @@ function mapImageResponse(output: RawRecord): RawRecord {
       return {
         imageOutput: {
           selectedStrings: { values },
+          timestamp,
           ...commentField(output),
         },
       };
@@ -297,6 +319,7 @@ function mapImageResponse(output: RawRecord): RawRecord {
     return {
       imageOutput: {
         selectedStrings: { values: selected },
+        timestamp,
         ...commentField(output),
       },
     };
@@ -304,6 +327,7 @@ function mapImageResponse(output: RawRecord): RawRecord {
   return {
     imageOutput: {
       selectedString: selected[0] ?? '',
+      timestamp,
       ...commentField(output),
     },
   };
