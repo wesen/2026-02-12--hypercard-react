@@ -10,11 +10,14 @@
     "skipLibCheck": true,
     "paths": {
       "@hypercard/engine": ["../../packages/engine/src"],
-      "@hypercard/engine/*": ["../../packages/engine/src/*"]
+      "@hypercard/engine/*": ["../../packages/engine/src/*"],
+      "@hypercard/confirm-runtime": ["../../packages/confirm-runtime/src"],
+      "@hypercard/confirm-runtime/*": ["../../packages/confirm-runtime/src/*"]
     }
   },
   "include": ["src"],
   "references": [
-    { "path": "../../packages/engine" }
+    { "path": "../../packages/engine" },
+    { "path": "../../packages/confirm-runtime" }
   ]
 }

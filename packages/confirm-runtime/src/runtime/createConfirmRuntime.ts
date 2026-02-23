@@ -1,6 +1,6 @@
 import { createConfirmApiClient } from '../api/confirmApiClient';
 import type { ConfirmRuntimeHostAdapters } from '../host/types';
-import { applyRealtimeEvent, setConnectionState, setLastError, type ConfirmRuntimeAction } from '../state/confirmRuntimeSlice';
+import { applyRealtimeEvent, setConnectionState, setLastError, type ConfirmRuntimeAnyAction } from '../state/confirmRuntimeSlice';
 import type { ConfirmRealtimeEvent } from '../types';
 import { ConfirmWsManager } from '../ws/confirmWsManager';
 
@@ -17,7 +17,7 @@ function toWsUrl(baseUrl: string, sessionId: string): string {
 
 export interface CreateConfirmRuntimeOptions {
   host: ConfirmRuntimeHostAdapters;
-  dispatch: (action: ConfirmRuntimeAction) => void;
+  dispatch: (action: ConfirmRuntimeAnyAction) => void;
 }
 
 export function createConfirmRuntime(options: CreateConfirmRuntimeOptions) {

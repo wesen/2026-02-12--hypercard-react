@@ -23,6 +23,15 @@ function createInventoryProxy(target: string): Record<string, ProxyOptions> {
       target,
       changeOrigin: true,
     },
+    '/confirm': {
+      target,
+      changeOrigin: true,
+    },
+    '/confirm/ws': {
+      target,
+      ws: true,
+      changeOrigin: true,
+    },
   };
 }
 
@@ -32,6 +41,7 @@ export function createHypercardViteConfig(options: HypercardViteConfigOptions = 
     resolve: {
       alias: {
         '@hypercard/engine': path.resolve(__dirname, '../../packages/engine/src'),
+        '@hypercard/confirm-runtime': path.resolve(__dirname, '../../packages/confirm-runtime/src'),
       },
     },
   } as {

@@ -27,6 +27,14 @@ export type ConfirmRuntimeAction =
   | { type: 'confirmRuntime/clearCompletions' }
   | { type: 'confirmRuntime/applyRealtimeEvent'; payload: ConfirmRealtimeEvent };
 
+export type ConfirmRuntimeAnyAction =
+  | ConfirmRuntimeAction
+  | {
+      type: string;
+      payload?: unknown;
+      [key: string]: unknown;
+    };
+
 function upsertActiveRequest(state: ConfirmRuntimeState, request: ConfirmRequest) {
   state.activeById[request.id] = request;
   if (!state.activeOrder.includes(request.id)) {
@@ -74,7 +82,7 @@ export function applyRealtimeEvent(payload: ConfirmRealtimeEvent): ConfirmRuntim
 
 export function confirmRuntimeReducer(
   state: ConfirmRuntimeState = initialConfirmRuntimeState,
-  action: ConfirmRuntimeAction,
+  action: ConfirmRuntimeAnyAction,
 ): ConfirmRuntimeState {
   const nextState: ConfirmRuntimeState = {
     ...state,
@@ -85,27 +93,39 @@ export function confirmRuntimeReducer(
 
   switch (action.type) {
     case 'confirmRuntime/setConnectionState': {
-      nextState.connected = action.payload;
-      if (action.payload) {
+      nextState.connected = Boolean(action.payload);
+      if (Boolean(action.payload)) {
         nextState.lastError = undefined;
       }
       return nextState;
     }
     case 'confirmRuntime/setLastError': {
-      nextState.lastError = action.payload;
+      nextState.lastError = typeof action.payload === 'string' ? action.payload : undefined;
       return nextState;
     }
     case 'confirmRuntime/upsertRequest': {
-      upsertActiveRequest(nextState, action.payload);
+      if (action.payload && typeof action.payload === 'object') {
+        upsertActiveRequest(nextState, action.payload as ConfirmRequest);
+      }
       return nextState;
     }
     case 'confirmRuntime/completeRequestById': {
-      completeRequest(nextState, action.payload.requestId, action.payload.completedAt, action.payload.output);
+      const payload = action.payload as { requestId?: string; completedAt?: string; output?: Record<string, unknown> };
+      if (typeof payload?.requestId === 'string') {
+        completeRequest(
+          nextState,
+          payload.requestId,
+          typeof payload.completedAt === 'string' ? payload.completedAt : new Date().toISOString(),
+          payload.output,
+        );
+      }
       return nextState;
     }
     case 'confirmRuntime/removeRequest': {
-      delete nextState.activeById[action.payload];
-      nextState.activeOrder = nextState.activeOrder.filter((id) => id !== action.payload);
+      if (typeof action.payload === 'string') {
+        delete nextState.activeById[action.payload];
+        nextState.activeOrder = nextState.activeOrder.filter((id) => id !== action.payload);
+      }
       return nextState;
     }
     case 'confirmRuntime/clearCompletions': {
@@ -113,7 +133,7 @@ export function confirmRuntimeReducer(
       return nextState;
     }
     case 'confirmRuntime/applyRealtimeEvent': {
-      const event = action.payload;
+      const event = action.payload as ConfirmRealtimeEvent;
       if (event.type === 'new_request' || event.type === 'request_updated') {
         if (event.request) {
           upsertActiveRequest(nextState, event.request);

@@ -83,26 +83,27 @@ export function ConfirmRequestWindowHost({ request, onSubmitResponse, onSubmitSc
     if (!Array.isArray(images)) {
       return [];
     }
-    return images
-      .map((entry, index) => {
-        if (typeof entry === 'string') {
-          return { id: `img-${index}`, src: entry, label: `Image ${index + 1}` };
-        }
-        if (typeof entry === 'object' && entry !== null) {
-          const row = entry as Record<string, unknown>;
-          if (typeof row.src !== 'string') {
-            return null;
-          }
-          return {
-            id: String(row.id ?? `img-${index}`),
-            src: row.src,
-            label: typeof row.label === 'string' ? row.label : undefined,
-            badge: typeof row.badge === 'string' ? row.badge : undefined,
-          };
-        }
-        return null;
-      })
-      .filter((entry): entry is { id: string; src: string; label?: string; badge?: string } => entry !== null);
+    const rows: Array<{ id: string; src: string; label?: string; badge?: string }> = [];
+    images.forEach((entry, index) => {
+      if (typeof entry === 'string') {
+        rows.push({ id: `img-${index}`, src: entry, label: `Image ${index + 1}` });
+        return;
+      }
+      if (typeof entry !== 'object' || entry === null) {
+        return;
+      }
+      const row = entry as Record<string, unknown>;
+      if (typeof row.src !== 'string') {
+        return;
+      }
+      rows.push({
+        id: String(row.id ?? `img-${index}`),
+        src: row.src,
+        label: typeof row.label === 'string' ? row.label : undefined,
+        badge: typeof row.badge === 'string' ? row.badge : undefined,
+      });
+    });
+    return rows;
   }, [payload.images]);
 
   if (request.widgetType === 'confirm') {
@@ -144,7 +145,11 @@ export function ConfirmRequestWindowHost({ request, onSubmitResponse, onSubmitSc
       return renderPlaceholder('Form schema missing');
     }
     return (
-        <SchemaFormRenderer schema={schema as JsonSchemaNode} onSubmit={(value: Record<string, unknown>) => onSubmitResponse(request.id, { output: { value } })} submitLabel="Submit" />
+      <SchemaFormRenderer
+        schema={schema as JsonSchemaNode}
+        onSubmit={(value: Record<string, unknown>) => onSubmitResponse(request.id, { output: { value } })}
+        submitLabel="Submit"
+      />
     );
   }
 
