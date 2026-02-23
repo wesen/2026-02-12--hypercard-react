@@ -32,8 +32,10 @@ export {
 } from './SelectableList';
 export { ListView, type ListViewProps } from './ListView';
 export { MenuGrid, type MenuGridProps } from './MenuGrid';
+export { GridBoard, type GridBoardProps, type GridCell, type GridCellSize, type GridSelection } from './GridBoard';
 export { ProgressBar, type ProgressBarProps } from './ProgressBar';
 export { RadioButton, type RadioButtonProps } from './RadioButton';
+export { RatingPicker, type RatingPickerProps, type RatingStyle } from './RatingPicker';
 export { RequestActionBar, type RequestActionBarProps } from './RequestActionBar';
 export { ReportView, type ReportViewProps } from './ReportView';
 export { FilePickerDropzone, type FilePickerDropzoneProps, type RejectedFile } from './FilePickerDropzone';

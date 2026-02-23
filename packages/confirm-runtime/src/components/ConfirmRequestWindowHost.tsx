@@ -1,14 +1,16 @@
 import {
   DataTable,
   FilePickerDropzone,
+  GridBoard,
   ImageChoiceGrid,
+  RatingPicker,
   RequestActionBar,
   SchemaFormRenderer,
   SelectableDataTable,
   SelectableList,
   type ColumnConfig,
 } from '@hypercard/engine';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ConfirmRequest, SubmitResponsePayload, SubmitScriptEventPayload } from '../types';
 import type { JsonSchemaNode } from '@hypercard/engine';
 
@@ -147,6 +149,8 @@ export function ConfirmRequestWindowHost({ request, onSubmitResponse, onSubmitSc
   const [selectedListIds, setSelectedListIds] = useState<string[]>([]);
   const [selectedTableRows, setSelectedTableRows] = useState<string[]>([]);
   const [selectedImageIds, setSelectedImageIds] = useState<string[]>([]);
+  const [selectedRating, setSelectedRating] = useState<number | null>(null);
+  const [selectedGridCell, setSelectedGridCell] = useState<{ row: number; col: number; cellIndex: number } | null>(null);
   const [selectedUploadFiles, setSelectedUploadFiles] = useState<
     Array<{ name: string; size: number; path: string; mimeType: string }>
   >([]);
@@ -156,6 +160,8 @@ export function ConfirmRequestWindowHost({ request, onSubmitResponse, onSubmitSc
     setSelectedListIds([]);
     setSelectedTableRows([]);
     setSelectedImageIds([]);
+    setSelectedRating(null);
+    setSelectedGridCell(null);
     setSelectedUploadFiles([]);
   }, [request.id, scriptStepKey]);
 
@@ -369,6 +375,88 @@ export function ConfirmRequestWindowHost({ request, onSubmitResponse, onSubmitSc
               }}
             />
           )}
+        </div>
+      );
+    }
+
+    if (widgetType === 'rating') {
+      const scale = typeof payload.scale === 'number' ? payload.scale : 5;
+      const styleRaw = normalizeWidgetType(payload.style);
+      const style = styleRaw === 'stars' || styleRaw === 'emoji' || styleRaw === 'slider' ? styleRaw : 'numbers';
+      const defaults = asRecord(payload.defaults);
+      const fallbackValue =
+        typeof defaults.value === 'number'
+          ? defaults.value
+          : typeof payload.defaultValue === 'number'
+            ? payload.defaultValue
+            : Math.max(1, Math.ceil(scale / 2));
+      const resolvedValue = selectedRating ?? fallbackValue;
+
+      return (
+        <div style={{ display: 'grid', gap: 8 }}>
+          <RatingPicker
+            scale={scale}
+            style={style}
+            value={resolvedValue}
+            lowLabel={asString(asRecord(payload.labels).low)}
+            highLabel={asString(asRecord(payload.labels).high)}
+            onChange={setSelectedRating}
+          />
+          <RequestActionBar
+            primaryLabel="Submit"
+            commentEnabled
+            onPrimary={(comment) =>
+              emitSubmit(mode, {
+                value: resolvedValue,
+                ...(normalizeComment(comment) ? { comment: normalizeComment(comment) } : {}),
+              })
+            }
+          />
+        </div>
+      );
+    }
+
+    if (widgetType === 'grid') {
+      const rows = typeof payload.rows === 'number' ? payload.rows : 1;
+      const cols = typeof payload.cols === 'number' ? payload.cols : 1;
+      const cellSizeRaw = normalizeWidgetType(payload.cellSize);
+      const cellSize = cellSizeRaw === 'small' || cellSizeRaw === 'large' ? cellSizeRaw : 'medium';
+      const cells = Array.isArray(payload.cells)
+        ? payload.cells
+            .filter((entry) => typeof entry === 'object' && entry !== null)
+            .map((entry) => {
+              const cell = entry as Record<string, unknown>;
+              return {
+                value: asString(cell.value),
+                label: asString(cell.label),
+                color: asString(cell.color),
+                disabled: cell.disabled === true,
+                style: asString(cell.style),
+              };
+            })
+        : [];
+
+      return (
+        <div style={{ display: 'grid', gap: 8 }}>
+          <GridBoard
+            rows={rows}
+            cols={cols}
+            cells={cells}
+            cellSize={cellSize}
+            selectedIndex={selectedGridCell?.cellIndex ?? null}
+            onSelect={setSelectedGridCell}
+          />
+          <RequestActionBar
+            primaryLabel="Submit"
+            primaryDisabled={selectedGridCell === null}
+            commentEnabled
+            onPrimary={(comment) =>
+              emitSubmit(mode, {
+                ...(selectedGridCell ?? {}),
+                ...(normalizeComment(comment) ? { comment: normalizeComment(comment) } : {}),
+              })
+            }
+          />
         </div>
       );
     }
