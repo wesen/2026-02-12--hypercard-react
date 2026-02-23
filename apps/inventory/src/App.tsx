@@ -325,8 +325,8 @@ function ConfirmRequestDesktopWindow({ requestId, apiClient }: { requestId: stri
   return (
     <ConfirmRequestWindowHost
       request={request}
-      onSubmitResponse={(id, payload) => {
-        void apiClient.submitResponse(id, payload).then((updated) => {
+      onSubmitResponse={(_id, payload) => {
+        void apiClient.submitResponse(request, payload).then((updated) => {
           if (updated) {
             dispatch(upsertRequest(updated));
           }

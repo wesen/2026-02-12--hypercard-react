@@ -1,4 +1,5 @@
 import type { ConfirmApiClient, ConfirmRequest, SubmitResponsePayload, SubmitScriptEventPayload } from '../types';
+import { mapSubmitResponseToProto, mapUIRequestFromProto } from '../proto/confirmProtoAdapter';
 
 function trimTrailingSlash(value: string): string {
   return value.endsWith('/') ? value.slice(0, -1) : value;
@@ -22,29 +23,34 @@ export function createConfirmApiClient(options: ConfirmApiClientOptions): Confir
 
   return {
     async getRequest(requestId: string) {
-      return await parseJsonResponse<ConfirmRequest>(
-        await fetchImpl(`${baseUrl}/api/requests/${encodeURIComponent(requestId)}`),
-      );
+      const raw = await parseJsonResponse<unknown>(await fetchImpl(`${baseUrl}/api/requests/${encodeURIComponent(requestId)}`));
+      const request = mapUIRequestFromProto(raw);
+      if (!request) {
+        throw new Error('confirm-api: invalid UIRequest payload');
+      }
+      return request;
     },
 
-    async submitResponse(requestId: string, payload: SubmitResponsePayload) {
-      return await parseJsonResponse<ConfirmRequest | null>(
-        await fetchImpl(`${baseUrl}/api/requests/${encodeURIComponent(requestId)}/response`, {
+    async submitResponse(request: ConfirmRequest, payload: SubmitResponsePayload) {
+      const raw = await parseJsonResponse<unknown>(
+        await fetchImpl(`${baseUrl}/api/requests/${encodeURIComponent(request.id)}/response`, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(mapSubmitResponseToProto(request, payload)),
         }),
       );
+      return mapUIRequestFromProto(raw);
     },
 
     async submitScriptEvent(requestId: string, payload: SubmitScriptEventPayload) {
-      return await parseJsonResponse<ConfirmRequest | null>(
+      const raw = await parseJsonResponse<unknown>(
         await fetchImpl(`${baseUrl}/api/requests/${encodeURIComponent(requestId)}/event`, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify(payload),
         }),
       );
+      return mapUIRequestFromProto(raw);
     },
 
     async touchRequest(requestId: string) {

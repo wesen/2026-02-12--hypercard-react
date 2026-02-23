@@ -41,7 +41,7 @@ export function ConfirmRequestWindowHost({ request, onSubmitResponse, onSubmitSc
     }
     return options.map((option, index) => {
       if (typeof option === 'string') {
-        return { id: `opt-${index}`, label: option };
+        return { id: option, label: option };
       }
       if (typeof option === 'object' && option !== null) {
         const row = option as Record<string, unknown>;
@@ -158,12 +158,17 @@ export function ConfirmRequestWindowHost({ request, onSubmitResponse, onSubmitSc
       return renderPlaceholder('No table columns available');
     }
 
+    const rowKey = typeof payload.rowKey === 'string' ? payload.rowKey : 'id';
+    const selectedRows = tableRows.filter((row: Record<string, unknown>) =>
+      selectedTableRows.includes(String(row[rowKey] ?? '')),
+    );
+
     return (
       <div style={{ display: 'grid', gap: 8 }}>
         <SelectableDataTable
           items={tableRows}
           columns={tableColumns}
-          rowKey={typeof payload.rowKey === 'string' ? payload.rowKey : 'id'}
+          rowKey={rowKey}
           selectedRowKeys={selectedTableRows}
           onSelectionChange={setSelectedTableRows}
           mode={payload.multiSelect === true ? 'multiple' : 'single'}
@@ -175,6 +180,7 @@ export function ConfirmRequestWindowHost({ request, onSubmitResponse, onSubmitSc
             onSubmitResponse(request.id, {
               output: {
                 selectedRowKeys: selectedTableRows,
+                selectedRows,
                 comment,
               },
             })

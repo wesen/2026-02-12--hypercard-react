@@ -1,4 +1,5 @@
 import type { ConfirmRealtimeEvent } from '../types';
+import { mapRealtimeEventFromProto } from '../proto/confirmProtoAdapter';
 
 export interface ConfirmWsManagerOptions {
   wsUrl: string;
@@ -30,7 +31,11 @@ export class ConfirmWsManager {
     socket.onerror = () => this.options.onError?.(new Error('confirm-ws: socket error'));
     socket.onmessage = (message) => {
       try {
-        const parsed = JSON.parse(String(message.data)) as ConfirmRealtimeEvent;
+        const parsed = mapRealtimeEventFromProto(JSON.parse(String(message.data)));
+        if (!parsed) {
+          this.options.onError?.(new Error('confirm-ws: invalid realtime event payload'));
+          return;
+        }
         this.options.onEvent(parsed);
       } catch (error) {
         this.options.onError?.(error instanceof Error ? error : new Error(String(error)));

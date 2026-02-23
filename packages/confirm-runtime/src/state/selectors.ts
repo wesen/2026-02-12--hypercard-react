@@ -1,26 +1,26 @@
-import type { ConfirmRuntimeState } from './confirmRuntimeSlice';
+import { initialConfirmRuntimeState, type ConfirmRuntimeState } from './confirmRuntimeSlice';
 
 export interface ConfirmRuntimeRootLike {
-  confirmRuntime: ConfirmRuntimeState;
+  confirmRuntime?: ConfirmRuntimeState;
 }
 
 export function selectConfirmRuntime(state: ConfirmRuntimeRootLike): ConfirmRuntimeState {
-  return state.confirmRuntime;
+  return state.confirmRuntime ?? initialConfirmRuntimeState;
 }
 
 export function selectConfirmConnected(state: ConfirmRuntimeRootLike): boolean {
-  return state.confirmRuntime.connected;
+  return selectConfirmRuntime(state).connected;
 }
 
 export function selectConfirmLastError(state: ConfirmRuntimeRootLike): string | undefined {
-  return state.confirmRuntime.lastError;
+  return selectConfirmRuntime(state).lastError;
 }
 
 export function selectActiveConfirmRequests(state: ConfirmRuntimeRootLike) {
-  const runtime = state.confirmRuntime;
+  const runtime = selectConfirmRuntime(state);
   return runtime.activeOrder.map((id) => runtime.activeById[id]).filter((value) => value !== undefined);
 }
 
 export function selectActiveConfirmRequestById(state: ConfirmRuntimeRootLike, requestId: string) {
-  return state.confirmRuntime.activeById[requestId];
+  return selectConfirmRuntime(state).activeById[requestId];
 }

@@ -71,7 +71,7 @@ export interface SubmitScriptEventPayload {
 
 export interface ConfirmApiClient {
   getRequest(requestId: string): Promise<ConfirmRequest>;
-  submitResponse(requestId: string, payload: SubmitResponsePayload): Promise<ConfirmRequest | null>;
+  submitResponse(request: ConfirmRequest, payload: SubmitResponsePayload): Promise<ConfirmRequest | null>;
   submitScriptEvent(requestId: string, payload: SubmitScriptEventPayload): Promise<ConfirmRequest | null>;
   touchRequest(requestId: string): Promise<void>;
 }
