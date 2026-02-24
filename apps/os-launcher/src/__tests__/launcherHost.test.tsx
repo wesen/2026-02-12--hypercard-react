@@ -157,4 +157,19 @@ describe('launcher host wiring', () => {
       expect(source).not.toContain(forbiddenImport);
     }
   });
+
+  it('removes legacy standalone desktop shell boot wiring from app roots', () => {
+    const appRootSources = [
+      readFileSync(new URL('../../../inventory/src/App.tsx', import.meta.url), 'utf8'),
+      readFileSync(new URL('../../../todo/src/App.tsx', import.meta.url), 'utf8'),
+      readFileSync(new URL('../../../crm/src/App.tsx', import.meta.url), 'utf8'),
+      readFileSync(new URL('../../../book-tracker-debug/src/App.tsx', import.meta.url), 'utf8'),
+    ];
+
+    for (const source of appRootSources) {
+      expect(source).not.toContain('DesktopShell');
+      expect(source).toContain("from './launcher/module'");
+      expect(source).toContain('renderWindow');
+    }
+  });
 });
