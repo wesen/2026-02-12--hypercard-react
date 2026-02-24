@@ -139,7 +139,7 @@ export function SelectableList({
   };
 
   return (
-    <div data-part={PARTS.cardBody} style={{ display: 'grid', gap: 6 }}>
+    <div data-part={PARTS.confirmWidgetBody}>
       {searchable && (
         <input
           data-part={PARTS.fieldInput}
@@ -184,7 +184,7 @@ export function SelectableList({
               <span>
                 <span>{item.label}</span>
                 {item.description && (
-                  <span data-part={PARTS.fieldValue} style={{ display: 'block', fontSize: 10, opacity: 0.8 }}>
+                  <span data-part={PARTS.confirmProgress} style={{ display: 'block' }}>
                     {item.description}
                   </span>
                 )}

@@ -39,6 +39,7 @@ const config: StorybookConfig = {
     config_.resolve.alias = {
       ...config_.resolve.alias,
       '@hypercard/engine': resolve(__dirname, '../packages/engine/src'),
+      '@hypercard/confirm-runtime': resolve(__dirname, '../packages/confirm-runtime/src'),
     };
     return config_;
   },

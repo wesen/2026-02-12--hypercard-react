@@ -52,18 +52,12 @@ export function RatingPicker({
 
   if (style === 'slider') {
     return (
-      <div data-part={PARTS.cardBody} style={{ display: 'grid', gap: 8 }}>
+      <div data-part={PARTS.confirmWidgetBody}>
         {(lowLabel || highLabel) && (
-          <div data-part={PARTS.fieldGrid} style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 8 }}>
-            <span data-part={PARTS.fieldValue} style={{ textAlign: 'left' }}>
-              {lowLabel ?? ''}
-            </span>
-            <span data-part={PARTS.fieldValue} style={{ textAlign: 'center' }}>
-              {normalizedValue}/{normalizedScale}
-            </span>
-            <span data-part={PARTS.fieldValue} style={{ textAlign: 'right' }}>
-              {highLabel ?? ''}
-            </span>
+          <div data-part={PARTS.confirmRatingLabels}>
+            <span>{lowLabel ?? ''}</span>
+            <span>{normalizedValue}/{normalizedScale}</span>
+            <span>{highLabel ?? ''}</span>
           </div>
         )}
         <input
@@ -80,23 +74,21 @@ export function RatingPicker({
   }
 
   return (
-    <div data-part={PARTS.cardBody} style={{ display: 'grid', gap: 8 }}>
+    <div data-part={PARTS.confirmWidgetBody}>
       {(lowLabel || highLabel) && (
-        <div data-part={PARTS.fieldGrid} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          <span data-part={PARTS.fieldValue}>{lowLabel ?? ''}</span>
-          <span data-part={PARTS.fieldValue} style={{ textAlign: 'right' }}>
-            {highLabel ?? ''}
-          </span>
+        <div data-part={PARTS.confirmRatingLabels}>
+          <span>{lowLabel ?? ''}</span>
+          <span>{highLabel ?? ''}</span>
         </div>
       )}
-      <div data-part={PARTS.buttonGroup} style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
         {Array.from({ length: normalizedScale }).map((_, idx) => {
           const rating = idx + 1;
           return (
             <button
               key={rating}
               type="button"
-              data-part={PARTS.btn}
+              data-part={PARTS.confirmRatingOption}
               data-state={rating === normalizedValue ? 'active' : undefined}
               disabled={disabled}
               onClick={() => onChange?.(rating)}
@@ -106,7 +98,7 @@ export function RatingPicker({
           );
         })}
       </div>
-      <div data-part={PARTS.fieldValue}>Selected: {normalizedValue}</div>
+      <div data-part={PARTS.confirmProgress}>Selected: {normalizedValue}</div>
     </div>
   );
 }

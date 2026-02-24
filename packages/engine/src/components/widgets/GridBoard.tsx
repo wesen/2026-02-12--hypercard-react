@@ -56,13 +56,12 @@ export function GridBoard({
   const edge = sizePx(cellSize);
 
   return (
-    <div data-part={PARTS.cardBody} style={{ display: 'grid', gap: 8 }}>
+    <div data-part={PARTS.confirmWidgetBody}>
       <div
-        data-part={PARTS.fieldGrid}
         style={{
           display: 'grid',
           gridTemplateColumns: `repeat(${normalizedCols}, ${edge}px)`,
-          gap: 6,
+          gap: 4,
         }}
       >
         {Array.from({ length: normalizedRows * normalizedCols }).map((_, index) => {
@@ -77,24 +76,15 @@ export function GridBoard({
             <button
               key={index}
               type="button"
-              data-part={PARTS.btn}
+              data-part={PARTS.confirmGridCell}
               data-state={isSelected ? 'active' : undefined}
               disabled={isDisabled}
               onClick={() => onSelect?.({ row, col, cellIndex: index })}
               style={{
                 width: edge,
                 height: edge,
-                padding: 4,
-                background: cell.color,
-                opacity: isDisabled ? 0.5 : 1,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                ...(cell.style
-                  ? {
-                      borderStyle: cell.style,
-                    }
-                  : {}),
+                ...(cell.color ? { background: cell.color } : {}),
+                ...(cell.style ? { borderStyle: cell.style } : {}),
               }}
             >
               {label}

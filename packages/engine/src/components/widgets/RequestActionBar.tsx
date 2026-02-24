@@ -40,7 +40,7 @@ export function RequestActionBar({
   };
 
   return (
-    <div data-part={PARTS.cardBody} style={{ display: 'grid', gap: 8 }}>
+    <div data-part={PARTS.confirmActionBar}>
       {commentEnabled && (
         <textarea
           data-part={PARTS.fieldInput}
@@ -51,7 +51,7 @@ export function RequestActionBar({
           disabled={busy}
         />
       )}
-      <div data-part={PARTS.buttonGroup} style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+      <div data-part={PARTS.confirmActionButtons}>
         {onSecondary && (
           <Btn variant="default" onClick={() => onSecondary(resolvedComment)} disabled={busy || secondaryDisabled}>
             {secondaryLabel ?? 'Cancel'}

@@ -128,19 +128,12 @@ function parseImageItems(payload: Record<string, unknown>): Array<{ id: string; 
 
 function ScriptDisplaySection({ payload }: { payload: Record<string, unknown> }) {
   const title = asString(payload.title);
-  const format = asString(payload.format) ?? 'markdown';
   const content = asString(payload.content) ?? '';
 
   return (
-    <div data-part="card" style={{ padding: 8, display: 'grid', gap: 6 }}>
-      {title && <div data-part="field-label">{title}</div>}
-      <div data-part="field-value">Format: {format}</div>
-      <pre
-        data-part="field-value"
-        style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'inherit' }}
-      >
-        {content}
-      </pre>
+    <div data-part="confirm-display">
+      {title && <div data-part="confirm-display-title">{title}</div>}
+      <pre data-part="confirm-display-content">{content}</pre>
     </div>
   );
 }
@@ -219,7 +212,7 @@ export function ConfirmRequestWindowHost({ request, onSubmitResponse, onSubmitSc
       const selectOptions = parseSelectOptions(payload);
       const isMulti = payload.multi === true;
       return (
-        <div style={{ display: 'grid', gap: 8 }}>
+        <div data-part="confirm-widget-body">
           <SelectableList
             items={selectOptions}
             mode={isMulti ? 'multiple' : 'single'}
@@ -284,7 +277,7 @@ export function ConfirmRequestWindowHost({ request, onSubmitResponse, onSubmitSc
       const isMulti = payload.multiSelect === true;
 
       return (
-        <div style={{ display: 'grid', gap: 8 }}>
+        <div data-part="confirm-widget-body">
           <SelectableDataTable
             items={tableRows}
             columns={tableColumns}
@@ -327,7 +320,7 @@ export function ConfirmRequestWindowHost({ request, onSubmitResponse, onSubmitSc
       const isMulti = imageMode === 'multi';
 
       return (
-        <div style={{ display: 'grid', gap: 8 }}>
+        <div data-part="confirm-widget-body">
           <ImageChoiceGrid
             items={imageItems}
             selectedIds={selectedImageIds}
@@ -393,7 +386,7 @@ export function ConfirmRequestWindowHost({ request, onSubmitResponse, onSubmitSc
       const resolvedValue = selectedRating ?? fallbackValue;
 
       return (
-        <div style={{ display: 'grid', gap: 8 }}>
+        <div data-part="confirm-widget-body">
           <RatingPicker
             scale={scale}
             style={style}
@@ -437,7 +430,7 @@ export function ConfirmRequestWindowHost({ request, onSubmitResponse, onSubmitSc
         : [];
 
       return (
-        <div style={{ display: 'grid', gap: 8 }}>
+        <div data-part="confirm-widget-body">
           <GridBoard
             rows={rows}
             cols={cols}
@@ -467,7 +460,7 @@ export function ConfirmRequestWindowHost({ request, onSubmitResponse, onSubmitSc
       const maxSize = typeof payload.maxSize === 'number' ? payload.maxSize : undefined;
 
       return (
-        <div style={{ display: 'grid', gap: 8 }}>
+        <div data-part="confirm-widget-body">
           <FilePickerDropzone
             accept={accept}
             multiple={multiple}
@@ -536,11 +529,11 @@ export function ConfirmRequestWindowHost({ request, onSubmitResponse, onSubmitSc
         ];
 
     return (
-      <div style={{ display: 'grid', gap: 8 }}>
-        {scriptView.title && <div data-part="field-label">{scriptView.title}</div>}
-        {scriptView.description && <div data-part="field-value">{scriptView.description}</div>}
+      <div data-part="confirm-section">
+        {scriptView.title && <div data-part="confirm-heading">{scriptView.title}</div>}
+        {scriptView.description && <div data-part="confirm-description">{scriptView.description}</div>}
         {showProgress && (
-          <div data-part="field-value">
+          <div data-part="confirm-progress">
             {scriptProgress?.label ?? `Step ${scriptProgress?.current} of ${scriptProgress?.total}`}
           </div>
         )}

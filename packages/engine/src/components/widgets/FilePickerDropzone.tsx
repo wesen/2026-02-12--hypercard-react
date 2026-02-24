@@ -82,9 +82,9 @@ export function FilePickerDropzone({ accept, multiple, maxSizeBytes, onFilesChan
   };
 
   return (
-    <div data-part={PARTS.cardBody} style={{ display: 'grid', gap: 8 }}>
+    <div data-part={PARTS.confirmWidgetBody}>
       <div
-        data-part={PARTS.card}
+        data-part={PARTS.confirmDropzone}
         data-state={dragOver ? 'drag-over' : undefined}
         onDragEnter={(event) => {
           event.preventDefault();
@@ -99,16 +99,8 @@ export function FilePickerDropzone({ accept, multiple, maxSizeBytes, onFilesChan
           setDragOver(false);
         }}
         onDrop={onDrop}
-        style={{
-          border: '1px dashed currentColor',
-          borderRadius: 4,
-          minHeight: 90,
-          display: 'grid',
-          placeItems: 'center',
-          padding: 10,
-        }}
       >
-        <span data-part={PARTS.fieldValue}>{helperText ?? 'Drag files here or choose from disk'}</span>
+        {helperText ?? 'Drag files here or choose from disk'}
       </div>
 
       <input
@@ -124,20 +116,20 @@ export function FilePickerDropzone({ accept, multiple, maxSizeBytes, onFilesChan
         }}
       />
 
-      <div data-part={PARTS.buttonGroup} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div data-part={PARTS.confirmActionButtons} style={{ justifyContent: 'flex-start' }}>
         <Btn variant="default" onClick={() => inputRef.current?.click()}>
           Choose File{multiple ? 's' : ''}
         </Btn>
-        <span data-part={PARTS.fieldValue}>
+        <span data-part={PARTS.confirmProgress}>
           Accept: {acceptLabel}
           {maxSizeBytes !== undefined ? `, max ${Math.round(maxSizeBytes / (1024 * 1024))}MB` : ''}
         </span>
       </div>
 
       {files.length > 0 && (
-        <div data-part={PARTS.fieldGrid}>
+        <div data-part={PARTS.confirmFileList}>
           {files.map((file) => (
-            <div key={`${file.name}:${file.size}`} data-part={PARTS.fieldValue}>
+            <div key={`${file.name}:${file.size}`} data-part={PARTS.confirmFileItem}>
               {file.name} ({Math.max(1, Math.round(file.size / 1024))} KB)
             </div>
           ))}

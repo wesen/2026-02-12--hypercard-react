@@ -98,7 +98,7 @@ export function SelectableDataTable<T extends Record<string, unknown>>({
   };
 
   return (
-    <div data-part={PARTS.dataTable} style={{ display: 'grid', gap: 6 }}>
+    <div data-part={PARTS.confirmWidgetBody}>
       {searchable && (
         <input
           data-part={PARTS.fieldInput}
@@ -109,64 +109,65 @@ export function SelectableDataTable<T extends Record<string, unknown>>({
         />
       )}
 
-      <div data-part={PARTS.tableHeader} style={{ display: 'grid', gridTemplateColumns: templateColumns }}>
-        {columns.map((column) => (
-          <span key={column.key} style={{ textAlign: column.align }}>
-            {column.label ?? column.key}
-          </span>
-        ))}
+      <div data-part={PARTS.dataTable}>
+        <div data-part={PARTS.tableHeader} style={{ display: 'grid', gridTemplateColumns: templateColumns }}>
+          {columns.map((column) => (
+            <span key={column.key} style={{ textAlign: column.align }}>
+              {column.label ?? column.key}
+            </span>
+          ))}
+        </div>
+
+        {filteredItems.length === 0 && <div data-part={PARTS.tableEmpty}>{emptyMessage ?? 'No items'}</div>}
+        {filteredItems.map((row, index) => {
+          const id = resolveRowKey(row, index, rowKey);
+          const selected = selectedRowKeys.includes(id);
+
+          return (
+            <button
+              key={id}
+              type="button"
+              data-part={PARTS.tableRow}
+              data-state={selected ? 'selected' : undefined}
+              onClick={() => handleRowClick(row, index)}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: templateColumns,
+                textAlign: 'left',
+                width: '100%',
+              }}
+            >
+              {columns.map((column) => {
+                const raw = row[column.key as keyof T] as unknown;
+                const state = column.cellState?.(raw, row);
+                const style = column.cellStyle?.(raw, row);
+                const rendered = column.renderCell
+                  ? column.renderCell(raw, row)
+                  : column.format
+                    ? column.format(raw, row)
+                    : String(raw ?? '');
+
+                return (
+                  <span
+                    key={column.key}
+                    data-part={PARTS.tableCell}
+                    data-state={state}
+                    style={{
+                      textAlign: column.align,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      ...style,
+                    }}
+                  >
+                    {rendered}
+                  </span>
+                );
+              })}
+            </button>
+          );
+        })}
       </div>
-
-      {filteredItems.length === 0 && <div data-part={PARTS.tableEmpty}>{emptyMessage ?? 'No items'}</div>}
-      {filteredItems.map((row, index) => {
-        const id = resolveRowKey(row, index, rowKey);
-        const selected = selectedRowKeys.includes(id);
-
-        return (
-          <button
-            key={id}
-            type="button"
-            data-part={PARTS.tableRow}
-            data-state={selected ? 'selected' : undefined}
-            onClick={() => handleRowClick(row, index)}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: templateColumns,
-              textAlign: 'left',
-              width: '100%',
-              cursor: 'pointer',
-            }}
-          >
-            {columns.map((column) => {
-              const raw = row[column.key as keyof T] as unknown;
-              const state = column.cellState?.(raw, row);
-              const style = column.cellStyle?.(raw, row);
-              const rendered = column.renderCell
-                ? column.renderCell(raw, row)
-                : column.format
-                  ? column.format(raw, row)
-                  : String(raw ?? '');
-
-              return (
-                <span
-                  key={column.key}
-                  data-part={PARTS.tableCell}
-                  data-state={state}
-                  style={{
-                    textAlign: column.align,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    ...style,
-                  }}
-                >
-                  {rendered}
-                </span>
-              );
-            })}
-          </button>
-        );
-      })}
     </div>
   );
 }

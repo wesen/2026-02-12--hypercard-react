@@ -51,11 +51,9 @@ export function ImageChoiceGrid({
 
   return (
     <div
-      data-part={PARTS.cardBody}
+      data-part={PARTS.confirmWidgetBody}
       style={{
-        display: 'grid',
         gridTemplateColumns: `repeat(${Math.max(1, columns)}, minmax(0, 1fr))`,
-        gap: 8,
       }}
     >
       {items.map((item) => {
@@ -66,24 +64,15 @@ export function ImageChoiceGrid({
             key={item.id}
             type="button"
             disabled={item.disabled}
-            data-part={PARTS.card}
+            data-part={PARTS.confirmImageCard}
             data-state={selected ? 'selected' : undefined}
             onClick={() => onSelectionChange(nextImageSelection(selectedIds, item.id, mode))}
-            style={{
-              border: '1px solid currentColor',
-              borderRadius: 4,
-              padding: 6,
-              display: 'grid',
-              gap: 6,
-              textAlign: 'left',
-            }}
           >
             <img
               src={item.src}
               alt={item.alt ?? item.label ?? item.id}
-              style={{ width: '100%', height: 110, objectFit: 'cover', borderRadius: 3 }}
             />
-            <span data-part={PARTS.fieldLabel}>{item.label ?? item.id}</span>
+            <span data-part={PARTS.confirmProgress}>{item.label ?? item.id}</span>
             {item.badge && <span data-part={PARTS.chip}>{item.badge}</span>}
             {mode === 'confirm' && selected && <span data-part={PARTS.fieldValue}>Selected for confirmation</span>}
           </button>
