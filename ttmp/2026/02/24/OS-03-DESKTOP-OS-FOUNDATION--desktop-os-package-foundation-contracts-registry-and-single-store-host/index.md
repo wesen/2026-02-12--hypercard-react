@@ -1,7 +1,7 @@
 ---
 Title: desktop-os package foundation contracts registry and single-store host
 Ticket: OS-03-DESKTOP-OS-FOUNDATION
-Status: closed
+Status: complete
 Topics:
     - go-go-os
     - frontend
@@ -52,7 +52,7 @@ This ticket delivers the first executable layer of the launcher architecture: a 
 
 ## Status
 
-Current status: **closed**
+Current status: **complete**
 
 ## Topics
 

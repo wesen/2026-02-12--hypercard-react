@@ -12,8 +12,8 @@ DocType: index
 Intent: long-term
 Owners: []
 RelatedFiles:
-    - Path: apps/os-launcher
-      Note: Launcher host app target for this ticket
+    - Path: apps
+      Note: Launcher host app will be added under apps/ during OS-04
     - Path: packages/desktop-os
       Note: Runtime APIs consumed by launcher host
     - Path: packages/engine
@@ -24,6 +24,7 @@ LastUpdated: 2026-02-24T14:00:26.923972659-05:00
 WhatFor: Use this ticket to implement the actual launcher UI host that consumes desktop-os APIs and replaces app-by-app boot assumptions.
 WhenToUse: Use when wiring launcher shell, icon surfaces, window lifecycle orchestration, and host-level providers.
 ---
+
 
 
 # launcher host frontend wiring with desktop-shell and desktop-os runtime

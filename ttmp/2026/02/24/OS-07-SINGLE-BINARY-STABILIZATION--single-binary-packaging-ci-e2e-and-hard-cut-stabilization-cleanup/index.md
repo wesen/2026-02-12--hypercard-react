@@ -12,8 +12,8 @@ DocType: index
 Intent: long-term
 Owners: []
 RelatedFiles:
-    - Path: apps/os-launcher
-      Note: Launcher frontend build artifact source
+    - Path: apps
+      Note: Launcher frontend source for single-binary stabilization
     - Path: go-inventory-chat
       Note: Backend binary assembly and module host
     - Path: scripts
@@ -24,6 +24,7 @@ LastUpdated: 2026-02-24T14:00:27.094417956-05:00
 WhatFor: Use this ticket to operationalize the launcher architecture as a stable single binary and finalize cleanup.
 WhenToUse: Use when implementing build/embed, CI workflows, e2e validation, and post-cutover cleanup.
 ---
+
 
 
 # single-binary packaging ci e2e and hard-cut stabilization cleanup
