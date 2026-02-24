@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import {
   buildLauncherContributions,
   createAppRegistry,
@@ -93,5 +94,21 @@ describe('launcher host wiring', () => {
     };
 
     expect(() => createAppRegistry([duplicateA, duplicateB])).toThrow(/Duplicate app manifest id/);
+  });
+
+  it('keeps host app orchestration-only (no app-specific business imports)', () => {
+    const source = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
+    const forbiddenImports = [
+      'apps/inventory',
+      'apps/todo',
+      'apps/crm',
+      'apps/book-tracker-debug',
+      'ChatConversationWindow',
+      'ConfirmRequestWindowHost',
+    ];
+
+    for (const forbiddenImport of forbiddenImports) {
+      expect(source).not.toContain(forbiddenImport);
+    }
   });
 });
