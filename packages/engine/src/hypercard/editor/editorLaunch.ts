@@ -5,12 +5,11 @@
  * code here before dispatching openWindow, and the editor reads it on mount.
  */
 
-import type { UnknownAction } from 'redux';
 import { type OpenWindowPayload, openWindow } from '../../desktop/core';
 import { getPendingRuntimeCards } from '../../plugin-runtime';
 
 const pendingCode = new Map<string, string>();
-type WindowDispatch = (action: UnknownAction) => unknown;
+type WindowDispatch = (action: ReturnType<typeof openWindow>) => unknown;
 
 export function buildCodeEditorWindowPayload(cardId: string): OpenWindowPayload {
   return {

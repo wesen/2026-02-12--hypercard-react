@@ -24,7 +24,7 @@ function Wrapper(props: React.ComponentProps<typeof CodeEditorWindow>) {
   );
 }
 
-const meta = {
+const meta: Meta<typeof Wrapper> = {
   title: 'Engine/Widgets/CodeEditorWindow',
   component: Wrapper,
   parameters: { layout: 'centered' },
@@ -34,10 +34,10 @@ const meta = {
       return <Story />;
     },
   ],
-} satisfies Meta<typeof Wrapper>;
+};
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<typeof Wrapper>;
 
 const SAMPLE_CODE = `({ ui }) => ({
   render({ globalState }) {
