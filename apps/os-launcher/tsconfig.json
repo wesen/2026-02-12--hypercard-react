@@ -15,5 +15,6 @@
     }
   },
   "include": ["src"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/__tests__"],
   "references": [{ "path": "../../packages/desktop-os" }, { "path": "../../packages/engine" }]
 }
