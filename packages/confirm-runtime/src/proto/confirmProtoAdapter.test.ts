@@ -95,7 +95,7 @@ describe('confirmProtoAdapter', () => {
       id: 'req-4',
       sessionId: 'global',
       widgetType: 'select',
-      input: { payload: {} },
+      input: { payload: { multi: true } },
     };
 
     const payload = mapSubmitResponseToProto(request, {
@@ -109,6 +109,87 @@ describe('confirmProtoAdapter', () => {
         },
       },
     });
+  });
+
+  it('encodes select multi mode with single selection as selectedMulti', () => {
+    const request: ConfirmRequest = {
+      id: 'req-4b',
+      sessionId: 'global',
+      widgetType: 'select',
+      input: { payload: { multi: true } },
+    };
+
+    const payload = mapSubmitResponseToProto(request, {
+      output: { selectedIds: ['staging'] },
+    });
+
+    expect(payload).toEqual({
+      selectOutput: {
+        selectedMulti: {
+          values: ['staging'],
+        },
+      },
+    });
+  });
+
+  it('encodes table multi mode with single selected row as selectedMulti', () => {
+    const request: ConfirmRequest = {
+      id: 'req-4c',
+      sessionId: 'global',
+      widgetType: 'table',
+      input: { payload: { multiSelect: true } },
+    };
+
+    const payload = mapSubmitResponseToProto(request, {
+      output: {
+        selectedRows: [{ id: 'srv-1', env: 'staging', status: 'ok' }],
+      },
+    });
+
+    expect(payload).toEqual({
+      tableOutput: {
+        selectedMulti: {
+          values: [{ id: 'srv-1', env: 'staging', status: 'ok' }],
+        },
+      },
+    });
+  });
+
+  it('encodes image multi mode with single selected id as selectedStrings', () => {
+    const request: ConfirmRequest = {
+      id: 'req-4d',
+      sessionId: 'global',
+      widgetType: 'image',
+      input: { payload: { multi: true } },
+    };
+
+    const payload = mapSubmitResponseToProto(request, {
+      output: { selectedImageIds: ['img-1'] },
+    });
+
+    expect(payload).toEqual({
+      imageOutput: {
+        selectedStrings: { values: ['img-1'] },
+        timestamp: expect.any(String),
+      },
+    });
+  });
+
+  it('normalizes upload maxSize protojson string into number', () => {
+    const request = mapUIRequestFromProto({
+      id: 'req-upload-1',
+      type: 'upload',
+      sessionId: 'global',
+      uploadInput: {
+        title: 'Attach logs',
+        maxSize: '10485760',
+      },
+      status: 'pending',
+    });
+
+    expect(request).not.toBeNull();
+    expect(request?.widgetType).toBe('upload');
+    expect(request?.input?.payload?.maxSize).toBe(10485760);
   });
 
   it('encodes image confirm response into proto oneof payload', () => {

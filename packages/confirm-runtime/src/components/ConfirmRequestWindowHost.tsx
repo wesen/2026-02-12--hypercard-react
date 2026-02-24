@@ -96,6 +96,22 @@ function parseTableColumns(
   return [];
 }
 
+function resolveTableRowId(row: Record<string, unknown>, index: number, rowKey?: string): string {
+  if (rowKey) {
+    return String(row[rowKey]);
+  }
+  return String(row.id ?? index);
+}
+
+export function resolveSelectedTableRows(
+  rows: Array<Record<string, unknown>>,
+  selectedRowKeys: string[],
+  rowKey?: string,
+): Array<Record<string, unknown>> {
+  const selected = new Set(selectedRowKeys);
+  return rows.filter((row, index) => selected.has(resolveTableRowId(row, index, rowKey)));
+}
+
 function parseImageItems(payload: Record<string, unknown>): Array<{ id: string; src: string; label?: string; badge?: string }> {
   const images = payload.images;
   if (!Array.isArray(images)) {
@@ -272,8 +288,8 @@ export function ConfirmRequestWindowHost({ request, onSubmitResponse, onSubmitSc
         return renderPlaceholder('No table columns available');
       }
 
-      const rowKey = typeof payload.rowKey === 'string' ? payload.rowKey : 'id';
-      const selectedRows = tableRows.filter((row) => selectedTableRows.includes(String(row[rowKey] ?? '')));
+      const rowKey = typeof payload.rowKey === 'string' ? payload.rowKey : undefined;
+      const selectedRows = resolveSelectedTableRows(tableRows, selectedTableRows, rowKey);
       const isMulti = payload.multiSelect === true;
 
       return (

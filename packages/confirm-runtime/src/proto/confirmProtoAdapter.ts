@@ -22,6 +22,19 @@ function asString(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined;
 }
 
+function asNumber(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return undefined;
+}
+
 function normalizeWidgetType(value: unknown): string | undefined {
   if (typeof value !== 'string') {
     return undefined;
@@ -65,6 +78,24 @@ function inputFieldForWidgetType(widgetType: ConfirmWidgetType): string {
     case 'script':
       return 'scriptInput';
   }
+}
+
+function normalizeUploadInput(rawInput: RawRecord): RawRecord {
+  const maxSize = asNumber(rawInput.maxSize);
+  if (maxSize === undefined) {
+    return rawInput;
+  }
+  return {
+    ...rawInput,
+    maxSize,
+  };
+}
+
+function normalizeInputPayload(widgetType: ConfirmWidgetType, rawInput: RawRecord): RawRecord {
+  if (widgetType === 'upload') {
+    return normalizeUploadInput(rawInput);
+  }
+  return rawInput;
 }
 
 function mapScriptView(raw: unknown): ConfirmScriptView | undefined {
@@ -143,6 +174,7 @@ export function mapUIRequestFromProto(raw: unknown): ConfirmRequest | null {
 
   const inputField = inputFieldForWidgetType(widgetType);
   const rawInput = asRecord(request[inputField]) ?? {};
+  const normalizedInput = normalizeInputPayload(widgetType, rawInput);
   const title = asString(rawInput.title);
   const message = asString(rawInput.message);
   const scriptView = mapScriptView(request.scriptView);
@@ -159,7 +191,7 @@ export function mapUIRequestFromProto(raw: unknown): ConfirmRequest | null {
     updatedAt: asString(request.updatedAt),
     input: {
       title,
-      payload: rawInput,
+      payload: normalizedInput,
     },
     scriptView,
     metadata: asRecord(request.metadata) ?? undefined,
@@ -211,9 +243,17 @@ function mapConfirmResponse(output: RawRecord): RawRecord {
   };
 }
 
-function mapSelectResponse(output: RawRecord): RawRecord {
-  const selected = asStringArray(output.selectedIds);
-  if (selected.length > 1) {
+function mapSelectResponse(request: ConfirmRequest, output: RawRecord): RawRecord {
+  const payload = asRecord(request.input?.payload) ?? {};
+  const multi = payload.multi === true;
+  const selectedMulti = asRecord(output.selectedMulti);
+  const selected = selectedMulti
+    ? asStringArray(selectedMulti.values)
+    : typeof output.selectedSingle === 'string'
+      ? [output.selectedSingle]
+      : asStringArray(output.selectedIds);
+
+  if (multi) {
     return {
       selectOutput: {
         selectedMulti: { values: selected },
@@ -239,11 +279,16 @@ function mapFormResponse(output: RawRecord): RawRecord {
   };
 }
 
-function mapTableResponse(output: RawRecord): RawRecord {
+function mapTableResponse(request: ConfirmRequest, output: RawRecord): RawRecord {
+  const payload = asRecord(request.input?.payload) ?? {};
+  const multi = payload.multiSelect === true;
   const selectedRowsRaw = output.selectedRows;
-  if (Array.isArray(selectedRowsRaw)) {
-    const selectedRows = selectedRowsRaw.map((row) => asRecord(row)).filter((row): row is RawRecord => row !== null);
-    if (selectedRows.length > 1) {
+  const selectedRows = Array.isArray(selectedRowsRaw)
+    ? selectedRowsRaw.map((row) => asRecord(row)).filter((row): row is RawRecord => row !== null)
+    : [];
+
+  if (selectedRows.length > 0) {
+    if (multi) {
       return {
         tableOutput: {
           selectedMulti: { values: selectedRows },
@@ -251,34 +296,33 @@ function mapTableResponse(output: RawRecord): RawRecord {
         },
       };
     }
-    if (selectedRows.length === 1) {
-      return {
-        tableOutput: {
-          selectedSingle: selectedRows[0],
-          ...commentField(output),
-        },
-      };
-    }
+    return {
+      tableOutput: {
+        selectedSingle: selectedRows[0],
+        ...commentField(output),
+      },
+    };
   }
 
   const keys = asStringArray(output.selectedRowKeys);
-  if (keys.length > 1) {
+  const keyRows = keys.map((id) => ({ id }));
+  if (multi) {
     return {
       tableOutput: {
-        selectedMulti: { values: keys.map((id) => ({ id })) },
+        selectedMulti: { values: keyRows },
         ...commentField(output),
       },
     };
   }
   return {
     tableOutput: {
-      selectedSingle: { id: keys[0] ?? '' },
+      selectedSingle: keyRows[0] ?? { id: '' },
       ...commentField(output),
     },
   };
 }
 
-function mapImageResponse(output: RawRecord): RawRecord {
+function mapImageResponse(request: ConfirmRequest, output: RawRecord): RawRecord {
   const timestamp = asString(output.timestamp) ?? new Date().toISOString();
   if (typeof output.selectedBool === 'boolean') {
     return {
@@ -314,8 +358,10 @@ function mapImageResponse(output: RawRecord): RawRecord {
     }
   }
 
+  const payload = asRecord(request.input?.payload) ?? {};
+  const multi = payload.multi === true;
   const selected = asStringArray(output.selectedImageIds);
-  if (selected.length > 1) {
+  if (multi) {
     return {
       imageOutput: {
         selectedStrings: { values: selected },
@@ -360,13 +406,13 @@ export function mapSubmitResponseToProto(request: ConfirmRequest, payload: Submi
     case 'confirm':
       return mapConfirmResponse(output);
     case 'select':
-      return mapSelectResponse(output);
+      return mapSelectResponse(request, output);
     case 'form':
       return mapFormResponse(output);
     case 'table':
-      return mapTableResponse(output);
+      return mapTableResponse(request, output);
     case 'image':
-      return mapImageResponse(output);
+      return mapImageResponse(request, output);
     case 'upload':
       return mapUploadResponse(output);
     case 'script':
