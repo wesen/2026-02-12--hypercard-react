@@ -1,5 +1,7 @@
 import {
   type ChatCurrentProfilePayload,
+  type ChatExtensionSchemaDocument,
+  type ChatMiddlewareSchemaDocument,
   type ChatProfileDocument,
   type ChatProfileListItem,
 } from './profileTypes';
@@ -166,6 +168,60 @@ function decodeCurrentProfilePayload(
   return out;
 }
 
+function decodeMiddlewareSchemas(
+  payload: unknown,
+  url: string,
+  status: number
+): ChatMiddlewareSchemaDocument[] {
+  if (!Array.isArray(payload)) {
+    throw invalidPayload(url, status, 'invalid middleware schema response: expected array');
+  }
+  return payload.map((row, index) => {
+    if (!isRecord(row)) {
+      throw invalidPayload(url, status, `invalid middleware schema at index ${index}`);
+    }
+    const name = typeof row.name === 'string' ? row.name.trim() : '';
+    if (name.length === 0) {
+      throw invalidPayload(url, status, `invalid middleware name at index ${index}`);
+    }
+    const version = typeof row.version === 'number' && Number.isFinite(row.version)
+      ? Math.trunc(row.version)
+      : 1;
+    const schema = cloneExtensions(row.schema);
+    if (!schema) {
+      throw invalidPayload(url, status, `invalid middleware schema payload at index ${index}`);
+    }
+    const out: ChatMiddlewareSchemaDocument = { name, version, schema };
+    if (typeof row.display_name === 'string') out.display_name = row.display_name;
+    if (typeof row.description === 'string') out.description = row.description;
+    return out;
+  });
+}
+
+function decodeExtensionSchemas(
+  payload: unknown,
+  url: string,
+  status: number
+): ChatExtensionSchemaDocument[] {
+  if (!Array.isArray(payload)) {
+    throw invalidPayload(url, status, 'invalid extension schema response: expected array');
+  }
+  return payload.map((row, index) => {
+    if (!isRecord(row)) {
+      throw invalidPayload(url, status, `invalid extension schema at index ${index}`);
+    }
+    const key = typeof row.key === 'string' ? row.key.trim() : '';
+    if (key.length === 0) {
+      throw invalidPayload(url, status, `invalid extension schema key at index ${index}`);
+    }
+    const schema = cloneExtensions(row.schema);
+    if (!schema) {
+      throw invalidPayload(url, status, `invalid extension schema payload at index ${index}`);
+    }
+    return { key, schema };
+  });
+}
+
 async function parseJsonOrThrow(response: Response, url: string, fallback: string): Promise<unknown> {
   if (!response.ok) {
     const body = await response.text();
@@ -295,4 +351,20 @@ export async function setCurrentProfile(slug: string, options: FetchOptions = {}
   });
   const payload = await parseJsonOrThrow(response, url, `set current profile failed (${response.status})`);
   return decodeCurrentProfilePayload(payload, url, response.status);
+}
+
+export async function listMiddlewareSchemas(options: FetchOptions = {}): Promise<ChatMiddlewareSchemaDocument[]> {
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const url = `${resolveBasePrefix(options.basePrefix)}/api/chat/schemas/middlewares`;
+  const response = await fetchImpl(url);
+  const payload = await parseJsonOrThrow(response, url, `middleware schema request failed (${response.status})`);
+  return decodeMiddlewareSchemas(payload, url, response.status);
+}
+
+export async function listExtensionSchemas(options: FetchOptions = {}): Promise<ChatExtensionSchemaDocument[]> {
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const url = `${resolveBasePrefix(options.basePrefix)}/api/chat/schemas/extensions`;
+  const response = await fetchImpl(url);
+  const payload = await parseJsonOrThrow(response, url, `extension schema request failed (${response.status})`);
+  return decodeExtensionSchemas(payload, url, response.status);
 }

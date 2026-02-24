@@ -29,3 +29,16 @@ export interface ChatCurrentProfilePayload {
   slug: string;
   profile?: string;
 }
+
+export interface ChatMiddlewareSchemaDocument {
+  name: string;
+  version: number;
+  display_name?: string;
+  description?: string;
+  schema: Record<string, unknown>;
+}
+
+export interface ChatExtensionSchemaDocument {
+  key: string;
+  schema: Record<string, unknown>;
+}

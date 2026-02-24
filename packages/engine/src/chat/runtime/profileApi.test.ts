@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   ChatProfileApiError,
   createProfile,
+  listExtensionSchemas,
+  listMiddlewareSchemas,
   listProfiles,
   setCurrentProfile,
   setDefaultProfile,
@@ -174,5 +176,63 @@ describe('profileApi', () => {
       },
       body: JSON.stringify({ slug: 'agent' }),
     });
+  });
+
+  it('decodes middleware schema catalog payload', async () => {
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ([
+        {
+          name: 'agentmode',
+          version: 1,
+          display_name: 'Agent Mode',
+          description: 'Parses mode switches',
+          schema: { type: 'object' },
+        },
+      ]),
+      text: async () => '',
+    } as Response));
+
+    const rows = await listMiddlewareSchemas({
+      basePrefix: '/chat',
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+    expect(rows).toEqual([
+      {
+        name: 'agentmode',
+        version: 1,
+        display_name: 'Agent Mode',
+        description: 'Parses mode switches',
+        schema: { type: 'object' },
+      },
+    ]);
+    expect(fetchImpl).toHaveBeenCalledWith('/chat/api/chat/schemas/middlewares');
+  });
+
+  it('decodes extension schema catalog payload', async () => {
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ([
+        {
+          key: 'middleware.agentmode_config@v1',
+          schema: { type: 'object', properties: { instances: { type: 'object' } } },
+        },
+      ]),
+      text: async () => '',
+    } as Response));
+
+    const rows = await listExtensionSchemas({
+      basePrefix: '/chat',
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+    expect(rows).toEqual([
+      {
+        key: 'middleware.agentmode_config@v1',
+        schema: { type: 'object', properties: { instances: { type: 'object' } } },
+      },
+    ]);
+    expect(fetchImpl).toHaveBeenCalledWith('/chat/api/chat/schemas/extensions');
   });
 });
