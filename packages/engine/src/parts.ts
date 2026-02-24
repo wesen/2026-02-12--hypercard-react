@@ -111,6 +111,24 @@ export const PARTS = {
   haloHandle: 'halo-handle',
   haloLabel: 'halo-label',
   haloBorder: 'halo-border',
+  // Confirm widgets
+  confirmSection: 'confirm-section',
+  confirmHeading: 'confirm-heading',
+  confirmDescription: 'confirm-description',
+  confirmProgress: 'confirm-progress',
+  confirmDisplay: 'confirm-display',
+  confirmDisplayTitle: 'confirm-display-title',
+  confirmDisplayContent: 'confirm-display-content',
+  confirmWidgetBody: 'confirm-widget-body',
+  confirmActionBar: 'confirm-action-bar',
+  confirmActionButtons: 'confirm-action-buttons',
+  confirmDropzone: 'confirm-dropzone',
+  confirmImageCard: 'confirm-image-card',
+  confirmGridCell: 'confirm-grid-cell',
+  confirmRatingOption: 'confirm-rating-option',
+  confirmRatingLabels: 'confirm-rating-labels',
+  confirmFileList: 'confirm-file-list',
+  confirmFileItem: 'confirm-file-item',
 } as const;
 
 export type PartName = (typeof PARTS)[keyof typeof PARTS];

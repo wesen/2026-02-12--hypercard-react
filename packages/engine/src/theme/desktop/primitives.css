@@ -576,3 +576,235 @@
   border-radius: 10px;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════ */
+/* Confirm widget primitives                                             */
+/* ═══════════════════════════════════════════════════════════════════════ */
+
+/* ─── Shared focus ring for interactive confirm elements ── */
+[data-part="list-box-item"]:focus-visible,
+[data-part="table-row"]:focus-visible,
+[data-part="confirm-image-card"]:focus-visible,
+[data-part="confirm-grid-cell"]:focus-visible,
+[data-part="confirm-rating-option"]:focus-visible {
+  outline: var(--hc-confirm-focus-ring);
+  outline-offset: var(--hc-confirm-focus-offset);
+  z-index: 1;
+}
+
+/* ─── Shared disabled treatment ── */
+[data-part="list-box-item"]:disabled,
+[data-part="table-row"]:disabled,
+[data-part="confirm-image-card"]:disabled,
+[data-part="confirm-grid-cell"]:disabled,
+[data-part="confirm-rating-option"]:disabled,
+[data-part="btn"]:disabled {
+  opacity: var(--hc-confirm-disabled-opacity);
+  cursor: default;
+  pointer-events: none;
+}
+
+/* ─── list-box-item as button reset ── */
+button[data-part="list-box-item"] {
+  font-family: var(--hc-font-family);
+  font-size: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  appearance: none;
+  color: inherit;
+}
+[data-part="list-box-item"][data-state="active"] {
+  background: var(--hc-color-row-hover);
+}
+
+/* ─── table-row as button reset ── */
+button[data-part="table-row"] {
+  font-family: var(--hc-font-family);
+  font-size: 11px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid #ccc;
+  cursor: pointer;
+  appearance: none;
+  color: inherit;
+}
+button[data-part="table-row"]:nth-child(odd) {
+  background: var(--hc-color-row-odd);
+}
+button[data-part="table-row"]:nth-child(even) {
+  background: var(--hc-color-row-even);
+}
+[data-part="table-row"][data-state="selected"] {
+  background: var(--hc-confirm-selected-bg);
+  color: var(--hc-confirm-selected-fg);
+}
+
+/* ─── Confirm section layout ── */
+[data-part="confirm-section"] {
+  display: grid;
+  gap: var(--hc-confirm-section-gap);
+  font-family: var(--hc-font-family);
+}
+[data-part="confirm-heading"] {
+  font-size: var(--hc-confirm-heading-size);
+  font-weight: bold;
+}
+[data-part="confirm-description"] {
+  font-size: var(--hc-confirm-body-size);
+  color: var(--hc-color-fg);
+}
+[data-part="confirm-progress"] {
+  font-size: var(--hc-confirm-caption-size);
+  color: var(--hc-confirm-progress-fg);
+}
+
+/* ─── Display section (read-only context panel) ── */
+[data-part="confirm-display"] {
+  border: 1px solid #ccc;
+  padding: 8px 10px;
+  display: grid;
+  gap: 4px;
+  background: var(--hc-color-alt);
+}
+[data-part="confirm-display-title"] {
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: var(--hc-color-muted);
+}
+[data-part="confirm-display-content"] {
+  font-size: var(--hc-confirm-body-size);
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: inherit;
+  margin: 0;
+}
+
+/* ─── Confirm widget body (inner widget wrapper) ── */
+[data-part="confirm-widget-body"] {
+  display: grid;
+  gap: var(--hc-confirm-widget-gap);
+}
+
+/* ─── Confirm action bar ── */
+[data-part="confirm-action-bar"] {
+  display: grid;
+  gap: var(--hc-confirm-widget-gap);
+  border-top: 1px solid #ccc;
+  padding-top: var(--hc-confirm-widget-gap);
+}
+[data-part="confirm-action-buttons"] {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ─── Dropzone ── */
+[data-part="confirm-dropzone"] {
+  border: var(--hc-confirm-dropzone-border);
+  min-height: 80px;
+  display: grid;
+  place-items: center;
+  padding: 10px;
+  font-size: var(--hc-confirm-body-size);
+  color: var(--hc-color-muted);
+  cursor: pointer;
+}
+[data-part="confirm-dropzone"][data-state="drag-over"] {
+  background: var(--hc-confirm-dropzone-hover-bg);
+  border-color: var(--hc-color-fg);
+  color: var(--hc-color-fg);
+}
+
+/* ─── Image choice card ── */
+[data-part="confirm-image-card"] {
+  font-family: var(--hc-font-family);
+  border: 2px solid var(--hc-color-border);
+  padding: 4px;
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  cursor: pointer;
+  background: var(--hc-color-bg);
+  appearance: none;
+  color: inherit;
+  font-size: 11px;
+}
+[data-part="confirm-image-card"]:hover {
+  background: var(--hc-color-row-hover);
+}
+[data-part="confirm-image-card"][data-state="selected"] {
+  background: var(--hc-confirm-selected-bg);
+  color: var(--hc-confirm-selected-fg);
+}
+[data-part="confirm-image-card"] img {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+}
+
+/* ─── Grid board cell ── */
+[data-part="confirm-grid-cell"] {
+  font-family: var(--hc-font-family);
+  font-size: 11px;
+  display: grid;
+  place-items: center;
+  border: var(--hc-btn-border);
+  background: var(--hc-btn-bg);
+  color: var(--hc-btn-fg);
+  box-shadow: var(--hc-btn-shadow);
+  cursor: pointer;
+  appearance: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+[data-part="confirm-grid-cell"]:hover {
+  background: var(--hc-btn-hover-bg);
+}
+[data-part="confirm-grid-cell"][data-state="active"] {
+  background: var(--hc-btn-active-bg);
+  color: var(--hc-btn-active-fg);
+}
+
+/* ─── Rating option ── */
+[data-part="confirm-rating-option"] {
+  font-family: var(--hc-font-family);
+  font-size: 11px;
+  border: var(--hc-btn-border);
+  background: var(--hc-btn-bg);
+  color: var(--hc-btn-fg);
+  box-shadow: var(--hc-btn-shadow);
+  padding: var(--hc-btn-padding);
+  cursor: pointer;
+  appearance: none;
+  user-select: none;
+  white-space: nowrap;
+}
+[data-part="confirm-rating-option"]:hover {
+  background: var(--hc-btn-hover-bg);
+}
+[data-part="confirm-rating-option"][data-state="active"] {
+  background: var(--hc-btn-active-bg);
+  color: var(--hc-btn-active-fg);
+}
+
+/* ─── Rating label row ── */
+[data-part="confirm-rating-labels"] {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--hc-confirm-caption-size);
+  color: var(--hc-color-muted);
+}
+
+/* ─── File list for uploads ── */
+[data-part="confirm-file-list"] {
+  display: grid;
+  gap: 2px;
+  font-size: 11px;
+}
+[data-part="confirm-file-item"] {
+  padding: 2px 0;
+  border-bottom: 1px dotted #ccc;
+}
+

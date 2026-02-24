@@ -108,6 +108,21 @@
   --hc-halo-border: 2px dashed #555;
   --hc-halo-label-bg: #ff0;
 
+  /* ── Confirm widgets ── */
+  --hc-confirm-section-gap: 10px;
+  --hc-confirm-widget-gap: 8px;
+  --hc-confirm-focus-ring: 2px solid var(--hc-color-fg);
+  --hc-confirm-focus-offset: 1px;
+  --hc-confirm-selected-bg: var(--hc-color-fg);
+  --hc-confirm-selected-fg: var(--hc-color-bg);
+  --hc-confirm-disabled-opacity: 0.45;
+  --hc-confirm-dropzone-border: 2px dashed var(--hc-color-border);
+  --hc-confirm-dropzone-hover-bg: var(--hc-color-highlight);
+  --hc-confirm-heading-size: 13px;
+  --hc-confirm-body-size: 12px;
+  --hc-confirm-caption-size: 10px;
+  --hc-confirm-progress-fg: var(--hc-color-muted);
+
   /* ── Windowing shell ── */
   --hc-desktop-menubar-height: 28px;
   --hc-desktop-menubar-z: 1000;
