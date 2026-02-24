@@ -235,7 +235,13 @@ export function ChatConversationWindow({
         value={currentProfile.profile ?? ''}
         onChange={(event) => {
           const nextProfile = event.target.value.trim();
-          setProfile(nextProfile.length > 0 ? nextProfile : null, profileRegistry ?? currentProfile.registry ?? null);
+          const resolvedRegistry = profileRegistry ?? currentProfile.registry ?? null;
+          if (nextProfile.length > 0) {
+            setProfile(nextProfile, resolvedRegistry);
+            return;
+          }
+          const defaultProfile = profiles.find((profile) => profile.is_default)?.slug ?? null;
+          setProfile(defaultProfile, resolvedRegistry);
         }}
         disabled={profilesLoading}
         style={{ fontSize: 11, padding: '1px 4px', maxWidth: 180 }}
