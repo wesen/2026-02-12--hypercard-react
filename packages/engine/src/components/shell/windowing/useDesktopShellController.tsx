@@ -30,6 +30,12 @@ import {
   setSelectedIcon,
 } from '../../../desktop/core/state/windowingSlice';
 import {
+  buildContextTargetKey,
+  normalizeContextTargetRef,
+  resolveContextActions,
+  type ContextActionRegistryState,
+} from './contextActionRegistry';
+import {
   composeDesktopContributions,
   mergeActionSections,
   routeContributionCommand,
@@ -46,6 +52,7 @@ import type {
   DesktopActionEntry,
   DesktopActionSection,
   DesktopCommandInvocation,
+  DesktopContextTargetRef,
   DesktopIconDef,
   DesktopMenuSection,
   DesktopWindowDef,
@@ -94,12 +101,23 @@ function nextSessionId() {
   return `session-${sessionCounter}`;
 }
 
+function resolveWindowAppId(win: WindowInstance | undefined): string | undefined {
+  if (!win || win.content.kind !== 'app') {
+    return undefined;
+  }
+  const appKey = String(win.content.appKey ?? '').trim();
+  if (!appKey) return undefined;
+  const [appId] = appKey.split(':');
+  return appId ? appId.trim() : undefined;
+}
+
 export interface DesktopContextMenuState {
   x: number;
   y: number;
   menuId: string;
   windowId: string | null;
   widgetId?: string;
+  target: DesktopContextTargetRef;
   items: DesktopActionEntry[];
 }
 
@@ -128,6 +146,8 @@ export interface DesktopShellControllerResult {
   onContextMenuAction: (entry: { commandId?: string; payload?: Record<string, unknown>; id?: string }) => void;
   registerWindowMenuSections: (windowId: string, sections: DesktopActionSection[]) => void;
   unregisterWindowMenuSections: (windowId: string) => void;
+  registerContextActions: (target: DesktopContextTargetRef, actions: DesktopActionEntry[]) => void;
+  unregisterContextActions: (target: DesktopContextTargetRef) => void;
   registerWindowContextActions: (windowId: string, actions: DesktopActionEntry[]) => void;
   unregisterWindowContextActions: (windowId: string) => void;
   onToastDone: () => void;
@@ -156,7 +176,7 @@ export function useDesktopShellController({
   const dragOverlay = useDragOverlaySnapshot();
   const focusedWindowId = focusedWin?.id ?? null;
   const [windowMenuSectionsById, setWindowMenuSectionsById] = useState<Record<string, DesktopActionSection[]>>({});
-  const [windowContextActionsById, setWindowContextActionsById] = useState<Record<string, DesktopActionEntry[]>>({});
+  const [contextActionsByTargetKey, setContextActionsByTargetKey] = useState<ContextActionRegistryState>({});
   const [contextMenu, setContextMenu] = useState<DesktopContextMenuState | null>(null);
   const composedContributions = useMemo(() => composeDesktopContributions(contributions), [contributions]);
 
@@ -306,15 +326,16 @@ export function useDesktopShellController({
       }
       return changed ? next : prev;
     });
-    setWindowContextActionsById((prev) => {
+    setContextActionsByTargetKey((prev) => {
       let changed = false;
-      const next: Record<string, DesktopActionEntry[]> = {};
-      for (const [windowId, actions] of Object.entries(prev)) {
-        if (!openWindowIds.has(windowId)) {
+      const next: ContextActionRegistryState = {};
+      for (const [targetKey, entry] of Object.entries(prev)) {
+        const targetWindowId = entry.target.windowId;
+        if (targetWindowId && !openWindowIds.has(targetWindowId)) {
           changed = true;
           continue;
         }
-        next[windowId] = actions;
+        next[targetKey] = entry;
       }
       return changed ? next : prev;
     });
@@ -341,26 +362,50 @@ export function useDesktopShellController({
     });
   }, []);
 
-  const registerWindowContextActions = useCallback((windowId: string, actions: DesktopActionEntry[]) => {
-    setWindowContextActionsById((prev) => {
-      const current = prev[windowId];
-      if (current === actions) {
+  const registerContextActions = useCallback((target: DesktopContextTargetRef, actions: DesktopActionEntry[]) => {
+    const normalizedTarget = normalizeContextTargetRef(target);
+    const targetKey = buildContextTargetKey(normalizedTarget);
+    setContextActionsByTargetKey((prev) => {
+      const current = prev[targetKey];
+      if (current?.actions === actions) {
         return prev;
       }
-      return { ...prev, [windowId]: actions };
+      return {
+        ...prev,
+        [targetKey]: {
+          target: normalizedTarget,
+          actions,
+        },
+      };
     });
   }, []);
 
-  const unregisterWindowContextActions = useCallback((windowId: string) => {
-    setWindowContextActionsById((prev) => {
-      if (!(windowId in prev)) {
+  const unregisterContextActions = useCallback((target: DesktopContextTargetRef) => {
+    const normalizedTarget = normalizeContextTargetRef(target);
+    const targetKey = buildContextTargetKey(normalizedTarget);
+    setContextActionsByTargetKey((prev) => {
+      if (!(targetKey in prev)) {
         return prev;
       }
       const next = { ...prev };
-      delete next[windowId];
+      delete next[targetKey];
       return next;
     });
   }, []);
+
+  const registerWindowContextActions = useCallback(
+    (windowId: string, actions: DesktopActionEntry[]) => {
+      registerContextActions({ kind: 'window', windowId }, actions);
+    },
+    [registerContextActions]
+  );
+
+  const unregisterWindowContextActions = useCallback(
+    (windowId: string) => {
+      unregisterContextActions({ kind: 'window', windowId });
+    },
+    [unregisterContextActions]
+  );
 
   const handleFocus = useCallback(
     (id: string) => {
@@ -525,12 +570,13 @@ export function useDesktopShellController({
   );
 
   const buildWindowContextMenuItems = useCallback(
-    (windowId: string): DesktopActionEntry[] => {
+    (target: DesktopContextTargetRef): DesktopActionEntry[] => {
+      const windowId = target.windowId ?? '';
       const win = windowsById[windowId];
       if (!win) {
         return [];
       }
-      const dynamicActions = windowContextActionsById[windowId] ?? [];
+      const dynamicActions = resolveContextActions(contextActionsByTargetKey, target);
 
       const closeEntry: DesktopActionEntry = {
         id: `window-context.close.${windowId}`,
@@ -553,7 +599,7 @@ export function useDesktopShellController({
       }
       return [...dynamicActions, { separator: true }, ...defaults];
     },
-    [windowContextActionsById, windowsById],
+    [contextActionsByTargetKey, windowsById],
   );
 
   const handleContextMenuClose = useCallback(() => {
@@ -562,7 +608,13 @@ export function useDesktopShellController({
 
   const handleWindowContextMenu = useCallback(
     (windowId: string, event: MouseEvent<HTMLElement>, source: 'surface' | 'title-bar') => {
-      const items = buildWindowContextMenuItems(windowId);
+      const target = normalizeContextTargetRef({
+        kind: 'window',
+        windowId,
+        widgetId: source === 'title-bar' ? 'title-bar' : undefined,
+        appId: resolveWindowAppId(windowsById[windowId]),
+      });
+      const items = buildWindowContextMenuItems(target);
       if (items.length === 0) {
         setContextMenu(null);
         return;
@@ -575,10 +627,11 @@ export function useDesktopShellController({
         menuId: 'window-context',
         windowId,
         widgetId: source === 'title-bar' ? 'title-bar' : undefined,
+        target,
         items,
       });
     },
-    [buildWindowContextMenuItems, dispatch],
+    [buildWindowContextMenuItems, dispatch, windowsById],
   );
 
   const handleContextMenuSelect = useCallback(
@@ -591,6 +644,7 @@ export function useDesktopShellController({
         menuId: contextMenu.menuId,
         windowId: contextMenu.windowId,
         widgetId: contextMenu.widgetId,
+        contextTarget: contextMenu.target,
       });
       setContextMenu(null);
     },
@@ -608,6 +662,7 @@ export function useDesktopShellController({
         menuId: contextMenu.menuId,
         windowId: contextMenu.windowId,
         widgetId: contextMenu.widgetId,
+        contextTarget: contextMenu.target,
         payload: entry.payload,
       });
       setContextMenu(null);
@@ -720,6 +775,8 @@ export function useDesktopShellController({
     onContextMenuAction: handleContextMenuAction,
     registerWindowMenuSections,
     unregisterWindowMenuSections,
+    registerContextActions,
+    unregisterContextActions,
     registerWindowContextActions,
     unregisterWindowContextActions,
     onToastDone: handleToastDone,

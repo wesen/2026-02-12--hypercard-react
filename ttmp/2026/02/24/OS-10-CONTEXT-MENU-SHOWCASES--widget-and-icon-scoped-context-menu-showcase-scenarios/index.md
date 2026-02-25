@@ -11,10 +11,18 @@ Topics:
 DocType: index
 Intent: long-term
 Owners: []
-RelatedFiles: []
+RelatedFiles:
+    - Path: packages/engine/src/components/shell/windowing/types.ts
+      Note: Context target contracts and invocation metadata extensions.
+    - Path: packages/engine/src/components/shell/windowing/contextActionRegistry.ts
+      Note: Target-key registry and precedence resolver for context actions.
+    - Path: packages/engine/src/components/shell/windowing/desktopMenuRuntime.tsx
+      Note: Target-scoped context action registration hooks and runtime API.
+    - Path: packages/engine/src/components/shell/windowing/useDesktopShellController.tsx
+      Note: Context target resolution and invocation plumbing in shell controller.
 ExternalSources: []
 Summary: Implementation planning ticket for target-scoped context menu showcase scenarios (icons, folders, chat message/conversation, role-aware menus) plus plugin-extension feasibility notes.
-LastUpdated: 2026-02-24T23:05:18.480723703-05:00
+LastUpdated: 2026-02-25T16:08:00-05:00
 WhatFor: Track planning and execution for high-impact context menu showcases in desktop-os/engine.
 WhenToUse: Use when implementing or reviewing OS-level context menu UX scenarios and extension hooks.
 ---

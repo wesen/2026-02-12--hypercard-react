@@ -28,10 +28,23 @@ export {
   DesktopWindowMenuRuntimeProvider,
   DesktopWindowScopeProvider,
   useDesktopWindowId,
+  useRegisterContextActions,
+  useRegisterConversationContextActions,
+  useRegisterIconContextActions,
+  useRegisterMessageContextActions,
+  useRegisterWidgetContextActions,
   useRegisterWindowContextActions,
   useRegisterWindowMenuSections,
   type DesktopWindowMenuRuntime,
 } from '../../components/shell/windowing/desktopMenuRuntime';
+export {
+  buildContextTargetKey,
+  normalizeContextTargetRef,
+  resolveContextActions,
+  resolveContextActionPrecedenceKeys,
+  type ContextActionRegistryEntry,
+  type ContextActionRegistryState,
+} from '../../components/shell/windowing/contextActionRegistry';
 export {
   createAppWindowContentAdapter,
   createFallbackWindowContentAdapter,
@@ -55,6 +68,8 @@ export type {
   DesktopActionSection,
   DesktopCommandInvocation,
   DesktopCommandSource,
+  ContextTargetKind,
+  DesktopContextTargetRef,
   DesktopIconDef,
   DesktopMenuEntry,
   DesktopMenuItem,

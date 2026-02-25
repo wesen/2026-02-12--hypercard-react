@@ -166,6 +166,12 @@ describe('desktop shell context-menu invocation metadata', () => {
         menuId: 'window-context',
         windowId: runtimeWindowId,
         widgetId: 'title-bar',
+        contextTarget: expect.objectContaining({
+          kind: 'window',
+          windowId: runtimeWindowId,
+          widgetId: 'title-bar',
+          appId: 'runtime-tools',
+        }),
         payload: { target: 'widget:timeline' },
       }),
     );

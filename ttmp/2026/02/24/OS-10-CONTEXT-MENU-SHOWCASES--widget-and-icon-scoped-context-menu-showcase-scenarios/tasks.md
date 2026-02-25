@@ -10,11 +10,11 @@
 
 ### Phase 1: Context target foundation
 
-- [ ] `OS10-10` Add target descriptor contract for context menus (`icon`, `widget`, `message`, `conversation`, `window`).
-- [ ] `OS10-11` Extend shell runtime registry to register context actions per target key, not only per window id.
-- [ ] `OS10-12` Add context menu resolution precedence (`exact target` -> `window target` -> `default`).
-- [ ] `OS10-13` Add hook helpers for target-scoped registration (icon/widget/message/conversation).
-- [ ] `OS10-14` Add command invocation metadata coverage for target attributes.
+- [x] `OS10-10` Add target descriptor contract for context menus (`icon`, `widget`, `message`, `conversation`, `window`).
+- [x] `OS10-11` Extend shell runtime registry to register context actions per target key, not only per window id.
+- [x] `OS10-12` Add context menu resolution precedence (`exact target` -> `window target` -> `default`).
+- [x] `OS10-13` Add hook helpers for target-scoped registration (icon/widget/message/conversation).
+- [x] `OS10-14` Add command invocation metadata coverage for target attributes.
 
 ### Phase 2: Scenario 1 - Icon quick actions
 

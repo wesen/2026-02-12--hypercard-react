@@ -26,11 +26,24 @@ export interface DesktopActionSection {
 
 export type DesktopCommandSource = 'menu' | 'context-menu' | 'icon' | 'programmatic';
 
+export type ContextTargetKind = 'window' | 'icon' | 'widget' | 'message' | 'conversation';
+
+export interface DesktopContextTargetRef {
+  kind: ContextTargetKind;
+  windowId?: string;
+  iconId?: string;
+  widgetId?: string;
+  messageId?: string;
+  conversationId?: string;
+  appId?: string;
+}
+
 export interface DesktopCommandInvocation {
   source: DesktopCommandSource;
   menuId?: string;
   windowId?: string | null;
   widgetId?: string;
+  contextTarget?: DesktopContextTargetRef;
   payload?: Record<string, unknown>;
 }
 
