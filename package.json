@@ -10,6 +10,7 @@
     "launcher:frontend:build": "npm run build -w apps/os-launcher",
     "launcher:ui:sync": "bash ./scripts/sync-launcher-ui.sh",
     "launcher:binary:build": "npm run launcher:frontend:build && npm run launcher:ui:sync && bash ./scripts/build-go-go-os-launcher.sh",
+    "launcher:smoke": "bash ./scripts/smoke-go-go-os-launcher.sh",
     "build": "npm run build -w packages/engine && npm run build -w packages/confirm-runtime && npm run build -w packages/desktop-os && npm run build -w apps/inventory && npm run build -w apps/todo && npm run build -w apps/crm && npm run build -w apps/book-tracker-debug && npm run build -w apps/os-launcher",
     "storybook": "npm run storybook -w apps/inventory",
     "lint": "biome check .",
