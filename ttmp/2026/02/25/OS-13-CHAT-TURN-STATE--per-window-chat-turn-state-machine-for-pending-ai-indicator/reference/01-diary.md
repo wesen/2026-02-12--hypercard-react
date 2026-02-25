@@ -184,7 +184,7 @@ After implementation, I completed the validation and documentation synchronizati
 
 **Inferred user intent:** End with a fully traceable and reviewable ticket state, not just code edits.
 
-**Commit (code):** Pending for this final docs-sync step.
+**Commit (code):** `8584365` — "docs(OS-13): record validation results and complete ticket tasks"
 
 ### What I did
 - Re-ran validation commands:
