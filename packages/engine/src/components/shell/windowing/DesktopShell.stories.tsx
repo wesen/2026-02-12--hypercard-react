@@ -1,10 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { Provider } from 'react-redux';
+import type { ReactNode } from 'react';
 import { createAppStore } from '../../../app/createAppStore';
 import type { CardDefinition, CardStackDefinition } from '../../../cards/types';
 import DEMO_PLUGIN_BUNDLE from './DesktopShell.demo.vm.js?raw';
+import type { DesktopContribution } from './desktopContributions';
+import { useRegisterWindowContextActions, useRegisterWindowMenuSections } from './desktopMenuRuntime';
 import { DesktopShell, type DesktopShellProps } from './DesktopShell';
-import type { DesktopIconDef } from './types';
+import type { DesktopActionEntry, DesktopActionSection, DesktopIconDef } from './types';
 
 interface PluginCardMeta {
   id: string;
@@ -56,6 +59,75 @@ const CUSTOM_ICONS: DesktopIconDef[] = [
 ];
 
 const { createStore } = createAppStore({});
+
+const RUNTIME_MENU_SECTIONS: DesktopActionSection[] = [
+  {
+    id: 'chat',
+    label: 'Chat',
+    merge: 'replace',
+    items: [
+      { id: 'runtime-chat-new', label: 'New Chat', commandId: 'runtime.chat.new', shortcut: 'Ctrl+N' },
+      { id: 'runtime-chat-events', label: 'Event Viewer', commandId: 'runtime.chat.event-viewer' },
+    ],
+  },
+  {
+    id: 'profile',
+    label: 'Profile',
+    merge: 'replace',
+    items: [
+      { id: 'runtime-profile-default', label: 'Default Agent', commandId: 'runtime.profile.default', checked: true },
+      { id: 'runtime-profile-safe', label: 'Safety Agent', commandId: 'runtime.profile.safety' },
+    ],
+  },
+];
+
+const RUNTIME_CONTEXT_ACTIONS: DesktopActionEntry[] = [
+  {
+    id: 'runtime-context-inspect-widget',
+    label: 'Inspect Widget',
+    commandId: 'runtime.widget.inspect',
+    payload: { target: 'widget:timeline' },
+  },
+  {
+    id: 'runtime-context-open-debug',
+    label: 'Open Timeline Debug',
+    commandId: 'runtime.widget.timeline',
+  },
+];
+
+const RUNTIME_STORY_CONTRIBUTIONS: DesktopContribution[] = [
+  {
+    id: 'runtime-story-startup',
+    startupWindows: [
+      {
+        id: 'runtime-story-window',
+        create: () => ({
+          id: 'window:story:runtime',
+          title: 'Runtime Tools',
+          icon: '🧪',
+          bounds: { x: 720, y: 64, w: 520, h: 360 },
+          content: {
+            kind: 'app',
+            appKey: 'story.runtime:tools',
+          },
+          dedupeKey: 'story-runtime-tools',
+        }),
+      },
+    ],
+  },
+];
+
+function RuntimeToolsWindow(): ReactNode {
+  useRegisterWindowMenuSections(RUNTIME_MENU_SECTIONS);
+  useRegisterWindowContextActions(RUNTIME_CONTEXT_ACTIONS);
+  return (
+    <section style={{ padding: 12, display: 'grid', gap: 8 }}>
+      <strong>Runtime Tools</strong>
+      <span>Focus this window to see Chat/Profile sections in the top menu bar.</span>
+      <span>Right-click the title bar to view context actions contributed by this window.</span>
+    </section>
+  );
+}
 
 function DesktopShellStory(props: DesktopShellProps) {
   const store = createStore();
@@ -125,5 +197,39 @@ export const WithCustomMenus: Story = {
         ],
       },
     ],
+  },
+};
+
+export const WithFocusedRuntimeMenus: Story = {
+  args: {
+    stack: DEMO_STACK,
+    icons: CUSTOM_ICONS,
+    contributions: RUNTIME_STORY_CONTRIBUTIONS,
+    renderAppWindow: (appKey) => (appKey === 'story.runtime:tools' ? <RuntimeToolsWindow /> : null),
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Focused runtime window registers dynamic Chat/Profile menubar sections. Focus Runtime Tools to see sections appear.',
+      },
+    },
+  },
+};
+
+export const WithTitleBarContextMenuActions: Story = {
+  args: {
+    stack: DEMO_STACK,
+    icons: CUSTOM_ICONS,
+    contributions: RUNTIME_STORY_CONTRIBUTIONS,
+    renderAppWindow: (appKey) => (appKey === 'story.runtime:tools' ? <RuntimeToolsWindow /> : null),
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Right-click Runtime Tools title bar to open a shell context menu that includes app-registered actions.',
+      },
+    },
   },
 };

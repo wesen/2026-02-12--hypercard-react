@@ -24,7 +24,7 @@ RelatedFiles:
       Note: Confirms context-menu styling primitives already available for shell integration.
 ExternalSources: []
 Summary: Chronological investigation log for OS-01-ADD-MENUS including commands, evidence, findings, design decisions, and delivery steps.
-LastUpdated: 2026-02-24T22:40:21-05:00
+LastUpdated: 2026-02-24T22:50:22-05:00
 WhatFor: Use this as a reproducible audit trail of how the menu/context-menu architecture analysis was performed and which files were used as evidence.
 WhenToUse: Use when reviewing the design proposal, onboarding engineers, or continuing implementation planning in this ticket.
 ---
@@ -479,4 +479,60 @@ pnpm --filter @hypercard/os-launcher build
 1. `pnpm --filter @hypercard/engine test -- src/chat/state/profileSlice.test.ts src/chat/state/selectors.test.ts src/chat/runtime/useProfiles.test.ts` passed.
 2. `pnpm --filter @hypercard/engine typecheck` passed.
 3. `pnpm --filter @hypercard/os-launcher test -- src/__tests__/launcherHost.test.tsx src/__tests__/launcherContextMenu.test.tsx` passed.
+4. `pnpm --filter @hypercard/os-launcher build` passed.
+
+## 2026-02-24 22:50 - OS-01 phase-6 regression/story coverage (`OS01-15`, `OS01-70`..`OS01-75`, `OS01-81`)
+
+### Intent
+
+Complete remaining menu/runtime regression and story coverage so focused runtime menu behavior, context-menu invocation metadata, and non-chat-app stability are test-backed and demonstrated in Storybook.
+
+### Commands
+
+```bash
+cd /home/manuel/workspaces/2026-02-24/add-menus/go-go-os
+sed -n '1,340p' packages/engine/src/components/shell/windowing/desktopContributions.test.ts
+sed -n '1,360p' packages/engine/src/components/shell/windowing/DesktopMenuBar.tsx
+sed -n '1,760p' packages/engine/src/components/shell/windowing/useDesktopShellController.tsx
+sed -n '1,360p' apps/os-launcher/src/__tests__/launcherHost.test.tsx
+sed -n '1,340p' apps/os-launcher/src/__tests__/launcherContextMenu.test.tsx
+
+pnpm --filter @hypercard/engine test -- src/components/shell/windowing/desktopContributions.test.ts src/components/shell/windowing/DesktopShell.contextMenu.test.tsx
+pnpm --filter @hypercard/os-launcher test -- src/__tests__/launcherMenuRuntime.test.tsx
+pnpm --filter @hypercard/engine typecheck
+pnpm --filter @hypercard/os-launcher build
+```
+
+### Implementation notes
+
+1. Added legacy compatibility regression to `desktopContributions.test.ts`:
+1. asserted legacy `DesktopMenuSection` aliases still merge identically,
+2. preserved separator + item ordering.
+2. Added new jsdom integration file `DesktopShell.contextMenu.test.tsx`:
+1. verifies title-bar context action invocation carries `source`, `menuId`, `windowId`, `widgetId`, and `payload`,
+2. verifies focused-window menu recomposition adds/removes dynamic `Chat`/`Profile` sections across focus changes.
+3. Added launcher regression file `launcherMenuRuntime.test.tsx`:
+1. opens `todo`/`crm`/`book-tracker-debug` workspace windows together,
+2. verifies no `Chat`/`Profile` dynamic sections appear while switching focus among non-chat apps,
+3. verifies title-bar context menu stays on default non-inventory actions.
+4. Added DesktopShell stories:
+1. `WithFocusedRuntimeMenus`,
+2. `WithTitleBarContextMenuActions`.
+5. Added ContextMenu story:
+1. `WidgetTargetActions` showing payload-driven widget targeting patterns.
+
+### Failure/debugging notes
+
+1. First attempt for launcher runtime regression opened a real inventory chat window in jsdom.
+2. That path left persistent runtime handles (chat runtime/connect flow), causing `vitest` worker hang.
+3. Resolution:
+1. terminated hung worker process,
+2. replaced test with non-chat module regression coverage in launcher test,
+3. moved focus-recomposition assertions to engine-level DesktopShell integration test with controlled test windows.
+
+### Validation results
+
+1. `pnpm --filter @hypercard/engine test -- src/components/shell/windowing/desktopContributions.test.ts src/components/shell/windowing/DesktopShell.contextMenu.test.tsx` passed.
+2. `pnpm --filter @hypercard/os-launcher test -- src/__tests__/launcherMenuRuntime.test.tsx` passed.
+3. `pnpm --filter @hypercard/engine typecheck` passed.
 4. `pnpm --filter @hypercard/os-launcher build` passed.

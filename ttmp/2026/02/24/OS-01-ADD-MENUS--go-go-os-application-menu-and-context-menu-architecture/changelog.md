@@ -105,3 +105,21 @@ Validation for this slice:
 - `pnpm --filter @hypercard/engine typecheck`
 - `pnpm --filter @hypercard/os-launcher test -- src/__tests__/launcherHost.test.tsx src/__tests__/launcherContextMenu.test.tsx`
 - `pnpm --filter @hypercard/os-launcher build`
+
+Completed OS-01 phase-6 regression/story coverage slice (`OS01-15`, `OS01-70`..`OS01-75`, `OS01-81`): added legacy menu-shape compatibility tests, context-menu invocation metadata integration test, multi-window focused menu recomposition test, non-chat app regression checks, and new stories for focused runtime menus/title-bar context actions/widget-targeted context actions.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/components/shell/windowing/desktopContributions.test.ts — Added compatibility regression for legacy `DesktopMenuSection` alias shapes.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/components/shell/windowing/DesktopShell.contextMenu.test.tsx — Added context-menu invocation metadata and multi-window focus/menu recomposition integration tests.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/apps/os-launcher/src/__tests__/launcherMenuRuntime.test.tsx — Added non-chat app regression tests ensuring default menu/context behavior across `todo`/`crm`/`book-tracker-debug`.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/components/shell/windowing/DesktopShell.stories.tsx — Added focused runtime menubar and title-bar context-menu stories.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/components/widgets/ContextMenu.stories.tsx — Added widget-target payload action story.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/ttmp/2026/02/24/OS-01-ADD-MENUS--go-go-os-application-menu-and-context-menu-architecture/tasks.md — Marked completed checklist items and DoD updates.
+
+Validation for this slice:
+
+- `pnpm --filter @hypercard/engine test -- src/components/shell/windowing/desktopContributions.test.ts src/components/shell/windowing/DesktopShell.contextMenu.test.tsx`
+- `pnpm --filter @hypercard/os-launcher test -- src/__tests__/launcherMenuRuntime.test.tsx`
+- `pnpm --filter @hypercard/engine typecheck`
+- `pnpm --filter @hypercard/os-launcher build`

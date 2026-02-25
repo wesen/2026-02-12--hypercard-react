@@ -6,6 +6,7 @@ import {
   type DesktopCommandHandler,
   type DesktopContribution,
 } from './desktopContributions';
+import type { DesktopMenuSection } from './types';
 
 describe('composeDesktopContributions', () => {
   it('merges menu sections by id in contribution order', () => {
@@ -93,6 +94,34 @@ describe('mergeActionSections', () => {
 
     expect(merged).toHaveLength(1);
     expect(merged[0].items.map((item) => ('separator' in item ? 'sep' : item.id))).toEqual(['timeline', 'redux']);
+  });
+
+  it('accepts legacy DesktopMenuSection alias shapes unchanged', () => {
+    const legacyMenus: DesktopMenuSection[] = [
+      {
+        id: 'file',
+        label: 'File',
+        items: [
+          { id: 'legacy-open', label: 'Legacy Open', commandId: 'legacy.open' },
+          { separator: true },
+          { id: 'legacy-close', label: 'Legacy Close', commandId: 'legacy.close' },
+        ],
+      },
+      {
+        id: 'file',
+        label: 'File',
+        items: [{ id: 'legacy-refresh', label: 'Legacy Refresh', commandId: 'legacy.refresh' }],
+      },
+    ];
+
+    const composed = composeDesktopContributions([{ id: 'legacy', menus: legacyMenus }]);
+    expect(composed.menus).toHaveLength(1);
+    expect(composed.menus[0].items.map((item) => ('separator' in item ? 'sep' : item.id))).toEqual([
+      'legacy-open',
+      'sep',
+      'legacy-close',
+      'legacy-refresh',
+    ]);
   });
 });
 

@@ -81,3 +81,35 @@ export const ActionEntries: Story = {
     onClose: () => {},
   },
 };
+
+export const WidgetTargetActions: Story = {
+  args: {
+    x: 80,
+    y: 40,
+    items: [
+      {
+        id: 'timeline-pin',
+        label: 'Pin Timeline Widget',
+        commandId: 'widget.timeline.pin',
+        payload: { widgetId: 'timeline-widget', target: 'timeline' },
+      },
+      {
+        id: 'timeline-copy',
+        label: 'Copy Widget Data',
+        commandId: 'widget.timeline.copy',
+        payload: { widgetId: 'timeline-widget', format: 'json' },
+      },
+      { separator: true },
+      {
+        id: 'sidebar-collapse',
+        label: 'Collapse Sidebar',
+        commandId: 'widget.sidebar.collapse',
+        payload: { widgetId: 'sidebar-main' },
+        checked: true,
+      },
+    ],
+    onSelect: () => {},
+    onAction: () => {},
+    onClose: () => {},
+  },
+};
