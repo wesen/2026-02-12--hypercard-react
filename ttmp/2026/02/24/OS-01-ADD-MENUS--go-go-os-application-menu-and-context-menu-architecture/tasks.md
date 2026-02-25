@@ -84,10 +84,10 @@
 - [x] `OS01-80` Run targeted engine tests for shell/windowing/menu suites.
 - [x] `OS01-81` Run app-level tests for inventory focused menu and profile-scoping behavior.
 - [x] `OS01-82` Run full frontend validation (`npm run test`, `npm run build`) and record results.
-- [ ] `OS01-83` Manually verify right-click behavior and native context-menu suppression.
+- [x] `OS01-83` Manually verify right-click behavior and native context-menu suppression.
 - [x] `OS01-84` Update ticket changelog and diary with implementation details and failures.
 - [x] `OS01-85` Run `docmgr doctor --ticket OS-01-ADD-MENUS --stale-after 30`.
-- [ ] `OS01-86` Close ticket `OS-01-ADD-MENUS` once DoD is satisfied.
+- [x] `OS01-86` Close ticket `OS-01-ADD-MENUS` once DoD is satisfied.
 
 ## Definition of Done
 
