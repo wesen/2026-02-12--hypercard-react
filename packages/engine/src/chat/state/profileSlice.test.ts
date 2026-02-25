@@ -37,4 +37,19 @@ describe('profileSlice', () => {
     expect(state.selectedProfile).toBeNull();
     expect(state.selectedRegistry).toBeNull();
   });
+
+  it('tracks scoped profile selection with global fallback preserved', () => {
+    const state = reduce([
+      actions.setSelectedProfile({ profile: 'global-default', registry: 'default' }),
+      actions.setSelectedProfile({
+        profile: 'inventory-specialist',
+        registry: 'default',
+        scopeKey: 'conv:abc',
+      }),
+      actions.clearScopedProfile({ scopeKey: 'conv:abc' }),
+    ]);
+
+    expect(state.selectedProfile).toBe('global-default');
+    expect(state.selectedByScope['conv:abc']).toBeUndefined();
+  });
 });

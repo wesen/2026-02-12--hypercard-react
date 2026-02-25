@@ -18,7 +18,7 @@ export interface UseConversationResult {
   isStreaming: boolean;
 }
 
-export function useConversation(convId: string, basePrefix = ''): UseConversationResult {
+export function useConversation(convId: string, basePrefix = '', scopeKey?: string): UseConversationResult {
   const dispatch = useDispatch();
   const connectionStatus = useSelector((state: ConversationStoreState) =>
     selectConnectionStatus(state, convId)
@@ -27,7 +27,7 @@ export function useConversation(convId: string, basePrefix = ''): UseConversatio
     selectIsStreaming(state, convId)
   );
   const profileSelection = useSelector((state: ConversationStoreState) =>
-    selectCurrentProfileSelection(state)
+    selectCurrentProfileSelection(state, scopeKey)
   );
   const selectedProfile = profileSelection.profile;
   const selectedRegistry = profileSelection.registry;
@@ -65,7 +65,7 @@ export function useConversation(convId: string, basePrefix = ''): UseConversatio
       disposed = true;
       conversationManager.disconnect(convId);
     };
-  }, [basePrefix, convId, dispatch, selectedProfile, selectedRegistry]);
+  }, [basePrefix, convId, dispatch, scopeKey, selectedProfile, selectedRegistry]);
 
   const send = useCallback(
     async (prompt: string) => {
@@ -102,7 +102,7 @@ export function useConversation(convId: string, basePrefix = ''): UseConversatio
         throw error;
       }
     },
-    [basePrefix, convId, dispatch, selectedProfile, selectedRegistry]
+    [basePrefix, convId, dispatch, scopeKey, selectedProfile, selectedRegistry]
   );
 
   return {

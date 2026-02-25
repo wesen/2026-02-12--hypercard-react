@@ -3,6 +3,6 @@ import { selectCurrentProfileSelection, type ChatStateSlice } from '../state/sel
 
 type CurrentProfileStoreState = ChatStateSlice & Record<string, unknown>;
 
-export function useCurrentProfile() {
-  return useSelector((state: CurrentProfileStoreState) => selectCurrentProfileSelection(state));
+export function useCurrentProfile(scopeKey?: string) {
+  return useSelector((state: CurrentProfileStoreState) => selectCurrentProfileSelection(state, scopeKey));
 }

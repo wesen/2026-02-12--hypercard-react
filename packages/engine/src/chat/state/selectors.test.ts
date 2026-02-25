@@ -160,4 +160,33 @@ describe('selectors', () => {
       registry: undefined,
     });
   });
+
+  it('returns scoped profile selection when scope key is present', () => {
+    const state: ChatStateSlice = {
+      timeline: { byConvId: {} },
+      chatSession: { byConvId: {} },
+      chatProfiles: {
+        availableProfiles: [],
+        selectedProfile: 'global-profile',
+        selectedRegistry: 'default',
+        selectedByScope: {
+          'conv:abc': {
+            profile: 'scoped-profile',
+            registry: 'default',
+          },
+        },
+        loading: false,
+        error: null,
+      },
+    };
+
+    expect(selectCurrentProfileSelection(state, 'conv:abc')).toEqual({
+      profile: 'scoped-profile',
+      registry: 'default',
+    });
+    expect(selectCurrentProfileSelection(state, 'conv:missing')).toEqual({
+      profile: 'global-profile',
+      registry: 'default',
+    });
+  });
 });

@@ -203,7 +203,7 @@ describe('launcher host wiring', () => {
     expect(profileDispatch).toHaveBeenCalledWith(
       expect.objectContaining({
         type: 'chatProfiles/setSelectedProfile',
-        payload: { profile: 'agent', registry: 'default' },
+        payload: { profile: 'agent', registry: 'default', scopeKey: 'conv:conv-42' },
       }),
     );
   });

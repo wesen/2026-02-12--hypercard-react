@@ -52,6 +52,7 @@ interface InventoryRootState {
     availableProfiles?: Array<{ slug: string; display_name?: string; is_default?: boolean }>;
     selectedProfile?: string | null;
     selectedRegistry?: string | null;
+    selectedByScope?: Record<string, { profile: string | null; registry: string | null }>;
   };
 }
 
@@ -410,11 +411,16 @@ function createInventoryCommands(hostContext: LauncherHostContext): DesktopComma
           return 'pass';
         }
         const state = (ctx.getState?.() ?? {}) as InventoryRootState;
-        const selectedRegistry = state.chatProfiles?.selectedRegistry ?? 'default';
+        const scopeKey = `conv:${parsed.convId}`;
+        const selectedRegistry =
+          state.chatProfiles?.selectedByScope?.[scopeKey]?.registry ??
+          state.chatProfiles?.selectedRegistry ??
+          'default';
         ctx.dispatch(
           chatProfilesSlice.actions.setSelectedProfile({
             profile: parsed.profile ?? null,
             registry: selectedRegistry,
+            scopeKey,
           }),
         );
         return 'handled';
@@ -632,7 +638,14 @@ function InventoryChatAssistantWindow({ convId }: { convId: string }) {
   const availableProfiles = useSelector(
     (state: InventoryRootState) => state.chatProfiles?.availableProfiles ?? [],
   );
-  const selectedProfile = useSelector((state: InventoryRootState) => state.chatProfiles?.selectedProfile ?? null);
+  const selectedProfile = useSelector((state: InventoryRootState) => {
+    const scopeKey = `conv:${convId}`;
+    return (
+      state.chatProfiles?.selectedByScope?.[scopeKey]?.profile ??
+      state.chatProfiles?.selectedProfile ??
+      null
+    );
+  });
 
   const focusedMenuSections = useMemo(
     () =>
@@ -676,6 +689,7 @@ function InventoryChatAssistantWindow({ convId }: { convId: string }) {
       title="Inventory Chat"
       enableProfileSelector
       profileRegistry="default"
+      profileScopeKey={`conv:${convId}`}
       renderMode={renderMode}
       headerActions={
         <>

@@ -84,3 +84,24 @@ Added right-click regression tests for title-bar context-menu open behavior and 
 Validation for this slice:
 
 - `pnpm --filter @hypercard/os-launcher test -- src/__tests__/launcherContextMenu.test.tsx`
+
+Implemented OS-01 profile-scope companion slice (`OS01-07`, `OS01-60`..`OS01-65`): chat profile selection now supports conversation-scoped keys with global fallback, runtime hooks consume optional scope keys, and inventory chat wires profile scope to `conv:<id>` for deterministic per-conversation profile menus.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/chat/state/profileSlice.ts — Added `selectedByScope` state plus scoped `setSelectedProfile` and `clearScopedProfile`.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/chat/state/selectors.ts — Updated `selectCurrentProfileSelection` to resolve scoped selection with global fallback.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/chat/runtime/useProfiles.ts — Added `scopeKey` option and scoped selection reconciliation during refresh.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/chat/runtime/useConversation.ts — Added optional `scopeKey` consumption for connection/send profile selection.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/chat/components/ChatConversationWindow.tsx — Added `profileScopeKey` prop and threaded through runtime hooks.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/apps/inventory/src/launcher/renderInventoryApp.tsx — Scoped inventory profile menu reads/dispatches to `conv:<id>`.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/chat/state/profileSlice.test.ts — Added scoped selection reducer coverage.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/chat/state/selectors.test.ts — Added scoped selection + fallback selector coverage.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/apps/os-launcher/src/__tests__/launcherHost.test.tsx — Updated profile command assertion to include scoped payload.
+
+Validation for this slice:
+
+- `pnpm --filter @hypercard/engine test -- src/chat/state/profileSlice.test.ts src/chat/state/selectors.test.ts src/chat/runtime/useProfiles.test.ts`
+- `pnpm --filter @hypercard/engine typecheck`
+- `pnpm --filter @hypercard/os-launcher test -- src/__tests__/launcherHost.test.tsx src/__tests__/launcherContextMenu.test.tsx`
+- `pnpm --filter @hypercard/os-launcher build`

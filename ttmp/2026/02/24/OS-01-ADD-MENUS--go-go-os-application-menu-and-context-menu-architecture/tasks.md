@@ -11,7 +11,7 @@
 - [x] `OS01-04` Decide focused-window merge policy for dynamic sections (`append` vs `replace` defaults).
 - [x] `OS01-05` Decide v1 shortcut behavior (`display-only` vs global execution handler).
 - [x] `OS01-06` Decide title-bar default context entries for dialog windows.
-- [ ] `OS01-07` Decide profile-scope cache strategy (shared profile list + scoped selection).
+- [x] `OS01-07` Decide profile-scope cache strategy (shared profile list + scoped selection).
 
 ### Phase 0: Contracts and compatibility
 
@@ -62,12 +62,12 @@
 
 ### Phase 5: Profile selection scoping (companion)
 
-- [ ] `OS01-60` Refactor profile slice to support scoped selection keys.
-- [ ] `OS01-61` Update profile selectors to resolve scoped selection with global fallback.
-- [ ] `OS01-62` Update `useCurrentProfile`/`useSetProfile`/`useProfiles` for scope key support.
-- [ ] `OS01-63` Update `useConversation` to consume scoped profile selection.
-- [ ] `OS01-64` Wire inventory chat profile scope to `conv:<id>`.
-- [ ] `OS01-65` Add migration-safe tests for scoped + fallback behavior.
+- [x] `OS01-60` Refactor profile slice to support scoped selection keys.
+- [x] `OS01-61` Update profile selectors to resolve scoped selection with global fallback.
+- [x] `OS01-62` Update `useCurrentProfile`/`useSetProfile`/`useProfiles` for scope key support.
+- [x] `OS01-63` Update `useConversation` to consume scoped profile selection.
+- [x] `OS01-64` Wire inventory chat profile scope to `conv:<id>`.
+- [x] `OS01-65` Add migration-safe tests for scoped + fallback behavior.
 
 ### Phase 6: Stories, docs, and regressions
 

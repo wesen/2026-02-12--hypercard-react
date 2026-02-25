@@ -25,6 +25,7 @@ const EMPTY_CHAT_PROFILES: ChatProfilesState = {
   availableProfiles: [],
   selectedProfile: null,
   selectedRegistry: null,
+  selectedByScope: {},
   loading: false,
   error: null,
 };
@@ -161,7 +162,23 @@ export const selectProfileLoading = (state: ChatStateSlice) =>
 export const selectProfileError = (state: ChatStateSlice) =>
   getChatProfiles(state).error;
 
-export const selectCurrentProfileSelection = (state: ChatStateSlice) => ({
-  profile: getChatProfiles(state).selectedProfile ?? undefined,
-  registry: getChatProfiles(state).selectedRegistry ?? undefined,
-});
+export function selectCurrentProfileSelection(
+  state: ChatStateSlice,
+  scopeKey?: string
+): { profile: string | undefined; registry: string | undefined } {
+  const profiles = getChatProfiles(state);
+  const normalizedScope = String(scopeKey ?? '').trim();
+  if (normalizedScope) {
+    const scoped = profiles.selectedByScope[normalizedScope];
+    if (scoped) {
+      return {
+        profile: scoped.profile ?? undefined,
+        registry: scoped.registry ?? undefined,
+      };
+    }
+  }
+  return {
+    profile: profiles.selectedProfile ?? undefined,
+    registry: profiles.selectedRegistry ?? undefined,
+  };
+}

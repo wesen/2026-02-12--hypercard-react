@@ -3,14 +3,25 @@ import { useDispatch } from 'react-redux';
 import { setCurrentProfile } from './profileApi';
 import { chatProfilesSlice } from '../state/profileSlice';
 
-export function useSetProfile(basePrefix = '') {
+export interface UseSetProfileOptions {
+  scopeKey?: string;
+}
+
+export function useSetProfile(basePrefix = '', options: UseSetProfileOptions = {}) {
   const dispatch = useDispatch();
+  const scopeKey = String(options.scopeKey ?? '').trim() || undefined;
 
   return useCallback(
     async (profile: string | null, registry?: string | null) => {
       const normalized = String(profile ?? '').trim();
       if (!normalized) {
-        dispatch(chatProfilesSlice.actions.setSelectedProfile({ profile: null, registry: registry ?? undefined }));
+        dispatch(
+          chatProfilesSlice.actions.setSelectedProfile({
+            profile: null,
+            registry: registry ?? undefined,
+            scopeKey,
+          })
+        );
         return;
       }
       dispatch(chatProfilesSlice.actions.setProfileError(null));
@@ -21,6 +32,7 @@ export function useSetProfile(basePrefix = '') {
           chatProfilesSlice.actions.setSelectedProfile({
             profile: serverSlug,
             registry: registry ?? undefined,
+            scopeKey,
           })
         );
       } catch (err) {
@@ -31,6 +43,6 @@ export function useSetProfile(basePrefix = '') {
         );
       }
     },
-    [basePrefix, dispatch]
+    [basePrefix, dispatch, scopeKey]
   );
 }

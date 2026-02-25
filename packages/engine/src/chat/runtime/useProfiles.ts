@@ -20,6 +20,11 @@ export interface UseProfilesResult {
   refresh: () => Promise<void>;
 }
 
+export interface UseProfilesOptions {
+  enabled?: boolean;
+  scopeKey?: string;
+}
+
 function normalize(value: string | null | undefined): string {
   return String(value ?? '').trim();
 }
@@ -63,14 +68,15 @@ export function resolveSelectionAfterProfileRefresh(
 export function useProfiles(
   basePrefix = '',
   registry?: string,
-  options: { enabled?: boolean } = {}
+  options: UseProfilesOptions = {}
 ): UseProfilesResult {
   const enabled = options.enabled ?? true;
+  const scopeKey = String(options.scopeKey ?? '').trim() || undefined;
   const dispatch = useDispatch();
   const profiles = useSelector((state: ProfilesStoreState) => selectAvailableProfiles(state));
   const loading = useSelector((state: ProfilesStoreState) => selectProfileLoading(state));
   const error = useSelector((state: ProfilesStoreState) => selectProfileError(state));
-  const selected = useSelector((state: ProfilesStoreState) => selectCurrentProfileSelection(state));
+  const selected = useSelector((state: ProfilesStoreState) => selectCurrentProfileSelection(state, scopeKey));
 
   const refresh = useCallback(async () => {
     if (!enabled) {
@@ -99,7 +105,7 @@ export function useProfiles(
         persistedProfile
       );
       if (nextSelection) {
-        dispatch(chatProfilesSlice.actions.setSelectedProfile(nextSelection));
+        dispatch(chatProfilesSlice.actions.setSelectedProfile({ ...nextSelection, scopeKey }));
       }
     } catch (err) {
       dispatch(chatProfilesSlice.actions.setProfileLoading(false));
@@ -107,7 +113,7 @@ export function useProfiles(
         chatProfilesSlice.actions.setProfileError(err instanceof Error ? err.message : String(err))
       );
     }
-  }, [basePrefix, dispatch, enabled, registry, selected.profile, selected.registry]);
+  }, [basePrefix, dispatch, enabled, registry, scopeKey, selected.profile, selected.registry]);
 
   useEffect(() => {
     if (!enabled) {

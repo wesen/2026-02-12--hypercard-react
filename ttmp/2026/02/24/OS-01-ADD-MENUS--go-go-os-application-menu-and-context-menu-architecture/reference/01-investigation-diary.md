@@ -24,7 +24,7 @@ RelatedFiles:
       Note: Confirms context-menu styling primitives already available for shell integration.
 ExternalSources: []
 Summary: Chronological investigation log for OS-01-ADD-MENUS including commands, evidence, findings, design decisions, and delivery steps.
-LastUpdated: 2026-02-24T22:35:19-05:00
+LastUpdated: 2026-02-24T22:40:21-05:00
 WhatFor: Use this as a reproducible audit trail of how the menu/context-menu architecture analysis was performed and which files were used as evidence.
 WhenToUse: Use when reviewing the design proposal, onboarding engineers, or continuing implementation planning in this ticket.
 ---
@@ -429,3 +429,54 @@ pnpm --filter @hypercard/os-launcher test -- src/__tests__/launcherContextMenu.t
 ### Validation results
 
 1. Targeted launcher test command passed (includes existing known selector warnings emitted by unrelated plugin-card selectors).
+
+## 2026-02-24 22:40 - OS-01 scoped profile selection (`OS01-07`, `OS01-60`..`OS01-65`)
+
+### Intent
+
+Complete profile-selection scoping for focused chat menu behavior so each conversation window can maintain an independent selected profile while preserving global fallback for non-scoped consumers.
+
+### Commands
+
+```bash
+cd /home/manuel/workspaces/2026-02-24/add-menus/go-go-os
+git diff --stat
+git diff -- packages/engine/src/chat/state/profileSlice.ts packages/engine/src/chat/state/selectors.ts
+git diff -- packages/engine/src/chat/runtime/useCurrentProfile.ts packages/engine/src/chat/runtime/useSetProfile.ts packages/engine/src/chat/runtime/useProfiles.ts packages/engine/src/chat/runtime/useConversation.ts
+git diff -- packages/engine/src/chat/components/ChatConversationWindow.tsx apps/inventory/src/launcher/renderInventoryApp.tsx
+git diff -- packages/engine/src/chat/state/profileSlice.test.ts packages/engine/src/chat/state/selectors.test.ts apps/os-launcher/src/__tests__/launcherHost.test.tsx
+
+pnpm --filter @hypercard/engine test -- src/chat/state/profileSlice.test.ts src/chat/state/selectors.test.ts src/chat/runtime/useProfiles.test.ts
+pnpm --filter @hypercard/engine typecheck
+pnpm --filter @hypercard/os-launcher test -- src/__tests__/launcherHost.test.tsx src/__tests__/launcherContextMenu.test.tsx
+pnpm --filter @hypercard/os-launcher build
+```
+
+### Implementation notes
+
+1. Extended `ChatProfilesState` with `selectedByScope: Record<string, {profile, registry}>`.
+2. Updated `chatProfilesSlice.actions.setSelectedProfile` to accept optional `scopeKey`:
+1. when present, selection writes only to `selectedByScope[scopeKey]`,
+2. when absent, selection continues writing global `selectedProfile`/`selectedRegistry`.
+3. Added `clearScopedProfile({ scopeKey })` reducer and kept `clearSelectedProfile()` global reset behavior.
+4. Updated selector `selectCurrentProfileSelection(state, scopeKey?)`:
+1. returns scoped value when available,
+2. falls back to global selection when scoped value is missing.
+5. Threaded optional scope support through runtime hooks:
+1. `useCurrentProfile(scopeKey?)`,
+2. `useSetProfile(basePrefix, { scopeKey? })`,
+3. `useProfiles(basePrefix, registry, { enabled, scopeKey })`,
+4. `useConversation(convId, basePrefix, scopeKey?)`.
+6. Updated `ChatConversationWindow` with `profileScopeKey` prop and passed it through all profile-aware hooks.
+7. Wired inventory launcher chat window to use `profileScopeKey={\`conv:${convId}\`}` and updated profile command routing/menu checks to read/write scoped state.
+8. Added/updated tests:
+1. reducer coverage for scoped selection lifecycle,
+2. selector coverage for scoped lookup + fallback,
+3. launcher host assertion for scoped profile command payload (`scopeKey: 'conv:conv-42'`).
+
+### Validation results
+
+1. `pnpm --filter @hypercard/engine test -- src/chat/state/profileSlice.test.ts src/chat/state/selectors.test.ts src/chat/runtime/useProfiles.test.ts` passed.
+2. `pnpm --filter @hypercard/engine typecheck` passed.
+3. `pnpm --filter @hypercard/os-launcher test -- src/__tests__/launcherHost.test.tsx src/__tests__/launcherContextMenu.test.tsx` passed.
+4. `pnpm --filter @hypercard/os-launcher build` passed.

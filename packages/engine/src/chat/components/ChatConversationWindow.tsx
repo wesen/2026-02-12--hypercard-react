@@ -44,6 +44,7 @@ export interface ChatConversationWindowProps {
   headerActions?: ReactNode;
   enableProfileSelector?: boolean;
   profileRegistry?: string;
+  profileScopeKey?: string;
   renderMode?: RenderMode;
 }
 
@@ -91,17 +92,18 @@ export function ChatConversationWindow({
   headerActions,
   enableProfileSelector = false,
   profileRegistry,
+  profileScopeKey,
   renderMode = 'normal',
 }: ChatConversationWindowProps) {
   const dispatch = useDispatch();
-  const { send, connectionStatus, isStreaming } = useConversation(convId, basePrefix);
+  const { send, connectionStatus, isStreaming } = useConversation(convId, basePrefix, profileScopeKey);
   const { profiles, loading: profilesLoading, error: profileError } = useProfiles(
     basePrefix,
     profileRegistry,
-    { enabled: enableProfileSelector }
+    { enabled: enableProfileSelector, scopeKey: profileScopeKey }
   );
-  const currentProfile = useCurrentProfile();
-  const setProfile = useSetProfile(basePrefix);
+  const currentProfile = useCurrentProfile(profileScopeKey);
+  const setProfile = useSetProfile(basePrefix, { scopeKey: profileScopeKey });
   const [awaitingResponseSinceMs, setAwaitingResponseSinceMs] = useState<number | null>(null);
 
   const entities = useSelector((state: ChatStateSlice & Record<string, unknown>) =>
