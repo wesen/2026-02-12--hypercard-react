@@ -18,10 +18,10 @@
 
 ### Phase 2: Scenario 1 - Icon quick actions
 
-- [ ] `OS10-20` Add right-click handling to desktop icons in `DesktopIconLayer`.
-- [ ] `OS10-21` Add icon-target context action registration and default quick actions (`Open`, `Open New`, `Pin`, `Inspect`).
-- [ ] `OS10-22` Add icon quick action command handlers and routing tests.
-- [ ] `OS10-23` Add Storybook demo for icon quick actions.
+- [x] `OS10-20` Add right-click handling to desktop icons in `DesktopIconLayer`.
+- [x] `OS10-21` Add icon-target context action registration and default quick actions (`Open`, `Open New`, `Pin`, `Inspect`).
+- [x] `OS10-22` Add icon quick action command handlers and routing tests.
+- [x] `OS10-23` Add Storybook demo for icon quick actions.
 
 ### Phase 3: Scenario 2 - Folder/icon hybrid launcher
 

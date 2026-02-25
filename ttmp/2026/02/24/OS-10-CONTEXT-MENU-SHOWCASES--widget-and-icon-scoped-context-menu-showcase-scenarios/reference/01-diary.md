@@ -88,3 +88,56 @@ Implemented target-scoped context menu contracts and runtime plumbing so context
 ### Next
 
 - Start Phase 2 (`OS10-20`..`OS10-23`): icon right-click handling and icon target actions in `DesktopIconLayer` + shell controller wiring.
+
+## Step 2: Phase 2 Scenario 1 (Icon Quick Actions)
+
+Implemented icon right-click quick actions end-to-end and validated routing through launcher integration tests.
+
+### Prompt Context
+
+**User prompt (verbatim):** "continue"
+
+**Assistant interpretation:** Keep executing the next OS-10 phase immediately after Phase 1 foundation.
+
+**Inferred user intent:** Maintain momentum on menu feature development and move from contracts into user-visible showcase behavior.
+
+### What I did
+
+- Added right-click callback support to desktop icons in:
+  - `/home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/components/shell/windowing/DesktopIconLayer.tsx`
+- Added icon quick-action context menu composition in controller (`Open`, `Open New`, `Pin`, `Inspect`) and attached icon context target metadata:
+  - `/home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/components/shell/windowing/useDesktopShellController.tsx`
+- Added icon command routing behavior:
+  - `icon.open.<id>` opens stack card windows when `<id>` is a card id
+  - `icon.open-new.<id>` opens stack card windows or falls back to contribution handling as `icon.open.<id>`
+- Wired icon context callback into shell view:
+  - `/home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/components/shell/windowing/DesktopShellView.tsx`
+- Added launcher integration test:
+  - `/home/manuel/workspaces/2026-02-24/add-menus/go-go-os/apps/os-launcher/src/__tests__/launcherContextMenu.test.tsx`
+  - verifies icon context menu opens with quick actions and `Open` command routes to create a window.
+- Added Storybook showcase:
+  - `/home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/components/shell/windowing/DesktopShell.stories.tsx`
+  - story: `WithIconQuickActionsContextMenu`
+
+### Why
+
+- OS-10 Scenario 1 is the first user-facing target-scoped showcase and validates that Phase 1 foundation is usable in real interaction paths.
+
+### What worked
+
+- `npm run typecheck -w packages/engine` passed.
+- `npm run test -w packages/engine -- src/components/shell/windowing/contextActionRegistry.test.ts src/components/shell/windowing/desktopContributions.test.ts src/components/shell/windowing/desktopCommandRouter.test.ts` passed.
+- `npm run test -w apps/os-launcher -- src/__tests__/launcherContextMenu.test.tsx` passed (with known pre-existing selector warnings in stderr).
+
+### What didn't work
+
+- Running `DesktopShell.contextMenu.test.tsx` directly through the engine package script still reports “No test files found” because the engine vitest include pattern currently only matches `src/**/*.test.ts`.
+
+### What warrants a second pair of eyes
+
+- Confirm default icon quick-action command IDs are final (`icon.open-*`, `icon.pin.*`, `icon.inspect.*`) before Scenario 2/3 reuse.
+- Confirm launcher-module `icon.open.<id>` mapping semantics align with “Open New” fallback behavior.
+
+### Next
+
+- Start Phase 3 (`OS10-30`..`OS10-33`): folder/icon hybrid launcher target behavior and context actions.

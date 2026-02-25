@@ -65,6 +65,28 @@ async function renderHostWithTwoWindows(): Promise<HTMLElement> {
   return container;
 }
 
+async function renderHost(): Promise<{
+  container: HTMLElement;
+  store: ReturnType<typeof createLauncherAppStore>;
+}> {
+  const store = createLauncherAppStore();
+  const container = document.createElement('div');
+  document.body.appendChild(container);
+  containers.push(container);
+
+  const root = createRoot(container);
+  roots.push(root);
+  await act(async () => {
+    root.render(
+      <Provider store={store}>
+        <App />
+      </Provider>,
+    );
+  });
+
+  return { container, store };
+}
+
 function fireContextMenu(target: Element): void {
   act(() => {
     target.dispatchEvent(
@@ -80,6 +102,34 @@ function fireContextMenu(target: Element): void {
 }
 
 describe('launcher context menu behavior', () => {
+  it('opens icon context menu quick actions and routes Open command', async () => {
+    const { container, store } = await renderHost();
+    const icons = container.querySelectorAll('[data-part="windowing-icon"]');
+    expect(icons.length).toBeGreaterThan(0);
+
+    const windowCountBefore = Object.keys(store.getState().windowing.windows).length;
+
+    fireContextMenu(icons[0]);
+    const contextMenu = container.querySelector('[data-part="context-menu"]');
+    expect(contextMenu).not.toBeNull();
+    expect(contextMenu?.textContent).toContain('Open');
+    expect(contextMenu?.textContent).toContain('Open New');
+    expect(contextMenu?.textContent).toContain('Pin');
+    expect(contextMenu?.textContent).toContain('Inspect');
+
+    const openAction = Array.from(contextMenu?.querySelectorAll('button') ?? []).find(
+      (button) => button.textContent?.trim() === 'Open'
+    );
+    expect(openAction).not.toBeUndefined();
+
+    act(() => {
+      openAction?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+
+    const windowCountAfter = Object.keys(store.getState().windowing.windows).length;
+    expect(windowCountAfter).toBeGreaterThan(windowCountBefore);
+  });
+
   it('opens shell context menu from title-bar right click', async () => {
     const container = await renderHostWithTwoWindows();
     const titleBars = container.querySelectorAll('[data-part="windowing-window-title-bar"]');

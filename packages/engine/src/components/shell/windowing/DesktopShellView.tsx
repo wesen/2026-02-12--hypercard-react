@@ -23,6 +23,7 @@ export function DesktopShellView({
   onCommand,
   onSelectIcon,
   onOpenIcon,
+  onIconContextMenu,
   onFocusWindow,
   onCloseWindow,
   onWindowDragStart,
@@ -55,6 +56,7 @@ export function DesktopShellView({
           selectedIconId={selectedIconId}
           onSelectIcon={onSelectIcon}
           onOpenIcon={onOpenIcon}
+          onContextMenuIcon={onIconContextMenu}
         />
         <DesktopWindowMenuRuntimeProvider
           registerWindowMenuSections={registerWindowMenuSections}

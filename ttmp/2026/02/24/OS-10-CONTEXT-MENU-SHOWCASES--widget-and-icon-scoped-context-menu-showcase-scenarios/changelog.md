@@ -26,3 +26,21 @@ Validation:
 
 - `npm run typecheck -w packages/engine`
 - `npm run test -w packages/engine -- src/components/shell/windowing/contextActionRegistry.test.ts src/components/shell/windowing/desktopContributions.test.ts`
+
+## 2026-02-25
+
+Completed OS-10 Phase 2 (Scenario 1: icon quick actions): icon right-click now opens shell context menu quick actions, icon command routing supports context-menu open/open-new paths, and launcher integration test + Storybook demo were added.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/components/shell/windowing/DesktopIconLayer.tsx — Added right-click handling callback for desktop icons.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/components/shell/windowing/useDesktopShellController.tsx — Added icon context menu item builder, icon context target metadata, and icon open/open-new command routing fallback.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/components/shell/windowing/DesktopShellView.tsx — Wired icon context-menu callback into shell icon layer.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/apps/os-launcher/src/__tests__/launcherContextMenu.test.tsx — Added integration test for icon quick actions and open-command routing.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/components/shell/windowing/DesktopShell.stories.tsx — Added Storybook scenario demonstrating icon quick-action context menu UX.
+
+Validation:
+
+- `npm run typecheck -w packages/engine`
+- `npm run test -w packages/engine -- src/components/shell/windowing/contextActionRegistry.test.ts src/components/shell/windowing/desktopContributions.test.ts src/components/shell/windowing/desktopCommandRouter.test.ts`
+- `npm run test -w apps/os-launcher -- src/__tests__/launcherContextMenu.test.tsx`

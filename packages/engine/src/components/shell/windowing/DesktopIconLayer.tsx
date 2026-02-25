@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react';
 import { PARTS } from '../../../parts';
 import type { DesktopIconDef } from './types';
 
@@ -6,6 +7,7 @@ export interface DesktopIconLayerProps {
   selectedIconId: string | null;
   onSelectIcon?: (iconId: string) => void;
   onOpenIcon?: (iconId: string) => void;
+  onContextMenuIcon?: (iconId: string, event: MouseEvent<HTMLButtonElement>) => void;
 }
 
 /** True when every icon has explicit x/y coordinates. */
@@ -18,11 +20,13 @@ function IconButton({
   isSelected,
   onSelect,
   onOpen,
+  onContextMenu,
 }: {
   icon: DesktopIconDef;
   isSelected: boolean;
   onSelect: () => void;
   onOpen: () => void;
+  onContextMenu?: (event: MouseEvent<HTMLButtonElement>) => void;
 }) {
   return (
     <button
@@ -33,6 +37,10 @@ function IconButton({
       aria-label={icon.label}
       onClick={onSelect}
       onDoubleClick={onOpen}
+      onContextMenu={(event) => {
+        event.preventDefault();
+        onContextMenu?.(event);
+      }}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
@@ -48,7 +56,13 @@ function IconButton({
   );
 }
 
-export function DesktopIconLayer({ icons, selectedIconId, onSelectIcon, onOpenIcon }: DesktopIconLayerProps) {
+export function DesktopIconLayer({
+  icons,
+  selectedIconId,
+  onSelectIcon,
+  onOpenIcon,
+  onContextMenuIcon,
+}: DesktopIconLayerProps) {
   const useAbsolute = hasExplicitPositions(icons);
 
   return (
@@ -68,6 +82,7 @@ export function DesktopIconLayer({ icons, selectedIconId, onSelectIcon, onOpenIc
                 isSelected={isSelected}
                 onSelect={() => onSelectIcon?.(icon.id)}
                 onOpen={() => onOpenIcon?.(icon.id)}
+                onContextMenu={(event) => onContextMenuIcon?.(icon.id, event)}
               />
             </li>
           );
@@ -80,6 +95,7 @@ export function DesktopIconLayer({ icons, selectedIconId, onSelectIcon, onOpenIc
               isSelected={isSelected}
               onSelect={() => onSelectIcon?.(icon.id)}
               onOpen={() => onOpenIcon?.(icon.id)}
+              onContextMenu={(event) => onContextMenuIcon?.(icon.id, event)}
             />
           </li>
         );

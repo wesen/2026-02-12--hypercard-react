@@ -233,3 +233,18 @@ export const WithTitleBarContextMenuActions: Story = {
     },
   },
 };
+
+export const WithIconQuickActionsContextMenu: Story = {
+  args: {
+    stack: DEMO_STACK,
+    icons: CUSTOM_ICONS,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Right-click desktop icons to open quick actions (`Open`, `Open New`, `Pin`, `Inspect`) routed through desktop command handling.',
+      },
+    },
+  },
+};

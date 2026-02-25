@@ -111,6 +111,20 @@ function resolveWindowAppId(win: WindowInstance | undefined): string | undefined
   return appId ? appId.trim() : undefined;
 }
 
+function resolveIconAppId(iconId: string): string | undefined {
+  const normalizedIconId = String(iconId ?? '').trim();
+  if (!normalizedIconId) return undefined;
+  const [dotPrefix] = normalizedIconId.split('.');
+  if (dotPrefix) return dotPrefix.trim();
+  return normalizedIconId;
+}
+
+function getCommandSuffix(commandId: string, prefix: string): string | null {
+  if (!commandId.startsWith(prefix)) return null;
+  const suffix = commandId.slice(prefix.length).trim();
+  return suffix.length > 0 ? suffix : null;
+}
+
 export interface DesktopContextMenuState {
   x: number;
   y: number;
@@ -134,6 +148,7 @@ export interface DesktopShellControllerResult {
   onCommand: (commandId: string, invocation?: DesktopCommandInvocation) => void;
   onSelectIcon: (id: string) => void;
   onOpenIcon: (id: string) => void;
+  onIconContextMenu: (iconId: string, event: MouseEvent<HTMLButtonElement>) => void;
   onFocusWindow: (id: string) => void;
   onCloseWindow: (id: string) => void;
   onWindowDragStart: (windowId: string, event: PointerEvent<HTMLDivElement>) => void;
@@ -521,6 +536,35 @@ export function useDesktopShellController({
       );
       if (contributionHandled) return;
 
+      const iconOpenNewId = getCommandSuffix(commandId, 'icon.open-new.');
+      if (iconOpenNewId) {
+        if (stack.cards[iconOpenNewId]) {
+          openCardWindow(iconOpenNewId, { dedupe: false });
+          return;
+        }
+        const fallbackHandled = routeContributionCommand(
+          `icon.open.${iconOpenNewId}`,
+          composedContributions.commandHandlers,
+          {
+            dispatch,
+            getState: () => store.getState(),
+            focusedWindowId: focusedWin?.id ?? null,
+            openCardWindow,
+            closeWindow: handleClose,
+          },
+          invocation,
+        );
+        if (fallbackHandled) {
+          return;
+        }
+      }
+
+      const iconOpenId = getCommandSuffix(commandId, 'icon.open.');
+      if (iconOpenId && stack.cards[iconOpenId]) {
+        openCardWindow(iconOpenId, { dedupe: false });
+        return;
+      }
+
       const handled = routeDesktopCommand(commandId, {
         homeCardId: stack.homeCard,
         focusedWindowId: focusedWin?.id ?? null,
@@ -551,6 +595,7 @@ export function useDesktopShellController({
       handleClose,
       onCommandProp,
       openCardWindow,
+      stack.cards,
       stack.homeCard,
       store,
       windows,
@@ -567,6 +612,35 @@ export function useDesktopShellController({
       routeCommand(`icon.open.${iconId}`, { source: 'icon' });
     },
     [dispatch, openCardWindow, routeCommand, stack.cards],
+  );
+
+  const buildIconContextMenuItems = useCallback(
+    (target: DesktopContextTargetRef): DesktopActionEntry[] => {
+      const iconId = String(target.iconId ?? '').trim();
+      if (!iconId) {
+        return [];
+      }
+
+      const dynamicActions = resolveContextActions(contextActionsByTargetKey, target);
+      const defaults: DesktopActionEntry[] = [
+        { id: `icon-context.open.${iconId}`, label: 'Open', commandId: `icon.open.${iconId}` },
+        {
+          id: `icon-context.open-new.${iconId}`,
+          label: 'Open New',
+          commandId: `icon.open-new.${iconId}`,
+        },
+        { separator: true },
+        { id: `icon-context.pin.${iconId}`, label: 'Pin', commandId: `icon.pin.${iconId}` },
+        { id: `icon-context.inspect.${iconId}`, label: 'Inspect', commandId: `icon.inspect.${iconId}` },
+      ];
+
+      if (dynamicActions.length === 0) {
+        return defaults;
+      }
+
+      return [...dynamicActions, { separator: true }, ...defaults];
+    },
+    [contextActionsByTargetKey],
   );
 
   const buildWindowContextMenuItems = useCallback(
@@ -632,6 +706,32 @@ export function useDesktopShellController({
       });
     },
     [buildWindowContextMenuItems, dispatch, windowsById],
+  );
+
+  const handleIconContextMenu = useCallback(
+    (iconId: string, event: MouseEvent<HTMLButtonElement>) => {
+      const target = normalizeContextTargetRef({
+        kind: 'icon',
+        iconId,
+        appId: resolveIconAppId(iconId),
+      });
+      const items = buildIconContextMenuItems(target);
+      if (items.length === 0) {
+        setContextMenu(null);
+        return;
+      }
+      dispatch(setSelectedIcon(iconId));
+      dispatch(setActiveMenu(null));
+      setContextMenu({
+        x: event.clientX,
+        y: event.clientY,
+        menuId: 'icon-context',
+        windowId: null,
+        target,
+        items,
+      });
+    },
+    [buildIconContextMenuItems, dispatch],
   );
 
   const handleContextMenuSelect = useCallback(
@@ -763,6 +863,7 @@ export function useDesktopShellController({
     onCommand: routeCommand,
     onSelectIcon: handleSelectIcon,
     onOpenIcon: handleOpenIcon,
+    onIconContextMenu: handleIconContextMenu,
     onFocusWindow: handleFocus,
     onCloseWindow: handleClose,
     onWindowDragStart: beginMove,
