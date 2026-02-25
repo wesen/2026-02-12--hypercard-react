@@ -67,6 +67,8 @@ describe('launcher host wiring', () => {
       hostContext: {
         dispatch: () => undefined,
         getState: () => ({}),
+        resolveApiBase: (appId: string) => `/api/apps/${appId}`,
+        resolveWsBase: (appId: string) => `/api/apps/${appId}/ws`,
       },
       onUnknownAppKey: (appKey) => `unknown:${appKey}`,
     });
@@ -81,6 +83,8 @@ describe('launcher host wiring', () => {
       hostContext: {
         dispatch: () => undefined,
         getState: () => ({}),
+        resolveApiBase: (appId: string) => `/api/apps/${appId}`,
+        resolveWsBase: (appId: string) => `/api/apps/${appId}/ws`,
       },
     });
 
@@ -171,6 +175,32 @@ describe('launcher host wiring', () => {
       });
       expect(rendered).not.toBeNull();
     }
+  });
+
+  it('derives inventory chat API base prefix from launcher host context', () => {
+    const module = launcherModules.find((entry) => entry.manifest.id === 'inventory');
+    expect(module).toBeTruthy();
+    if (!module) {
+      return;
+    }
+
+    const rendered = module.renderWindow({
+      appId: 'inventory',
+      appKey: formatAppKey('inventory', 'chat-test-instance'),
+      instanceId: 'chat-test-instance',
+      windowId: 'window:inventory:test',
+      ctx: {
+        dispatch: () => undefined,
+        getState: () => ({}),
+        moduleId: 'inventory',
+        stateKey: module.state?.stateKey,
+        resolveApiBase: () => '/launcher/api/apps/inventory',
+        resolveWsBase: () => '/launcher/api/apps/inventory/ws',
+      },
+    }) as { props?: Record<string, unknown> } | null;
+
+    expect(rendered).not.toBeNull();
+    expect(rendered?.props?.apiBasePrefix).toBe('/launcher/api/apps/inventory');
   });
 
   it('routes inventory chat-scoped debug and profile commands deterministically', () => {

@@ -7,7 +7,7 @@ import { parseAppKey } from './appKey';
 
 export interface RenderAppWindowOptions {
   registry: AppRegistry;
-  hostContext: Pick<LauncherHostContext, 'dispatch' | 'getState'>;
+  hostContext: Pick<LauncherHostContext, 'dispatch' | 'getState' | 'resolveApiBase' | 'resolveWsBase'>;
   onUnknownAppKey?: (appKey: string, windowId: string) => ReactNode | null;
 }
 
@@ -29,6 +29,8 @@ export function renderAppWindow(options: RenderAppWindowOptions, appKey: string,
     getState: options.hostContext.getState,
     moduleId: module.manifest.id,
     stateKey: module.state?.stateKey,
+    resolveApiBase: options.hostContext.resolveApiBase,
+    resolveWsBase: options.hostContext.resolveWsBase,
   };
 
   return module.renderWindow({

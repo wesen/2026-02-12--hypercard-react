@@ -5,6 +5,8 @@ import type { ReactNode } from 'react';
 import {
   buildInventoryLaunchWindowPayload,
   createInventoryContributions,
+  INVENTORY_API_BASE_PREFIX_FALLBACK,
+  type InventoryLauncherAppWindowProps,
   InventoryLauncherAppWindow,
 } from './renderInventoryApp';
 
@@ -45,5 +47,15 @@ export const inventoryLauncherModule: LaunchableAppModule = {
     return buildLaunchWindowPayload(reason);
   },
   createContributions: (ctx) => createInventoryContributions(ctx),
-  renderWindow: ({ instanceId }): ReactNode => <InventoryLauncherAppWindow instanceId={instanceId} />,
+  renderWindow: ({ instanceId, ctx }): ReactNode => {
+    const apiBasePrefix =
+      ctx.resolveApiBase?.('inventory') ??
+      ctx.resolveWsBase?.('inventory')?.replace(/\/ws$/, '') ??
+      INVENTORY_API_BASE_PREFIX_FALLBACK;
+    const props: InventoryLauncherAppWindowProps = {
+      instanceId,
+      apiBasePrefix,
+    };
+    return <InventoryLauncherAppWindow {...props} />;
+  },
 };

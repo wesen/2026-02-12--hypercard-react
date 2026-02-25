@@ -27,7 +27,7 @@ RelatedFiles:
       Note: Execution checklist tracked against diary entries
 ExternalSources: []
 Summary: Ongoing implementation diary for OS-08 launcher real-app cutover and folder-based app opening UX.
-LastUpdated: 2026-02-25T20:57:00-05:00
+LastUpdated: 2026-02-25T12:23:00-05:00
 WhatFor: Record implementation slices, regressions, and validation evidence while replacing placeholder launcher modules with real app windows.
 WhenToUse: Use while implementing or reviewing launcher module rendering and folder-launch behavior changes.
 ---
@@ -134,3 +134,27 @@ Inventory remains folder-based because it has multiple launcher actions/icons.
 - `npm run test -w apps/os-launcher`
 - `npm run build -w apps/os-launcher`
 - `npm run launcher:smoke`
+
+## Step 7: Follow-up fixes from review (embed bootstrap + root-prefixed inventory API base)
+
+Addressed two review findings:
+
+1. `go:embed dist` failed on clean checkouts if launcher UI assets had not been synced yet.
+2. Inventory launcher chat window hardcoded `/api/apps/inventory`, which broke under non-default launcher `--root` prefixes.
+
+### Code changes
+
+- Switched launcher embed directive to `//go:embed all:dist` and added tracked sentinel file `go-inventory-chat/internal/launcherui/dist/.embedkeep`.
+- Updated `scripts/sync-launcher-ui.sh` to always recreate `.embedkeep` after syncing frontend assets.
+- Extended `LauncherRenderContext` with optional `resolveApiBase` / `resolveWsBase` pass-through from host context.
+- Updated inventory launcher module rendering to derive `apiBasePrefix` from `ctx.resolveApiBase('inventory')` (fallback via ws-base strip or default).
+- Threaded `apiBasePrefix` into `InventoryLauncherAppWindow` and chat window rendering path.
+- Added launcher host regression assertions for inventory API base derivation.
+
+### Validation
+
+- `npm run test -w packages/desktop-os`
+- `npm run test -w apps/os-launcher`
+- `npm run build -w apps/inventory`
+- `npm run build -w apps/os-launcher`
+- `go test ./internal/launcherui ./cmd/go-go-os-launcher` (from `go-inventory-chat/`)

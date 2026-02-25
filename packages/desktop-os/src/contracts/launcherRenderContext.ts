@@ -5,4 +5,6 @@ export interface LauncherRenderContext {
   getState: () => unknown;
   moduleId: string;
   stateKey?: AppStateKey;
+  resolveApiBase?: (appId: string) => string;
+  resolveWsBase?: (appId: string) => string;
 }

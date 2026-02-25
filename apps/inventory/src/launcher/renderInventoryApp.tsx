@@ -30,7 +30,7 @@ import { STACK } from '../domain/stack';
 import { ReduxPerfWindow } from '../features/debug/ReduxPerfWindow';
 
 const INVENTORY_APP_ID = 'inventory';
-const INVENTORY_API_BASE_PREFIX = '/api/apps/inventory';
+export const INVENTORY_API_BASE_PREFIX_FALLBACK = '/api/apps/inventory';
 const CHAT_INSTANCE_PREFIX = 'chat-';
 const EVENT_VIEW_INSTANCE_PREFIX = 'event-viewer-';
 const TIMELINE_DEBUG_INSTANCE_PREFIX = 'timeline-debug-';
@@ -631,7 +631,13 @@ async function copyTextToClipboard(text: string): Promise<void> {
   throw new Error('clipboard unavailable');
 }
 
-function InventoryChatAssistantWindow({ convId }: { convId: string }) {
+function InventoryChatAssistantWindow({
+  convId,
+  apiBasePrefix,
+}: {
+  convId: string;
+  apiBasePrefix: string;
+}) {
   const dispatch = useDispatch();
   const [renderMode, setRenderMode] = useState<'normal' | 'debug'>('normal');
   const [copyConvStatus, setCopyConvStatus] = useState<'idle' | 'copied' | 'error'>('idle');
@@ -685,7 +691,7 @@ function InventoryChatAssistantWindow({ convId }: { convId: string }) {
   return (
     <ChatConversationWindow
       convId={convId}
-      basePrefix={INVENTORY_API_BASE_PREFIX}
+      basePrefix={apiBasePrefix}
       title="Inventory Chat"
       enableProfileSelector
       profileRegistry="default"
@@ -732,13 +738,21 @@ function InventoryChatAssistantWindow({ convId }: { convId: string }) {
   );
 }
 
-export function InventoryLauncherAppWindow({ instanceId }: { instanceId: string }): ReactNode {
+export interface InventoryLauncherAppWindowProps {
+  instanceId: string;
+  apiBasePrefix: string;
+}
+
+export function InventoryLauncherAppWindow({
+  instanceId,
+  apiBasePrefix,
+}: InventoryLauncherAppWindowProps): ReactNode {
   if (instanceId === FOLDER_INSTANCE) {
     return <InventoryFolderWindow />;
   }
   if (instanceId.startsWith(CHAT_INSTANCE_PREFIX)) {
     const convId = instanceId.slice(CHAT_INSTANCE_PREFIX.length);
-    return <InventoryChatAssistantWindow convId={convId} />;
+    return <InventoryChatAssistantWindow convId={convId} apiBasePrefix={apiBasePrefix} />;
   }
   if (instanceId.startsWith(EVENT_VIEW_INSTANCE_PREFIX)) {
     const convId = instanceId.slice(EVENT_VIEW_INSTANCE_PREFIX.length);
