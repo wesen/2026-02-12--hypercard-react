@@ -1,10 +1,100 @@
 # Tasks
 
-## TODO
+## Execution Checklist
 
-- [x] Create ticket `OS-01-ADD-MENUS` and initialize docs
-- [x] Map `go-go-os` desktop shell/menu/window/profile architecture with concrete evidence
-- [x] Produce detailed design doc with API proposals, pseudocode, migration plan, and test strategy
-- [x] Produce investigation diary with chronological command/finding trail
-- [x] Upload ticket analysis bundle to reMarkable and verify remote listing
+### Ticket setup and decisions
 
+- [x] `OS01-00` Create ticket `OS-01-ADD-MENUS` and initialize docs.
+- [x] `OS01-01` Map current desktop/menu/window/profile architecture with concrete evidence.
+- [x] `OS01-02` Produce design doc with API proposals, migration plan, and tests.
+- [x] `OS01-03` Produce investigation diary and upload analysis bundle.
+- [ ] `OS01-04` Decide focused-window merge policy for dynamic sections (`append` vs `replace` defaults).
+- [ ] `OS01-05` Decide v1 shortcut behavior (`display-only` vs global execution handler).
+- [ ] `OS01-06` Decide title-bar default context entries for dialog windows.
+- [ ] `OS01-07` Decide profile-scope cache strategy (shared profile list + scoped selection).
+
+### Phase 0: Contracts and compatibility
+
+- [ ] `OS01-10` Add `DesktopActionEntry`/`DesktopActionSection` types in windowing contracts.
+- [ ] `OS01-11` Add `DesktopCommandInvocation` metadata contract (`source`, `menuId`, `windowId`, `widgetId`, `payload`).
+- [ ] `OS01-12` Keep backward-compatible typing for existing `DesktopMenuItem`/`DesktopMenuSection` usage.
+- [ ] `OS01-13` Add/extend section merge helpers for deterministic section/item ordering.
+- [ ] `OS01-14` Add unit tests for merge precedence and stable ordering.
+- [ ] `OS01-15` Add unit tests confirming old contribution shapes still compile and behave.
+
+### Phase 1: Shell runtime for dynamic menus/context menus
+
+- [ ] `OS01-20` Add runtime registry module for dynamic focused-window menu sections.
+- [ ] `OS01-21` Add runtime API/hook to register/unregister window menu sections.
+- [ ] `OS01-22` Add controller state for context-menu open/close and anchor position.
+- [ ] `OS01-23` Compose effective menu sections from static contributions + focused-window runtime sections.
+- [ ] `OS01-24` Ensure focused-window switches recompute effective menu sections correctly.
+- [ ] `OS01-25` Route context-menu command actions through existing desktop command router.
+- [ ] `OS01-26` Extend controller result contract with context-menu props/state.
+- [ ] `OS01-27` Render context-menu overlay in `DesktopShellView` using controller state.
+- [ ] `OS01-28` Export new runtime APIs from shell barrels (`windowing`, `desktop-react`, `desktop/react`).
+
+### Phase 2: Window/title-bar right-click integration
+
+- [ ] `OS01-30` Add `onContextMenu` handling in `WindowSurface`.
+- [ ] `OS01-31` Add `onContextMenu` handling in `WindowTitleBar`.
+- [ ] `OS01-32` Ensure right-click focuses target window before showing context menu.
+- [ ] `OS01-33` Preserve drag/resize behavior: left button only, unchanged.
+- [ ] `OS01-34` Add unit tests for title-bar right-click interaction path.
+- [ ] `OS01-35` Add unit tests for focused-window transition on right-click.
+
+### Phase 3: ContextMenu component upgrade
+
+- [ ] `OS01-40` Upgrade `ContextMenu` to support command-based action entries.
+- [ ] `OS01-41` Support separators, disabled states, checked states, and shortcut labels.
+- [ ] `OS01-42` Keep compatibility path for existing string-only entries.
+- [ ] `OS01-43` Add `Escape` close behavior.
+- [ ] `OS01-44` Add/update stories demonstrating action entries and compatibility mode.
+
+### Phase 4: Inventory app adoption
+
+- [ ] `OS01-50` Pass `windowId` to chat-window render path used for menu registration.
+- [ ] `OS01-51` Register focused chat dynamic menu sections in inventory app runtime.
+- [ ] `OS01-52` Add profile-selection dynamic section for focused chat windows.
+- [ ] `OS01-53` Add debug actions (`event viewer`, `timeline debug`) as focused-window menu items.
+- [ ] `OS01-54` Add title-bar context menu actions for chat windows.
+- [ ] `OS01-55` Ensure commands target focused conversation/window deterministically.
+
+### Phase 5: Profile selection scoping (companion)
+
+- [ ] `OS01-60` Refactor profile slice to support scoped selection keys.
+- [ ] `OS01-61` Update profile selectors to resolve scoped selection with global fallback.
+- [ ] `OS01-62` Update `useCurrentProfile`/`useSetProfile`/`useProfiles` for scope key support.
+- [ ] `OS01-63` Update `useConversation` to consume scoped profile selection.
+- [ ] `OS01-64` Wire inventory chat profile scope to `conv:<id>`.
+- [ ] `OS01-65` Add migration-safe tests for scoped + fallback behavior.
+
+### Phase 6: Stories, docs, and regressions
+
+- [ ] `OS01-70` Add DesktopShell story for focused dynamic menubar sections.
+- [ ] `OS01-71` Add story for title-bar right-click context menu.
+- [ ] `OS01-72` Add story for widget-level context-menu target actions.
+- [ ] `OS01-73` Add unit/integration tests for context-menu invocation metadata.
+- [ ] `OS01-74` Add integration tests for multi-window focus/menu recomposition.
+- [ ] `OS01-75` Add regression tests ensuring existing apps (`todo`, `crm`, `book-tracker-debug`) are unaffected.
+- [ ] `OS01-76` Update engine/docs menu and context-menu authoring guidance.
+
+### Validation and closure
+
+- [ ] `OS01-80` Run targeted engine tests for shell/windowing/menu suites.
+- [ ] `OS01-81` Run app-level tests for inventory focused menu and profile-scoping behavior.
+- [ ] `OS01-82` Run full frontend validation (`npm run test`, `npm run build`) and record results.
+- [ ] `OS01-83` Manually verify right-click behavior and native context-menu suppression.
+- [ ] `OS01-84` Update ticket changelog and diary with implementation details and failures.
+- [ ] `OS01-85` Run `docmgr doctor --ticket OS-01-ADD-MENUS --stale-after 30`.
+- [ ] `OS01-86` Close ticket `OS-01-ADD-MENUS` once DoD is satisfied.
+
+## Definition of Done
+
+- [ ] Focused window can contribute and update top menubar sections at runtime.
+- [ ] Title bars and widget targets can open shell-integrated context menus.
+- [ ] Context-menu actions route through unified desktop command routing with invocation metadata.
+- [ ] Inventory chat menu/profile/debug flows are focused-window-scoped and deterministic.
+- [ ] Existing non-chat apps continue to function without new menu-runtime adoption.
+- [ ] Storybook/docs/tests cover both compatibility and new dynamic-runtime paths.
+- [ ] Ticket artifacts (tasks/changelog/diary) and `docmgr doctor` are clean.
