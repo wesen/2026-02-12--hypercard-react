@@ -39,6 +39,11 @@ export {
   type DesktopWindowMenuRuntime,
 } from '../../components/shell/windowing/desktopMenuRuntime';
 export {
+  applyActionVisibility,
+  isActionVisible,
+  isContextCommandAllowed,
+} from '../../components/shell/windowing/contextActionVisibility';
+export {
   buildContextTargetKey,
   normalizeContextTargetRef,
   resolveContextActions,
@@ -67,6 +72,8 @@ export type {
   DesktopActionEntry,
   DesktopActionItem,
   DesktopActionSection,
+  DesktopActionVisibility,
+  DesktopActionVisibilityContext,
   DesktopContextMenuOpenRequest,
   DesktopCommandInvocation,
   DesktopCommandSource,

@@ -30,6 +30,10 @@ import {
   setSelectedIcon,
 } from '../../../desktop/core/state/windowingSlice';
 import {
+  applyActionVisibility,
+  isContextCommandAllowed,
+} from './contextActionVisibility';
+import {
   buildContextTargetKey,
   normalizeContextTargetRef,
   resolveContextActions,
@@ -55,6 +59,7 @@ import type {
   DesktopCommandInvocation,
   DesktopContextMenuOpenRequest,
   DesktopContextTargetRef,
+  DesktopActionVisibilityContext,
   DesktopIconDef,
   DesktopIconKind,
   DesktopMenuSection,
@@ -178,6 +183,178 @@ function resolveFolderMemberIconIds(
   return iconsInOrder
     .filter((icon) => icon.id !== folderIcon.id && resolveIconKind(icon) !== 'folder')
     .map((icon) => icon.id);
+}
+
+function normalizeStringValue(value: unknown): string | undefined {
+  const normalized = String(value ?? '').trim();
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+function normalizeStringList(values: unknown): string[] {
+  if (!Array.isArray(values)) {
+    return [];
+  }
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const value of values) {
+    const normalized = normalizeStringValue(value);
+    if (!normalized || seen.has(normalized)) {
+      continue;
+    }
+    seen.add(normalized);
+    out.push(normalized);
+  }
+  return out;
+}
+
+interface ChatProfileLike {
+  slug?: string;
+  extensions?: Record<string, unknown>;
+}
+
+interface ChatProfilesStateLike {
+  availableProfiles?: ChatProfileLike[];
+  selectedProfile?: string | null;
+  selectedRegistry?: string | null;
+  selectedByScope?: Record<string, { profile?: string | null; registry?: string | null }>;
+}
+
+function readChatProfilesState(state: unknown): ChatProfilesStateLike | null {
+  if (!state || typeof state !== 'object' || Array.isArray(state)) {
+    return null;
+  }
+  const root = state as Record<string, unknown>;
+  const chatProfiles = root.chatProfiles;
+  if (!chatProfiles || typeof chatProfiles !== 'object' || Array.isArray(chatProfiles)) {
+    return null;
+  }
+  return chatProfiles as ChatProfilesStateLike;
+}
+
+function resolveProfileRoles(profile: ChatProfileLike | undefined): string[] {
+  if (!profile?.extensions || typeof profile.extensions !== 'object' || Array.isArray(profile.extensions)) {
+    return [];
+  }
+  const extensions = profile.extensions;
+  const explicitRoles = normalizeStringList(extensions.roles);
+  if (explicitRoles.length > 0) {
+    return explicitRoles;
+  }
+  const explicitRole = normalizeStringValue(extensions.role);
+  return explicitRole ? [explicitRole] : [];
+}
+
+function resolveActionVisibilityContext(
+  state: unknown,
+  target: DesktopContextTargetRef,
+): DesktopActionVisibilityContext {
+  const context: DesktopActionVisibilityContext = {
+    target,
+  };
+  const chatProfiles = readChatProfilesState(state);
+  if (!chatProfiles) {
+    return context;
+  }
+
+  const conversationId = normalizeStringValue(target.conversationId);
+  const scopeKey = conversationId ? `conv:${conversationId}` : undefined;
+  const scopedSelection = scopeKey ? chatProfiles.selectedByScope?.[scopeKey] : undefined;
+  const profile =
+    normalizeStringValue(scopedSelection?.profile) ??
+    normalizeStringValue(chatProfiles.selectedProfile);
+  const registry =
+    normalizeStringValue(scopedSelection?.registry) ??
+    normalizeStringValue(chatProfiles.selectedRegistry);
+  const selectedProfile = (chatProfiles.availableProfiles ?? []).find(
+    (entry) => normalizeStringValue(entry.slug) === profile,
+  );
+  const roles = resolveProfileRoles(selectedProfile);
+
+  return {
+    profile,
+    registry,
+    roles: roles.length > 0 ? roles : undefined,
+    target,
+  };
+}
+
+function buildRawContextMenuItemsForTarget(args: {
+  target: DesktopContextTargetRef;
+  contextActionsByTargetKey: ContextActionRegistryState;
+  iconsById: Record<string, DesktopIconDef>;
+  windowsById: Record<string, WindowInstance>;
+}): DesktopActionEntry[] {
+  const { target, contextActionsByTargetKey, iconsById, windowsById } = args;
+
+  if (target.kind === 'icon') {
+    const iconId = String(target.iconId ?? '').trim();
+    if (!iconId) {
+      return [];
+    }
+    const icon = iconsById[iconId];
+    const iconKind = resolveIconKind(icon);
+    const dynamicActions = resolveContextActions(contextActionsByTargetKey, target);
+    const defaults: DesktopActionEntry[] =
+      iconKind === 'folder'
+        ? [
+            { id: `folder-context.open.${iconId}`, label: 'Open', commandId: `folder.open.${iconId}` },
+            {
+              id: `folder-context.open-new.${iconId}`,
+              label: 'Open in New Window',
+              commandId: `folder.open-new.${iconId}`,
+            },
+            { separator: true },
+            {
+              id: `folder-context.launch-all.${iconId}`,
+              label: 'Launch All',
+              commandId: `folder.launch-all.${iconId}`,
+            },
+            {
+              id: `folder-context.sort-icons.${iconId}`,
+              label: 'Sort Icons',
+              commandId: `folder.sort-icons.${iconId}`,
+            },
+          ]
+        : [
+            { id: `icon-context.open.${iconId}`, label: 'Open', commandId: `icon.open.${iconId}` },
+            {
+              id: `icon-context.open-new.${iconId}`,
+              label: 'Open New',
+              commandId: `icon.open-new.${iconId}`,
+            },
+            { separator: true },
+            { id: `icon-context.pin.${iconId}`, label: 'Pin', commandId: `icon.pin.${iconId}` },
+            { id: `icon-context.inspect.${iconId}`, label: 'Inspect', commandId: `icon.inspect.${iconId}` },
+          ];
+
+    return dynamicActions.length > 0 ? [...dynamicActions, { separator: true }, ...defaults] : defaults;
+  }
+
+  if (target.kind === 'window') {
+    const windowId = target.windowId ?? '';
+    const win = windowsById[windowId];
+    if (!win) {
+      return [];
+    }
+    const dynamicActions = resolveContextActions(contextActionsByTargetKey, target);
+    const closeEntry: DesktopActionEntry = {
+      id: `window-context.close.${windowId}`,
+      label: 'Close Window',
+      commandId: 'window.close-focused',
+    };
+    if (win.isDialog) {
+      return dynamicActions.length > 0 ? [...dynamicActions, { separator: true }, closeEntry] : [closeEntry];
+    }
+    const defaults: DesktopActionEntry[] = [
+      closeEntry,
+      { separator: true },
+      { id: `window-context.tile.${windowId}`, label: 'Tile Windows', commandId: 'window.tile' },
+      { id: `window-context.cascade.${windowId}`, label: 'Cascade Windows', commandId: 'window.cascade' },
+    ];
+    return dynamicActions.length > 0 ? [...dynamicActions, { separator: true }, ...defaults] : defaults;
+  }
+
+  return resolveContextActions(contextActionsByTargetKey, target);
 }
 
 export interface DesktopContextMenuState {
@@ -694,8 +871,33 @@ export function useDesktopShellController({
     [iconsById, resolveFolderMembers, routeIconOpenCommand],
   );
 
+  const resolveContextMenuItemsForTarget = useCallback(
+    (target: DesktopContextTargetRef): DesktopActionEntry[] => {
+      const rawItems = buildRawContextMenuItemsForTarget({
+        target,
+        contextActionsByTargetKey,
+        iconsById,
+        windowsById,
+      });
+      if (rawItems.length === 0) {
+        return rawItems;
+      }
+      const visibilityContext = resolveActionVisibilityContext(store.getState(), target);
+      return applyActionVisibility(rawItems, visibilityContext);
+    },
+    [contextActionsByTargetKey, iconsById, store, windowsById],
+  );
+
   const routeCommand = useCallback(
     (commandId: string, invocation: DesktopCommandInvocation = { source: 'programmatic' }) => {
+      if (invocation.source === 'context-menu' && invocation.contextTarget) {
+        const target = normalizeContextTargetRef(invocation.contextTarget);
+        const targetItems = resolveContextMenuItemsForTarget(target);
+        if (!isContextCommandAllowed(targetItems, commandId)) {
+          return;
+        }
+      }
+
       const contributionHandled = routeContributionCommand(
         commandId,
         composedContributions.commandHandlers,
@@ -765,6 +967,7 @@ export function useDesktopShellController({
       onCommandProp,
       openCardWindow,
       stack.homeCard,
+      resolveContextMenuItemsForTarget,
       routeFolderCommand,
       routeIconOpenCommand,
       windows,
@@ -784,109 +987,10 @@ export function useDesktopShellController({
     [dispatch, iconsById, routeCommand],
   );
 
-  const buildIconContextMenuItems = useCallback(
-    (target: DesktopContextTargetRef): DesktopActionEntry[] => {
-      const iconId = String(target.iconId ?? '').trim();
-      if (!iconId) {
-        return [];
-      }
-
-      const icon = iconsById[iconId];
-      const iconKind = resolveIconKind(icon);
-      const dynamicActions = resolveContextActions(contextActionsByTargetKey, target);
-      const defaults: DesktopActionEntry[] =
-        iconKind === 'folder'
-          ? [
-              { id: `folder-context.open.${iconId}`, label: 'Open', commandId: `folder.open.${iconId}` },
-              {
-                id: `folder-context.open-new.${iconId}`,
-                label: 'Open in New Window',
-                commandId: `folder.open-new.${iconId}`,
-              },
-              { separator: true },
-              {
-                id: `folder-context.launch-all.${iconId}`,
-                label: 'Launch All',
-                commandId: `folder.launch-all.${iconId}`,
-              },
-              {
-                id: `folder-context.sort-icons.${iconId}`,
-                label: 'Sort Icons',
-                commandId: `folder.sort-icons.${iconId}`,
-              },
-            ]
-          : [
-              { id: `icon-context.open.${iconId}`, label: 'Open', commandId: `icon.open.${iconId}` },
-              {
-                id: `icon-context.open-new.${iconId}`,
-                label: 'Open New',
-                commandId: `icon.open-new.${iconId}`,
-              },
-              { separator: true },
-              { id: `icon-context.pin.${iconId}`, label: 'Pin', commandId: `icon.pin.${iconId}` },
-              { id: `icon-context.inspect.${iconId}`, label: 'Inspect', commandId: `icon.inspect.${iconId}` },
-            ];
-
-      if (dynamicActions.length === 0) {
-        return defaults;
-      }
-
-      return [...dynamicActions, { separator: true }, ...defaults];
-    },
-    [contextActionsByTargetKey, iconsById],
-  );
-
-  const buildWindowContextMenuItems = useCallback(
-    (target: DesktopContextTargetRef): DesktopActionEntry[] => {
-      const windowId = target.windowId ?? '';
-      const win = windowsById[windowId];
-      if (!win) {
-        return [];
-      }
-      const dynamicActions = resolveContextActions(contextActionsByTargetKey, target);
-
-      const closeEntry: DesktopActionEntry = {
-        id: `window-context.close.${windowId}`,
-        label: 'Close Window',
-        commandId: 'window.close-focused',
-      };
-
-      if (win.isDialog) {
-        return dynamicActions.length > 0 ? [...dynamicActions, { separator: true }, closeEntry] : [closeEntry];
-      }
-
-      const defaults: DesktopActionEntry[] = [
-        closeEntry,
-        { separator: true },
-        { id: `window-context.tile.${windowId}`, label: 'Tile Windows', commandId: 'window.tile' },
-        { id: `window-context.cascade.${windowId}`, label: 'Cascade Windows', commandId: 'window.cascade' },
-      ];
-      if (dynamicActions.length === 0) {
-        return defaults;
-      }
-      return [...dynamicActions, { separator: true }, ...defaults];
-    },
-    [contextActionsByTargetKey, windowsById],
-  );
-
-  const buildGenericContextMenuItems = useCallback(
-    (target: DesktopContextTargetRef): DesktopActionEntry[] => {
-      return resolveContextActions(contextActionsByTargetKey, target);
-    },
-    [contextActionsByTargetKey],
-  );
-
   const openContextMenu = useCallback(
     (request: DesktopContextMenuOpenRequest) => {
       const normalizedTarget = normalizeContextTargetRef(request.target);
-      let items: DesktopActionEntry[] = [];
-      if (normalizedTarget.kind === 'icon') {
-        items = buildIconContextMenuItems(normalizedTarget);
-      } else if (normalizedTarget.kind === 'window') {
-        items = buildWindowContextMenuItems(normalizedTarget);
-      } else {
-        items = buildGenericContextMenuItems(normalizedTarget);
-      }
+      const items = resolveContextMenuItemsForTarget(normalizedTarget);
 
       if (items.length === 0) {
         setContextMenu(null);
@@ -911,7 +1015,7 @@ export function useDesktopShellController({
         items,
       });
     },
-    [buildGenericContextMenuItems, buildIconContextMenuItems, buildWindowContextMenuItems, dispatch],
+    [dispatch, resolveContextMenuItemsForTarget],
   );
 
   const handleContextMenuClose = useCallback(() => {

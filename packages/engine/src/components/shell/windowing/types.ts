@@ -5,6 +5,7 @@ export interface DesktopActionItem {
   shortcut?: string;
   disabled?: boolean;
   checked?: boolean;
+  visibility?: DesktopActionVisibility;
   payload?: Record<string, unknown>;
 }
 
@@ -28,6 +29,32 @@ export type DesktopCommandSource = 'menu' | 'context-menu' | 'icon' | 'programma
 
 export type ContextTargetKind = 'window' | 'icon' | 'widget' | 'message' | 'conversation';
 export type DesktopIconKind = 'app' | 'folder';
+
+export interface DesktopActionVisibilityContext {
+  profile?: string;
+  registry?: string;
+  roles?: string[];
+  target?: DesktopContextTargetRef;
+}
+
+export interface DesktopActionVisibility {
+  /**
+   * Only allow this action when the active profile slug matches one of these values.
+   */
+  allowedProfiles?: string[];
+  /**
+   * Only allow this action when at least one active role matches one of these values.
+   */
+  allowedRoles?: string[];
+  /**
+   * Optional custom predicate for advanced visibility checks.
+   */
+  when?: (context: DesktopActionVisibilityContext) => boolean;
+  /**
+   * Unauthorized actions are hidden by default. Use `disable` to keep them visible but disabled.
+   */
+  unauthorized?: 'hide' | 'disable';
+}
 
 export interface DesktopFolderIconOptions {
   /**

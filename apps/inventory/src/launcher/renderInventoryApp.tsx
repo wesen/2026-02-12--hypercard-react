@@ -406,12 +406,20 @@ function buildConversationContextActions(convId: string): DesktopActionEntry[] {
       id: `chat-conversation-profile-${convId}`,
       label: 'Change Profile',
       commandId: buildChatConversationChangeProfileCommand(convId),
+      visibility: {
+        allowedProfiles: ['default', 'agent', 'analyst'],
+        unauthorized: 'disable',
+      },
       payload: { conversationId: convId },
     },
     {
       id: `chat-conversation-replay-${convId}`,
       label: 'Replay Last Turn',
       commandId: buildChatConversationReplayLastTurnCommand(convId),
+      visibility: {
+        allowedProfiles: ['agent', 'analyst'],
+        unauthorized: 'disable',
+      },
       payload: { conversationId: convId },
     },
     {
@@ -424,6 +432,10 @@ function buildConversationContextActions(convId: string): DesktopActionEntry[] {
       id: `chat-conversation-export-${convId}`,
       label: 'Export Transcript',
       commandId: buildChatConversationExportTranscriptCommand(convId),
+      visibility: {
+        allowedRoles: ['admin'],
+        unauthorized: 'hide',
+      },
       payload: { conversationId: convId },
     },
   ];
