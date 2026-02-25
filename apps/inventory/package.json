@@ -17,6 +17,7 @@
     "@codemirror/state": "^6.5.4",
     "@codemirror/theme-one-dark": "^6.1.3",
     "@codemirror/view": "^6.39.14",
+    "@hypercard/desktop-os": "workspace:*",
     "@hypercard/engine": "workspace:*",
     "@hypercard/confirm-runtime": "workspace:*",
     "@reduxjs/toolkit": "^2.5.0",

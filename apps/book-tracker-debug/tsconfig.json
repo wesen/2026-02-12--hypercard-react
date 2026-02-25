@@ -10,9 +10,10 @@
     "outDir": "dist",
     "rootDir": "src",
     "paths": {
+      "@hypercard/desktop-os": ["../../packages/desktop-os/src"],
       "@hypercard/engine": ["../../packages/engine/src"]
     }
   },
   "include": ["src"],
-  "references": [{ "path": "../../packages/engine" }]
+  "references": [{ "path": "../../packages/desktop-os" }, { "path": "../../packages/engine" }]
 }

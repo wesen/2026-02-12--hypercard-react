@@ -26,14 +26,33 @@ npm install
 npm run dev          # Vite dev server (apps/inventory on localhost:5173)
 npm run storybook    # Storybook dev server (all apps + engine widgets)
 npm run build        # Production build (engine + all 4 apps)
+npm run launcher:binary:build  # Build single launcher binary (embedded UI + backend modules)
+npm run launcher:smoke         # Boot binary and run route/health/policy smoke checks
 npm run typecheck    # TypeScript project-references check
 npm run lint         # Biome lint/format check
 npm run test         # Vitest runtime tests + Storybook taxonomy check
 ```
 
+## Single Binary Launcher
+
+The launcher-first production path is a single Go binary that serves:
+
+- embedded `apps/os-launcher` frontend assets at `/`
+- namespaced backend modules under `/api/apps/<app-id>/*`
+- module manifest and health at `/api/os/apps`
+
+Build and run:
+
+```bash
+npm run launcher:binary:build
+./build/go-go-os-launcher go-go-os-launcher --addr :8091
+```
+
+Hard-cut route policy: legacy aliases (`/chat`, `/ws`, `/api/timeline`) are intentionally blocked.
+
 ## Architecture
 
-The project is a monorepo with one shared engine package and four example apps:
+The project is a monorepo with shared framework packages and app modules:
 
 ```
 packages/engine/          ← @hypercard/engine — shared framework (zero domain knowledge)
@@ -57,6 +76,7 @@ apps/
   todo/                   ← Minimal app (simplest possible desktop shell usage)
   crm/                    ← CRM: contacts, companies, deals, activities
   book-tracker-debug/     ← Book tracker with debug pane
+  os-launcher/            ← Launcher-first host that composes app-owned desktop-os modules
 
 go-inventory-chat/        ← Go backend for inventory chat (Glazed + Pinocchio webchat)
 
@@ -77,6 +97,63 @@ The engine uses subpath imports to keep the API organized:
 | `@hypercard/engine/theme` | Base CSS packs (tokens, shell, primitives, chat, syntax, animations) |
 | `@hypercard/engine/desktop-theme-macos1` | Optional macOS-inspired theme layer |
 | `@hypercard/engine/desktop-hypercard-adapter` | Card rendering adapter for custom adapter chains |
+
+## Launcher Module Pattern (desktop-os)
+
+The launcher host composes app modules through `@hypercard/desktop-os`. Each app owns a launcher module at `apps/<app>/src/launcher/module.tsx`.
+
+```tsx
+import { formatAppKey, type LaunchableAppModule } from '@hypercard/desktop-os';
+
+export const inventoryLauncherModule: LaunchableAppModule = {
+  manifest: {
+    id: 'inventory',
+    name: 'Inventory',
+    icon: '📦',
+    launch: { mode: 'window' },
+    desktop: { order: 10 },
+  },
+  state: {
+    stateKey: 'app_inventory',
+    reducer: inventoryReducer,
+  },
+  buildLaunchWindow: (_ctx, reason) => {
+    const instanceId = crypto.randomUUID();
+    return {
+      id: `window:inventory:${instanceId}`,
+      title: 'Inventory',
+      icon: '📦',
+      bounds: { x: 140, y: 40, w: 640, h: 420 },
+      content: {
+        kind: 'app',
+        appKey: formatAppKey('inventory', instanceId),
+      },
+      dedupeKey: reason === 'startup' ? 'inventory:startup' : undefined,
+    };
+  },
+  renderWindow: ({ appId, instanceId, windowId }) => (
+    <div>{appId}:{instanceId}:{windowId}</div>
+  ),
+};
+```
+
+The host side stays orchestration-only:
+
+```tsx
+import { inventoryLauncherModule } from '@hypercard/inventory/src/launcher/module';
+import { todoLauncherModule } from '@hypercard/todo/src/launcher/module';
+import { crmLauncherModule } from '@hypercard/crm/src/launcher/module';
+import { bookTrackerLauncherModule } from '@hypercard/book-tracker-debug/src/launcher/module';
+
+export const launcherModules = [
+  inventoryLauncherModule,
+  todoLauncherModule,
+  crmLauncherModule,
+  bookTrackerLauncherModule,
+];
+```
+
+This gives one launcher-first composition path while keeping module ownership inside each app package.
 
 ## Creating an App
 

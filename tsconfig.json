@@ -3,9 +3,11 @@
   "references": [
     { "path": "packages/engine" },
     { "path": "packages/confirm-runtime" },
+    { "path": "packages/desktop-os" },
     { "path": "apps/inventory" },
     { "path": "apps/book-tracker-debug" },
     { "path": "apps/todo" },
-    { "path": "apps/crm" }
+    { "path": "apps/crm" },
+    { "path": "apps/os-launcher" }
   ]
 }

@@ -10,26 +10,30 @@ export interface HypercardViteConfigOptions {
 
 function createInventoryProxy(target: string): Record<string, ProxyOptions> {
   return {
-    '/chat': {
+    '/api/apps/inventory/chat': {
       target,
       changeOrigin: true,
     },
-    '/ws': {
+    '/api/apps/inventory/ws': {
       target,
       ws: true,
       changeOrigin: true,
     },
-    '/api': {
+    '/api/apps/inventory/api': {
       target,
       changeOrigin: true,
     },
-    '/confirm': {
+    '/api/apps/inventory/confirm': {
       target,
       changeOrigin: true,
     },
-    '/confirm/ws': {
+    '/api/apps/inventory/confirm/ws': {
       target,
       ws: true,
+      changeOrigin: true,
+    },
+    '/api/os/apps': {
+      target,
       changeOrigin: true,
     },
   };
@@ -41,6 +45,7 @@ export function createHypercardViteConfig(options: HypercardViteConfigOptions = 
     resolve: {
       alias: {
         '@hypercard/engine': path.resolve(__dirname, '../../packages/engine/src'),
+        '@hypercard/desktop-os': path.resolve(__dirname, '../../packages/desktop-os/src'),
         '@hypercard/confirm-runtime': path.resolve(__dirname, '../../packages/confirm-runtime/src'),
       },
     },

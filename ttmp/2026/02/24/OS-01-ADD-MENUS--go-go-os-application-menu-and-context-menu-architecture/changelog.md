@@ -28,3 +28,11 @@ Uploaded bundled ticket documentation to reMarkable as 'OS-01-ADD-MENUS Menu Arc
 - /home/manuel/workspaces/2026-02-23/add-profile-registry/geppetto/ttmp/2026/02/24/OS-01-ADD-MENUS--go-go-os-application-menu-and-context-menu-architecture/design-doc/01-go-go-os-dynamic-window-menus-and-context-menus-design.md — Primary analysis document included in the uploaded bundle.
 - /home/manuel/workspaces/2026-02-23/add-profile-registry/geppetto/ttmp/2026/02/24/OS-01-ADD-MENUS--go-go-os-application-menu-and-context-menu-architecture/reference/01-investigation-diary.md — Investigation diary included in the uploaded bundle.
 
+
+## 2026-02-25
+
+Expanded `OS-01` from research-only TODOs into a full execution checklist covering contract work, shell runtime wiring, right-click/title-bar integration, context-menu component upgrade, inventory adoption, profile scoping, regression tests, validation, and ticket closure gates.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/ttmp/2026/02/24/OS-01-ADD-MENUS--go-go-os-application-menu-and-context-menu-architecture/tasks.md — Detailed implementation task plan replacing research-only list.

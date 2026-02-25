@@ -9,6 +9,8 @@
     "outDir": "dist",
     "skipLibCheck": true,
     "paths": {
+      "@hypercard/desktop-os": ["../../packages/desktop-os/src"],
+      "@hypercard/desktop-os/*": ["../../packages/desktop-os/src/*"],
       "@hypercard/engine": ["../../packages/engine/src"],
       "@hypercard/engine/*": ["../../packages/engine/src/*"],
       "@hypercard/confirm-runtime": ["../../packages/confirm-runtime/src"],
@@ -17,6 +19,7 @@
   },
   "include": ["src"],
   "references": [
+    { "path": "../../packages/desktop-os" },
     { "path": "../../packages/engine" },
     { "path": "../../packages/confirm-runtime" }
   ]
