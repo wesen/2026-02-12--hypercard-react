@@ -12,18 +12,24 @@ Intent: long-term
 Owners: []
 RelatedFiles:
     - Path: packages/engine/src/chat/components/ChatConversationWindow.tsx
-      Note: Integration and legacy logic removal details
-    - Path: packages/engine/src/chat/runtime/pendingAiTurnMachine.test.ts
-      Note: Validation coverage referenced in Step 2 and Step 3
-    - Path: packages/engine/src/chat/runtime/pendingAiTurnMachine.ts
-      Note: State machine implementation details discussed in Step 2
+      Note: Integration and legacy logic removal details.
+    - Path: packages/engine/src/chat/state/chatWindowSlice.ts
+      Note: Per-window Redux slice introduced in Step 4.
+    - Path: packages/engine/src/chat/state/selectors.ts
+      Note: Pending spinner selector logic introduced in Step 4.
+    - Path: packages/engine/src/chat/state/chatWindowSlice.test.ts
+      Note: Slice transition tests introduced in Step 4.
+    - Path: packages/engine/src/chat/state/selectors.test.ts
+      Note: Pending indicator selector behavior coverage updated in Step 4.
+    - Path: docs/frontend/window-local-redux-state-playbook.md
+      Note: Project playbook added in Step 4.
     - Path: ttmp/2026/02/25/OS-13-CHAT-TURN-STATE--per-window-chat-turn-state-machine-for-pending-ai-indicator/design/01-implementation-plan-per-window-turn-state-machine.md
       Note: Defines state machine phases and transition contract.
     - Path: ttmp/2026/02/25/OS-13-CHAT-TURN-STATE--per-window-chat-turn-state-machine-for-pending-ai-indicator/tasks.md
       Note: Task list executed sequentially with check-off status.
 ExternalSources: []
-Summary: Implementation diary for OS-13 per-window chat turn state machine work.
-LastUpdated: 2026-02-25T14:03:00-05:00
+Summary: Implementation diary for OS-13 per-window chat pending-indicator state work.
+LastUpdated: 2026-02-25T14:31:00-05:00
 WhatFor: Maintain a detailed execution trail with decisions, failures, validations, and review guidance.
 WhenToUse: Use when continuing or reviewing OS-13 implementation.
 ---
@@ -230,3 +236,98 @@ After implementation, I completed the validation and documentation synchronizati
 - T5 completion criteria satisfied:
   - validation executed and green,
   - docs metadata and task checkboxes synchronized with implementation state.
+
+## Step 4: Legacy Runtime Removal And Per-window Redux Slice Cutover
+
+After observing repeated render-loop edge cases around local `useState` pending-turn reconciliation, I replaced the runtime machine + component-local state path with a Redux slice keyed by `windowId`. This keeps pending state deterministic and isolated per desktop window, while removing legacy glue code.
+
+I also threaded launcher `windowId` into the inventory chat window, removed the obsolete `pendingAiTurnMachine` implementation/tests, and added a reusable project playbook for future window-local state wiring.
+
+### Prompt Context
+
+**User prompt (verbatim):** "get rid of legacy stuff"
+
+**Assistant interpretation:** Remove the old pending-turn/local-effect path, complete the per-window Redux migration, and clean up superseded code.
+
+**Inferred user intent:** Consolidate on one clean architecture that avoids regressions and is reusable for similar window-local UX state.
+
+**Commit (code):** N/A (pending in working tree during this diary entry)
+
+### What I did
+- Added new slice:
+  - `/home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/chat/state/chatWindowSlice.ts`
+  - actions: `setWindowConversation`, `beginAwaitingAi`, `clearAwaitingAi`, `clearWindowState`.
+- Added new tests:
+  - `/home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/chat/state/chatWindowSlice.test.ts`
+  - expanded `/home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/chat/state/selectors.test.ts`.
+- Added selector:
+  - `selectShouldShowPendingAiPlaceholder(state, windowId, convId)` in `selectors.ts`.
+- Rewired `ChatConversationWindow`:
+  - removed local pending-turn `useState` and machine transition effects,
+  - dispatches window-local actions on mount/send/unmount,
+  - drives spinner via selector.
+- Passed `windowId` from launcher:
+  - `apps/inventory/src/launcher/module.tsx`
+  - `apps/inventory/src/launcher/renderInventoryApp.tsx`.
+- Added `chatWindowReducer` in app stores that host chat:
+  - `apps/inventory/src/app/store.ts`
+  - `apps/os-launcher/src/app/store.ts`
+  - `apps/crm/src/app/store.ts`
+  - story store in `packages/engine/src/components/widgets/ChatConversationWindow.stories.tsx`.
+- Removed legacy files:
+  - deleted `packages/engine/src/chat/runtime/pendingAiTurnMachine.ts`
+  - deleted `packages/engine/src/chat/runtime/pendingAiTurnMachine.test.ts`.
+- Added project playbook:
+  - `/home/manuel/workspaces/2026-02-24/add-menus/go-go-os/docs/frontend/window-local-redux-state-playbook.md`.
+- Validation run:
+  - `npm run typecheck -w packages/engine` (pass)
+  - `npm run test -w packages/engine -- src/chat/state/chatWindowSlice.test.ts src/chat/state/selectors.test.ts` (pass).
+
+### Why
+- Local component reconciliation had become brittle and harder to debug under window lifecycle churn.
+- Per-window Redux state is a reusable pattern for this codebase and aligns with your “recurring theme” requirement.
+
+### What worked
+- Slice + selector model provided deterministic spinner behavior without render-loop-prone state effects.
+- Legacy runtime files were fully removable with targeted test replacement.
+
+### What didn't work
+- Attempted `npm run typecheck -w apps/inventory` / `apps/os-launcher` / `apps/crm` failed because those workspaces do not define a `typecheck` script.
+
+Exact output:
+- `Missing script: "typecheck"` for each app workspace above.
+
+### What I learned
+- Keeping window-local intent as an explicit Redux primitive simplifies chat UX logic and avoids incidental coupling to component render cadence.
+
+### What was tricky to build
+- The critical part was preserving UX semantics while removing the old machine:
+  - spinner must not appear before user append,
+  - spinner must disappear on first AI-side timeline signal.
+- I solved this with selector-level gating that combines `windowId` slice state + timeline inspection instead of effect-driven transitions.
+
+### What warrants a second pair of eyes
+- Confirm fallback `windowId` strategy (`chat:conv:${convId}`) is acceptable for non-launcher embeddings.
+- Confirm `chatWindowReducer` inclusion scope (inventory/launcher/crm) matches intended chat-enabled app set.
+
+### What should be done in the future
+- If needed, add an end-to-end test that opens two windows for the same conversation and asserts independent pending behavior by `windowId`.
+
+### Code review instructions
+- Start in:
+  - `/home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/chat/state/chatWindowSlice.ts`
+  - `/home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/chat/state/selectors.ts`
+  - `/home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/chat/components/ChatConversationWindow.tsx`
+- Then verify wiring:
+  - `/home/manuel/workspaces/2026-02-24/add-menus/go-go-os/apps/inventory/src/launcher/module.tsx`
+  - `/home/manuel/workspaces/2026-02-24/add-menus/go-go-os/apps/inventory/src/launcher/renderInventoryApp.tsx`
+- Re-run:
+  - `npm run typecheck -w packages/engine`
+  - `npm run test -w packages/engine -- src/chat/state/chatWindowSlice.test.ts src/chat/state/selectors.test.ts`
+
+### Technical details
+- Pending spinner is now fully derived:
+  - local state marker: `byWindowId[windowId].awaiting.baselineIndex`
+  - + timeline role/kind analysis
+  - + connection error guard
+  - => `showPendingResponseSpinner`.
