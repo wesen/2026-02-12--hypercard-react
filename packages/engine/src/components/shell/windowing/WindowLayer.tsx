@@ -1,5 +1,6 @@
-import type { PointerEvent, ReactNode } from 'react';
+import type { MouseEvent, PointerEvent, ReactNode } from 'react';
 import { PARTS } from '../../../parts';
+import { DesktopWindowScopeProvider } from './desktopMenuRuntime';
 import type { DesktopWindowDef } from './types';
 import { WindowSurface } from './WindowSurface';
 
@@ -11,6 +12,11 @@ export interface WindowLayerProps {
   onCloseWindow?: (windowId: string) => void;
   onWindowDragStart?: (windowId: string, event: PointerEvent<HTMLDivElement>) => void;
   onWindowResizeStart?: (windowId: string, event: PointerEvent<HTMLButtonElement>) => void;
+  onWindowContextMenu?: (
+    windowId: string,
+    event: MouseEvent<HTMLElement>,
+    source: 'surface' | 'title-bar',
+  ) => void;
 }
 
 export function WindowLayer({
@@ -20,6 +26,7 @@ export function WindowLayer({
   onCloseWindow,
   onWindowDragStart,
   onWindowResizeStart,
+  onWindowContextMenu,
 }: WindowLayerProps) {
   return (
     <section data-part={PARTS.windowingWindowLayer} aria-label="Window layer">
@@ -31,8 +38,9 @@ export function WindowLayer({
           onCloseWindow={onCloseWindow}
           onWindowDragStart={onWindowDragStart}
           onWindowResizeStart={onWindowResizeStart}
+          onWindowContextMenu={onWindowContextMenu}
         >
-          {renderWindowBody?.(window)}
+          <DesktopWindowScopeProvider windowId={window.id}>{renderWindowBody?.(window)}</DesktopWindowScopeProvider>
         </WindowSurface>
       ))}
     </section>

@@ -15,6 +15,7 @@ export {
 } from '../../components/shell/windowing/DesktopShellView';
 export {
   composeDesktopContributions,
+  mergeActionSections,
   routeContributionCommand,
   type ComposedDesktopContributions,
   type DesktopCommandContext,
@@ -23,6 +24,13 @@ export {
   type StartupWindowContext,
   type StartupWindowFactory,
 } from '../../components/shell/windowing/desktopContributions';
+export {
+  DesktopWindowMenuRuntimeProvider,
+  DesktopWindowScopeProvider,
+  useDesktopWindowId,
+  useRegisterWindowMenuSections,
+  type DesktopWindowMenuRuntime,
+} from '../../components/shell/windowing/desktopMenuRuntime';
 export {
   createAppWindowContentAdapter,
   createFallbackWindowContentAdapter,
@@ -41,6 +49,11 @@ export {
   type WindowContentAdapter,
 } from '../../components/shell/windowing/windowContentAdapter';
 export type {
+  DesktopActionEntry,
+  DesktopActionItem,
+  DesktopActionSection,
+  DesktopCommandInvocation,
+  DesktopCommandSource,
   DesktopIconDef,
   DesktopMenuEntry,
   DesktopMenuItem,

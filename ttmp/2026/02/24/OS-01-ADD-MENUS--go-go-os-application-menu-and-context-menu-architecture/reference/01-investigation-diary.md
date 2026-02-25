@@ -24,7 +24,7 @@ RelatedFiles:
       Note: Confirms context-menu styling primitives already available for shell integration.
 ExternalSources: []
 Summary: Chronological investigation log for OS-01-ADD-MENUS including commands, evidence, findings, design decisions, and delivery steps.
-LastUpdated: 2026-02-24T10:24:17-05:00
+LastUpdated: 2026-02-24T22:25:31-05:00
 WhatFor: Use this as a reproducible audit trail of how the menu/context-menu architecture analysis was performed and which files were used as evidence.
 WhenToUse: Use when reviewing the design proposal, onboarding engineers, or continuing implementation planning in this ticket.
 ---
@@ -277,3 +277,84 @@ Why:
 2. Ticket tasks (`tasks.md`)
 3. Ticket changelog (`changelog.md`)
 
+## 2026-02-24 22:00 - OS-01 implementation slice (Phase 0/1/2/3 foundations)
+
+### Intent
+
+Implement the first concrete menu/runtime slice from the OS-01 plan:
+
+1. action + invocation contracts,
+2. dynamic focused-window menu runtime registration APIs,
+3. shell context-menu state/rendering with right-click title/surface hooks,
+4. command-capable context-menu widget with compatibility.
+
+### Commands
+
+```bash
+cd /home/manuel/workspaces/2026-02-24/add-menus/go-go-os
+rg -n "DesktopShell|ContextMenu|desktopContributions|WindowSurface|WindowTitleBar|useDesktopShellController" packages apps -S
+sed -n '1,260p' packages/engine/src/components/shell/windowing/types.ts
+sed -n '1,320p' packages/engine/src/components/shell/windowing/desktopContributions.ts
+sed -n '1,560p' packages/engine/src/components/shell/windowing/useDesktopShellController.tsx
+sed -n '1,320p' packages/engine/src/components/shell/windowing/DesktopShellView.tsx
+sed -n '1,260p' packages/engine/src/components/widgets/ContextMenu.tsx
+
+pnpm --filter @hypercard/engine test -- src/components/shell/windowing/desktopContributions.test.ts
+pnpm --filter @hypercard/engine typecheck
+pnpm --filter @hypercard/os-launcher test
+pnpm --filter @hypercard/os-launcher build
+```
+
+### Implementation notes
+
+1. Added `DesktopActionItem`/`DesktopActionSection` and `DesktopCommandInvocation` in windowing types, while preserving existing `DesktopMenu*` aliases for compatibility.
+2. Added `mergeActionSections` with deterministic order and section-level `merge: 'replace'` override support (default remains append).
+3. Added invocation-aware command routing by extending `routeContributionCommand(..., invocation)` and `DesktopCommandHandler.run(..., invocation)`.
+4. Added `desktopMenuRuntime.tsx` with:
+   - `DesktopWindowMenuRuntimeProvider`
+   - `DesktopWindowScopeProvider`
+   - `useRegisterWindowMenuSections`
+   - `useDesktopWindowId`
+5. Updated shell controller to:
+   - keep runtime menu sections keyed by `windowId`,
+   - merge focused-window dynamic sections into menubar composition,
+   - keep context-menu state with anchor and source metadata,
+   - route context-menu commands through existing command router with invocation metadata,
+   - expose runtime register/unregister callbacks.
+6. Updated view/layer integration:
+   - wrap `WindowLayer` with runtime provider,
+   - wrap each window body with window scope provider,
+   - render shell-integrated `ContextMenu` overlay from controller state.
+7. Updated window primitives:
+   - right-click handling in `WindowSurface` + `WindowTitleBar`,
+   - right-click focuses target window first,
+   - drag/resize still left-button only.
+8. Upgraded `ContextMenu` widget:
+   - supports action entries with `commandId`, `disabled`, `checked`, `shortcut`, `payload`,
+   - preserves string-item compatibility via existing `onSelect(item: string)`,
+   - adds Escape-to-close behavior.
+9. Fixed action-item double-dispatch edge case:
+   - action entry click now routes via `onAction` when provided,
+   - falls back to `onSelect(commandId)` only when `onAction` is absent.
+
+### Decisions locked in this slice
+
+1. Dynamic section merge default is `append`; selective hard override is `merge: 'replace'`.
+2. Shortcut behavior in v1 remains display-only (no global accelerator dispatch in this slice).
+3. Default window right-click menu:
+   - dialog windows: `Close Window`,
+   - non-dialog windows: `Close Window`, separator, `Tile Windows`, `Cascade Windows`.
+
+### Validation results
+
+1. `pnpm --filter @hypercard/engine test -- src/components/shell/windowing/desktopContributions.test.ts` passed.
+2. `pnpm --filter @hypercard/engine typecheck` passed.
+3. `pnpm --filter @hypercard/os-launcher test` passed (with existing selector warnings from unrelated test paths).
+4. `pnpm --filter @hypercard/os-launcher build` passed.
+5. `docmgr doctor --ticket OS-01-ADD-MENUS --stale-after 30` passed after adding missing topic vocabulary entries (`menus`, `ui`).
+
+### Remaining immediate follow-ups
+
+1. Add explicit right-click interaction tests for window/title-bar path (`OS01-34`, `OS01-35`).
+2. Adopt runtime focused-window menu registration in inventory chat windows (`OS01-50+`).
+3. Implement profile-scoped selection model (`OS01-60+`) and connect dynamic profile menu section.

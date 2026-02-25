@@ -1,6 +1,6 @@
 import { useId } from 'react';
 import { PARTS } from '../../../parts';
-import type { DesktopMenuEntry, DesktopMenuSection } from './types';
+import type { DesktopCommandInvocation, DesktopMenuEntry, DesktopMenuSection } from './types';
 
 function isSeparator(entry: DesktopMenuEntry): entry is { separator: true } {
   return 'separator' in entry && entry.separator === true;
@@ -10,7 +10,7 @@ export interface DesktopMenuBarProps {
   sections: DesktopMenuSection[];
   activeMenuId: string | null;
   onActiveMenuChange?: (menuId: string | null) => void;
-  onCommand?: (commandId: string, menuId: string) => void;
+  onCommand?: (commandId: string, menuId: string, invocation: DesktopCommandInvocation) => void;
 }
 
 export function DesktopMenuBar({ sections, activeMenuId, onActiveMenuChange, onCommand }: DesktopMenuBarProps) {
@@ -69,7 +69,7 @@ export function DesktopMenuBar({ sections, activeMenuId, onActiveMenuChange, onC
                       role="menuitem"
                       disabled={entry.disabled}
                       onClick={() => {
-                        onCommand?.(entry.commandId, section.id);
+                        onCommand?.(entry.commandId, section.id, { source: 'menu', menuId: section.id });
                         onActiveMenuChange?.(null);
                       }}
                     >

@@ -1,4 +1,4 @@
-import type { PointerEvent } from 'react';
+import type { MouseEvent, PointerEvent } from 'react';
 import { PARTS } from '../../../parts';
 
 export interface WindowTitleBarProps {
@@ -7,6 +7,7 @@ export interface WindowTitleBarProps {
   focused?: boolean;
   onClose?: () => void;
   onPointerDown?: (event: PointerEvent<HTMLDivElement>) => void;
+  onContextMenu?: (event: MouseEvent<HTMLDivElement>) => void;
 }
 
 export function shouldPrefixWindowIcon(title: string, icon?: string): boolean {
@@ -16,7 +17,7 @@ export function shouldPrefixWindowIcon(title: string, icon?: string): boolean {
   return !title.trimStart().startsWith(icon);
 }
 
-export function WindowTitleBar({ title, icon, focused, onClose, onPointerDown }: WindowTitleBarProps) {
+export function WindowTitleBar({ title, icon, focused, onClose, onPointerDown, onContextMenu }: WindowTitleBarProps) {
   const prefixIcon = shouldPrefixWindowIcon(title, icon) ? `${icon} ` : '';
 
   return (
@@ -24,6 +25,7 @@ export function WindowTitleBar({ title, icon, focused, onClose, onPointerDown }:
       data-part={PARTS.windowingWindowTitleBar}
       data-state={focused ? 'focused' : undefined}
       onPointerDown={onPointerDown}
+      onContextMenu={onContextMenu}
     >
       <button
         type="button"

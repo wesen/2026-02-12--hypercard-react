@@ -1,4 +1,13 @@
-import { type MouseEvent, type PointerEvent, type ReactNode, useCallback, useEffect, useMemo, useRef } from 'react';
+import {
+  type MouseEvent,
+  type PointerEvent,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import { clearToast } from '../../../features/notifications/notificationsSlice';
 import { type NotificationsStateSlice, selectToast } from '../../../features/notifications/selectors';
@@ -22,6 +31,7 @@ import {
 } from '../../../desktop/core/state/windowingSlice';
 import {
   composeDesktopContributions,
+  mergeActionSections,
   routeContributionCommand,
 } from './desktopContributions';
 import {
@@ -32,7 +42,14 @@ import {
 import { dragOverlayStore, useDragOverlaySnapshot } from './dragOverlayStore';
 import { routeDesktopCommand } from './desktopCommandRouter';
 import type { DesktopShellProps } from './desktopShellTypes';
-import type { DesktopIconDef, DesktopMenuSection, DesktopWindowDef } from './types';
+import type {
+  DesktopActionEntry,
+  DesktopActionSection,
+  DesktopCommandInvocation,
+  DesktopIconDef,
+  DesktopMenuSection,
+  DesktopWindowDef,
+} from './types';
 import {
   renderWindowContentWithAdapters,
   type WindowContentAdapter,
@@ -77,6 +94,15 @@ function nextSessionId() {
   return `session-${sessionCounter}`;
 }
 
+export interface DesktopContextMenuState {
+  x: number;
+  y: number;
+  menuId: string;
+  windowId: string | null;
+  widgetId?: string;
+  items: DesktopActionEntry[];
+}
+
 export interface DesktopShellControllerResult {
   themeClass?: string;
   menus: DesktopMenuSection[];
@@ -87,14 +113,21 @@ export interface DesktopShellControllerResult {
   toast: string | null;
   onDesktopBackgroundClick: (event: MouseEvent<HTMLDivElement>) => void;
   onActiveMenuChange: (id: string | null) => void;
-  onCommand: (commandId: string) => void;
+  onCommand: (commandId: string, invocation?: DesktopCommandInvocation) => void;
   onSelectIcon: (id: string) => void;
   onOpenIcon: (id: string) => void;
   onFocusWindow: (id: string) => void;
   onCloseWindow: (id: string) => void;
   onWindowDragStart: (windowId: string, event: PointerEvent<HTMLDivElement>) => void;
   onWindowResizeStart: (windowId: string, event: PointerEvent<HTMLButtonElement>) => void;
+  onWindowContextMenu: (windowId: string, event: MouseEvent<HTMLElement>, source: 'surface' | 'title-bar') => void;
   renderWindowBody: (window: DesktopWindowDef) => ReactNode;
+  contextMenu: DesktopContextMenuState | null;
+  onContextMenuClose: () => void;
+  onContextMenuSelect: (item: string) => void;
+  onContextMenuAction: (entry: { commandId?: string; payload?: Record<string, unknown>; id?: string }) => void;
+  registerWindowMenuSections: (windowId: string, sections: DesktopActionSection[]) => void;
+  unregisterWindowMenuSections: (windowId: string) => void;
   onToastDone: () => void;
 }
 
@@ -120,6 +153,8 @@ export function useDesktopShellController({
   const toast = useSelector((s: ShellState) => selectToast(s));
   const dragOverlay = useDragOverlaySnapshot();
   const focusedWindowId = focusedWin?.id ?? null;
+  const [windowMenuSectionsById, setWindowMenuSectionsById] = useState<Record<string, DesktopActionSection[]>>({});
+  const [contextMenu, setContextMenu] = useState<DesktopContextMenuState | null>(null);
   const composedContributions = useMemo(() => composeDesktopContributions(contributions), [contributions]);
 
   const defaultIcons = useMemo(() => {
@@ -171,10 +206,20 @@ export function useDesktopShellController({
     return composedContributions.icons.length > 0 ? composedContributions.icons : defaultIcons;
   }, [composedContributions.icons, defaultIcons, iconsProp]);
 
-  const menus = useMemo((): DesktopMenuSection[] => {
+  const baseMenus = useMemo((): DesktopMenuSection[] => {
     if (menusProp) return menusProp;
     return composedContributions.menus.length > 0 ? composedContributions.menus : defaultMenus;
   }, [composedContributions.menus, defaultMenus, menusProp]);
+
+  const focusedWindowRuntimeMenus = useMemo(
+    () => (focusedWindowId ? windowMenuSectionsById[focusedWindowId] ?? [] : []),
+    [focusedWindowId, windowMenuSectionsById],
+  );
+
+  const menus = useMemo(
+    () => mergeActionSections([...baseMenus, ...focusedWindowRuntimeMenus]),
+    [baseMenus, focusedWindowRuntimeMenus],
+  );
 
   useEffect(() => {
     const homeCard = stack.cards[stack.homeCard];
@@ -243,6 +288,43 @@ export function useDesktopShellController({
     for (const win of windows) byId[win.id] = win;
     return byId;
   }, [windows]);
+
+  useEffect(() => {
+    const openWindowIds = new Set(windows.map((w) => w.id));
+    setWindowMenuSectionsById((prev) => {
+      let changed = false;
+      const next: Record<string, DesktopActionSection[]> = {};
+      for (const [windowId, sections] of Object.entries(prev)) {
+        if (!openWindowIds.has(windowId)) {
+          changed = true;
+          continue;
+        }
+        next[windowId] = sections;
+      }
+      return changed ? next : prev;
+    });
+  }, [windows]);
+
+  const registerWindowMenuSections = useCallback((windowId: string, sections: DesktopActionSection[]) => {
+    setWindowMenuSectionsById((prev) => {
+      const current = prev[windowId];
+      if (current === sections) {
+        return prev;
+      }
+      return { ...prev, [windowId]: sections };
+    });
+  }, []);
+
+  const unregisterWindowMenuSections = useCallback((windowId: string) => {
+    setWindowMenuSectionsById((prev) => {
+      if (!(windowId in prev)) {
+        return prev;
+      }
+      const next = { ...prev };
+      delete next[windowId];
+      return next;
+    });
+  }, []);
 
   const handleFocus = useCallback(
     (id: string) => {
@@ -343,7 +425,7 @@ export function useDesktopShellController({
   );
 
   const routeCommand = useCallback(
-    (commandId: string) => {
+    (commandId: string, invocation: DesktopCommandInvocation = { source: 'programmatic' }) => {
       const contributionHandled = routeContributionCommand(
         commandId,
         composedContributions.commandHandlers,
@@ -354,6 +436,7 @@ export function useDesktopShellController({
           openCardWindow,
           closeWindow: handleClose,
         },
+        invocation,
       );
       if (contributionHandled) return;
 
@@ -378,7 +461,7 @@ export function useDesktopShellController({
         },
       });
       if (handled) return;
-      onCommandProp?.(commandId);
+      onCommandProp?.(commandId, invocation);
     },
     [
       composedContributions.commandHandlers,
@@ -400,9 +483,95 @@ export function useDesktopShellController({
         openCardWindow(iconId);
         return;
       }
-      routeCommand(`icon.open.${iconId}`);
+      routeCommand(`icon.open.${iconId}`, { source: 'icon' });
     },
     [dispatch, openCardWindow, routeCommand, stack.cards],
+  );
+
+  const buildWindowContextMenuItems = useCallback(
+    (windowId: string): DesktopActionEntry[] => {
+      const win = windowsById[windowId];
+      if (!win) {
+        return [];
+      }
+
+      const closeEntry: DesktopActionEntry = {
+        id: `window-context.close.${windowId}`,
+        label: 'Close Window',
+        commandId: 'window.close-focused',
+      };
+
+      if (win.isDialog) {
+        return [closeEntry];
+      }
+
+      return [
+        closeEntry,
+        { separator: true },
+        { id: `window-context.tile.${windowId}`, label: 'Tile Windows', commandId: 'window.tile' },
+        { id: `window-context.cascade.${windowId}`, label: 'Cascade Windows', commandId: 'window.cascade' },
+      ];
+    },
+    [windowsById],
+  );
+
+  const handleContextMenuClose = useCallback(() => {
+    setContextMenu(null);
+  }, []);
+
+  const handleWindowContextMenu = useCallback(
+    (windowId: string, event: MouseEvent<HTMLElement>, source: 'surface' | 'title-bar') => {
+      const items = buildWindowContextMenuItems(windowId);
+      if (items.length === 0) {
+        setContextMenu(null);
+        return;
+      }
+      dispatch(focusWindow(windowId));
+      dispatch(setActiveMenu(null));
+      setContextMenu({
+        x: event.clientX,
+        y: event.clientY,
+        menuId: 'window-context',
+        windowId,
+        widgetId: source === 'title-bar' ? 'title-bar' : undefined,
+        items,
+      });
+    },
+    [buildWindowContextMenuItems, dispatch],
+  );
+
+  const handleContextMenuSelect = useCallback(
+    (item: string) => {
+      if (!contextMenu) {
+        return;
+      }
+      routeCommand(item, {
+        source: 'context-menu',
+        menuId: contextMenu.menuId,
+        windowId: contextMenu.windowId,
+        widgetId: contextMenu.widgetId,
+      });
+      setContextMenu(null);
+    },
+    [contextMenu, routeCommand],
+  );
+
+  const handleContextMenuAction = useCallback(
+    (entry: { commandId?: string; payload?: Record<string, unknown> }) => {
+      if (!contextMenu || !entry.commandId) {
+        setContextMenu(null);
+        return;
+      }
+      routeCommand(entry.commandId, {
+        source: 'context-menu',
+        menuId: contextMenu.menuId,
+        windowId: contextMenu.windowId,
+        widgetId: contextMenu.widgetId,
+        payload: entry.payload,
+      });
+      setContextMenu(null);
+    },
+    [contextMenu, routeCommand],
   );
 
   const defaultAdapters = useMemo<WindowContentAdapter[]>(
@@ -469,12 +638,19 @@ export function useDesktopShellController({
     (event: MouseEvent<HTMLDivElement>) => {
       if (event.target === event.currentTarget) {
         dispatch(clearDesktopTransient());
+        setContextMenu(null);
       }
     },
     [dispatch],
   );
 
-  const handleActiveMenuChange = useCallback((id: string | null) => dispatch(setActiveMenu(id)), [dispatch]);
+  const handleActiveMenuChange = useCallback(
+    (id: string | null) => {
+      setContextMenu(null);
+      dispatch(setActiveMenu(id));
+    },
+    [dispatch],
+  );
   const handleSelectIcon = useCallback((id: string) => dispatch(setSelectedIcon(id)), [dispatch]);
   const handleToastDone = useCallback(() => dispatch(clearToast()), [dispatch]);
 
@@ -495,7 +671,14 @@ export function useDesktopShellController({
     onCloseWindow: handleClose,
     onWindowDragStart: beginMove,
     onWindowResizeStart: beginResize,
+    onWindowContextMenu: handleWindowContextMenu,
     renderWindowBody,
+    contextMenu,
+    onContextMenuClose: handleContextMenuClose,
+    onContextMenuSelect: handleContextMenuSelect,
+    onContextMenuAction: handleContextMenuAction,
+    registerWindowMenuSections,
+    unregisterWindowMenuSections,
     onToastDone: handleToastDone,
   };
 }

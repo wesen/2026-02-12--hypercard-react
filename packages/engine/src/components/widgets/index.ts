@@ -7,7 +7,7 @@ export {
 } from './ChatWindow';
 export { Checkbox, type CheckboxProps } from './Checkbox';
 export { Chip, type ChipProps } from './Chip';
-export { ContextMenu, type ContextMenuProps, type ContextMenuEntry } from './ContextMenu';
+export { ContextMenu, type ContextMenuActionEntry, type ContextMenuProps, type ContextMenuEntry } from './ContextMenu';
 export { DataTable, type DataTableProps } from './DataTable';
 export { DetailView, type DetailViewProps } from './DetailView';
 export { DisclosureTriangle, type DisclosureTriangleProps } from './DisclosureTriangle';

@@ -1,6 +1,11 @@
 import type { CardStackDefinition } from '../../../cards';
 import type { OpenWindowPayload } from '../../../desktop/core/state/types';
-import type { DesktopIconDef, DesktopMenuSection } from './types';
+import type {
+  DesktopActionSection,
+  DesktopCommandInvocation,
+  DesktopIconDef,
+  DesktopMenuSection,
+} from './types';
 import type { WindowContentAdapter } from './windowContentAdapter';
 
 export interface DesktopCommandContext {
@@ -15,7 +20,7 @@ export interface DesktopCommandHandler {
   id: string;
   priority?: number;
   matches: (commandId: string) => boolean;
-  run: (commandId: string, ctx: DesktopCommandContext) => 'handled' | 'pass';
+  run: (commandId: string, ctx: DesktopCommandContext, invocation: DesktopCommandInvocation) => 'handled' | 'pass';
 }
 
 export interface StartupWindowContext {
@@ -49,21 +54,36 @@ export interface ComposeDesktopContributionsOptions {
   onIconCollision?: 'throw' | 'warn';
 }
 
-function mergeMenus(menus: DesktopMenuSection[]): DesktopMenuSection[] {
-  const byId = new Map<string, DesktopMenuSection>();
+function cloneActionSection(section: DesktopActionSection): DesktopActionSection {
+  return { ...section, items: [...section.items] };
+}
+
+export function mergeActionSections<T extends DesktopActionSection>(sections: T[]): T[] {
+  const byId = new Map<string, DesktopActionSection>();
   const order: string[] = [];
 
-  for (const section of menus) {
+  for (const section of sections) {
     const existing = byId.get(section.id);
     if (!existing) {
-      byId.set(section.id, { ...section, items: [...section.items] });
+      byId.set(section.id, cloneActionSection(section));
       order.push(section.id);
+      continue;
+    }
+
+    existing.label = section.label;
+    existing.merge = section.merge;
+    if (section.merge === 'replace') {
+      existing.items = [...section.items];
       continue;
     }
     existing.items = [...existing.items, ...section.items];
   }
 
-  return order.map((id) => byId.get(id) as DesktopMenuSection);
+  return order.map((id) => byId.get(id) as T);
+}
+
+function mergeMenus(menus: DesktopMenuSection[]): DesktopMenuSection[] {
+  return mergeActionSections(menus);
 }
 
 function mergeIcons(icons: DesktopIconDef[], options: ComposeDesktopContributionsOptions): DesktopIconDef[] {
@@ -113,10 +133,11 @@ export function routeContributionCommand(
   commandId: string,
   handlers: DesktopCommandHandler[],
   ctx: DesktopCommandContext,
+  invocation: DesktopCommandInvocation = { source: 'programmatic' },
 ): boolean {
   for (const handler of handlers) {
     if (!handler.matches(commandId)) continue;
-    if (handler.run(commandId, ctx) === 'handled') return true;
+    if (handler.run(commandId, ctx, invocation) === 'handled') return true;
   }
   return false;
 }

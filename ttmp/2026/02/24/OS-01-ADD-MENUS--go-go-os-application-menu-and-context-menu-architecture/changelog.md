@@ -36,3 +36,25 @@ Expanded `OS-01` from research-only TODOs into a full execution checklist coveri
 ### Related Files
 
 - /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/ttmp/2026/02/24/OS-01-ADD-MENUS--go-go-os-application-menu-and-context-menu-architecture/tasks.md — Detailed implementation task plan replacing research-only list.
+
+Implemented OS-01 Phase 0/1/2/3 foundations in engine windowing: action contracts, command invocation metadata, focused-window runtime menu registry APIs/hooks, shell-integrated window context menu state/rendering, right-click title-bar/window handling, and upgraded command-capable context menu widget.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/components/shell/windowing/types.ts — Added `DesktopAction*` contracts and `DesktopCommandInvocation` metadata with backward-compatible aliases.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/components/shell/windowing/desktopContributions.ts — Added deterministic `mergeActionSections` helper and invocation-aware contribution routing.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/components/shell/windowing/desktopMenuRuntime.tsx — New runtime provider/scope/hook APIs for focused-window menu section registration.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/components/shell/windowing/useDesktopShellController.tsx — Added runtime menu state, context-menu state, right-click command routing, and runtime registration plumbing.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/components/shell/windowing/DesktopShellView.tsx — Wired context-menu overlay rendering and runtime provider wrapping.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/components/shell/windowing/WindowSurface.tsx — Added right-click handling and title-bar/surface context-menu delegation with focus-first behavior.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/components/widgets/ContextMenu.tsx — Added command/action entries, disabled/checked/shortcut support, and Escape close behavior while preserving string-item compatibility.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/components/shell/windowing/desktopContributions.test.ts — Added merge and invocation metadata tests.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/components/widgets/ContextMenu.stories.tsx — Added action-entry story coverage.
+
+Validation for this slice:
+
+- `pnpm --filter @hypercard/engine test -- src/components/shell/windowing/desktopContributions.test.ts`
+- `pnpm --filter @hypercard/engine typecheck`
+- `pnpm --filter @hypercard/os-launcher test`
+- `pnpm --filter @hypercard/os-launcher build`
+- `docmgr doctor --ticket OS-01-ADD-MENUS --stale-after 30` (clean after adding topic vocabulary slugs `menus` and `ui`)

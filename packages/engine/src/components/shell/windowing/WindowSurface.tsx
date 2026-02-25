@@ -1,4 +1,4 @@
-import { memo, type PointerEvent, type ReactNode } from 'react';
+import { memo, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
 import { PARTS } from '../../../parts';
 import type { DesktopWindowDef } from './types';
 import { WindowResizeHandle } from './WindowResizeHandle';
@@ -11,6 +11,11 @@ export interface WindowSurfaceProps {
   onCloseWindow?: (windowId: string) => void;
   onWindowDragStart?: (windowId: string, event: PointerEvent<HTMLDivElement>) => void;
   onWindowResizeStart?: (windowId: string, event: PointerEvent<HTMLButtonElement>) => void;
+  onWindowContextMenu?: (
+    windowId: string,
+    event: MouseEvent<HTMLElement>,
+    source: 'surface' | 'title-bar',
+  ) => void;
 }
 
 interface WindowBodyProps {
@@ -28,6 +33,7 @@ function WindowSurfaceBase({
   onCloseWindow,
   onWindowDragStart,
   onWindowResizeStart,
+  onWindowContextMenu,
 }: WindowSurfaceProps) {
   return (
     <section
@@ -48,6 +54,11 @@ function WindowSurfaceBase({
         if (event.button !== 0) return;
         onFocusWindow?.(window.id);
       }}
+      onContextMenu={(event) => {
+        event.preventDefault();
+        onFocusWindow?.(window.id);
+        onWindowContextMenu?.(window.id, event, 'surface');
+      }}
     >
       <WindowTitleBar
         title={window.title}
@@ -55,6 +66,12 @@ function WindowSurfaceBase({
         focused={window.focused}
         onClose={window.isDialog ? undefined : () => onCloseWindow?.(window.id)}
         onPointerDown={window.isDialog ? undefined : (event) => onWindowDragStart?.(window.id, event)}
+        onContextMenu={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          onFocusWindow?.(window.id);
+          onWindowContextMenu?.(window.id, event, 'title-bar');
+        }}
       />
       <WindowBody>{children}</WindowBody>
       {window.isResizable !== false && !window.isDialog ? (
@@ -71,6 +88,7 @@ function areWindowSurfacePropsEqual(prev: WindowSurfaceProps, next: WindowSurfac
     prev.onCloseWindow === next.onCloseWindow &&
     prev.onWindowDragStart === next.onWindowDragStart &&
     prev.onWindowResizeStart === next.onWindowResizeStart &&
+    prev.onWindowContextMenu === next.onWindowContextMenu &&
     prev.window.id === next.window.id &&
     prev.window.title === next.window.title &&
     prev.window.icon === next.window.icon &&

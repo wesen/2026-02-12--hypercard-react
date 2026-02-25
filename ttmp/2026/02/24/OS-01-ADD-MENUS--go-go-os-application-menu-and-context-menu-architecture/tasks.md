@@ -8,48 +8,48 @@
 - [x] `OS01-01` Map current desktop/menu/window/profile architecture with concrete evidence.
 - [x] `OS01-02` Produce design doc with API proposals, migration plan, and tests.
 - [x] `OS01-03` Produce investigation diary and upload analysis bundle.
-- [ ] `OS01-04` Decide focused-window merge policy for dynamic sections (`append` vs `replace` defaults).
-- [ ] `OS01-05` Decide v1 shortcut behavior (`display-only` vs global execution handler).
-- [ ] `OS01-06` Decide title-bar default context entries for dialog windows.
+- [x] `OS01-04` Decide focused-window merge policy for dynamic sections (`append` vs `replace` defaults).
+- [x] `OS01-05` Decide v1 shortcut behavior (`display-only` vs global execution handler).
+- [x] `OS01-06` Decide title-bar default context entries for dialog windows.
 - [ ] `OS01-07` Decide profile-scope cache strategy (shared profile list + scoped selection).
 
 ### Phase 0: Contracts and compatibility
 
-- [ ] `OS01-10` Add `DesktopActionEntry`/`DesktopActionSection` types in windowing contracts.
-- [ ] `OS01-11` Add `DesktopCommandInvocation` metadata contract (`source`, `menuId`, `windowId`, `widgetId`, `payload`).
-- [ ] `OS01-12` Keep backward-compatible typing for existing `DesktopMenuItem`/`DesktopMenuSection` usage.
-- [ ] `OS01-13` Add/extend section merge helpers for deterministic section/item ordering.
-- [ ] `OS01-14` Add unit tests for merge precedence and stable ordering.
+- [x] `OS01-10` Add `DesktopActionEntry`/`DesktopActionSection` types in windowing contracts.
+- [x] `OS01-11` Add `DesktopCommandInvocation` metadata contract (`source`, `menuId`, `windowId`, `widgetId`, `payload`).
+- [x] `OS01-12` Keep backward-compatible typing for existing `DesktopMenuItem`/`DesktopMenuSection` usage.
+- [x] `OS01-13` Add/extend section merge helpers for deterministic section/item ordering.
+- [x] `OS01-14` Add unit tests for merge precedence and stable ordering.
 - [ ] `OS01-15` Add unit tests confirming old contribution shapes still compile and behave.
 
 ### Phase 1: Shell runtime for dynamic menus/context menus
 
-- [ ] `OS01-20` Add runtime registry module for dynamic focused-window menu sections.
-- [ ] `OS01-21` Add runtime API/hook to register/unregister window menu sections.
-- [ ] `OS01-22` Add controller state for context-menu open/close and anchor position.
-- [ ] `OS01-23` Compose effective menu sections from static contributions + focused-window runtime sections.
-- [ ] `OS01-24` Ensure focused-window switches recompute effective menu sections correctly.
-- [ ] `OS01-25` Route context-menu command actions through existing desktop command router.
-- [ ] `OS01-26` Extend controller result contract with context-menu props/state.
-- [ ] `OS01-27` Render context-menu overlay in `DesktopShellView` using controller state.
-- [ ] `OS01-28` Export new runtime APIs from shell barrels (`windowing`, `desktop-react`, `desktop/react`).
+- [x] `OS01-20` Add runtime registry module for dynamic focused-window menu sections.
+- [x] `OS01-21` Add runtime API/hook to register/unregister window menu sections.
+- [x] `OS01-22` Add controller state for context-menu open/close and anchor position.
+- [x] `OS01-23` Compose effective menu sections from static contributions + focused-window runtime sections.
+- [x] `OS01-24` Ensure focused-window switches recompute effective menu sections correctly.
+- [x] `OS01-25` Route context-menu command actions through existing desktop command router.
+- [x] `OS01-26` Extend controller result contract with context-menu props/state.
+- [x] `OS01-27` Render context-menu overlay in `DesktopShellView` using controller state.
+- [x] `OS01-28` Export new runtime APIs from shell barrels (`windowing`, `desktop-react`, `desktop/react`).
 
 ### Phase 2: Window/title-bar right-click integration
 
-- [ ] `OS01-30` Add `onContextMenu` handling in `WindowSurface`.
-- [ ] `OS01-31` Add `onContextMenu` handling in `WindowTitleBar`.
-- [ ] `OS01-32` Ensure right-click focuses target window before showing context menu.
-- [ ] `OS01-33` Preserve drag/resize behavior: left button only, unchanged.
+- [x] `OS01-30` Add `onContextMenu` handling in `WindowSurface`.
+- [x] `OS01-31` Add `onContextMenu` handling in `WindowTitleBar`.
+- [x] `OS01-32` Ensure right-click focuses target window before showing context menu.
+- [x] `OS01-33` Preserve drag/resize behavior: left button only, unchanged.
 - [ ] `OS01-34` Add unit tests for title-bar right-click interaction path.
 - [ ] `OS01-35` Add unit tests for focused-window transition on right-click.
 
 ### Phase 3: ContextMenu component upgrade
 
-- [ ] `OS01-40` Upgrade `ContextMenu` to support command-based action entries.
-- [ ] `OS01-41` Support separators, disabled states, checked states, and shortcut labels.
-- [ ] `OS01-42` Keep compatibility path for existing string-only entries.
-- [ ] `OS01-43` Add `Escape` close behavior.
-- [ ] `OS01-44` Add/update stories demonstrating action entries and compatibility mode.
+- [x] `OS01-40` Upgrade `ContextMenu` to support command-based action entries.
+- [x] `OS01-41` Support separators, disabled states, checked states, and shortcut labels.
+- [x] `OS01-42` Keep compatibility path for existing string-only entries.
+- [x] `OS01-43` Add `Escape` close behavior.
+- [x] `OS01-44` Add/update stories demonstrating action entries and compatibility mode.
 
 ### Phase 4: Inventory app adoption
 
@@ -81,12 +81,12 @@
 
 ### Validation and closure
 
-- [ ] `OS01-80` Run targeted engine tests for shell/windowing/menu suites.
+- [x] `OS01-80` Run targeted engine tests for shell/windowing/menu suites.
 - [ ] `OS01-81` Run app-level tests for inventory focused menu and profile-scoping behavior.
 - [ ] `OS01-82` Run full frontend validation (`npm run test`, `npm run build`) and record results.
 - [ ] `OS01-83` Manually verify right-click behavior and native context-menu suppression.
-- [ ] `OS01-84` Update ticket changelog and diary with implementation details and failures.
-- [ ] `OS01-85` Run `docmgr doctor --ticket OS-01-ADD-MENUS --stale-after 30`.
+- [x] `OS01-84` Update ticket changelog and diary with implementation details and failures.
+- [x] `OS01-85` Run `docmgr doctor --ticket OS-01-ADD-MENUS --stale-after 30`.
 - [ ] `OS01-86` Close ticket `OS-01-ADD-MENUS` once DoD is satisfied.
 
 ## Definition of Done

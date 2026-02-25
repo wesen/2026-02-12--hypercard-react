@@ -64,3 +64,20 @@ export const ManyItems: Story = {
     onClose: () => {},
   },
 };
+
+export const ActionEntries: Story = {
+  args: {
+    x: 80,
+    y: 40,
+    items: [
+      { id: 'close', label: 'Close Window', commandId: 'window.close-focused', shortcut: 'Ctrl+W' },
+      { separator: true },
+      { id: 'tile', label: 'Tile Windows', commandId: 'window.tile' },
+      { id: 'cascade', label: 'Cascade Windows', commandId: 'window.cascade', checked: true },
+      { id: 'disabled', label: 'Disabled Item', commandId: 'window.disabled', disabled: true },
+    ],
+    onSelect: () => {},
+    onAction: () => {},
+    onClose: () => {},
+  },
+};

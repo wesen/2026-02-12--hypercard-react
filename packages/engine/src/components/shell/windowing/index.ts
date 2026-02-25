@@ -4,6 +4,7 @@ export { DesktopShell, type DesktopShellProps } from './DesktopShell';
 export { DesktopShellView, type DesktopShellViewProps } from './DesktopShellView';
 export {
   composeDesktopContributions,
+  mergeActionSections,
   routeContributionCommand,
   type ComposedDesktopContributions,
   type DesktopCommandContext,
@@ -12,6 +13,13 @@ export {
   type StartupWindowContext,
   type StartupWindowFactory,
 } from './desktopContributions';
+export {
+  DesktopWindowMenuRuntimeProvider,
+  DesktopWindowScopeProvider,
+  useDesktopWindowId,
+  useRegisterWindowMenuSections,
+  type DesktopWindowMenuRuntime,
+} from './desktopMenuRuntime';
 export {
   createAppWindowContentAdapter,
   createFallbackWindowContentAdapter,
@@ -34,6 +42,11 @@ export { PluginCardRenderer, type PluginCardRendererProps } from './PluginCardRe
 export { dispatchRuntimeIntent } from './pluginIntentRouting';
 export { PluginCardSessionHost, type PluginCardSessionHostProps } from './PluginCardSessionHost';
 export type {
+  DesktopActionEntry,
+  DesktopActionItem,
+  DesktopActionSection,
+  DesktopCommandInvocation,
+  DesktopCommandSource,
   DesktopIconDef,
   DesktopMenuEntry,
   DesktopMenuItem,
