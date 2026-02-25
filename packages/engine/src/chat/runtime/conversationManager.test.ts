@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocked = vi.hoisted(() => ({
   ensureChatModulesRegistered: vi.fn(),
@@ -28,11 +28,16 @@ import { ConversationManager } from './conversationManager';
 
 describe('conversationManager', () => {
   beforeEach(() => {
+    vi.useFakeTimers();
     mocked.ensureChatModulesRegistered.mockClear();
     mocked.clearConversationEventHistory.mockClear();
     mocked.emitConversationEvent.mockClear();
     mocked.wsConnect.mockClear();
     mocked.wsDisconnect.mockClear();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('clears retained debug event history on final disconnect', async () => {
@@ -43,6 +48,12 @@ describe('conversationManager', () => {
     expect(manager.getActiveConversationIds()).toEqual(['conv-1']);
 
     manager.disconnect('conv-1');
+
+    expect(mocked.wsDisconnect).not.toHaveBeenCalled();
+    expect(mocked.clearConversationEventHistory).not.toHaveBeenCalled();
+    expect(manager.getActiveConversationIds()).toEqual([]);
+
+    vi.advanceTimersByTime(750);
 
     expect(mocked.wsDisconnect).toHaveBeenCalledTimes(1);
     expect(mocked.clearConversationEventHistory).toHaveBeenCalledTimes(1);
@@ -64,9 +75,29 @@ describe('conversationManager', () => {
     expect(manager.getActiveConversationIds()).toEqual(['conv-shared']);
 
     manager.disconnect('conv-shared');
+    expect(mocked.wsDisconnect).not.toHaveBeenCalled();
+    expect(mocked.clearConversationEventHistory).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(750);
+
     expect(mocked.wsDisconnect).toHaveBeenCalledTimes(1);
     expect(mocked.clearConversationEventHistory).toHaveBeenCalledTimes(1);
     expect(mocked.clearConversationEventHistory).toHaveBeenCalledWith('conv-shared');
     expect(manager.getActiveConversationIds()).toEqual([]);
+  });
+
+  it('cancels pending disconnect when reconnect happens during grace period', async () => {
+    const manager = new ConversationManager();
+    const dispatch = vi.fn();
+
+    await manager.connect({ convId: 'conv-remount', dispatch });
+    manager.disconnect('conv-remount');
+    await manager.connect({ convId: 'conv-remount', dispatch });
+
+    vi.advanceTimersByTime(750);
+
+    expect(mocked.wsDisconnect).not.toHaveBeenCalled();
+    expect(mocked.clearConversationEventHistory).not.toHaveBeenCalled();
+    expect(manager.getActiveConversationIds()).toEqual(['conv-remount']);
   });
 });

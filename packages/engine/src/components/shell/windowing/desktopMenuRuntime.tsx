@@ -1,4 +1,4 @@
-import { createContext, type ReactNode, useContext, useEffect } from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useMemo } from 'react';
 import type { DesktopActionEntry, DesktopActionSection } from './types';
 
 export interface DesktopWindowMenuRuntime {
@@ -22,15 +22,23 @@ export function DesktopWindowMenuRuntimeProvider({
   registerWindowContextActions,
   unregisterWindowContextActions,
 }: DesktopWindowMenuRuntimeProviderProps) {
+  const runtime = useMemo(
+    () => ({
+      registerWindowMenuSections,
+      unregisterWindowMenuSections,
+      registerWindowContextActions,
+      unregisterWindowContextActions,
+    }),
+    [
+      registerWindowMenuSections,
+      unregisterWindowMenuSections,
+      registerWindowContextActions,
+      unregisterWindowContextActions,
+    ]
+  );
+
   return (
-    <DesktopWindowMenuRuntimeContext.Provider
-      value={{
-        registerWindowMenuSections,
-        unregisterWindowMenuSections,
-        registerWindowContextActions,
-        unregisterWindowContextActions,
-      }}
-    >
+    <DesktopWindowMenuRuntimeContext.Provider value={runtime}>
       {children}
     </DesktopWindowMenuRuntimeContext.Provider>
   );

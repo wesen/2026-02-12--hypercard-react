@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { chatSessionSlice, createChatError } from '../state/chatSessionSlice';
 import {
@@ -9,6 +9,7 @@ import {
 } from '../state/selectors';
 import { conversationManager } from './conversationManager';
 import { ChatHttpError } from './http';
+import { getDebugLogger } from '../debug/debugChannels';
 
 type ConversationStoreState = ChatStateSlice & Record<string, unknown>;
 
@@ -18,38 +19,123 @@ export interface UseConversationResult {
   isStreaming: boolean;
 }
 
+interface ConversationEffectSnapshot {
+  convId: string;
+  basePrefix: string;
+  scopeKey: string;
+  profile: string;
+  registry: string;
+}
+
+const lifecycleLog = getDebugLogger('chat:useConversation:lifecycle');
+const sendLog = getDebugLogger('chat:useConversation:send');
+
+function normalizeSnapshotValue(value: string | undefined): string {
+  const normalized = String(value ?? '').trim();
+  return normalized;
+}
+
+function normalizeBasePrefix(value: string | undefined): string {
+  const normalized = normalizeSnapshotValue(value);
+  return normalized.replace(/\/$/, '');
+}
+
+function buildEffectSnapshot(
+  convId: string,
+  basePrefix: string,
+  scopeKey: string | undefined,
+  profile: string | undefined,
+  registry: string | undefined
+): ConversationEffectSnapshot {
+  return {
+    convId: normalizeSnapshotValue(convId),
+    basePrefix: normalizeSnapshotValue(basePrefix),
+    scopeKey: normalizeSnapshotValue(scopeKey),
+    profile: normalizeSnapshotValue(profile),
+    registry: normalizeSnapshotValue(registry),
+  };
+}
+
+function diffEffectSnapshot(
+  previous: ConversationEffectSnapshot,
+  current: ConversationEffectSnapshot
+): string[] {
+  const changed: string[] = [];
+  if (previous.convId !== current.convId) changed.push('convId');
+  if (previous.basePrefix !== current.basePrefix) changed.push('basePrefix');
+  if (previous.scopeKey !== current.scopeKey) changed.push('scopeKey');
+  if (previous.profile !== current.profile) changed.push('profile');
+  if (previous.registry !== current.registry) changed.push('registry');
+  return changed;
+}
+
 export function useConversation(convId: string, basePrefix = '', scopeKey?: string): UseConversationResult {
   const dispatch = useDispatch();
+  const dispatchRef = useRef(dispatch);
+  useEffect(() => {
+    dispatchRef.current = dispatch;
+  }, [dispatch]);
+
+  const normalizedConvId = normalizeSnapshotValue(convId);
+  const normalizedBasePrefix = normalizeBasePrefix(basePrefix);
+  const normalizedScopeKey = normalizeSnapshotValue(scopeKey) || undefined;
+
   const connectionStatus = useSelector((state: ConversationStoreState) =>
-    selectConnectionStatus(state, convId)
+    selectConnectionStatus(state, normalizedConvId)
   );
   const isStreaming = useSelector((state: ConversationStoreState) =>
-    selectIsStreaming(state, convId)
+    selectIsStreaming(state, normalizedConvId)
   );
   const profileSelection = useSelector((state: ConversationStoreState) =>
-    selectCurrentProfileSelection(state, scopeKey)
+    selectCurrentProfileSelection(state, normalizedScopeKey)
   );
-  const selectedProfile = profileSelection.profile;
-  const selectedRegistry = profileSelection.registry;
+  const selectedProfile = normalizeSnapshotValue(profileSelection.profile) || undefined;
+  const selectedRegistry = normalizeSnapshotValue(profileSelection.registry) || undefined;
+  const lastEffectSnapshotRef = useRef<ConversationEffectSnapshot | null>(null);
+  const lastEffectDispatchRef = useRef<typeof dispatch | null>(null);
+  const effectRunIdRef = useRef(0);
 
   useEffect(() => {
+    const snapshot = buildEffectSnapshot(
+      normalizedConvId,
+      normalizedBasePrefix,
+      normalizedScopeKey,
+      selectedProfile,
+      selectedRegistry
+    );
+    const previousSnapshot = lastEffectSnapshotRef.current;
+    const changedKeys = previousSnapshot ? diffEffectSnapshot(previousSnapshot, snapshot) : ['mount'];
+    const dispatchChanged = lastEffectDispatchRef.current !== null && lastEffectDispatchRef.current !== dispatchRef.current;
+    if (dispatchChanged) {
+      changedKeys.push('dispatch');
+    }
+    effectRunIdRef.current += 1;
+    const runId = effectRunIdRef.current;
+    lifecycleLog('effect:start run=%d conv=%s changes=%o snapshot=%o', runId, normalizedConvId, changedKeys, snapshot);
+    lastEffectSnapshotRef.current = snapshot;
+    lastEffectDispatchRef.current = dispatchRef.current;
+
     let disposed = false;
 
     conversationManager
       .connect({
-        convId,
-        basePrefix,
+        convId: normalizedConvId,
+        basePrefix: normalizedBasePrefix,
         profileSelection: {
           profile: selectedProfile,
           registry: selectedRegistry,
         },
-        dispatch: dispatch as (action: unknown) => unknown,
+        dispatch: (action: unknown) => dispatchRef.current(action as never),
+      })
+      .then(() => {
+        lifecycleLog('connect:ok run=%d conv=%s', runId, normalizedConvId);
       })
       .catch((error) => {
+        lifecycleLog('connect:error run=%d conv=%s error=%o', runId, normalizedConvId, error);
         if (disposed) return;
-        dispatch(
+        dispatchRef.current(
           chatSessionSlice.actions.pushError({
-            convId,
+            convId: normalizedConvId,
             error: createChatError({
               kind: 'runtime_error',
               stage: 'connect',
@@ -62,19 +148,23 @@ export function useConversation(convId: string, basePrefix = '', scopeKey?: stri
       });
 
     return () => {
+      lifecycleLog('effect:cleanup run=%d conv=%s', runId, normalizedConvId);
       disposed = true;
-      conversationManager.disconnect(convId);
+      conversationManager.disconnect(normalizedConvId);
     };
-  }, [basePrefix, convId, dispatch, scopeKey, selectedProfile, selectedRegistry]);
+  }, [normalizedBasePrefix, normalizedConvId, normalizedScopeKey, selectedProfile, selectedRegistry]);
 
   const send = useCallback(
     async (prompt: string) => {
+      sendLog('send:start conv=%s len=%d', normalizedConvId, prompt.length);
       try {
-        await conversationManager.send(prompt, convId, basePrefix, {
+        await conversationManager.send(prompt, normalizedConvId, normalizedBasePrefix, {
           profile: selectedProfile,
           registry: selectedRegistry,
         });
+        sendLog('send:ok conv=%s', normalizedConvId);
       } catch (error) {
+        sendLog('send:error conv=%s error=%o', normalizedConvId, error);
         const mapped =
           error instanceof ChatHttpError
             ? createChatError({
@@ -93,16 +183,16 @@ export function useConversation(convId: string, basePrefix = '', scopeKey?: stri
                 message: error instanceof Error ? error.message : String(error),
                 recoverable: true,
               });
-        dispatch(
+        dispatchRef.current(
           chatSessionSlice.actions.pushError({
-            convId,
+            convId: normalizedConvId,
             error: mapped,
           })
         );
         throw error;
       }
     },
-    [basePrefix, convId, dispatch, scopeKey, selectedProfile, selectedRegistry]
+    [normalizedBasePrefix, normalizedConvId, selectedProfile, selectedRegistry]
   );
 
   return {

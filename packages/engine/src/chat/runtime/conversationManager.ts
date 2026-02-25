@@ -20,11 +20,22 @@ interface ConversationSession {
   args: ConversationConnectArgs;
 }
 
+const DISCONNECT_GRACE_MS = 750;
+
 export class ConversationManager {
   private readonly sessions = new Map<string, ConversationSession>();
+  private readonly pendingDisconnects = new Map<string, ReturnType<typeof setTimeout>>();
+
+  private clearPendingDisconnect(convId: string) {
+    const timer = this.pendingDisconnects.get(convId);
+    if (!timer) return;
+    clearTimeout(timer);
+    this.pendingDisconnects.delete(convId);
+  }
 
   async connect(args: ConversationConnectArgs): Promise<void> {
     ensureChatModulesRegistered();
+    this.clearPendingDisconnect(args.convId);
 
     const existing = this.sessions.get(args.convId);
     if (existing) {
@@ -63,13 +74,21 @@ export class ConversationManager {
   disconnect(convId: string): void {
     const session = this.sessions.get(convId);
     if (!session) return;
+    if (session.refs === 0) return;
 
     session.refs -= 1;
     if (session.refs > 0) return;
-
-    session.ws.disconnect();
-    this.sessions.delete(convId);
-    clearConversationEventHistory(convId);
+    session.refs = 0;
+    this.clearPendingDisconnect(convId);
+    const timer = setTimeout(() => {
+      const current = this.sessions.get(convId);
+      this.pendingDisconnects.delete(convId);
+      if (!current || current.refs > 0) return;
+      current.ws.disconnect();
+      this.sessions.delete(convId);
+      clearConversationEventHistory(convId);
+    }, DISCONNECT_GRACE_MS);
+    this.pendingDisconnects.set(convId, timer);
   }
 
   async send(
@@ -86,7 +105,9 @@ export class ConversationManager {
   }
 
   getActiveConversationIds(): string[] {
-    return Array.from(this.sessions.keys());
+    return Array.from(this.sessions.entries())
+      .filter(([, session]) => session.refs > 0)
+      .map(([convId]) => convId);
   }
 }
 
