@@ -11,9 +11,15 @@ DocType: reference
 Intent: long-term
 Owners: []
 RelatedFiles:
-    - Path: /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/ttmp/2026/02/25/OS-13-CHAT-TURN-STATE--per-window-chat-turn-state-machine-for-pending-ai-indicator/design/01-implementation-plan-per-window-turn-state-machine.md
+    - Path: packages/engine/src/chat/components/ChatConversationWindow.tsx
+      Note: Integration and legacy logic removal details
+    - Path: packages/engine/src/chat/runtime/pendingAiTurnMachine.test.ts
+      Note: Validation coverage referenced in Step 2 and Step 3
+    - Path: packages/engine/src/chat/runtime/pendingAiTurnMachine.ts
+      Note: State machine implementation details discussed in Step 2
+    - Path: ttmp/2026/02/25/OS-13-CHAT-TURN-STATE--per-window-chat-turn-state-machine-for-pending-ai-indicator/design/01-implementation-plan-per-window-turn-state-machine.md
       Note: Defines state machine phases and transition contract.
-    - Path: /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/ttmp/2026/02/25/OS-13-CHAT-TURN-STATE--per-window-chat-turn-state-machine-for-pending-ai-indicator/tasks.md
+    - Path: ttmp/2026/02/25/OS-13-CHAT-TURN-STATE--per-window-chat-turn-state-machine-for-pending-ai-indicator/tasks.md
       Note: Task list executed sequentially with check-off status.
 ExternalSources: []
 Summary: Implementation diary for OS-13 per-window chat turn state machine work.
@@ -21,6 +27,7 @@ LastUpdated: 2026-02-25T14:03:00-05:00
 WhatFor: Maintain a detailed execution trail with decisions, failures, validations, and review guidance.
 WhenToUse: Use when continuing or reviewing OS-13 implementation.
 ---
+
 
 # Diary
 
@@ -42,7 +49,7 @@ I also created a short implementation plan that locks the UX contract before tou
 
 **Inferred user intent:** Replace ad-hoc behavior with a deterministic, maintainable architecture and keep work auditable for handoff.
 
-**Commit (code):** N/A (ticket setup stage; commit planned after initial scaffolding and task checkoff updates).
+**Commit (code):** `8165889` — "docs(OS-13): add turn-state implementation plan, tasks, and diary scaffold"
 
 ### What I did
 - Created ticket workspace:
@@ -106,7 +113,7 @@ I also added focused unit tests for the machine so the behavior is validated ind
 
 **Inferred user intent:** Achieve stable non-flickering pending behavior and eliminate incremental hacks.
 
-**Commit (code):** Pending at this step; recorded after staging this milestone.
+**Commit (code):** `fb17d1c` — "feat(chat): replace pending spinner heuristics with per-window turn machine"
 
 ### What I did
 - Added new state-machine module:
@@ -164,3 +171,62 @@ I also added focused unit tests for the machine so the behavior is validated ind
 - Placeholder visibility rule is now:
   - `showPendingResponseSpinner = shouldShowPendingAiPlaceholder(state)`
 - `shouldShowPendingAiPlaceholder` returns true only in `waiting_for_ai_signal`.
+
+## Step 3: Validation And Ticket Documentation Sync (T5)
+
+After implementation, I completed the validation and documentation synchronization task. This step ensures the ticket can be handed off without missing context: tasks are checked, changelog reflects implementation + verification, and index related-file links point to actual code/test artifacts.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 1)
+
+**Assistant interpretation:** Finish remaining task(s), validate behavior changes, and keep the documentation trail complete.
+
+**Inferred user intent:** End with a fully traceable and reviewable ticket state, not just code edits.
+
+**Commit (code):** Pending for this final docs-sync step.
+
+### What I did
+- Re-ran validation commands:
+  - `npm run typecheck -w packages/engine`
+  - `npm run test -w packages/engine -- src/chat/runtime/pendingAiTurnMachine.test.ts src/chat/runtime/conversationManager.test.ts src/chat/ws/wsManager.test.ts src/chat/sem/semRegistry.test.ts`
+- Marked `T5` complete in ticket tasks.
+- Updated ticket `index.md` RelatedFiles to include code + tests.
+- Appended changelog entries for implementation and validation/doc sync.
+
+### Why
+- The user requested task-by-task execution with commits and detailed diary updates; this step closes the loop for the final task.
+
+### What worked
+- All targeted validation checks passed.
+- Ticket now reflects complete plan -> implementation -> validation trace.
+
+### What didn't work
+- N/A in this step.
+
+### What I learned
+- Keeping doc updates in the same execution pass as validation prevents divergence between repository state and ticket narrative.
+
+### What was tricky to build
+- The key challenge was avoiding partial closure (code done but ticket artifacts stale).
+- I addressed this by updating tasks/changelog/index/diary together after validation.
+
+### What warrants a second pair of eyes
+- Confirm RelatedFiles coverage is sufficient for reviewer onboarding without extra context search.
+
+### What should be done in the future
+- Optional: add a small integration test around `ChatConversationWindow` rendering behavior if/when React test tooling is introduced for this package.
+
+### Code review instructions
+- Re-run:
+  - `npm run typecheck -w packages/engine`
+  - `npm run test -w packages/engine -- src/chat/runtime/pendingAiTurnMachine.test.ts src/chat/runtime/conversationManager.test.ts src/chat/ws/wsManager.test.ts src/chat/sem/semRegistry.test.ts`
+- Review ticket artifacts:
+  - `/home/manuel/workspaces/2026-02-24/add-menus/go-go-os/ttmp/2026/02/25/OS-13-CHAT-TURN-STATE--per-window-chat-turn-state-machine-for-pending-ai-indicator/tasks.md`
+  - `/home/manuel/workspaces/2026-02-24/add-menus/go-go-os/ttmp/2026/02/25/OS-13-CHAT-TURN-STATE--per-window-chat-turn-state-machine-for-pending-ai-indicator/changelog.md`
+  - `/home/manuel/workspaces/2026-02-24/add-menus/go-go-os/ttmp/2026/02/25/OS-13-CHAT-TURN-STATE--per-window-chat-turn-state-machine-for-pending-ai-indicator/index.md`
+
+### Technical details
+- T5 completion criteria satisfied:
+  - validation executed and green,
+  - docs metadata and task checkboxes synchronized with implementation state.
