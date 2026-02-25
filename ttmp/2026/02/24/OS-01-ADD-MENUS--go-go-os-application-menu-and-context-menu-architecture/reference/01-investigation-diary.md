@@ -24,7 +24,7 @@ RelatedFiles:
       Note: Confirms context-menu styling primitives already available for shell integration.
 ExternalSources: []
 Summary: Chronological investigation log for OS-01-ADD-MENUS including commands, evidence, findings, design decisions, and delivery steps.
-LastUpdated: 2026-02-24T22:50:22-05:00
+LastUpdated: 2026-02-24T22:52:55-05:00
 WhatFor: Use this as a reproducible audit trail of how the menu/context-menu architecture analysis was performed and which files were used as evidence.
 WhenToUse: Use when reviewing the design proposal, onboarding engineers, or continuing implementation planning in this ticket.
 ---
@@ -536,3 +536,42 @@ pnpm --filter @hypercard/os-launcher build
 2. `pnpm --filter @hypercard/os-launcher test -- src/__tests__/launcherMenuRuntime.test.tsx` passed.
 3. `pnpm --filter @hypercard/engine typecheck` passed.
 4. `pnpm --filter @hypercard/os-launcher build` passed.
+
+## 2026-02-24 22:52 - OS-01 docs guidance + full validation (`OS01-76`, `OS01-82`)
+
+### Intent
+
+Finish remaining non-manual work by documenting authoring guidance for menu runtime adoption and executing full workspace validation.
+
+### Commands
+
+```bash
+cd /home/manuel/workspaces/2026-02-24/add-menus/go-go-os
+cat package.json
+pnpm test
+pnpm build
+```
+
+### Implementation notes
+
+1. Added new engine documentation file: `packages/engine/docs/desktop-menu-runtime-authoring.md`.
+2. Document includes:
+1. static contribution patterns,
+2. focused runtime menu registration,
+3. title-bar context actions,
+4. invocation metadata contract,
+5. profile-scope hook usage,
+6. test/story checklists.
+3. Updated OS-01 tasks and DoD checklist with completed docs/validation items.
+
+### Validation results
+
+1. `pnpm test` passed:
+1. engine tests passed,
+2. desktop-os tests passed,
+3. os-launcher tests passed.
+2. `pnpm build` passed:
+1. engine, confirm-runtime, desktop-os, inventory, todo, crm, book-tracker-debug, and os-launcher builds passed.
+3. Known warnings remained non-blocking:
+1. existing selector memoization warnings from `PluginCardSessionHost` tests,
+2. Vite bundle-size and browser-externalization warnings.

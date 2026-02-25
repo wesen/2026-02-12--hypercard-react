@@ -123,3 +123,15 @@ Validation for this slice:
 - `pnpm --filter @hypercard/os-launcher test -- src/__tests__/launcherMenuRuntime.test.tsx`
 - `pnpm --filter @hypercard/engine typecheck`
 - `pnpm --filter @hypercard/os-launcher build`
+
+Added engine menu runtime authoring guide (`OS01-76`) and completed full frontend validation run (`OS01-82`) for the entire workspace.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/docs/desktop-menu-runtime-authoring.md — New guidance for static/dynamic menu contributions, context actions, invocation metadata, profile scoping, and validation checklist.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/ttmp/2026/02/24/OS-01-ADD-MENUS--go-go-os-application-menu-and-context-menu-architecture/tasks.md — Marked docs + full validation tasks complete and updated DoD coverage.
+
+Validation for this slice:
+
+- `pnpm test`
+- `pnpm build`

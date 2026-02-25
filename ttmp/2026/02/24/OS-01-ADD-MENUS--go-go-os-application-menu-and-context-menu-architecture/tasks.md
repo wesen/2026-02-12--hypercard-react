@@ -77,13 +77,13 @@
 - [x] `OS01-73` Add unit/integration tests for context-menu invocation metadata.
 - [x] `OS01-74` Add integration tests for multi-window focus/menu recomposition.
 - [x] `OS01-75` Add regression tests ensuring existing apps (`todo`, `crm`, `book-tracker-debug`) are unaffected.
-- [ ] `OS01-76` Update engine/docs menu and context-menu authoring guidance.
+- [x] `OS01-76` Update engine/docs menu and context-menu authoring guidance.
 
 ### Validation and closure
 
 - [x] `OS01-80` Run targeted engine tests for shell/windowing/menu suites.
 - [x] `OS01-81` Run app-level tests for inventory focused menu and profile-scoping behavior.
-- [ ] `OS01-82` Run full frontend validation (`npm run test`, `npm run build`) and record results.
+- [x] `OS01-82` Run full frontend validation (`npm run test`, `npm run build`) and record results.
 - [ ] `OS01-83` Manually verify right-click behavior and native context-menu suppression.
 - [x] `OS01-84` Update ticket changelog and diary with implementation details and failures.
 - [x] `OS01-85` Run `docmgr doctor --ticket OS-01-ADD-MENUS --stale-after 30`.
@@ -96,5 +96,5 @@
 - [x] Context-menu actions route through unified desktop command routing with invocation metadata.
 - [x] Inventory chat menu/profile/debug flows are focused-window-scoped and deterministic.
 - [x] Existing non-chat apps continue to function without new menu-runtime adoption.
-- [ ] Storybook/docs/tests cover both compatibility and new dynamic-runtime paths.
-- [ ] Ticket artifacts (tasks/changelog/diary) and `docmgr doctor` are clean.
+- [x] Storybook/docs/tests cover both compatibility and new dynamic-runtime paths.
+- [x] Ticket artifacts (tasks/changelog/diary) and `docmgr doctor` are clean.
