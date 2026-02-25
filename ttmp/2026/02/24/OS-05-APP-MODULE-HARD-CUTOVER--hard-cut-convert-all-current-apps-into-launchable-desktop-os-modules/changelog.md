@@ -63,3 +63,21 @@ Updated README with desktop-os launcher module authoring pattern and host aggreg
 
 - /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/README.md — Documented module-based extension model for launcher-first architecture
 
+
+## 2026-02-24
+
+Ticket closed
+
+
+## 2026-02-24
+
+Removed legacy standalone desktop boot wiring from app root entry components (commit 288d8ea); app roots now render through launcher modules only, and regression coverage asserts no direct DesktopShell boot remains in app App.tsx files.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/apps/book-tracker-debug/src/App.tsx — Book tracker app root now delegates to bookTrackerLauncherModule.renderWindow
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/apps/crm/src/App.tsx — CRM app root now delegates to crmLauncherModule.renderWindow
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/apps/inventory/src/App.tsx — Inventory app root now delegates to inventoryLauncherModule.renderWindow
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/apps/os-launcher/src/__tests__/launcherHost.test.tsx — Added guardrail for removed standalone DesktopShell boot wiring
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/apps/todo/src/App.tsx — Todo app root now delegates to todoLauncherModule.renderWindow
+

@@ -13,8 +13,8 @@
 - [x] `OS05-09` Add optional reducer + `stateKey` metadata where each app owns launcher state.
 - [x] `OS05-10` Build consolidated module list export consumed by launcher host.
 - [x] `OS05-11` Ensure module list passes registry validation with no ID or state-key collisions.
-- [ ] `OS05-12` Remove superseded standalone app launch wiring from app-local `App.tsx` and `main.tsx` paths.
-- [ ] `OS05-13` Remove unused exports/utilities introduced solely for old standalone boot mode.
+- [x] `OS05-12` Remove superseded standalone app launch wiring from app-local `App.tsx` and `main.tsx` paths.
+- [x] `OS05-13` Remove unused exports/utilities introduced solely for old standalone boot mode.
 - [x] `OS05-14` Add per-app module smoke tests for render + launch metadata.
 - [x] `OS05-15` Add integration test that each app icon opens a valid window.
 - [x] `OS05-16` Add regression assertion that no legacy standalone entrypoint is referenced by launcher host.
@@ -25,5 +25,5 @@
 ## Definition of Done
 
 - [x] All current frontend apps are represented as launchable modules.
-- [ ] Standalone app boot paths replaced by launcher-first composition.
+- [x] Standalone app boot paths replaced by launcher-first composition.
 - [x] Module registry is collision-free and fully test-covered.

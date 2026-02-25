@@ -1,7 +1,7 @@
 ---
 Title: hard-cut convert all current apps into launchable desktop-os modules
 Ticket: OS-05-APP-MODULE-HARD-CUTOVER
-Status: active
+Status: complete
 Topics:
     - go-go-os
     - frontend
@@ -22,10 +22,11 @@ RelatedFiles:
       Note: Todo module conversion target
 ExternalSources: []
 Summary: Hard-cut migration of existing frontend apps into `LaunchableAppModule` implementations consumed by the new launcher host.
-LastUpdated: 2026-02-24T14:00:26.980657662-05:00
+LastUpdated: 2026-02-24T15:08:49.206856388-05:00
 WhatFor: Use this ticket to move app-specific boot logic into desktop-os module contracts and remove legacy standalone boot paths.
 WhenToUse: Use when implementing or modifying per-app module adapters and launch metadata.
 ---
+
 
 
 # hard-cut convert all current apps into launchable desktop-os modules
