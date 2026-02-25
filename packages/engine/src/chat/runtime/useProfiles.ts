@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { listProfiles } from './profileApi';
+import { getCurrentProfile, listProfiles } from './profileApi';
+import type { ChatProfileListItem } from './profileTypes';
 import {
   selectAvailableProfiles,
   selectCurrentProfileSelection,
@@ -17,6 +18,46 @@ export interface UseProfilesResult {
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
+}
+
+function normalize(value: string | null | undefined): string {
+  return String(value ?? '').trim();
+}
+
+export function resolveSelectionAfterProfileRefresh(
+  profiles: ChatProfileListItem[],
+  selected: { profile?: string; registry?: string },
+  registryHint?: string,
+  persistedProfileHint?: string
+): { profile: string | null; registry: string | null } | null {
+  const selectedProfile = normalize(selected.profile);
+  const selectedRegistry = normalize(selected.registry);
+  const resolvedRegistry = normalize(registryHint) || selectedRegistry;
+  const persistedProfile = normalize(persistedProfileHint);
+
+  if (selectedProfile) {
+    const hasSelected = profiles.some((item) => normalize(item.slug) === selectedProfile);
+    if (hasSelected) {
+      const nextRegistry = resolvedRegistry || null;
+      if (nextRegistry === (selectedRegistry || null)) {
+        return null;
+      }
+      return { profile: selectedProfile, registry: nextRegistry };
+    }
+  }
+
+  if (persistedProfile) {
+    const hasPersisted = profiles.some((item) => normalize(item.slug) === persistedProfile);
+    if (hasPersisted) {
+      return { profile: persistedProfile, registry: resolvedRegistry || null };
+    }
+  }
+
+  const fallback = profiles.find((item) => item.is_default) ?? profiles[0];
+  if (!fallback?.slug) {
+    return { profile: null, registry: resolvedRegistry || null };
+  }
+  return { profile: normalize(fallback.slug), registry: resolvedRegistry || null };
 }
 
 export function useProfiles(
@@ -42,16 +83,23 @@ export function useProfiles(
       const nextProfiles = await listProfiles(resolvedRegistry || undefined, { basePrefix });
       dispatch(chatProfilesSlice.actions.setAvailableProfiles(nextProfiles));
       dispatch(chatProfilesSlice.actions.setProfileLoading(false));
-      if (!selected.profile) {
-        const preferred = nextProfiles.find((item) => item.is_default) ?? nextProfiles[0];
-        if (preferred?.slug) {
-          dispatch(
-            chatProfilesSlice.actions.setSelectedProfile({
-              profile: preferred.slug,
-              registry: resolvedRegistry || null,
-            })
-          );
+      let persistedProfile: string | undefined;
+      if (!normalize(selected.profile)) {
+        try {
+          const payload = await getCurrentProfile({ basePrefix });
+          persistedProfile = normalize(payload.slug || payload.profile);
+        } catch {
+          persistedProfile = undefined;
         }
+      }
+      const nextSelection = resolveSelectionAfterProfileRefresh(
+        nextProfiles,
+        selected,
+        resolvedRegistry,
+        persistedProfile
+      );
+      if (nextSelection) {
+        dispatch(chatProfilesSlice.actions.setSelectedProfile(nextSelection));
       }
     } catch (err) {
       dispatch(chatProfilesSlice.actions.setProfileLoading(false));

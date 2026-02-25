@@ -134,6 +134,7 @@ func (c *Command) RunIntoWriter(ctx context.Context, parsed *values.Values, _ io
 			Description: "Tool-first inventory assistant profile.",
 			Runtime: gepprofiles.RuntimeSpec{
 				SystemPrompt: "You are an inventory assistant. Be concise, accurate, and tool-first.",
+				Middlewares:  inventoryRuntimeMiddlewares(),
 				Tools:        append([]string(nil), inventoryToolNames...),
 			},
 		},
@@ -143,6 +144,7 @@ func (c *Command) RunIntoWriter(ctx context.Context, parsed *values.Values, _ io
 			Description: "Analysis-oriented profile for inventory reporting tasks.",
 			Runtime: gepprofiles.RuntimeSpec{
 				SystemPrompt: "You are an inventory analyst. Explain results with concise evidence.",
+				Middlewares:  inventoryRuntimeMiddlewares(),
 				Tools:        append([]string(nil), inventoryToolNames...),
 			},
 		},
@@ -152,6 +154,7 @@ func (c *Command) RunIntoWriter(ctx context.Context, parsed *values.Values, _ io
 			Description: "Planning-focused profile for restock and operations scenarios.",
 			Runtime: gepprofiles.RuntimeSpec{
 				SystemPrompt: "You are an inventory operations planner. Prioritize actionable next steps.",
+				Middlewares:  inventoryRuntimeMiddlewares(),
 				Tools:        append([]string(nil), inventoryToolNames...),
 			},
 		},
@@ -196,6 +199,26 @@ func (c *Command) RunIntoWriter(ctx context.Context, parsed *values.Values, _ io
 		EnableCurrentProfileCookieRoute: true,
 		WriteActor:                      "hypercard-inventory-server",
 		WriteSource:                     "http-api",
+		MiddlewareDefinitions:           composer.MiddlewareDefinitions(),
+		ExtensionSchemas: []webhttp.ExtensionSchemaDocument{
+			{
+				Key: "inventory.starter_suggestions@v1",
+				Schema: map[string]any{
+					"type": "object",
+					"properties": map[string]any{
+						"items": map[string]any{
+							"type": "array",
+							"items": map[string]any{
+								"type": "string",
+							},
+							"default": []any{},
+						},
+					},
+					"required":             []any{"items"},
+					"additionalProperties": false,
+				},
+			},
+		},
 	})
 	appMux.HandleFunc("/api/timeline", timelineHandler)
 	appMux.HandleFunc("/api/timeline/", timelineHandler)
@@ -287,6 +310,13 @@ func firstProfileSlug(profiles map[gepprofiles.ProfileSlug]*gepprofiles.Profile)
 		return ""
 	}
 	return slugs[0]
+}
+
+func inventoryRuntimeMiddlewares() []gepprofiles.MiddlewareUse {
+	return []gepprofiles.MiddlewareUse{
+		{Name: "inventory_artifact_policy", ID: "artifact-policy"},
+		{Name: "inventory_suggestions_policy", ID: "suggestions-policy"},
+	}
 }
 
 func main() {

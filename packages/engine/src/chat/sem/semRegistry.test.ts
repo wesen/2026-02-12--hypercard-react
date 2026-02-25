@@ -284,6 +284,68 @@ describe('semRegistry', () => {
     });
   });
 
+  it('clears emitted state when terminal timeline updates include text', () => {
+    const store = createStore();
+    registerDefaultSemHandlers();
+
+    handleSem(
+      {
+        sem: true,
+        event: {
+          type: 'timeline.upsert',
+          id: 'msg-reuse',
+          data: {
+            convId: 'conv-reuse',
+            version: '1',
+            entity: {
+              id: 'msg-reuse',
+              kind: 'message',
+              createdAtMs: '1',
+              updatedAtMs: '1',
+              props: {
+                role: 'assistant',
+                content: 'done',
+                streaming: false,
+              },
+            },
+          },
+        },
+      },
+      { convId: 'conv-reuse', dispatch: store.dispatch }
+    );
+
+    store.dispatch(timelineSlice.actions.clearConversation({ convId: 'conv-reuse' }));
+    expect(store.getState().timeline.byConvId['conv-reuse']).toBeUndefined();
+
+    handleSem(
+      {
+        sem: true,
+        event: {
+          type: 'timeline.upsert',
+          id: 'msg-reuse',
+          data: {
+            convId: 'conv-reuse',
+            version: '2',
+            entity: {
+              id: 'msg-reuse',
+              kind: 'message',
+              createdAtMs: '2',
+              updatedAtMs: '2',
+              props: {
+                role: 'assistant',
+                content: '',
+                streaming: false,
+              },
+            },
+          },
+        },
+      },
+      { convId: 'conv-reuse', dispatch: store.dispatch }
+    );
+
+    expect(store.getState().timeline.byConvId['conv-reuse']).toBeUndefined();
+  });
+
   it('updates model/streaming stats and conversation token totals from llm metadata', () => {
     const store = createStore();
     registerDefaultSemHandlers();

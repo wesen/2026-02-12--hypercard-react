@@ -30,6 +30,10 @@ import { useConversation } from '../runtime/useConversation';
 import { useCurrentProfile } from '../runtime/useCurrentProfile';
 import { useProfiles } from '../runtime/useProfiles';
 import { useSetProfile } from '../runtime/useSetProfile';
+import {
+  resolveProfileSelectionChange,
+  resolveProfileSelectorValue,
+} from './profileSelectorState';
 import { StatsFooter } from './StatsFooter';
 
 export interface ChatConversationWindowProps {
@@ -97,7 +101,7 @@ export function ChatConversationWindow({
     { enabled: enableProfileSelector }
   );
   const currentProfile = useCurrentProfile();
-  const setProfile = useSetProfile();
+  const setProfile = useSetProfile(basePrefix);
   const [awaitingResponseSinceMs, setAwaitingResponseSinceMs] = useState<number | null>(null);
 
   const entities = useSelector((state: ChatStateSlice & Record<string, unknown>) =>
@@ -225,11 +229,10 @@ export function ChatConversationWindow({
         ? 'connecting…'
         : connectionStatus;
   const defaultProfileSlug = profiles.find((profile) => profile.is_default)?.slug ?? '';
-  const availableProfileSlugs = new Set(profiles.map((profile) => profile.slug));
-  const selectedProfileValue =
-    currentProfile.profile && availableProfileSlugs.has(currentProfile.profile)
-      ? currentProfile.profile
-      : defaultProfileSlug;
+  const selectedProfileValue = resolveProfileSelectorValue(
+    profiles,
+    currentProfile.profile
+  );
 
   const profileSelector = enableProfileSelector ? (
     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -240,14 +243,16 @@ export function ChatConversationWindow({
         id={`chat-profile-${convId}`}
         value={selectedProfileValue}
         onChange={(event) => {
-          const nextProfile = event.target.value.trim();
+          const nextProfile = resolveProfileSelectionChange(
+            event.target.value,
+            defaultProfileSlug
+          );
           const resolvedRegistry = profileRegistry ?? currentProfile.registry ?? null;
-          if (nextProfile.length > 0) {
-            setProfile(nextProfile, resolvedRegistry);
+          if (nextProfile) {
+            void setProfile(nextProfile, resolvedRegistry);
             return;
           }
-          const defaultProfile = defaultProfileSlug || null;
-          setProfile(defaultProfile, resolvedRegistry);
+          void setProfile(null, resolvedRegistry);
         }}
         disabled={profilesLoading}
         style={{ fontSize: 11, padding: '1px 4px', maxWidth: 180 }}

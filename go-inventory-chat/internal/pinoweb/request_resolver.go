@@ -246,8 +246,8 @@ func (r *StrictRequestResolver) toRequestResolutionError(err error, slug string)
 	}
 	if errors.Is(err, gepprofiles.ErrRegistryNotFound) {
 		return &webhttp.RequestResolutionError{
-			Status:    http.StatusInternalServerError,
-			ClientMsg: "profile registry is not configured",
+			Status:    http.StatusNotFound,
+			ClientMsg: "registry not found",
 			Err:       err,
 		}
 	}
@@ -270,6 +270,16 @@ func profileRuntimeSpec(p *gepprofiles.Profile) *gepprofiles.RuntimeSpec {
 	}
 	for k, v := range p.Runtime.StepSettingsPatch {
 		spec.StepSettingsPatch[k] = v
+	}
+	for i := range spec.Middlewares {
+		mw := spec.Middlewares[i]
+		config := mw.Config
+		if config == nil {
+			if fromExt, ok, err := gepprofiles.MiddlewareConfigFromExtensions(p.Extensions, mw, i); err == nil && ok {
+				config = fromExt
+			}
+		}
+		spec.Middlewares[i].Config = config
 	}
 	if len(spec.StepSettingsPatch) == 0 {
 		spec.StepSettingsPatch = nil
