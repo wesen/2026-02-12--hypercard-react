@@ -58,3 +58,19 @@ Validation for this slice:
 - `pnpm --filter @hypercard/os-launcher test`
 - `pnpm --filter @hypercard/os-launcher build`
 - `docmgr doctor --ticket OS-01-ADD-MENUS --stale-after 30` (clean after adding topic vocabulary slugs `menus` and `ui`)
+
+Implemented OS-01 inventory adoption slice (`OS01-50`..`OS01-55`): chat windows now register focused runtime menu sections and title-bar context actions, profile/debug menu entries are conversation-scoped, and command routing supports deterministic `inventory.chat.<convId>.*` targets.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/apps/inventory/src/launcher/renderInventoryApp.tsx — Added focused chat menu/context registration hooks and deterministic chat-scoped command parsing/routing.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/components/shell/windowing/desktopMenuRuntime.tsx — Extended runtime APIs to register/unregister window context actions in addition to menu sections.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/components/shell/windowing/useDesktopShellController.tsx — Composed app-registered window context actions into shell context-menu rendering.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/packages/engine/src/components/shell/windowing/DesktopShellView.tsx — Passed context-action runtime callbacks through provider wiring.
+- /home/manuel/workspaces/2026-02-24/add-menus/go-go-os/apps/os-launcher/src/__tests__/launcherHost.test.tsx — Added regression test for deterministic inventory chat debug/profile command routing.
+
+Validation for this slice:
+
+- `pnpm --filter @hypercard/engine typecheck`
+- `pnpm --filter @hypercard/os-launcher test -- src/__tests__/launcherHost.test.tsx`
+- `pnpm --filter @hypercard/os-launcher build`

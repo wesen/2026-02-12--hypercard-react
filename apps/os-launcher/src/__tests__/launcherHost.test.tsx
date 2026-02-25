@@ -173,6 +173,41 @@ describe('launcher host wiring', () => {
     }
   });
 
+  it('routes inventory chat-scoped debug and profile commands deterministically', () => {
+    const hostContext = createHostContext();
+    const contributions = buildLauncherContributions(launcherRegistry, { hostContext });
+    const handlers = contributions.flatMap((contribution) => contribution.commands ?? []);
+
+    const debugHandled = routeContributionCommand(
+      'inventory.chat.conv-42.debug.event-viewer',
+      handlers,
+      commandContext(),
+    );
+    expect(debugHandled).toBe(true);
+    expect(hostContext.openWindow).toHaveBeenCalledTimes(1);
+    const [eventPayload] = hostContext.openWindow.mock.calls[0] as [{ id: string; content: { appKey?: string } }];
+    expect(eventPayload.id).toContain('event-viewer-conv-42');
+    expect(eventPayload.content.appKey).toContain('event-viewer-conv-42');
+
+    const profileDispatch = vi.fn();
+    const profileHandled = routeContributionCommand(
+      'inventory.chat.conv-42.profile.select.agent',
+      handlers,
+      {
+        ...commandContext(),
+        dispatch: profileDispatch,
+        getState: () => ({ chatProfiles: { selectedRegistry: 'default' } }),
+      },
+    );
+    expect(profileHandled).toBe(true);
+    expect(profileDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'chatProfiles/setSelectedProfile',
+        payload: { profile: 'agent', registry: 'default' },
+      }),
+    );
+  });
+
   it('keeps host app orchestration-only (no app-specific business imports)', () => {
     const source = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
     const forbiddenImports = [

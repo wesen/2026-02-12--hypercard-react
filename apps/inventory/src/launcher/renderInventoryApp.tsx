@@ -9,18 +9,23 @@ import {
   registerHypercardTimelineModule,
   RuntimeCardDebugWindow,
   TimelineDebugWindow,
+  chatProfilesSlice,
 } from '@hypercard/engine';
 import { openWindow, type OpenWindowPayload, type WindowInstance } from '@hypercard/engine/desktop-core';
 import { PluginCardSessionHost } from '@hypercard/engine/desktop-hypercard-adapter';
 import {
   DesktopIconLayer,
+  type DesktopActionEntry,
+  type DesktopActionSection,
   type DesktopCommandHandler,
   type DesktopContribution,
   type DesktopIconDef,
   type WindowContentAdapter,
+  useRegisterWindowContextActions,
+  useRegisterWindowMenuSections,
 } from '@hypercard/engine/desktop-react';
-import { type ReactNode, useCallback, useState } from 'react';
-import { useDispatch, useStore } from 'react-redux';
+import { type ReactNode, useCallback, useMemo, useState } from 'react';
+import { useDispatch, useSelector, useStore } from 'react-redux';
 import { STACK } from '../domain/stack';
 import { ReduxPerfWindow } from '../features/debug/ReduxPerfWindow';
 
@@ -33,6 +38,22 @@ const CODE_EDITOR_INSTANCE_PREFIX = 'code-editor-';
 const RUNTIME_DEBUG_INSTANCE = 'runtime-debug';
 const REDUX_PERF_INSTANCE = 'redux-perf';
 const FOLDER_INSTANCE = 'folder';
+const CHAT_COMMAND_PREFIX = 'inventory.chat.';
+const PROFILE_SELECT_TOKEN = '.profile.select.';
+
+interface InventoryChatCommand {
+  kind: 'debug-event-viewer' | 'debug-timeline' | 'profile-select';
+  convId: string;
+  profile?: string | null;
+}
+
+interface InventoryRootState {
+  chatProfiles?: {
+    availableProfiles?: Array<{ slug: string; display_name?: string; is_default?: boolean }>;
+    selectedProfile?: string | null;
+    selectedRegistry?: string | null;
+  };
+}
 
 registerChatRuntimeModule({
   id: 'chat.hypercard-timeline',
@@ -199,6 +220,123 @@ function asCardId(commandId: string): string | null {
   return null;
 }
 
+function buildChatDebugEventViewerCommand(convId: string): string {
+  return `${CHAT_COMMAND_PREFIX}${convId}.debug.event-viewer`;
+}
+
+function buildChatDebugTimelineCommand(convId: string): string {
+  return `${CHAT_COMMAND_PREFIX}${convId}.debug.timeline-debug`;
+}
+
+function buildChatProfileSelectCommand(convId: string, profile: string | null): string {
+  const token = profile ? encodeURIComponent(profile) : '__none__';
+  return `${CHAT_COMMAND_PREFIX}${convId}${PROFILE_SELECT_TOKEN}${token}`;
+}
+
+function parseInventoryChatCommand(commandId: string): InventoryChatCommand | null {
+  if (!commandId.startsWith(CHAT_COMMAND_PREFIX)) {
+    return null;
+  }
+  const rest = commandId.slice(CHAT_COMMAND_PREFIX.length);
+  if (rest.endsWith('.debug.event-viewer')) {
+    const convId = rest.slice(0, -'.debug.event-viewer'.length);
+    return convId ? { kind: 'debug-event-viewer', convId } : null;
+  }
+  if (rest.endsWith('.debug.timeline-debug')) {
+    const convId = rest.slice(0, -'.debug.timeline-debug'.length);
+    return convId ? { kind: 'debug-timeline', convId } : null;
+  }
+
+  const profileIdx = rest.indexOf(PROFILE_SELECT_TOKEN);
+  if (profileIdx > 0) {
+    const convId = rest.slice(0, profileIdx);
+    if (!convId) {
+      return null;
+    }
+    const rawProfile = rest.slice(profileIdx + PROFILE_SELECT_TOKEN.length);
+    if (!rawProfile) {
+      return null;
+    }
+    if (rawProfile === '__none__') {
+      return { kind: 'profile-select', convId, profile: null };
+    }
+    try {
+      return { kind: 'profile-select', convId, profile: decodeURIComponent(rawProfile) };
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function buildFocusedChatMenuSections(args: {
+  convId: string;
+  availableProfiles: Array<{ slug: string; display_name?: string; is_default?: boolean }>;
+  selectedProfile: string | null;
+}): DesktopActionSection[] {
+  const { convId, availableProfiles, selectedProfile } = args;
+  const chatSection: DesktopActionSection = {
+    id: 'chat',
+    label: 'Chat',
+    merge: 'replace',
+    items: [
+      { id: `chat-new-${convId}`, label: '💬 New Chat', commandId: 'inventory.chat.new', shortcut: 'Ctrl+N' },
+      { separator: true },
+      {
+        id: `chat-events-${convId}`,
+        label: '🧭 Event Viewer',
+        commandId: buildChatDebugEventViewerCommand(convId),
+      },
+      {
+        id: `chat-timeline-${convId}`,
+        label: '🧱 Timeline Debug',
+        commandId: buildChatDebugTimelineCommand(convId),
+      },
+    ],
+  };
+
+  const profileItems: DesktopActionEntry[] = availableProfiles.length
+    ? availableProfiles.map((profile) => ({
+        id: `chat-profile-${convId}-${profile.slug}`,
+        label: `${profile.display_name?.trim() || profile.slug}${profile.is_default ? ' (default)' : ''}`,
+        commandId: buildChatProfileSelectCommand(convId, profile.slug),
+        checked: selectedProfile === profile.slug,
+      }))
+    : [
+        {
+          id: `chat-profile-none-${convId}`,
+          label: 'No profiles',
+          commandId: buildChatProfileSelectCommand(convId, null),
+          disabled: true,
+        },
+      ];
+
+  return [
+    chatSection,
+    {
+      id: 'profile',
+      label: 'Profile',
+      merge: 'replace',
+      items: profileItems,
+    },
+  ];
+}
+
+function buildFocusedChatContextActions(convId: string): DesktopActionEntry[] {
+  return [
+    {
+      id: `chat-context-event-viewer-${convId}`,
+      label: '🧭 Open Event Viewer',
+      commandId: buildChatDebugEventViewerCommand(convId),
+    },
+    {
+      id: `chat-context-timeline-${convId}`,
+      label: '🧱 Open Timeline Debug',
+      commandId: buildChatDebugTimelineCommand(convId),
+    },
+  ];
+}
+
 function createInventoryCardAdapter(): WindowContentAdapter {
   return {
     id: 'inventory.card-adapter',
@@ -236,6 +374,49 @@ function createInventoryCommands(hostContext: LauncherHostContext): DesktopComma
       matches: (commandId) => commandId === 'inventory.chat.new' || commandId === 'icon.open.inventory.new-chat',
       run: () => {
         hostContext.openWindow(buildChatWindowPayload());
+        return 'handled';
+      },
+    },
+    {
+      id: 'inventory.chat.focused-debug',
+      priority: 120,
+      matches: (commandId) => {
+        const parsed = parseInventoryChatCommand(commandId);
+        return parsed?.kind === 'debug-event-viewer' || parsed?.kind === 'debug-timeline';
+      },
+      run: (commandId) => {
+        const parsed = parseInventoryChatCommand(commandId);
+        if (!parsed) {
+          return 'pass';
+        }
+        if (parsed.kind === 'debug-event-viewer') {
+          hostContext.openWindow(buildEventViewerWindowPayload(parsed.convId));
+          return 'handled';
+        }
+        if (parsed.kind === 'debug-timeline') {
+          hostContext.openWindow(buildTimelineDebugWindowPayload(parsed.convId));
+          return 'handled';
+        }
+        return 'pass';
+      },
+    },
+    {
+      id: 'inventory.chat.profile-select',
+      priority: 120,
+      matches: (commandId) => parseInventoryChatCommand(commandId)?.kind === 'profile-select',
+      run: (commandId, ctx) => {
+        const parsed = parseInventoryChatCommand(commandId);
+        if (!parsed || parsed.kind !== 'profile-select') {
+          return 'pass';
+        }
+        const state = (ctx.getState?.() ?? {}) as InventoryRootState;
+        const selectedRegistry = state.chatProfiles?.selectedRegistry ?? 'default';
+        ctx.dispatch(
+          chatProfilesSlice.actions.setSelectedProfile({
+            profile: parsed.profile ?? null,
+            registry: selectedRegistry,
+          }),
+        );
         return 'handled';
       },
     },
@@ -448,6 +629,24 @@ function InventoryChatAssistantWindow({ convId }: { convId: string }) {
   const dispatch = useDispatch();
   const [renderMode, setRenderMode] = useState<'normal' | 'debug'>('normal');
   const [copyConvStatus, setCopyConvStatus] = useState<'idle' | 'copied' | 'error'>('idle');
+  const availableProfiles = useSelector(
+    (state: InventoryRootState) => state.chatProfiles?.availableProfiles ?? [],
+  );
+  const selectedProfile = useSelector((state: InventoryRootState) => state.chatProfiles?.selectedProfile ?? null);
+
+  const focusedMenuSections = useMemo(
+    () =>
+      buildFocusedChatMenuSections({
+        convId,
+        availableProfiles,
+        selectedProfile,
+      }),
+    [availableProfiles, convId, selectedProfile],
+  );
+  const focusedContextActions = useMemo(() => buildFocusedChatContextActions(convId), [convId]);
+
+  useRegisterWindowMenuSections(focusedMenuSections);
+  useRegisterWindowContextActions(focusedContextActions);
 
   const openEventViewer = useCallback(() => {
     dispatch(openWindow(buildEventViewerWindowPayload(convId)));

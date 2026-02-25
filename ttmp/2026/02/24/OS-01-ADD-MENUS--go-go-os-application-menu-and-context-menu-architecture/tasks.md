@@ -53,12 +53,12 @@
 
 ### Phase 4: Inventory app adoption
 
-- [ ] `OS01-50` Pass `windowId` to chat-window render path used for menu registration.
-- [ ] `OS01-51` Register focused chat dynamic menu sections in inventory app runtime.
-- [ ] `OS01-52` Add profile-selection dynamic section for focused chat windows.
-- [ ] `OS01-53` Add debug actions (`event viewer`, `timeline debug`) as focused-window menu items.
-- [ ] `OS01-54` Add title-bar context menu actions for chat windows.
-- [ ] `OS01-55` Ensure commands target focused conversation/window deterministically.
+- [x] `OS01-50` Pass `windowId` to chat-window render path used for menu registration.
+- [x] `OS01-51` Register focused chat dynamic menu sections in inventory app runtime.
+- [x] `OS01-52` Add profile-selection dynamic section for focused chat windows.
+- [x] `OS01-53` Add debug actions (`event viewer`, `timeline debug`) as focused-window menu items.
+- [x] `OS01-54` Add title-bar context menu actions for chat windows.
+- [x] `OS01-55` Ensure commands target focused conversation/window deterministically.
 
 ### Phase 5: Profile selection scoping (companion)
 

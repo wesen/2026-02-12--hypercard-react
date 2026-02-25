@@ -35,6 +35,8 @@ export function DesktopShellView({
   onContextMenuAction,
   registerWindowMenuSections,
   unregisterWindowMenuSections,
+  registerWindowContextActions,
+  unregisterWindowContextActions,
   onToastDone,
 }: DesktopShellViewProps) {
   return (
@@ -55,6 +57,8 @@ export function DesktopShellView({
         <DesktopWindowMenuRuntimeProvider
           registerWindowMenuSections={registerWindowMenuSections}
           unregisterWindowMenuSections={unregisterWindowMenuSections}
+          registerWindowContextActions={registerWindowContextActions}
+          unregisterWindowContextActions={unregisterWindowContextActions}
         >
           <WindowLayer
             windows={windows}

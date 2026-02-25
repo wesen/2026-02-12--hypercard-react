@@ -1,9 +1,11 @@
 import { createContext, type ReactNode, useContext, useEffect } from 'react';
-import type { DesktopActionSection } from './types';
+import type { DesktopActionEntry, DesktopActionSection } from './types';
 
 export interface DesktopWindowMenuRuntime {
   registerWindowMenuSections: (windowId: string, sections: DesktopActionSection[]) => void;
   unregisterWindowMenuSections: (windowId: string) => void;
+  registerWindowContextActions: (windowId: string, actions: DesktopActionEntry[]) => void;
+  unregisterWindowContextActions: (windowId: string) => void;
 }
 
 const DesktopWindowMenuRuntimeContext = createContext<DesktopWindowMenuRuntime | null>(null);
@@ -17,9 +19,18 @@ export function DesktopWindowMenuRuntimeProvider({
   children,
   registerWindowMenuSections,
   unregisterWindowMenuSections,
+  registerWindowContextActions,
+  unregisterWindowContextActions,
 }: DesktopWindowMenuRuntimeProviderProps) {
   return (
-    <DesktopWindowMenuRuntimeContext.Provider value={{ registerWindowMenuSections, unregisterWindowMenuSections }}>
+    <DesktopWindowMenuRuntimeContext.Provider
+      value={{
+        registerWindowMenuSections,
+        unregisterWindowMenuSections,
+        registerWindowContextActions,
+        unregisterWindowContextActions,
+      }}
+    >
       {children}
     </DesktopWindowMenuRuntimeContext.Provider>
   );
@@ -51,4 +62,19 @@ export function useRegisterWindowMenuSections(sections: DesktopActionSection[] |
       runtime.unregisterWindowMenuSections(windowId);
     };
   }, [runtime, sections, windowId]);
+}
+
+export function useRegisterWindowContextActions(actions: DesktopActionEntry[] | null | undefined): void {
+  const runtime = useContext(DesktopWindowMenuRuntimeContext);
+  const windowId = useDesktopWindowId();
+
+  useEffect(() => {
+    if (!runtime || !windowId || !actions || actions.length === 0) {
+      return;
+    }
+    runtime.registerWindowContextActions(windowId, actions);
+    return () => {
+      runtime.unregisterWindowContextActions(windowId);
+    };
+  }, [actions, runtime, windowId]);
 }

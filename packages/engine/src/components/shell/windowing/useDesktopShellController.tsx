@@ -128,6 +128,8 @@ export interface DesktopShellControllerResult {
   onContextMenuAction: (entry: { commandId?: string; payload?: Record<string, unknown>; id?: string }) => void;
   registerWindowMenuSections: (windowId: string, sections: DesktopActionSection[]) => void;
   unregisterWindowMenuSections: (windowId: string) => void;
+  registerWindowContextActions: (windowId: string, actions: DesktopActionEntry[]) => void;
+  unregisterWindowContextActions: (windowId: string) => void;
   onToastDone: () => void;
 }
 
@@ -154,6 +156,7 @@ export function useDesktopShellController({
   const dragOverlay = useDragOverlaySnapshot();
   const focusedWindowId = focusedWin?.id ?? null;
   const [windowMenuSectionsById, setWindowMenuSectionsById] = useState<Record<string, DesktopActionSection[]>>({});
+  const [windowContextActionsById, setWindowContextActionsById] = useState<Record<string, DesktopActionEntry[]>>({});
   const [contextMenu, setContextMenu] = useState<DesktopContextMenuState | null>(null);
   const composedContributions = useMemo(() => composeDesktopContributions(contributions), [contributions]);
 
@@ -303,6 +306,18 @@ export function useDesktopShellController({
       }
       return changed ? next : prev;
     });
+    setWindowContextActionsById((prev) => {
+      let changed = false;
+      const next: Record<string, DesktopActionEntry[]> = {};
+      for (const [windowId, actions] of Object.entries(prev)) {
+        if (!openWindowIds.has(windowId)) {
+          changed = true;
+          continue;
+        }
+        next[windowId] = actions;
+      }
+      return changed ? next : prev;
+    });
   }, [windows]);
 
   const registerWindowMenuSections = useCallback((windowId: string, sections: DesktopActionSection[]) => {
@@ -317,6 +332,27 @@ export function useDesktopShellController({
 
   const unregisterWindowMenuSections = useCallback((windowId: string) => {
     setWindowMenuSectionsById((prev) => {
+      if (!(windowId in prev)) {
+        return prev;
+      }
+      const next = { ...prev };
+      delete next[windowId];
+      return next;
+    });
+  }, []);
+
+  const registerWindowContextActions = useCallback((windowId: string, actions: DesktopActionEntry[]) => {
+    setWindowContextActionsById((prev) => {
+      const current = prev[windowId];
+      if (current === actions) {
+        return prev;
+      }
+      return { ...prev, [windowId]: actions };
+    });
+  }, []);
+
+  const unregisterWindowContextActions = useCallback((windowId: string) => {
+    setWindowContextActionsById((prev) => {
       if (!(windowId in prev)) {
         return prev;
       }
@@ -494,6 +530,7 @@ export function useDesktopShellController({
       if (!win) {
         return [];
       }
+      const dynamicActions = windowContextActionsById[windowId] ?? [];
 
       const closeEntry: DesktopActionEntry = {
         id: `window-context.close.${windowId}`,
@@ -502,17 +539,21 @@ export function useDesktopShellController({
       };
 
       if (win.isDialog) {
-        return [closeEntry];
+        return dynamicActions.length > 0 ? [...dynamicActions, { separator: true }, closeEntry] : [closeEntry];
       }
 
-      return [
+      const defaults: DesktopActionEntry[] = [
         closeEntry,
         { separator: true },
         { id: `window-context.tile.${windowId}`, label: 'Tile Windows', commandId: 'window.tile' },
         { id: `window-context.cascade.${windowId}`, label: 'Cascade Windows', commandId: 'window.cascade' },
       ];
+      if (dynamicActions.length === 0) {
+        return defaults;
+      }
+      return [...dynamicActions, { separator: true }, ...defaults];
     },
-    [windowsById],
+    [windowContextActionsById, windowsById],
   );
 
   const handleContextMenuClose = useCallback(() => {
@@ -679,6 +720,8 @@ export function useDesktopShellController({
     onContextMenuAction: handleContextMenuAction,
     registerWindowMenuSections,
     unregisterWindowMenuSections,
+    registerWindowContextActions,
+    unregisterWindowContextActions,
     onToastDone: handleToastDone,
   };
 }

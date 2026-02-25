@@ -24,7 +24,7 @@ RelatedFiles:
       Note: Confirms context-menu styling primitives already available for shell integration.
 ExternalSources: []
 Summary: Chronological investigation log for OS-01-ADD-MENUS including commands, evidence, findings, design decisions, and delivery steps.
-LastUpdated: 2026-02-24T22:25:31-05:00
+LastUpdated: 2026-02-24T22:33:34-05:00
 WhatFor: Use this as a reproducible audit trail of how the menu/context-menu architecture analysis was performed and which files were used as evidence.
 WhenToUse: Use when reviewing the design proposal, onboarding engineers, or continuing implementation planning in this ticket.
 ---
@@ -358,3 +358,48 @@ pnpm --filter @hypercard/os-launcher build
 1. Add explicit right-click interaction tests for window/title-bar path (`OS01-34`, `OS01-35`).
 2. Adopt runtime focused-window menu registration in inventory chat windows (`OS01-50+`).
 3. Implement profile-scoped selection model (`OS01-60+`) and connect dynamic profile menu section.
+
+## 2026-02-24 22:27 - OS-01 inventory adoption (focused chat menus + title-bar context actions)
+
+### Intent
+
+Implement `OS01-50` through `OS01-55` so inventory chat windows provide focused dynamic menubar sections and chat-specific title-bar context actions, with deterministic conversation targeting.
+
+### Commands
+
+```bash
+cd /home/manuel/workspaces/2026-02-24/add-menus/go-go-os
+sed -n '1,420p' apps/inventory/src/launcher/renderInventoryApp.tsx
+sed -n '1,360p' apps/os-launcher/src/__tests__/launcherHost.test.tsx
+pnpm --filter @hypercard/engine typecheck
+pnpm --filter @hypercard/os-launcher test -- src/__tests__/launcherHost.test.tsx
+pnpm --filter @hypercard/os-launcher build
+```
+
+### Implementation notes
+
+1. Extended window runtime hooks in `desktopMenuRuntime.tsx`:
+   - added `registerWindowContextActions` / `unregisterWindowContextActions`,
+   - added `useRegisterWindowContextActions`.
+2. Updated shell runtime/controller wiring so app-registered context actions are composed into window context-menu overlays.
+3. Added inventory chat deterministic command model:
+   - `inventory.chat.<convId>.debug.event-viewer`
+   - `inventory.chat.<convId>.debug.timeline-debug`
+   - `inventory.chat.<convId>.profile.select.<slug|__none__>`
+4. Added parser/builders for these command IDs and command handlers that:
+   - open debug windows for the specific `convId`,
+   - update profile selection via `chatProfilesSlice.actions.setSelectedProfile`.
+5. In `InventoryChatAssistantWindow`, added:
+   - `useRegisterWindowMenuSections(...)` for focused `Chat` + `Profile` menu sections,
+   - `useRegisterWindowContextActions(...)` for title-bar context actions.
+6. Added launcher host regression test that asserts deterministic routing for chat-scoped debug/profile commands.
+
+### Validation results
+
+1. `pnpm --filter @hypercard/engine typecheck` passed.
+2. `pnpm --filter @hypercard/os-launcher test -- src/__tests__/launcherHost.test.tsx` passed.
+3. `pnpm --filter @hypercard/os-launcher build` passed.
+
+### Notes
+
+1. Profile selection in this slice is still global state-backed; conversation-scoped profile selection remains tracked under `OS01-60`..`OS01-65`.

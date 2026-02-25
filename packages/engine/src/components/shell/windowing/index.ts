@@ -17,6 +17,7 @@ export {
   DesktopWindowMenuRuntimeProvider,
   DesktopWindowScopeProvider,
   useDesktopWindowId,
+  useRegisterWindowContextActions,
   useRegisterWindowMenuSections,
   type DesktopWindowMenuRuntime,
 } from './desktopMenuRuntime';
