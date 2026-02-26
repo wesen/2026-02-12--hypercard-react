@@ -25,6 +25,8 @@ export const { store, createStore: createLauncherAppStore } = createLauncherStor
     activities: activitiesReducer,
     books: booksReducer,
   },
+  enableReduxDiagnostics: import.meta.env.DEV,
+  diagnosticsWindowMs: 5000,
 });
 
 export type RootState = ReturnType<typeof store.getState>;
