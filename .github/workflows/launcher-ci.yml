@@ -18,19 +18,23 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --no-frozen-lockfile
 
       - name: Lint launcher app
-        run: npm exec biome check apps/os-launcher
+        run: pnpm exec biome check apps/os-launcher
 
       - name: Test launcher app
-        run: npm run test -w apps/os-launcher
+        run: pnpm --filter @hypercard/os-launcher test
 
       - name: Build launcher app
-        run: npm run build -w apps/os-launcher
+        run: pnpm --filter @hypercard/os-launcher build
 
   go-tests:
     runs-on: ubuntu-latest
@@ -60,7 +64,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -68,7 +76,7 @@ jobs:
           go-version-file: go-inventory-chat/go.mod
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --no-frozen-lockfile
 
       - name: Build launcher binary
         run: npm run launcher:binary:build
