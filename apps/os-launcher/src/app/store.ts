@@ -5,8 +5,7 @@ import { activitiesReducer } from '@hypercard/crm/src/features/activities/activi
 import { companiesReducer } from '@hypercard/crm/src/features/companies/companiesSlice';
 import { contactsReducer } from '@hypercard/crm/src/features/contacts/contactsSlice';
 import { dealsReducer } from '@hypercard/crm/src/features/deals/dealsSlice';
-import { inventoryReducer } from '@hypercard/inventory/src/features/inventory/inventorySlice';
-import { salesReducer } from '@hypercard/inventory/src/features/sales/salesSlice';
+import { inventoryReducer, salesReducer } from '@hypercard/inventory/reducers';
 import { tasksReducer } from '@hypercard/todo/src/features/tasks/tasksSlice';
 import { launcherModules } from './modules';
 

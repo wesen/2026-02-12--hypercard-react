@@ -126,9 +126,22 @@ describe('launcher host wiring', () => {
     expect(source).not.toContain('/App');
   });
 
+  it('imports inventory module/reducers from public package exports only', () => {
+    const moduleSource = readFileSync(new URL('../app/modules.tsx', import.meta.url), 'utf8');
+    const storeSource = readFileSync(new URL('../app/store.ts', import.meta.url), 'utf8');
+
+    expect(moduleSource).toContain("@hypercard/inventory/launcher");
+    expect(storeSource).toContain("@hypercard/inventory/reducers");
+    expect(moduleSource).not.toContain('@hypercard/inventory/src/');
+    expect(storeSource).not.toContain('@hypercard/inventory/src/');
+  });
+
   it('prevents placeholder module labels from being reintroduced', () => {
     const moduleSources = [
-      readFileSync(new URL('../../../inventory/src/launcher/module.tsx', import.meta.url), 'utf8'),
+      readFileSync(
+        new URL('../../../../../go-go-app-inventory/apps/inventory/src/launcher/module.tsx', import.meta.url),
+        'utf8',
+      ),
       readFileSync(new URL('../../../todo/src/launcher/module.tsx', import.meta.url), 'utf8'),
       readFileSync(new URL('../../../crm/src/launcher/module.tsx', import.meta.url), 'utf8'),
       readFileSync(new URL('../../../book-tracker-debug/src/launcher/module.tsx', import.meta.url), 'utf8'),
@@ -368,7 +381,7 @@ describe('launcher host wiring', () => {
 
   it('removes legacy standalone desktop shell boot wiring from app roots', () => {
     const appRootSources = [
-      readFileSync(new URL('../../../inventory/src/App.tsx', import.meta.url), 'utf8'),
+      readFileSync(new URL('../../../../../go-go-app-inventory/apps/inventory/src/App.tsx', import.meta.url), 'utf8'),
       readFileSync(new URL('../../../todo/src/App.tsx', import.meta.url), 'utf8'),
       readFileSync(new URL('../../../crm/src/App.tsx', import.meta.url), 'utf8'),
       readFileSync(new URL('../../../book-tracker-debug/src/App.tsx', import.meta.url), 'utf8'),
