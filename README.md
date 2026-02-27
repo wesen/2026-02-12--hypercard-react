@@ -26,29 +26,17 @@ npm install
 npm run dev          # Vite dev server (apps/inventory on localhost:5173)
 npm run storybook    # Storybook dev server (all apps + engine widgets)
 npm run build        # Production build (engine + all 4 apps)
-npm run launcher:binary:build  # Build single launcher binary (embedded UI + backend modules)
-npm run launcher:smoke         # Boot binary and run route/health/policy smoke checks
 npm run typecheck    # TypeScript project-references check
 npm run lint         # Biome lint/format check
 npm run test         # Vitest runtime tests + Storybook taxonomy check
 ```
 
-## Single Binary Launcher
+## Backend Composition
 
-The launcher-first production path is a single Go binary that serves:
+This repository now owns the frontend workspaces and shared backend host package.
+Single-binary launcher assembly is handled in the composition runtime repository.
 
-- embedded `apps/os-launcher` frontend assets at `/`
-- namespaced backend modules under `/api/apps/<app-id>/*`
-- module manifest and health at `/api/os/apps`
-
-Build and run:
-
-```bash
-npm run launcher:binary:build
-./build/go-go-os-launcher go-go-os-launcher --addr :8091
-```
-
-Hard-cut route policy: legacy aliases (`/chat`, `/ws`, `/api/timeline`) are intentionally blocked.
+- Backend host package path: `go-go-os/pkg/backendhost`
 
 ## Architecture
 
@@ -78,7 +66,7 @@ apps/
   book-tracker-debug/     ← Book tracker with debug pane
   os-launcher/            ← Launcher-first host that composes app-owned desktop-os modules
 
-go-inventory-chat/        ← Go backend for inventory chat (Glazed + Pinocchio webchat)
+go-go-os/                ← Go backend host module package (Glazed + Pinocchio webchat contracts)
 
 tooling/vite/             ← Shared Vite config helper (createHypercardViteConfig)
 scripts/storybook/        ← Storybook taxonomy enforcement (check-taxonomy.mjs)
@@ -454,7 +442,7 @@ export const Contacts = createStory('contacts');
 
 ## Go Backend (Inventory Chat)
 
-`go-inventory-chat/` provides the streaming chat backend for the inventory app, built with Glazed and Pinocchio webchat. See its [README](go-inventory-chat/README.md) for setup and routes.
+`go-go-os/` provides the shared Go backend host package used by composition runtimes. See its [README](go-go-os/README.md) for setup and routes.
 
 ## Documentation
 
