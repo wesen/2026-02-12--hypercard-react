@@ -1,6 +1,11 @@
-import type { LaunchableAppModule, LaunchReason } from '@hypercard/desktop-os';
+import type { LaunchableAppModule, LauncherHostContext, LaunchReason } from '@hypercard/desktop-os';
 import type { OpenWindowPayload } from '@hypercard/engine/desktop-core';
-import type { DesktopContribution, WindowContentAdapter } from '@hypercard/engine/desktop-react';
+import type {
+  DesktopCommandHandler,
+  DesktopCommandInvocation,
+  DesktopContribution,
+  WindowContentAdapter,
+} from '@hypercard/engine/desktop-react';
 import { type ReactNode, useRef } from 'react';
 import { Provider } from 'react-redux';
 import { createAppsBrowserStore } from '../app/store';
@@ -14,6 +19,9 @@ const APP_KEY_FOLDER = 'apps-browser:folder';
 const APP_KEY_BROWSER = 'apps-browser:browser';
 const APP_KEY_HEALTH = 'apps-browser:health';
 const APP_KEY_GET_INFO_PREFIX = 'apps-browser:get-info:';
+const COMMAND_OPEN_BROWSER = 'apps-browser.open-browser';
+const COMMAND_GET_INFO = 'apps-browser.get-info';
+const COMMAND_OPEN_HEALTH = 'apps-browser.open-health';
 
 function buildFolderWindowPayload(reason: LaunchReason): OpenWindowPayload {
   return {
@@ -62,7 +70,7 @@ export function buildGetInfoWindowPayload(appId: string, appName?: string): Open
   };
 }
 
-function createAppsBrowserAdapter(): WindowContentAdapter {
+function createAppsBrowserAdapter(hostContext: LauncherHostContext): WindowContentAdapter {
   return {
     id: 'apps-browser.windows',
     canRender: (window) =>
@@ -74,7 +82,7 @@ function createAppsBrowserAdapter(): WindowContentAdapter {
       let content: ReactNode = null;
 
       if (appKey === APP_KEY_FOLDER) {
-        content = <AppsFolderWindow />;
+        content = <AppsFolderWindow onOpenApp={(appId) => hostContext.openWindow(buildBrowserWindowPayload(appId))} />;
       }
 
       if (content == null && appKey.startsWith(APP_KEY_BROWSER)) {
@@ -83,13 +91,18 @@ function createAppsBrowserAdapter(): WindowContentAdapter {
       }
 
       if (content == null && appKey === APP_KEY_HEALTH) {
-        content = <HealthDashboardWindow />;
+        content = <HealthDashboardWindow onClickModule={(appId) => hostContext.openWindow(buildGetInfoWindowPayload(appId))} />;
       }
 
       if (content == null && appKey.startsWith(APP_KEY_GET_INFO_PREFIX)) {
         const appId = appKey.slice(APP_KEY_GET_INFO_PREFIX.length);
         if (appId) {
-          content = <GetInfoWindowByAppId appId={appId} />;
+          content = (
+            <GetInfoWindowByAppId
+              appId={appId}
+              onOpenInBrowser={() => hostContext.openWindow(buildBrowserWindowPayload(appId))}
+            />
+          );
         }
       }
 
@@ -97,6 +110,47 @@ function createAppsBrowserAdapter(): WindowContentAdapter {
         return null;
       }
       return <AppsBrowserHost>{content}</AppsBrowserHost>;
+    },
+  };
+}
+
+function asNonEmptyString(value: unknown): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function resolveAppFromInvocation(invocation: DesktopCommandInvocation): { appId?: string; appName?: string } {
+  const payload = invocation.payload ?? {};
+  return {
+    appId: asNonEmptyString(payload.appId) ?? asNonEmptyString(invocation.contextTarget?.appId),
+    appName: asNonEmptyString(payload.appName),
+  };
+}
+
+function createAppsBrowserCommandHandler(hostContext: LauncherHostContext): DesktopCommandHandler {
+  return {
+    id: 'apps-browser.commands',
+    priority: 220,
+    matches: (commandId) =>
+      commandId === COMMAND_OPEN_BROWSER || commandId === COMMAND_GET_INFO || commandId === COMMAND_OPEN_HEALTH,
+    run: (commandId, _ctx, invocation) => {
+      const { appId, appName } = resolveAppFromInvocation(invocation);
+      if (commandId === COMMAND_OPEN_HEALTH) {
+        hostContext.openWindow(buildHealthWindowPayload());
+        return 'handled';
+      }
+      if (commandId === COMMAND_OPEN_BROWSER) {
+        hostContext.openWindow(buildBrowserWindowPayload(appId));
+        return 'handled';
+      }
+      if (commandId === COMMAND_GET_INFO && appId) {
+        hostContext.openWindow(buildGetInfoWindowPayload(appId, appName));
+        return 'handled';
+      }
+      return 'pass';
     },
   };
 }
@@ -122,10 +176,11 @@ export const appsBrowserLauncherModule: LaunchableAppModule = {
     return buildFolderWindowPayload(reason);
   },
 
-  createContributions: (): DesktopContribution[] => [
+  createContributions: (hostContext): DesktopContribution[] => [
     {
-      id: 'apps-browser.window-adapters',
-      windowContentAdapters: [createAppsBrowserAdapter()],
+      id: 'apps-browser.desktop-contributions',
+      windowContentAdapters: [createAppsBrowserAdapter(hostContext)],
+      commands: [createAppsBrowserCommandHandler(hostContext)],
     },
   ],
 
