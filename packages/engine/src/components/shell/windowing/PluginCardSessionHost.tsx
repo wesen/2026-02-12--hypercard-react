@@ -283,28 +283,50 @@ export function PluginCardSessionHost({
     ]
   );
 
-  const tree = useMemo<UINode | null>(() => {
+  const renderOutcome = useMemo<{ tree: UINode | null; error: string | null }>(() => {
     if (!pluginConfig || !runtimeSession || runtimeSession.status !== 'ready') {
-      return null;
+      return { tree: null, error: null };
     }
 
     const projectedGlobalState = projectGlobal();
 
     try {
-      return runtimeServiceRef.current?.renderCard(
-        sessionId,
-        currentCardId,
-        cardState,
-        sessionState,
-        projectedGlobalState
-      ) ?? null;
+      return {
+        tree:
+          runtimeServiceRef.current?.renderCard(
+            sessionId,
+            currentCardId,
+            cardState,
+            sessionState,
+            projectedGlobalState,
+          ) ?? null,
+        error: null,
+      };
     } catch (error) {
-      dispatch(
-        showToast(error instanceof Error ? error.message : String(error))
-      );
-      return null;
+      return {
+        tree: null,
+        error: error instanceof Error ? error.message : String(error),
+      };
     }
-  }, [cardState, currentCardId, dispatch, pluginConfig, projectGlobal, runtimeSession, sessionId, sessionState]);
+  }, [cardState, currentCardId, pluginConfig, projectGlobal, runtimeSession, sessionId, sessionState]);
+
+  const tree = renderOutcome.tree;
+  const renderError = renderOutcome.error;
+  const lastRenderErrorRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!renderError) {
+      lastRenderErrorRef.current = null;
+      return;
+    }
+
+    if (lastRenderErrorRef.current === renderError) {
+      return;
+    }
+
+    lastRenderErrorRef.current = renderError;
+    dispatch(showToast(renderError));
+  }, [dispatch, renderError]);
 
   const emitRuntimeEvent = useCallback(
     (handler: string, args?: unknown) => {
@@ -366,6 +388,9 @@ export function PluginCardSessionHost({
   }
 
   if (!tree) {
+    if (renderError) {
+      return <div style={{ padding: 12, color: '#9f1d1d' }}>Runtime render error: {renderError}</div>;
+    }
     return <div style={{ padding: 12 }}>No plugin output for card: {currentCardId}</div>;
   }
 
