@@ -2,9 +2,9 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { useEffect, useRef } from 'react';
 import { Provider } from 'react-redux';
 import { createAppStore } from '../../app/createAppStore';
-import type { CardStackDefinition } from '../../cards';
-import { RuntimeCardDebugWindow } from '../../hypercard/debug/RuntimeCardDebugWindow';
-import { upsertArtifact } from '../../hypercard/artifacts/artifactsSlice';
+import type { CardStackDefinition } from '@hypercard/engine';
+import { RuntimeCardDebugWindow } from './RuntimeCardDebugWindow';
+import { upsertArtifact } from '../artifacts/artifactsSlice';
 import { clearRuntimeCardRegistry, registerRuntimeCard } from '../../plugin-runtime';
 
 const STORY_STACK: CardStackDefinition = {
@@ -74,7 +74,7 @@ function RuntimeCardDebugStory() {
 }
 
 const meta = {
-  title: 'Engine/Widgets/RuntimeCardDebugWindow',
+  title: 'HypercardRuntime/Debug/RuntimeCardDebugWindow',
   parameters: { layout: 'centered' },
 } satisfies Meta;
 

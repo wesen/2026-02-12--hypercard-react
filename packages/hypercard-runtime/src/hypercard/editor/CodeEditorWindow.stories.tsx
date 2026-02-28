@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Provider } from 'react-redux';
-import { CodeEditorWindow } from '../../hypercard/editor/CodeEditorWindow';
+import { CodeEditorWindow } from './CodeEditorWindow';
 import { clearRuntimeCardRegistry, registerRuntimeCard } from '../../plugin-runtime';
 
 const store = configureStore({ reducer: { _: (s = {}) => s } });
@@ -25,7 +25,7 @@ function Wrapper(props: React.ComponentProps<typeof CodeEditorWindow>) {
 }
 
 const meta: Meta<typeof Wrapper> = {
-  title: 'Engine/Widgets/CodeEditorWindow',
+  title: 'HypercardRuntime/Editor/CodeEditorWindow',
   component: Wrapper,
   parameters: { layout: 'centered' },
   decorators: [

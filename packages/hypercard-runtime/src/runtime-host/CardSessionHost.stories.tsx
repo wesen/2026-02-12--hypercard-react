@@ -126,7 +126,7 @@ function PluginCardSessionHostWrapper(props: PluginCardSessionHostProps) {
 }
 
 const meta = {
-  title: 'Engine/Shell/Windowing/CardSessionHost',
+  title: 'HypercardRuntime/RuntimeHost/CardSessionHost',
   component: PluginCardSessionHostWrapper,
   parameters: {
     layout: 'centered',

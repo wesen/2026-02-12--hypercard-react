@@ -1,9 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Provider } from 'react-redux';
-import { TimelineDebugWindow } from '../../chat/debug/TimelineDebugWindow';
-import { buildTimelineDebugSnapshot, type TimelineDebugSnapshot } from '../../chat/debug/timelineDebugModel';
-import type { ConversationTimelineState, TimelineEntity } from '../../chat/state/timelineSlice';
+import { TimelineDebugWindow } from './TimelineDebugWindow';
+import { buildTimelineDebugSnapshot, type TimelineDebugSnapshot } from './timelineDebugModel';
+import type { ConversationTimelineState, TimelineEntity } from '../state/timelineSlice';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -55,7 +55,7 @@ function makeMinimalStore() {
 // ---------------------------------------------------------------------------
 
 const meta: Meta<typeof TimelineDebugWindow> = {
-  title: 'Engine/Widgets/TimelineDebugWindow',
+  title: 'ChatRuntime/Debug/TimelineDebugWindow',
   component: TimelineDebugWindow,
   parameters: { layout: 'fullscreen' },
   decorators: [

@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import type { ReactNode } from 'react';
-import { GenericRenderer } from '../../chat/renderers/builtin/GenericRenderer';
-import { LogRenderer } from '../../chat/renderers/builtin/LogRenderer';
-import { MessageRenderer } from '../../chat/renderers/builtin/MessageRenderer';
-import { StatusRenderer } from '../../chat/renderers/builtin/StatusRenderer';
-import { ToolCallRenderer } from '../../chat/renderers/builtin/ToolCallRenderer';
-import { ToolResultRenderer } from '../../chat/renderers/builtin/ToolResultRenderer';
-import type { RenderEntity, TimelineRenderer } from '../../chat/renderers/types';
+import { GenericRenderer } from './builtin/GenericRenderer';
+import { LogRenderer } from './builtin/LogRenderer';
+import { MessageRenderer } from './builtin/MessageRenderer';
+import { StatusRenderer } from './builtin/StatusRenderer';
+import { ToolCallRenderer } from './builtin/ToolCallRenderer';
+import { ToolResultRenderer } from './builtin/ToolResultRenderer';
+import type { RenderEntity, TimelineRenderer } from './types';
 
 function Frame({ children }: { children: ReactNode }) {
   return (
@@ -23,7 +23,7 @@ function Frame({ children }: { children: ReactNode }) {
 }
 
 const meta = {
-  title: 'Engine/Widgets/ChatTimelineRenderers',
+  title: 'ChatRuntime/Renderers/ChatTimelineRenderers',
   parameters: { layout: 'centered' },
 } satisfies Meta;
 

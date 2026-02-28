@@ -232,7 +232,7 @@ function RuntimeMutationDemo() {
 }
 
 const meta = {
-  title: 'Engine/PluginRuntime/RuntimeMutation',
+  title: 'HypercardRuntime/PluginRuntime/RuntimeMutation',
   component: RuntimeMutationDemo,
   parameters: {
     layout: 'centered',

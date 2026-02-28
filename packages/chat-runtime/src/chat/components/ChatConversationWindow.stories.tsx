@@ -1,13 +1,13 @@
+import { configureStore } from '@reduxjs/toolkit';
 import type { Meta, StoryObj } from '@storybook/react';
 import { useEffect, useRef } from 'react';
 import { Provider } from 'react-redux';
-import { createAppStore } from '../../app/createAppStore';
 import {
   ChatConversationWindow,
-  chatWindowReducer,
-  chatSessionReducer,
-  timelineReducer,
-} from '../../chat';
+} from './ChatConversationWindow';
+import { chatWindowReducer } from '../state/chatWindowSlice';
+import { chatSessionReducer } from '../state/chatSessionSlice';
+import { timelineReducer } from '../state/timelineSlice';
 
 type Envelope = {
   sem: true;
@@ -99,15 +99,20 @@ class StoryWebSocket {
   }
 }
 
-function ChatConversationWindowStory() {
-  const { createStore } = createAppStore({
-    timeline: timelineReducer,
-    chatSession: chatSessionReducer,
-    chatWindow: chatWindowReducer,
+function createStoryStore() {
+  return configureStore({
+    reducer: {
+      timeline: timelineReducer,
+      chatSession: chatSessionReducer,
+      chatWindow: chatWindowReducer,
+    },
   });
-  const storeRef = useRef<ReturnType<typeof createStore> | null>(null);
+}
+
+function ChatConversationWindowStory() {
+  const storeRef = useRef<ReturnType<typeof createStoryStore> | null>(null);
   if (!storeRef.current) {
-    storeRef.current = createStore();
+    storeRef.current = createStoryStore();
   }
 
   useEffect(() => {
@@ -163,7 +168,7 @@ function ChatConversationWindowStory() {
 }
 
 const meta = {
-  title: 'Engine/Widgets/ChatConversationWindow',
+  title: 'ChatRuntime/Components/ChatConversationWindow',
   parameters: { layout: 'fullscreen' },
 } satisfies Meta;
 

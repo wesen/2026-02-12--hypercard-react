@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { useCallback, useState } from 'react';
-import { defaultResponseMatcher, tokenize } from '../../chat/mocks/fakeResponses';
+import { defaultResponseMatcher, tokenize } from '../widgets/storyFakeResponses';
 import type { ChatMessage } from '../../types';
 import { ChatSidebar } from './ChatSidebar';
 

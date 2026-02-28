@@ -11,6 +11,7 @@ const APP_PREFIXES = new Map([
   ['apps/todo/', 'Apps/Todo/'],
   ['apps/crm/', 'Apps/Crm/'],
   ['apps/book-tracker-debug/', 'Apps/BookTrackerDebug/'],
+  ['apps/apps-browser/', 'Apps/AppsBrowser/'],
 ]);
 
 const FORBIDDEN_TOP_LEVEL = new Set([
@@ -55,6 +56,36 @@ function inferExpectedPrefix(relPath) {
   if (relPath.startsWith('packages/engine/')) {
     return 'Engine/';
   }
+  if (relPath.startsWith('packages/chat-runtime/src/chat/components/')) {
+    return 'ChatRuntime/Components/';
+  }
+  if (relPath.startsWith('packages/chat-runtime/src/chat/debug/')) {
+    return 'ChatRuntime/Debug/';
+  }
+  if (relPath.startsWith('packages/chat-runtime/src/chat/renderers/')) {
+    return 'ChatRuntime/Renderers/';
+  }
+  if (relPath.startsWith('packages/chat-runtime/')) {
+    return 'ChatRuntime/';
+  }
+  if (relPath.startsWith('packages/hypercard-runtime/src/hypercard/debug/')) {
+    return 'HypercardRuntime/Debug/';
+  }
+  if (relPath.startsWith('packages/hypercard-runtime/src/hypercard/editor/')) {
+    return 'HypercardRuntime/Editor/';
+  }
+  if (relPath.startsWith('packages/hypercard-runtime/src/hypercard/timeline/')) {
+    return 'HypercardRuntime/Timeline/';
+  }
+  if (relPath.startsWith('packages/hypercard-runtime/src/runtime-host/')) {
+    return 'HypercardRuntime/RuntimeHost/';
+  }
+  if (relPath.startsWith('packages/hypercard-runtime/src/plugin-runtime/')) {
+    return 'HypercardRuntime/PluginRuntime/';
+  }
+  if (relPath.startsWith('packages/hypercard-runtime/')) {
+    return 'HypercardRuntime/';
+  }
   for (const [pathPrefix, titlePrefix] of APP_PREFIXES.entries()) {
     if (relPath.startsWith(pathPrefix)) return titlePrefix;
   }
@@ -63,7 +94,15 @@ function inferExpectedPrefix(relPath) {
 
 function extractCanonicalTitle(source) {
   const matches = [...source.matchAll(/title:\s*'([^']+)'/g)].map((m) => m[1]);
-  return matches.find((t) => t.startsWith('Apps/') || t.startsWith('Engine/')) ?? null;
+  return (
+    matches.find(
+      (t) =>
+        t.startsWith('Apps/') ||
+        t.startsWith('Engine/') ||
+        t.startsWith('ChatRuntime/') ||
+        t.startsWith('HypercardRuntime/'),
+    ) ?? null
+  );
 }
 
 function checkPlacement(relPath) {
@@ -71,9 +110,10 @@ function checkPlacement(relPath) {
     if (relPath.includes('/src/stories/')) {
       return 'app story must not live in flat src/stories; move under src/app/stories or src/features/**/stories';
     }
-    const ok = /^apps\/[^/]+\/src\/(app\/stories|features\/.+\/stories)\/[^/]+\.stories\.(ts|tsx)$/.test(relPath);
+    const ok =
+      /^apps\/[^/]+\/src\/(app\/stories|features\/.+\/stories|components)\/[^/]+\.stories\.(ts|tsx)$/.test(relPath);
     if (!ok) {
-      return 'app story path must match src/app/stories/* or src/features/**/stories/*';
+      return 'app story path must match src/app/stories/*, src/features/**/stories/*, or src/components/*';
     }
   }
 
@@ -83,6 +123,21 @@ function checkPlacement(relPath) {
       return 'engine story path must be under packages/engine/src/components or packages/engine/src/plugin-runtime';
     }
   }
+  if (relPath.startsWith('packages/chat-runtime/')) {
+    const ok = /^packages\/chat-runtime\/src\/chat\/.+\.stories\.(ts|tsx)$/.test(relPath);
+    if (!ok) {
+      return 'chat-runtime story path must be under packages/chat-runtime/src/chat';
+    }
+  }
+  if (relPath.startsWith('packages/hypercard-runtime/')) {
+    const ok =
+      /^packages\/hypercard-runtime\/src\/(hypercard\/.+|runtime-host\/.+|plugin-runtime\/.+)\.stories\.(ts|tsx)$/.test(
+        relPath,
+      );
+    if (!ok) {
+      return 'hypercard-runtime story path must be under src/hypercard, src/runtime-host, or src/plugin-runtime';
+    }
+  }
 
   return null;
 }
@@ -90,6 +145,8 @@ function checkPlacement(relPath) {
 const storyFiles = [];
 walk(join(repoRoot, 'apps'), storyFiles);
 walk(join(repoRoot, 'packages/engine/src'), storyFiles);
+walk(join(repoRoot, 'packages/chat-runtime/src'), storyFiles);
+walk(join(repoRoot, 'packages/hypercard-runtime/src'), storyFiles);
 
 const errors = [];
 
