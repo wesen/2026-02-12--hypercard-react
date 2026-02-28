@@ -195,3 +195,32 @@
   font-size: 11px;
   padding: 12px 0;
 }
+
+[data-part="browser-detail-section-title"] {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--hc-color-border, #000);
+  font-weight: bold;
+  font-size: 10px;
+}
+
+[data-part="browser-detail-api-schema"] {
+  margin-top: 8px;
+}
+
+[data-part="browser-detail-api-schema-header"] {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+[data-part="browser-detail-api-schema-label"] {
+  font-weight: bold;
+  font-size: 10px;
+}
+
+[data-part="browser-detail-api-schema-id"] {
+  font-size: 10px;
+  color: var(--hc-color-muted, #777);
+}

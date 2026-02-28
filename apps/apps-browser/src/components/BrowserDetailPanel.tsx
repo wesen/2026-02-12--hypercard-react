@@ -47,9 +47,75 @@ function ModuleDetail({ app, reflection }: ModuleDetailProps) {
 interface APIDetailProps {
   api: ReflectionAPI;
   appId: string;
+  schemas: ReflectionSchemaRef[];
 }
 
-function APIDetail({ api, appId }: APIDetailProps) {
+interface APISchemaPreviewProps {
+  label: string;
+  schemaId: string;
+  appId: string;
+  schema?: ReflectionSchemaRef;
+}
+
+function buildSchemaUrl(appId: string, schemaId: string, schema?: ReflectionSchemaRef): string {
+  return schema?.uri ?? `/api/apps/${appId}/schemas/${encodeURIComponent(schemaId)}`;
+}
+
+function APISchemaPreview({ label, schemaId, appId, schema }: APISchemaPreviewProps) {
+  const schemaUrl = buildSchemaUrl(appId, schemaId, schema);
+  const [fetchSchema, { data: fetchedSchema, isFetching, isError, error }] = useLazyGetSchemaDocumentQuery();
+  const schemaPayload = schema?.embedded ?? fetchedSchema;
+  const autoFetchUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (schemaPayload != null || isFetching || autoFetchUrlRef.current === schemaUrl) {
+      return;
+    }
+    autoFetchUrlRef.current = schemaUrl;
+    void fetchSchema(schemaUrl);
+  }, [fetchSchema, isFetching, schemaPayload, schemaUrl]);
+
+  return (
+    <div data-part="browser-detail-api-schema">
+      <div data-part="browser-detail-api-schema-header">
+        <span data-part="browser-detail-api-schema-label">{label}</span>
+        <span data-part="browser-detail-api-schema-id">
+          {schemaId}
+          {schema?.format ? ` (${schema.format})` : ''}
+        </span>
+      </div>
+      <div data-part="browser-detail-mono">{schemaUrl}</div>
+      {schemaPayload != null ? (
+        <pre data-part="browser-detail-code">{formatSchemaPayload(schemaPayload)}</pre>
+      ) : (
+        <div data-part="browser-detail-placeholder">
+          <button
+            type="button"
+            data-part="apps-folder-refresh"
+            onClick={() => void fetchSchema(schemaUrl)}
+            disabled={isFetching}
+            aria-label={`Fetch schema ${schemaId}`}
+          >
+            {isFetching ? 'Fetching schema...' : 'Fetch schema again'}
+          </button>{' '}
+          from {schemaUrl} to view the full schema as well.
+          {isError && (
+            <div style={{ marginTop: 8, color: '#a00' }}>Schema fetch failed: {formatSchemaFetchError(error)}</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function APIDetail({ api, appId, schemas }: APIDetailProps) {
+  const schemaById = new Map(schemas.map((schema) => [schema.id, schema] as const));
+  const schemaEntries = [
+    { label: 'Request Schema', schemaId: api.request_schema },
+    { label: 'Response Schema', schemaId: api.response_schema },
+    { label: 'Error Schema', schemaId: api.error_schema },
+  ].filter((entry): entry is { label: string; schemaId: string } => Boolean(entry.schemaId));
+
   return (
     <div data-part="browser-detail">
       <div data-part="browser-detail-header">
@@ -71,6 +137,20 @@ function APIDetail({ api, appId }: APIDetailProps) {
           <dt>error_schema:</dt>
           <dd>{api.error_schema ?? '\u2014'}</dd>
         </dl>
+        {schemaEntries.length > 0 && (
+          <div data-part="browser-detail-api-schemas">
+            <div data-part="browser-detail-section-title">Schemas</div>
+            {schemaEntries.map((entry) => (
+              <APISchemaPreview
+                key={entry.label}
+                label={entry.label}
+                schemaId={entry.schemaId}
+                appId={appId}
+                schema={schemaById.get(entry.schemaId)}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -115,7 +195,7 @@ function formatSchemaFetchError(error: unknown): string {
 }
 
 function SchemaDetail({ schema, appId }: SchemaDetailProps) {
-  const schemaUrl = schema.uri ?? `/api/apps/${appId}/schemas/${encodeURIComponent(schema.id)}`;
+  const schemaUrl = buildSchemaUrl(appId, schema.id, schema);
   const [fetchSchema, { data: fetchedSchema, isFetching, isError, error }] = useLazyGetSchemaDocumentQuery();
   const schemaPayload = schema.embedded ?? fetchedSchema;
   const autoFetchUrlRef = useRef<string | null>(null);
@@ -202,7 +282,8 @@ export function BrowserDetailPanel({
   }
 
   if (selectedApi && selectedApp) {
-    return <APIDetail api={selectedApi} appId={selectedApp.app_id} />;
+    const schemas = reflection && !reflection._unsupported ? (reflection.schemas ?? []) : [];
+    return <APIDetail api={selectedApi} appId={selectedApp.app_id} schemas={schemas} />;
   }
 
   return <ModuleDetail app={selectedApp} reflection={reflection} />;
