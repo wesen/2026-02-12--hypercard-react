@@ -207,4 +207,67 @@ describe('dispatchRuntimeIntent', () => {
     );
     expect(deniedEntry?.outcome).toBe('denied');
   });
+
+  it('emits canonical domain action type and runtime correlation metadata', () => {
+    const sessionId = 'session-domain';
+    const windowId = 'window:domain:session-domain';
+    const observedActions: Array<{ type?: string; meta?: Record<string, unknown> }> = [];
+
+    const store = configureStore({
+      reducer: {
+        pluginCardRuntime: pluginCardRuntimeReducer,
+        windowing: windowingReducer,
+        notifications: notificationsReducer,
+        inventory: inventoryReducer,
+      },
+      middleware: (getDefault) =>
+        getDefault().concat((_) => (next) => (action) => {
+          if (typeof action === 'object' && action && 'type' in action) {
+            observedActions.push(action as { type?: string; meta?: Record<string, unknown> });
+          }
+          return next(action);
+        }),
+    });
+
+    store.dispatch(
+      registerRuntimeSession({
+        sessionId,
+        stackId: 'domain-demo',
+        status: 'ready',
+        capabilities: {
+          domain: ['domain-demo'],
+        },
+      }),
+    );
+
+    dispatchRuntimeIntent(
+      {
+        scope: 'domain',
+        domain: 'domain-demo',
+        actionType: 'command.request',
+        payload: {
+          op: 'create-session',
+          requestId: 'req-routing',
+          args: {},
+        },
+      },
+      {
+        dispatch: (action) => store.dispatch(action as never),
+        getState: () => store.getState(),
+        sessionId,
+        cardId: 'home',
+        windowId,
+      },
+    );
+
+    const actions = store.getState().pluginCardRuntime.timeline;
+    const applied = actions.find((entry) => entry.scope === 'domain' && entry.domain === 'domain-demo');
+    expect(applied?.outcome).toBe('applied');
+
+    const emitted = observedActions.find((action) => action.type === 'domain-demo/command.request');
+    expect(emitted).toBeDefined();
+    expect(emitted?.meta?.source).toBe('plugin-runtime');
+    expect(emitted?.meta?.runtimeSessionId).toBe(sessionId);
+    expect(emitted?.meta?.cardId).toBe('home');
+  });
 });

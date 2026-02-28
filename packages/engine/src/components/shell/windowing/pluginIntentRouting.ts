@@ -73,7 +73,9 @@ function toDomainAction(intent: Extract<RuntimeIntent, { scope: 'domain' }>, con
     meta: {
       source: 'plugin-runtime',
       sessionId: context.sessionId,
+      runtimeSessionId: context.sessionId,
       cardId: context.cardId,
+      windowId: context.windowId,
     },
   };
 }
