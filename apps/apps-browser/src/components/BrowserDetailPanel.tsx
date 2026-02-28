@@ -1,5 +1,6 @@
+import { SyntaxHighlight, toYaml } from '@hypercard/engine';
 import { useLazyGetSchemaDocumentQuery } from '../api/appsApi';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { isReflectionUnsupported } from '../domain/selectors';
 import type { AppManifestDocument, ReflectionAPI, ReflectionResult, ReflectionSchemaRef } from '../domain/types';
 
@@ -61,50 +62,81 @@ function buildSchemaUrl(appId: string, schemaId: string, schema?: ReflectionSche
   return schema?.uri ?? `/api/apps/${appId}/schemas/${encodeURIComponent(schemaId)}`;
 }
 
+function toReadableYaml(value: unknown): string {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (
+      (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+      (trimmed.startsWith('[') && trimmed.endsWith(']'))
+    ) {
+      try {
+        return toYaml(JSON.parse(trimmed));
+      } catch {
+        return value;
+      }
+    }
+    return value;
+  }
+  return toYaml(value);
+}
+
 function APISchemaPreview({ label, schemaId, appId, schema }: APISchemaPreviewProps) {
   const schemaUrl = buildSchemaUrl(appId, schemaId, schema);
   const [fetchSchema, { data: fetchedSchema, isFetching, isError, error }] = useLazyGetSchemaDocumentQuery();
   const schemaPayload = schema?.embedded ?? fetchedSchema;
+  const [expanded, setExpanded] = useState(false);
   const autoFetchUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (schemaPayload != null || isFetching || autoFetchUrlRef.current === schemaUrl) {
+    if (!expanded || schemaPayload != null || isFetching || autoFetchUrlRef.current === schemaUrl) {
       return;
     }
     autoFetchUrlRef.current = schemaUrl;
     void fetchSchema(schemaUrl);
-  }, [fetchSchema, isFetching, schemaPayload, schemaUrl]);
+  }, [expanded, fetchSchema, isFetching, schemaPayload, schemaUrl]);
+
+  useEffect(() => {
+    if (!expanded) {
+      autoFetchUrlRef.current = null;
+    }
+  }, [expanded]);
 
   return (
-    <div data-part="browser-detail-api-schema">
-      <div data-part="browser-detail-api-schema-header">
+    <details
+      data-part="browser-detail-schema-fold"
+      open={expanded}
+      onToggle={(event) => setExpanded(event.currentTarget.open)}
+    >
+      <summary data-part="browser-detail-schema-fold-summary">
         <span data-part="browser-detail-api-schema-label">{label}</span>
         <span data-part="browser-detail-api-schema-id">
           {schemaId}
           {schema?.format ? ` (${schema.format})` : ''}
         </span>
+      </summary>
+      <div data-part="browser-detail-api-schema">
+        <div data-part="browser-detail-mono">{schemaUrl}</div>
+        {schemaPayload != null ? (
+          <SyntaxHighlight code={toReadableYaml(schemaPayload)} language="yaml" variant="light" maxLines={50} />
+        ) : (
+          <div data-part="browser-detail-placeholder">
+            <button
+              type="button"
+              data-part="apps-folder-refresh"
+              onClick={() => void fetchSchema(schemaUrl)}
+              disabled={isFetching}
+              aria-label={`Fetch schema ${schemaId}`}
+            >
+              {isFetching ? 'Fetching schema...' : 'Fetch schema again'}
+            </button>{' '}
+            from {schemaUrl} to view the full schema as well.
+            {isError && (
+              <div style={{ marginTop: 8, color: '#a00' }}>Schema fetch failed: {formatSchemaFetchError(error)}</div>
+            )}
+          </div>
+        )}
       </div>
-      <div data-part="browser-detail-mono">{schemaUrl}</div>
-      {schemaPayload != null ? (
-        <pre data-part="browser-detail-code">{formatSchemaPayload(schemaPayload)}</pre>
-      ) : (
-        <div data-part="browser-detail-placeholder">
-          <button
-            type="button"
-            data-part="apps-folder-refresh"
-            onClick={() => void fetchSchema(schemaUrl)}
-            disabled={isFetching}
-            aria-label={`Fetch schema ${schemaId}`}
-          >
-            {isFetching ? 'Fetching schema...' : 'Fetch schema again'}
-          </button>{' '}
-          from {schemaUrl} to view the full schema as well.
-          {isError && (
-            <div style={{ marginTop: 8, color: '#a00' }}>Schema fetch failed: {formatSchemaFetchError(error)}</div>
-          )}
-        </div>
-      )}
-    </div>
+    </details>
   );
 }
 
@@ -161,17 +193,6 @@ interface SchemaDetailProps {
   appId: string;
 }
 
-function formatSchemaPayload(value: unknown): string {
-  if (typeof value === 'string') {
-    return value;
-  }
-  try {
-    return JSON.stringify(value, null, 2);
-  } catch {
-    return String(value);
-  }
-}
-
 function formatSchemaFetchError(error: unknown): string {
   if (!error) {
     return 'Unknown error';
@@ -220,7 +241,7 @@ function SchemaDetail({ schema, appId }: SchemaDetailProps) {
           <dd data-part="browser-detail-mono">{schemaUrl}</dd>
         </dl>
         {schemaPayload != null ? (
-          <pre data-part="browser-detail-code">{formatSchemaPayload(schemaPayload)}</pre>
+          <SyntaxHighlight code={toReadableYaml(schemaPayload)} language="yaml" variant="light" maxLines={80} />
         ) : (
           <div data-part="browser-detail-placeholder">
             <button
