@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { createAppStore } from '../../../app/createAppStore';
 import type { CardDefinition, CardStackDefinition } from '../../../cards/types';
 import { chatProfilesSlice } from '../../../chat/state/profileSlice';
-import DEMO_PLUGIN_BUNDLE from './DesktopShell.demo.vm.js?raw';
+import DEMO_PLUGIN_BUNDLE from './fixtures/DesktopShell.demo.vm.js?raw';
 import type { DesktopContribution } from './desktopContributions';
 import {
   useOpenDesktopContextMenu,

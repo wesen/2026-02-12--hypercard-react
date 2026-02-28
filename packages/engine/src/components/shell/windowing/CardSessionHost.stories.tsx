@@ -3,11 +3,11 @@ import { Provider } from 'react-redux';
 import { createAppStore } from '../../../app/createAppStore';
 import type { CardDefinition, CardStackDefinition } from '../../../cards/types';
 import { openWindow } from '../../../desktop/core/state/windowingSlice';
-import CHAT_PLUGIN_BUNDLE from './CardSessionHost.chat.vm.js?raw';
-import LIST_PLUGIN_BUNDLE from './CardSessionHost.list.vm.js?raw';
-import NAV_PLUGIN_BUNDLE from './CardSessionHost.nav.vm.js?raw';
+import CHAT_PLUGIN_BUNDLE from './fixtures/CardSessionHost.chat.vm.js?raw';
+import LIST_PLUGIN_BUNDLE from './fixtures/CardSessionHost.list.vm.js?raw';
+import NAV_PLUGIN_BUNDLE from './fixtures/CardSessionHost.nav.vm.js?raw';
 import { PluginCardSessionHost, type PluginCardSessionHostProps } from './PluginCardSessionHost';
-import REPORT_PLUGIN_BUNDLE from './CardSessionHost.report.vm.js?raw';
+import REPORT_PLUGIN_BUNDLE from './fixtures/CardSessionHost.report.vm.js?raw';
 
 interface PluginCardMeta {
   id: string;
