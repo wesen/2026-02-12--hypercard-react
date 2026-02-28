@@ -23,6 +23,10 @@ const config: StorybookConfig = {
       files: '**/*.stories.@(ts|tsx)',
     },
     {
+      directory: '../apps/arc-agi-player/src',
+      files: '**/*.stories.@(ts|tsx)',
+    },
+    {
       directory: '../packages/engine/src',
       files: '**/*.stories.@(ts|tsx)',
     },
@@ -42,6 +46,7 @@ const config: StorybookConfig = {
       '@hypercard/engine': resolve(__dirname, '../packages/engine/src'),
       '@hypercard/confirm-runtime': resolve(__dirname, '../packages/confirm-runtime/src'),
       '@hypercard/apps-browser': resolve(__dirname, '../apps/apps-browser/src'),
+      '@hypercard/arc-agi-player': resolve(__dirname, '../apps/arc-agi-player/src'),
     };
     return config_;
   },
