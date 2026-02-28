@@ -1,3 +1,4 @@
+import { useLazyGetSchemaDocumentQuery } from '../api/appsApi';
 import { isReflectionUnsupported } from '../domain/selectors';
 import type { AppManifestDocument, ReflectionAPI, ReflectionResult, ReflectionSchemaRef } from '../domain/types';
 
@@ -76,9 +77,47 @@ function APIDetail({ api, appId }: APIDetailProps) {
 
 interface SchemaDetailProps {
   schema: ReflectionSchemaRef;
+  appId: string;
 }
 
-function SchemaDetail({ schema }: SchemaDetailProps) {
+function formatSchemaPayload(value: unknown): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+}
+
+function formatSchemaFetchError(error: unknown): string {
+  if (!error) {
+    return 'Unknown error';
+  }
+  if (typeof error === 'string') {
+    return error;
+  }
+  if (typeof error === 'object') {
+    const withStatus = error as { status?: unknown; data?: unknown; message?: unknown };
+    if (withStatus.status !== undefined) {
+      return `Request failed (${String(withStatus.status)})`;
+    }
+    if (typeof withStatus.message === 'string' && withStatus.message.trim().length > 0) {
+      return withStatus.message;
+    }
+    if (typeof withStatus.data === 'string' && withStatus.data.trim().length > 0) {
+      return withStatus.data;
+    }
+  }
+  return 'Failed to fetch schema';
+}
+
+function SchemaDetail({ schema, appId }: SchemaDetailProps) {
+  const schemaUrl = schema.uri ?? `/api/apps/${appId}/schemas/${encodeURIComponent(schema.id)}`;
+  const [fetchSchema, { data: fetchedSchema, isFetching, isError, error }] = useLazyGetSchemaDocumentQuery();
+  const schemaPayload = schema.embedded ?? fetchedSchema;
+
   return (
     <div data-part="browser-detail">
       <div data-part="browser-detail-header">
@@ -88,14 +127,26 @@ function SchemaDetail({ schema }: SchemaDetailProps) {
       <div data-part="browser-detail-body">
         <dl data-part="browser-detail-fields">
           <dt>uri:</dt>
-          <dd data-part="browser-detail-mono">{schema.uri ?? '\u2014'}</dd>
+          <dd data-part="browser-detail-mono">{schemaUrl}</dd>
         </dl>
-        {schema.embedded ? (
-          <pre data-part="browser-detail-code">
-            {typeof schema.embedded === 'string' ? schema.embedded : JSON.stringify(schema.embedded, null, 2)}
-          </pre>
+        {schemaPayload != null ? (
+          <pre data-part="browser-detail-code">{formatSchemaPayload(schemaPayload)}</pre>
         ) : (
-          <div data-part="browser-detail-placeholder">Fetch from {schema.uri} to view full schema.</div>
+          <div data-part="browser-detail-placeholder">
+            <button
+              type="button"
+              data-part="apps-folder-refresh"
+              onClick={() => void fetchSchema(schemaUrl)}
+              disabled={isFetching}
+              aria-label={`Fetch schema ${schema.id}`}
+            >
+              {isFetching ? 'Fetching schema...' : 'Fetch schema'}
+            </button>{' '}
+            from {schemaUrl} to view the full schema as well.
+            {isError && (
+              <div style={{ marginTop: 8, color: '#a00' }}>Schema fetch failed: {formatSchemaFetchError(error)}</div>
+            )}
+          </div>
         )}
       </div>
     </div>
@@ -137,7 +188,7 @@ export function BrowserDetailPanel({
   }
 
   if (selectedSchema) {
-    return <SchemaDetail schema={selectedSchema} />;
+    return <SchemaDetail schema={selectedSchema} appId={selectedApp.app_id} />;
   }
 
   if (selectedApi && selectedApp) {

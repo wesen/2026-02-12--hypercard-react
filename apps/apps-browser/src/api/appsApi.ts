@@ -26,7 +26,20 @@ export const appsApi = createApi({
         return response as ModuleReflectionDocument;
       },
     }),
+
+    getSchemaDocument: builder.query<unknown, string>({
+      query: (schemaUrl) => ({
+        url: schemaUrl,
+        responseHandler: async (response) => {
+          const contentType = response.headers.get('content-type') ?? '';
+          if (contentType.includes('application/json')) {
+            return response.json();
+          }
+          return response.text();
+        },
+      }),
+    }),
   }),
 });
 
-export const { useGetAppsQuery, useGetReflectionQuery } = appsApi;
+export const { useGetAppsQuery, useGetReflectionQuery, useLazyGetSchemaDocumentQuery } = appsApi;
