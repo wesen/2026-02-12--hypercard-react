@@ -1,0 +1,65 @@
+/* ─── AppsFolderWindow ── */
+[data-part="apps-folder"] {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-family: var(--hc-font-family);
+  font-size: var(--hc-font-size, 11px);
+  color: var(--hc-color-fg, #000);
+  background: var(--hc-color-bg, #fff);
+}
+
+[data-part="apps-folder-toolbar"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  border-bottom: 2px solid var(--hc-color-border, #000);
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+[data-part="apps-folder-status"] {
+  font-size: 10px;
+  color: var(--hc-color-muted, #777);
+}
+[data-part="apps-folder-status"][data-variant="warning"] {
+  color: #a00;
+}
+
+[data-part="apps-folder-refresh"] {
+  font-family: var(--hc-font-family);
+  font-size: 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  padding: 2px 4px;
+  color: var(--hc-color-fg, #000);
+}
+[data-part="apps-folder-refresh"]:hover {
+  background: var(--hc-btn-hover-bg, #eee);
+}
+
+[data-part="apps-folder-grid"] {
+  flex: 1;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 88px);
+  grid-auto-rows: 100px;
+  align-content: start;
+  padding: 12px;
+  gap: 4px;
+}
+
+/* ─── Loading / Error states ── */
+[data-part="apps-folder-message"] {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--hc-color-muted, #777);
+  font-size: 12px;
+}
+[data-part="apps-folder-message"][data-variant="error"] {
+  color: #a00;
+}
