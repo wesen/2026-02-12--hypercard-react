@@ -1,6 +1,7 @@
 import { DocBrowserProvider, useDocBrowser } from './DocBrowserContext';
 import { DocCenterHome } from './DocCenterHome';
 import { DocReaderScreen } from './DocReaderScreen';
+import { DocSearchScreen } from './DocSearchScreen';
 import './DocBrowserWindow.css';
 
 function DocBrowserToolbar() {
@@ -57,7 +58,7 @@ function DocBrowserScreenRouter() {
     case 'home':
       return <DocCenterHome />;
     case 'search':
-      return <PlaceholderScreen label="Search & Filter" detail={location.query ? `query: "${location.query}"` : undefined} />;
+      return <DocSearchScreen initialQuery={location.query} />;
     case 'module-docs':
       return <PlaceholderScreen label="Module Docs" detail={location.moduleId} />;
     case 'reader':

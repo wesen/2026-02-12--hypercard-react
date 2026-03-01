@@ -1,6 +1,9 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import type { ComponentPropsWithoutRef } from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
+import 'highlight.js/styles/github.css';
 import { useGetAppsQuery, useGetModuleDocQuery, useGetModuleDocsQuery } from '../../api/appsApi';
 import type { ModuleDocDocument } from '../../domain/types';
 import { useDocBrowser } from './DocBrowserContext';
@@ -9,6 +12,48 @@ interface DocReaderScreenProps {
   moduleId: string;
   slug: string;
 }
+
+function CodeBlock({ children, ...props }: ComponentPropsWithoutRef<'pre'>) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(() => {
+    // Extract text content from the pre element's children
+    const text = extractText(children);
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [children]);
+
+  return (
+    <div data-part="doc-code-block">
+      <pre {...props}>{children}</pre>
+      <button
+        type="button"
+        data-part="doc-code-copy"
+        onClick={handleCopy}
+        aria-label="Copy code"
+        title="Copy to clipboard"
+      >
+        {copied ? '\u2713' : '\u2398'}
+      </button>
+    </div>
+  );
+}
+
+function extractText(node: unknown): string {
+  if (typeof node === 'string') return node;
+  if (Array.isArray(node)) return node.map(extractText).join('');
+  if (node && typeof node === 'object' && 'props' in node) {
+    const element = node as { props?: { children?: unknown } };
+    return extractText(element.props?.children);
+  }
+  return '';
+}
+
+const markdownComponents = {
+  pre: CodeBlock,
+};
 
 function parseSeeAlso(ref: string): { moduleId: string; slug: string } {
   const parts = ref.split('/');
@@ -185,7 +230,13 @@ export function DocReaderScreen({ moduleId, slug }: DocReaderScreenProps) {
       <MetadataBar moduleId={moduleId} doc={displayDoc} />
 
       <div data-part="doc-content">
-        <Markdown remarkPlugins={[remarkGfm]}>{displayDoc.content ?? ''}</Markdown>
+        <Markdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeHighlight]}
+          components={markdownComponents}
+        >
+          {displayDoc.content ?? ''}
+        </Markdown>
       </div>
 
       {displayDoc.see_also && displayDoc.see_also.length > 0 && (
