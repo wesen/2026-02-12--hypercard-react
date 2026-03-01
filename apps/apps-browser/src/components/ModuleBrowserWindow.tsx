@@ -16,6 +16,9 @@ import './ModuleBrowserWindow.css';
 
 export interface ModuleBrowserWindowProps {
   initialAppId?: string;
+  onOpenDocs?: (moduleId?: string) => void;
+  onOpenDocsCenter?: () => void;
+  onOpenDoc?: (moduleId: string, slug: string, newWindow?: boolean) => void;
 }
 
 function ReflectionLoader({
@@ -41,6 +44,12 @@ function buildAppContextActions(app: AppManifestDocument): DesktopActionEntry[] 
       id: `apps-browser.module-browser.get-info.${app.app_id}`,
       label: 'Get Info',
       commandId: 'apps-browser.get-info',
+      payload: { appId: app.app_id, appName: app.name },
+    },
+    {
+      id: `apps-browser.module-browser.open-docs.${app.app_id}`,
+      label: 'View Documentation',
+      commandId: 'apps-browser.open-docs',
       payload: { appId: app.app_id, appName: app.name },
     },
     { separator: true },
@@ -75,7 +84,7 @@ function ModuleContextRegistration({ app, windowId }: { app: AppManifestDocument
   return null;
 }
 
-export function ModuleBrowserWindow({ initialAppId }: ModuleBrowserWindowProps) {
+export function ModuleBrowserWindow({ initialAppId, onOpenDocs, onOpenDocsCenter, onOpenDoc }: ModuleBrowserWindowProps) {
   const { data: apps, refetch } = useGetAppsQuery();
   const sorted = useMemo(() => sortApps(apps ?? []), [apps]);
   const openContextMenu = useOpenDesktopContextMenu();
@@ -160,6 +169,7 @@ export function ModuleBrowserWindow({ initialAppId }: ModuleBrowserWindowProps) 
           selectedSchema={selectedSchema}
           reflection={reflection}
           reflectionLoading={reflectionLoading}
+          onOpenDoc={onOpenDoc}
         />
       </>
     );
@@ -171,6 +181,29 @@ export function ModuleBrowserWindow({ initialAppId }: ModuleBrowserWindowProps) 
         <ModuleContextRegistration key={app.app_id} app={app} windowId={windowId} />
       ))}
       <div data-part="module-browser-toolbar">
+        <div data-part="module-browser-toolbar-actions">
+          {onOpenDocsCenter && (
+            <button
+              type="button"
+              data-part="module-browser-docs-btn"
+              onClick={onOpenDocsCenter}
+              aria-label="Open Documentation Center"
+            >
+              Doc Center
+            </button>
+          )}
+          {onOpenDocs && (
+            <button
+              type="button"
+              data-part="module-browser-docs-btn"
+              onClick={() => onOpenDocs(selectedAppId)}
+              disabled={!selectedAppId}
+              aria-label="Open selected module docs"
+            >
+              Module Docs
+            </button>
+          )}
+        </div>
         <button type="button" data-part="apps-folder-refresh" onClick={() => refetch()} aria-label="Refresh">
           &#x27F3;
         </button>

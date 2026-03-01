@@ -27,6 +27,25 @@
   color: #a00;
 }
 
+[data-part="apps-folder-toolbar-actions"] {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+[data-part="apps-folder-docs-center"] {
+  font-family: var(--hc-font-family);
+  font-size: 10px;
+  background: transparent;
+  border: 1px solid var(--hc-color-border, #000);
+  cursor: pointer;
+  padding: 2px 8px;
+  color: var(--hc-color-fg, #000);
+}
+[data-part="apps-folder-docs-center"]:hover {
+  background: var(--hc-btn-hover-bg, #eee);
+}
+
 [data-part="apps-folder-refresh"] {
   font-family: var(--hc-font-family);
   font-size: 14px;

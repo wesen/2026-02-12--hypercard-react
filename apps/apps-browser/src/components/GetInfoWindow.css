@@ -111,6 +111,29 @@
   background: #fff0f0;
 }
 
+[data-part="get-info-docs-error"] {
+  color: #a00;
+  font-size: 10px;
+  padding: 4px 8px;
+  border: 1px solid #a00;
+  background: #fff0f0;
+}
+
+/* ─── Doc link button (replaces <a> when onOpenDoc is provided) ── */
+[data-part="get-info-doc-link"] {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: monospace;
+  font-size: 10px;
+  color: var(--hc-color-fg, #000);
+  text-decoration: underline;
+  cursor: pointer;
+}
+[data-part="get-info-doc-link"]:hover {
+  color: var(--hc-color-muted, #777);
+}
+
 /* ─── Footer ── */
 [data-part="get-info-footer"] {
   display: flex;
