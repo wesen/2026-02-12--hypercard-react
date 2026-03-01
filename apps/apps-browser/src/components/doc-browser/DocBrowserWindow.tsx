@@ -1,4 +1,4 @@
-import { DocBrowserProvider, useDocBrowser } from './DocBrowserContext';
+import { DocBrowserProvider, useDocBrowser, type DocBrowserMode } from './DocBrowserContext';
 import { DocCenterHome } from './DocCenterHome';
 import { DocReaderScreen } from './DocReaderScreen';
 import { DocSearchScreen } from './DocSearchScreen';
@@ -91,6 +91,7 @@ function DocBrowserScreenRouter() {
 }
 
 export interface DocBrowserWindowProps {
+  mode?: DocBrowserMode;
   initialScreen?: 'home' | 'search' | 'module-docs' | 'reader' | 'topic-browser';
   initialModuleId?: string;
   initialSlug?: string;
@@ -160,6 +161,7 @@ function DocLinkContextMenu() {
 }
 
 export function DocBrowserWindow({
+  mode,
   initialScreen: screen,
   initialModuleId,
   initialSlug,
@@ -180,7 +182,7 @@ export function DocBrowserWindow({
   };
 
   return (
-    <DocBrowserProvider initialScreen={resolvedScreen} initialParams={initialParams} onOpenDocNewWindow={onOpenDocNewWindow}>
+    <DocBrowserProvider mode={mode} initialScreen={resolvedScreen} initialParams={initialParams} onOpenDocNewWindow={onOpenDocNewWindow}>
       <div data-part="doc-browser">
         <DocBrowserToolbar />
         <div data-part="doc-browser-content">

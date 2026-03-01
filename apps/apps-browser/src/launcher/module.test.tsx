@@ -108,7 +108,7 @@ describe('apps-browser docs command routing', () => {
     expect(outcome).toBe('handled');
     expect(hostContext.openWindow).toHaveBeenCalledWith(
       expect.objectContaining({
-        content: expect.objectContaining({ appKey: 'apps-browser:docs:module:inventory' }),
+        content: expect.objectContaining({ appKey: 'apps-browser:docs:apps:module:inventory' }),
       }),
     );
   });
@@ -126,7 +126,7 @@ describe('apps-browser docs command routing', () => {
     expect(hostContext.openWindow).toHaveBeenCalledWith(
       expect.objectContaining({
         content: expect.objectContaining({
-          appKey: 'apps-browser:docs:doc:arc-agi:session%20lifecycle',
+          appKey: 'apps-browser:docs:apps:doc:arc-agi:session%20lifecycle',
         }),
       }),
     );
@@ -144,7 +144,7 @@ describe('apps-browser docs command routing', () => {
     expect(outcome).toBe('handled');
     expect(hostContext.openWindow).toHaveBeenCalledWith(
       expect.objectContaining({
-        content: expect.objectContaining({ appKey: 'apps-browser:docs:search' }),
+        content: expect.objectContaining({ appKey: 'apps-browser:docs:apps:search' }),
       }),
     );
   });

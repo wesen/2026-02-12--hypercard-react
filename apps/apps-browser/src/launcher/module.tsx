@@ -4,6 +4,7 @@ import type {
   DesktopCommandHandler,
   DesktopCommandInvocation,
   DesktopContribution,
+  DesktopMenuSection,
   WindowContentAdapter,
 } from '@hypercard/engine/desktop-react';
 import { type ReactNode, useRef } from 'react';
@@ -11,6 +12,7 @@ import { Provider } from 'react-redux';
 import { createAppsBrowserStore } from '../app/store';
 import { AppsFolderWindow } from '../components/AppsFolderWindow';
 import { DocBrowserWindow } from '../components/doc-browser/DocBrowserWindow';
+import type { DocBrowserMode } from '../components/doc-browser/DocBrowserContext';
 import { GetInfoWindowByAppId } from '../components/GetInfoWindowByAppId';
 import { HealthDashboardWindow } from '../components/HealthDashboardWindow';
 import { ModuleBrowserWindow } from '../components/ModuleBrowserWindow';
@@ -27,10 +29,13 @@ const COMMAND_OPEN_HEALTH = 'apps-browser.open-health';
 const COMMAND_OPEN_DOCS = 'apps-browser.open-docs';
 const COMMAND_OPEN_DOC_PAGE = 'apps-browser.open-doc-page';
 const COMMAND_SEARCH_DOCS = 'apps-browser.search-docs';
+const COMMAND_OPEN_HELP = 'apps-browser.open-help';
 const DOC_ROUTE_HOME = 'home';
 const DOC_ROUTE_SEARCH = 'search';
 const DOC_ROUTE_MODULE = 'module';
 const DOC_ROUTE_DOC = 'doc';
+const DOC_MODE_APPS = 'apps';
+const DOC_MODE_HELP = 'help';
 
 function buildFolderWindowPayload(reason: LaunchReason): OpenWindowPayload {
   return {
@@ -68,48 +73,70 @@ export function buildHealthWindowPayload(): OpenWindowPayload {
 let docWindowCounter = 0;
 
 export function buildDocBrowserWindowPayload(opts?: {
+  mode?: DocBrowserMode;
   screen?: 'home' | 'search';
   moduleId?: string;
   slug?: string;
   query?: string;
   newWindow?: boolean;
 }): OpenWindowPayload {
+  const mode: DocBrowserMode = opts?.mode ?? DOC_MODE_APPS;
   const moduleId = asNonEmptyString(opts?.moduleId);
   const slug = asNonEmptyString(opts?.slug);
   const query = asNonEmptyString(opts?.query);
-  const suffix = moduleId
-    ? slug
-      ? `${DOC_ROUTE_DOC}:${encodeDocRoutePart(moduleId)}:${encodeDocRoutePart(slug)}`
-      : `${DOC_ROUTE_MODULE}:${encodeDocRoutePart(moduleId)}`
-    : opts?.screen === 'search' || opts?.query !== undefined
-      ? query
-        ? `${DOC_ROUTE_SEARCH}:${encodeDocRoutePart(query)}`
-        : DOC_ROUTE_SEARCH
-      : DOC_ROUTE_HOME;
+
+  // Build the route part (without mode prefix)
+  let routePart: string;
+  if (mode === DOC_MODE_HELP) {
+    // Help mode: help:home, help:search:<query>, help:doc:<slug>
+    if (slug) {
+      routePart = `${DOC_ROUTE_DOC}:${encodeDocRoutePart(slug)}`;
+    } else if (opts?.screen === 'search' || opts?.query !== undefined) {
+      routePart = query ? `${DOC_ROUTE_SEARCH}:${encodeDocRoutePart(query)}` : DOC_ROUTE_SEARCH;
+    } else {
+      routePart = DOC_ROUTE_HOME;
+    }
+  } else {
+    // Apps mode: apps:home, apps:search:<query>, apps:module:<id>, apps:doc:<id>:<slug>
+    if (moduleId) {
+      routePart = slug
+        ? `${DOC_ROUTE_DOC}:${encodeDocRoutePart(moduleId)}:${encodeDocRoutePart(slug)}`
+        : `${DOC_ROUTE_MODULE}:${encodeDocRoutePart(moduleId)}`;
+    } else if (opts?.screen === 'search' || opts?.query !== undefined) {
+      routePart = query ? `${DOC_ROUTE_SEARCH}:${encodeDocRoutePart(query)}` : DOC_ROUTE_SEARCH;
+    } else {
+      routePart = DOC_ROUTE_HOME;
+    }
+  }
+
+  const suffix = `${mode}:${routePart}`;
+  const title = mode === DOC_MODE_HELP ? 'Help' : 'Documentation';
+  const dedupeBase = mode === DOC_MODE_HELP ? 'apps-browser:help' : 'apps-browser:docs';
+
   if (opts?.newWindow) {
     const counter = ++docWindowCounter;
     return {
-      id: `window:apps-browser:docs:new-${counter}:${suffix}`,
-      title: 'Documentation',
+      id: `window:${dedupeBase}:new-${counter}:${routePart}`,
+      title,
       icon: '\uD83D\uDCD6',
       bounds: { x: 160 + (counter % 5) * 20, y: 60 + (counter % 5) * 20, w: 700, h: 520 },
       content: {
         kind: APP_CONTENT_KIND,
         appKey: `${APP_KEY_DOCS_PREFIX}${suffix}`,
       },
-      dedupeKey: `apps-browser:docs:new-${counter}`,
+      dedupeKey: `${dedupeBase}:new-${counter}`,
     };
   }
   return {
-    id: `window:apps-browser:docs:${suffix}`,
-    title: 'Documentation',
+    id: `window:${dedupeBase}:${routePart}`,
+    title,
     icon: '\uD83D\uDCD6',
     bounds: { x: 160, y: 60, w: 700, h: 520 },
     content: {
       kind: APP_CONTENT_KIND,
       appKey: `${APP_KEY_DOCS_PREFIX}${suffix}`,
     },
-    dedupeKey: 'apps-browser:docs',
+    dedupeKey: dedupeBase,
   };
 }
 
@@ -174,7 +201,7 @@ function createAppsBrowserAdapter(hostContext: LauncherHostContext): WindowConte
           <DocBrowserWindow
             {...parsed}
             onOpenDocNewWindow={(moduleId, slug) =>
-              hostContext.openWindow(buildDocBrowserWindowPayload({ moduleId, slug, newWindow: true }))
+              hostContext.openWindow(buildDocBrowserWindowPayload({ mode: parsed.mode, moduleId, slug, newWindow: true }))
             }
           />
         );
@@ -229,6 +256,7 @@ function decodeDocRoutePart(value: string | undefined): string | undefined {
 }
 
 function parseDocBrowserSuffix(suffix: string): {
+  mode?: DocBrowserMode;
   initialScreen?: 'home' | 'search' | 'module-docs' | 'reader' | 'topic-browser';
   initialModuleId?: string;
   initialSlug?: string;
@@ -237,35 +265,63 @@ function parseDocBrowserSuffix(suffix: string): {
   if (!suffix || suffix === DOC_ROUTE_HOME) {
     return {};
   }
+
   const parts = suffix.split(':');
-  const route = parts[0];
-  if (route === DOC_ROUTE_SEARCH) {
-    const query = decodeDocRoutePart(parts.slice(1).join(':'));
-    return {
-      initialScreen: 'search',
-      initialQuery: query,
-    };
+  const firstToken = parts[0];
+
+  // Check if first token is a mode prefix
+  let mode: DocBrowserMode | undefined;
+  let routeParts: string[];
+  if (firstToken === DOC_MODE_APPS || firstToken === DOC_MODE_HELP) {
+    mode = firstToken;
+    routeParts = parts.slice(1);
+  } else {
+    // Backwards compatibility: no mode prefix defaults to apps
+    mode = undefined;
+    routeParts = parts;
   }
-  if (route === DOC_ROUTE_MODULE) {
-    const moduleId = decodeDocRoutePart(parts[1]);
-    if (!moduleId) {
-      return {};
+
+  const route = routeParts[0];
+  if (!route || route === DOC_ROUTE_HOME) {
+    return { mode };
+  }
+
+  if (route === DOC_ROUTE_SEARCH) {
+    const query = decodeDocRoutePart(routeParts.slice(1).join(':'));
+    return { mode, initialScreen: 'search', initialQuery: query };
+  }
+
+  if (mode === DOC_MODE_HELP) {
+    // Help mode: help:doc:<slug> (no moduleId)
+    if (route === DOC_ROUTE_DOC) {
+      const slug = decodeDocRoutePart(routeParts.slice(1).join(':'));
+      if (!slug) {
+        return { mode };
+      }
+      return { mode, initialModuleId: 'wesen-os', initialSlug: slug };
     }
-    return {
-      initialModuleId: moduleId,
-    };
+    return { mode };
+  }
+
+  // Apps mode routes
+  if (route === DOC_ROUTE_MODULE) {
+    const moduleId = decodeDocRoutePart(routeParts[1]);
+    if (!moduleId) {
+      return { mode };
+    }
+    return { mode, initialModuleId: moduleId };
   }
   if (route === DOC_ROUTE_DOC) {
-    const moduleId = decodeDocRoutePart(parts[1]);
-    const slug = decodeDocRoutePart(parts.slice(2).join(':'));
+    const moduleId = decodeDocRoutePart(routeParts[1]);
+    const slug = decodeDocRoutePart(routeParts.slice(2).join(':'));
     if (!moduleId) {
-      return {};
+      return { mode };
     }
     return slug
-      ? { initialModuleId: moduleId, initialSlug: slug }
-      : { initialModuleId: moduleId };
+      ? { mode, initialModuleId: moduleId, initialSlug: slug }
+      : { mode, initialModuleId: moduleId };
   }
-  return {};
+  return { mode };
 }
 
 function resolveAppFromInvocation(invocation: DesktopCommandInvocation): { appId?: string; appName?: string } {
@@ -289,7 +345,8 @@ function createAppsBrowserCommandHandler(hostContext: LauncherHostContext): Desk
       commandId === COMMAND_OPEN_HEALTH ||
       commandId === COMMAND_OPEN_DOCS ||
       commandId === COMMAND_OPEN_DOC_PAGE ||
-      commandId === COMMAND_SEARCH_DOCS,
+      commandId === COMMAND_SEARCH_DOCS ||
+      commandId === COMMAND_OPEN_HELP,
     run: (commandId, _ctx, invocation) => {
       const { appId, appName } = resolveAppFromInvocation(invocation);
       const payload = invocation.payload ?? {};
@@ -306,20 +363,24 @@ function createAppsBrowserCommandHandler(hostContext: LauncherHostContext): Desk
         return 'handled';
       }
       if (commandId === COMMAND_OPEN_DOCS) {
-        hostContext.openWindow(buildDocBrowserWindowPayload(appId ? { moduleId: appId } : undefined));
+        hostContext.openWindow(buildDocBrowserWindowPayload({ mode: 'apps', ...(appId ? { moduleId: appId } : {}) }));
         return 'handled';
       }
       if (commandId === COMMAND_OPEN_DOC_PAGE) {
         const slug = asNonEmptyString(payload.slug);
         if (appId && slug) {
-          hostContext.openWindow(buildDocBrowserWindowPayload({ moduleId: appId, slug }));
+          hostContext.openWindow(buildDocBrowserWindowPayload({ mode: 'apps', moduleId: appId, slug }));
           return 'handled';
         }
         return 'pass';
       }
       if (commandId === COMMAND_SEARCH_DOCS) {
         const query = asNonEmptyString(payload.query);
-        hostContext.openWindow(buildDocBrowserWindowPayload({ screen: 'search', query }));
+        hostContext.openWindow(buildDocBrowserWindowPayload({ mode: 'apps', screen: 'search', query }));
+        return 'handled';
+      }
+      if (commandId === COMMAND_OPEN_HELP) {
+        hostContext.openWindow(buildDocBrowserWindowPayload({ mode: 'help' }));
         return 'handled';
       }
       return 'pass';
@@ -351,6 +412,17 @@ export const appsBrowserLauncherModule: LaunchableAppModule = {
   createContributions: (hostContext): DesktopContribution[] => [
     {
       id: 'apps-browser.desktop-contributions',
+      menus: [
+        {
+          id: 'help',
+          label: 'Help',
+          items: [
+            { id: 'general-help', label: 'General Help', commandId: COMMAND_OPEN_HELP },
+            { separator: true },
+            { id: 'apps-docs', label: 'Apps Documentation Browser', commandId: COMMAND_OPEN_DOCS },
+          ],
+        } satisfies DesktopMenuSection,
+      ],
       windowContentAdapters: [createAppsBrowserAdapter(hostContext)],
       commands: [createAppsBrowserCommandHandler(hostContext)],
     },

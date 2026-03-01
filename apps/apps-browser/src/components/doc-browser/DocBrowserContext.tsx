@@ -2,6 +2,8 @@ import { createContext, useCallback, useContext, useMemo, useReducer, useState }
 import type { ReactNode } from 'react';
 import type { DocLinkTarget } from './docLinkInteraction';
 
+export type DocBrowserMode = 'apps' | 'help';
+
 export type DocBrowserScreen = 'home' | 'search' | 'module-docs' | 'reader' | 'topic-browser';
 
 export interface DocBrowserLocation {
@@ -46,6 +48,7 @@ export interface DocLinkMenuState {
 }
 
 interface DocBrowserContextValue {
+  mode: DocBrowserMode;
   location: DocBrowserLocation;
   canGoBack: boolean;
   navigateTo: (screen: DocBrowserScreen, params?: Omit<DocBrowserLocation, 'screen'>) => void;
@@ -72,13 +75,14 @@ export function useDocBrowser(): DocBrowserContextValue {
 }
 
 export interface DocBrowserProviderProps {
+  mode?: DocBrowserMode;
   initialScreen?: DocBrowserScreen;
   initialParams?: Omit<DocBrowserLocation, 'screen'>;
   onOpenDocNewWindow?: (moduleId: string, slug: string) => void;
   children: ReactNode;
 }
 
-export function DocBrowserProvider({ initialScreen = 'home', initialParams, onOpenDocNewWindow, children }: DocBrowserProviderProps) {
+export function DocBrowserProvider({ mode = 'apps', initialScreen = 'home', initialParams, onOpenDocNewWindow, children }: DocBrowserProviderProps) {
   const [state, dispatch] = useReducer(docBrowserReducer, {
     current: { screen: initialScreen, ...initialParams },
     history: [],
@@ -139,6 +143,7 @@ export function DocBrowserProvider({ initialScreen = 'home', initialParams, onOp
 
   const value = useMemo<DocBrowserContextValue>(
     () => ({
+      mode,
       location: state.current,
       canGoBack: state.history.length > 0,
       navigateTo,
@@ -153,7 +158,7 @@ export function DocBrowserProvider({ initialScreen = 'home', initialParams, onOp
       showDocLinkMenu,
       closeDocLinkMenu,
     }),
-    [state.current, state.history.length, navigateTo, goBack, goHome, openSearch, openModuleDocs, openDoc, openTopicBrowser, onOpenDocNewWindow, docLinkMenu, showDocLinkMenu, closeDocLinkMenu],
+    [mode, state.current, state.history.length, navigateTo, goBack, goHome, openSearch, openModuleDocs, openDoc, openTopicBrowser, onOpenDocNewWindow, docLinkMenu, showDocLinkMenu, closeDocLinkMenu],
   );
 
   return <DocBrowserContext.Provider value={value}>{children}</DocBrowserContext.Provider>;
