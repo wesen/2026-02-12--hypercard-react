@@ -1,6 +1,6 @@
 import { type LaunchableAppModule, type LaunchReason } from '@hypercard/desktop-os';
 import type { OpenWindowPayload } from '@hypercard/engine/desktop-core';
-import { PluginCardSessionHost } from '@hypercard/engine/desktop-hypercard-adapter';
+import { PluginCardSessionHost } from '@hypercard/hypercard-runtime';
 import { type DesktopContribution, type WindowContentAdapter } from '@hypercard/engine/desktop-react';
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { type ReactNode, useRef } from 'react';

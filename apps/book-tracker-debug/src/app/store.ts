@@ -1,4 +1,4 @@
-import { createAppStore } from '@hypercard/engine';
+import { createAppStore } from '@hypercard/hypercard-runtime';
 import { booksReducer } from '../features/books/booksSlice';
 
 export const { store, createStore: createBookStore } = createAppStore({

@@ -1,4 +1,4 @@
-import { type CreateAppStoreOptions, createAppStore } from '@hypercard/engine';
+import { type CreateAppStoreOptions, createAppStore } from '@hypercard/hypercard-runtime';
 import type { Reducer } from '@reduxjs/toolkit';
 import type { AppStateKey } from '../contracts/appManifest';
 import type { LaunchableAppModule } from '../contracts/launchableAppModule';

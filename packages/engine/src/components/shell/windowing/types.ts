@@ -27,7 +27,7 @@ export interface DesktopActionSection {
 
 export type DesktopCommandSource = 'menu' | 'context-menu' | 'icon' | 'programmatic';
 
-export type ContextTargetKind = 'window' | 'icon' | 'widget' | 'message' | 'conversation';
+export type ContextTargetKind = 'window' | 'icon' | 'widget' | (string & {});
 export type DesktopIconKind = 'app' | 'folder';
 
 export interface DesktopActionVisibilityContext {
@@ -36,6 +36,16 @@ export interface DesktopActionVisibilityContext {
   roles?: string[];
   target?: DesktopContextTargetRef;
 }
+
+export interface DesktopVisibilityContextResolverArgs {
+  state: unknown;
+  target: DesktopContextTargetRef;
+  invocation?: DesktopCommandInvocation;
+}
+
+export type DesktopVisibilityContextResolver = (
+  args: DesktopVisibilityContextResolverArgs,
+) => DesktopActionVisibilityContext;
 
 export interface DesktopActionVisibility {
   /**

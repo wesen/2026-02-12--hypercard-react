@@ -4,7 +4,6 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const APP_STORY_FILES = [
-  'apps/inventory/src/app/stories/FullApp.stories.tsx',
   'apps/todo/src/app/stories/TodoApp.stories.tsx',
   'apps/crm/src/app/stories/CrmApp.stories.tsx',
   'apps/book-tracker-debug/src/app/stories/BookTrackerDebugApp.stories.tsx',

@@ -16,7 +16,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@hypercard/engine": "workspace:*"
+    "@hypercard/engine": "workspace:*",
+    "@hypercard/hypercard-runtime": "workspace:*"
   },
   "peerDependencies": {
     "@reduxjs/toolkit": "^2.0.0",

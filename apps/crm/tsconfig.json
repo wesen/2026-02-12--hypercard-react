@@ -10,10 +10,17 @@
     "outDir": "dist",
     "rootDir": "src",
     "paths": {
+      "@hypercard/chat-runtime": ["../../packages/chat-runtime/src"],
       "@hypercard/desktop-os": ["../../packages/desktop-os/src"],
-      "@hypercard/engine": ["../../packages/engine/src"]
+      "@hypercard/engine": ["../../packages/engine/src"],
+      "@hypercard/hypercard-runtime": ["../../packages/hypercard-runtime/src"]
     }
   },
   "include": ["src"],
-  "references": [{ "path": "../../packages/desktop-os" }, { "path": "../../packages/engine" }]
+  "references": [
+    { "path": "../../packages/chat-runtime" },
+    { "path": "../../packages/desktop-os" },
+    { "path": "../../packages/engine" },
+    { "path": "../../packages/hypercard-runtime" }
+  ]
 }

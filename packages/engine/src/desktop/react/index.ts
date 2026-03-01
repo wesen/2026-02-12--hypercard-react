@@ -1,4 +1,3 @@
-export { ChatSidebar, type ChatSidebarProps } from '../../components/shell/ChatSidebar';
 export { RuntimeDebugPane, type RuntimeDebugPaneProps } from '../../components/shell/RuntimeDebugPane';
 export {
   DesktopIconLayer,
@@ -30,9 +29,7 @@ export {
   useDesktopWindowId,
   useOpenDesktopContextMenu,
   useRegisterContextActions,
-  useRegisterConversationContextActions,
   useRegisterIconContextActions,
-  useRegisterMessageContextActions,
   useRegisterWidgetContextActions,
   useRegisterWindowContextActions,
   useRegisterWindowMenuSections,
@@ -74,6 +71,8 @@ export type {
   DesktopActionSection,
   DesktopActionVisibility,
   DesktopActionVisibilityContext,
+  DesktopVisibilityContextResolver,
+  DesktopVisibilityContextResolverArgs,
   DesktopContextMenuOpenRequest,
   DesktopCommandInvocation,
   DesktopCommandSource,

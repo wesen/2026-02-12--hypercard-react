@@ -2,12 +2,14 @@
   "files": [],
   "references": [
     { "path": "packages/engine" },
+    { "path": "packages/chat-runtime" },
+    { "path": "packages/hypercard-runtime" },
     { "path": "packages/confirm-runtime" },
     { "path": "packages/desktop-os" },
-    { "path": "apps/inventory" },
     { "path": "apps/book-tracker-debug" },
     { "path": "apps/todo" },
     { "path": "apps/crm" },
-    { "path": "apps/os-launcher" }
+    { "path": "apps/apps-browser" },
+    { "path": "apps/hypercard-tools" }
   ]
 }

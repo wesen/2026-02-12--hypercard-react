@@ -1,9 +1,14 @@
 import type { Preview } from '@storybook/react';
 import React from 'react';
+import { initialize, mswLoader } from 'msw-storybook-addon';
 import { HyperCardTheme } from '@hypercard/engine';
 import '@hypercard/engine/theme';
+import '@hypercard/chat-runtime/theme';
+
+initialize();
 
 const preview: Preview = {
+  loaders: [mswLoader],
   decorators: [(Story) => React.createElement(HyperCardTheme, null, React.createElement(Story))],
   parameters: {
     docs: {
@@ -19,7 +24,7 @@ const preview: Preview = {
       storySort: {
         order: [
           'Apps',
-          ['Inventory', 'Todo', 'Crm', 'BookTrackerDebug'],
+          ['Inventory', 'Todo', 'Crm', 'AppsBrowser', 'BookTrackerDebug'],
           'Engine',
           ['Shell', 'Widgets', 'PluginRuntime'],
         ],

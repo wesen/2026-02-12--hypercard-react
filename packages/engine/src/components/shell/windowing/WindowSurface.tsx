@@ -55,6 +55,7 @@ function WindowSurfaceBase({
         onFocusWindow?.(window.id);
       }}
       onContextMenu={(event) => {
+        if (event.defaultPrevented) return;
         event.preventDefault();
         onFocusWindow?.(window.id);
         onWindowContextMenu?.(window.id, event, 'surface');

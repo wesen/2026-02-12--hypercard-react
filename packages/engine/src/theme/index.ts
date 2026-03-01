@@ -3,7 +3,6 @@
 import './desktop/tokens.css';
 import './desktop/shell.css';
 import './desktop/primitives.css';
-import './desktop/chat.css';
 import './desktop/syntax.css';
 import './desktop/animations.css';
 

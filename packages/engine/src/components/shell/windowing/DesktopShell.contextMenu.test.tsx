@@ -1,15 +1,28 @@
 // @vitest-environment jsdom
-import { act } from 'react';
+import { act, type MouseEvent, useMemo } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { configureStore } from '@reduxjs/toolkit';
 import { Provider } from 'react-redux';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { createAppStore } from '../../../app/createAppStore';
 import type { CardStackDefinition } from '../../../cards/types';
-import { MessageRenderer } from '../../../chat/renderers/builtin/MessageRenderer';
+import { debugReducer } from '../../../debug/debugSlice';
 import { focusWindow, openWindow } from '../../../desktop/core/state/windowingSlice';
+import { windowingReducer } from '../../../desktop/core/state/windowingSlice';
+import { notificationsReducer } from '../../../features/notifications/notificationsSlice';
 import { DesktopShell } from './DesktopShell';
-import { useRegisterWindowContextActions, useRegisterWindowMenuSections } from './desktopMenuRuntime';
-import type { DesktopActionEntry, DesktopActionSection } from './types';
+import {
+  useDesktopWindowId,
+  useOpenDesktopContextMenu,
+  useRegisterContextActions,
+  useRegisterWindowContextActions,
+  useRegisterWindowMenuSections,
+} from './desktopMenuRuntime';
+import type {
+  DesktopActionEntry,
+  DesktopActionSection,
+  DesktopContextTargetRef,
+  DesktopVisibilityContextResolver,
+} from './types';
 
 const roots: Root[] = [];
 const containers: HTMLElement[] = [];
@@ -49,6 +62,28 @@ const APP_MENU_SECTIONS: DesktopActionSection[] = [
   },
 ];
 
+const POLICY_CONTEXT_ACTIONS: DesktopActionEntry[] = [
+  {
+    id: 'admin-export',
+    label: 'Admin Export',
+    commandId: 'runtime.admin.export',
+    visibility: {
+      allowedRoles: ['admin'],
+      unauthorized: 'hide',
+    },
+  },
+];
+
+function createTestStore() {
+  return configureStore({
+    reducer: {
+      windowing: windowingReducer,
+      notifications: notificationsReducer,
+      debug: debugReducer,
+    },
+  });
+}
+
 function RuntimeWindow() {
   useRegisterWindowContextActions(APP_CONTEXT_ACTIONS);
   return (
@@ -67,22 +102,96 @@ function RuntimeMenuWindow() {
   );
 }
 
-function RuntimeMessageWindow() {
+function RuntimePolicyWindow() {
+  useRegisterWindowContextActions(POLICY_CONTEXT_ACTIONS);
   return (
     <section style={{ padding: 8 }}>
-      <MessageRenderer
-        e={{
-          id: 'msg-runtime-1',
-          kind: 'message',
-          createdAt: Date.now(),
-          props: {
-            role: 'assistant',
-            content: 'Runtime message payload',
-            streaming: false,
-          },
-        }}
-        ctx={{ mode: 'normal', convId: 'conv-runtime' }}
-      />
+      <strong>Runtime Policy Window</strong>
+    </section>
+  );
+}
+
+function RuntimeMessageWindow() {
+  const runtimeWindowId = useDesktopWindowId();
+  const openContextMenu = useOpenDesktopContextMenu();
+  const messageTarget: DesktopContextTargetRef = useMemo(
+    () => ({
+      kind: 'message',
+      conversationId: 'conv-runtime',
+      messageId: 'msg-runtime-1',
+      windowId: runtimeWindowId ?? undefined,
+    }),
+    [runtimeWindowId],
+  );
+  const messageContextActions: DesktopActionEntry[] = useMemo(
+    () => [
+      {
+        id: 'chat-message.reply.msg-runtime-1',
+        label: 'Reply',
+        commandId: 'chat.message.reply',
+        payload: {
+          conversationId: 'conv-runtime',
+          messageId: 'msg-runtime-1',
+          role: 'assistant',
+          content: 'Runtime message payload',
+        },
+      },
+      {
+        id: 'chat-message.copy.msg-runtime-1',
+        label: 'Copy',
+        commandId: 'clipboard.copy-text',
+        payload: {
+          conversationId: 'conv-runtime',
+          messageId: 'msg-runtime-1',
+          role: 'assistant',
+          content: 'Runtime message payload',
+          text: 'Runtime message payload',
+        },
+      },
+      {
+        id: 'chat-message.create-task.msg-runtime-1',
+        label: 'Create Task',
+        commandId: 'chat.message.create-task',
+        payload: {
+          conversationId: 'conv-runtime',
+          messageId: 'msg-runtime-1',
+          role: 'assistant',
+          content: 'Runtime message payload',
+        },
+      },
+      {
+        id: 'chat-message.debug-event.msg-runtime-1',
+        label: 'Debug Event',
+        commandId: 'chat.message.debug-event',
+        payload: {
+          conversationId: 'conv-runtime',
+          messageId: 'msg-runtime-1',
+          role: 'assistant',
+          content: 'Runtime message payload',
+        },
+      },
+    ],
+    [],
+  );
+  useRegisterContextActions(messageTarget, messageContextActions);
+
+  const onContextMenu = (event: MouseEvent<HTMLElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    openContextMenu({
+      x: event.clientX,
+      y: event.clientY,
+      menuId: 'message-context',
+      target: messageTarget,
+    });
+  };
+
+  return (
+    <section style={{ padding: 8 }} onContextMenu={onContextMenu}>
+      <div data-part="chat-message" data-role="assistant">
+        <div data-part="chat-role">AI:</div>
+        <div style={{ fontSize: 11, whiteSpace: 'pre-wrap' }}>Runtime message payload</div>
+      </div>
     </section>
   );
 }
@@ -127,8 +236,7 @@ function fireContextMenu(target: Element): void {
 
 describe('desktop shell context-menu invocation metadata', () => {
   it('passes source/menu/window/widget/payload metadata to onCommand from title-bar actions', async () => {
-    const { createStore } = createAppStore({});
-    const store = createStore();
+    const store = createTestStore();
     const onCommand = vi.fn();
 
     const container = document.createElement('div');
@@ -199,8 +307,7 @@ describe('desktop shell context-menu invocation metadata', () => {
   });
 
   it('recomposes focused menubar sections when switching between runtime and neutral windows', async () => {
-    const { createStore } = createAppStore({});
-    const store = createStore();
+    const store = createTestStore();
 
     const container = document.createElement('div');
     document.body.appendChild(container);
@@ -267,8 +374,7 @@ describe('desktop shell context-menu invocation metadata', () => {
   });
 
   it('opens message-target context menu and forwards conversation/message payload metadata', async () => {
-    const { createStore } = createAppStore({});
-    const store = createStore();
+    const store = createTestStore();
     const onCommand = vi.fn();
 
     const container = document.createElement('div');
@@ -342,6 +448,74 @@ describe('desktop shell context-menu invocation metadata', () => {
           messageId: 'msg-runtime-1',
           content: 'Runtime message payload',
         }),
+      }),
+    );
+  });
+
+  it('applies externally injected visibility resolver context for context actions', async () => {
+    const store = createTestStore();
+    const onCommand = vi.fn();
+    const visibilityContextResolver: DesktopVisibilityContextResolver = ({ target }) => ({
+      target,
+      roles: ['admin'],
+    });
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    containers.push(container);
+
+    const root = createRoot(container);
+    roots.push(root);
+    await act(async () => {
+      root.render(
+        <Provider store={store}>
+          <DesktopShell
+            stack={TEST_STACK}
+            renderAppWindow={(appKey) => (appKey === 'runtime-tools:policy' ? <RuntimePolicyWindow /> : null)}
+            visibilityContextResolver={visibilityContextResolver}
+            onCommand={onCommand}
+          />
+        </Provider>,
+      );
+    });
+
+    const runtimeWindowId = 'window:runtime:policy';
+    await act(async () => {
+      store.dispatch(
+        openWindow({
+          id: runtimeWindowId,
+          title: 'Runtime Policy',
+          icon: '🛡️',
+          bounds: { x: 220, y: 72, w: 440, h: 320 },
+          content: {
+            kind: 'app',
+            appKey: 'runtime-tools:policy',
+          },
+        }),
+      );
+    });
+
+    const titleBar = container.querySelector('[data-part="windowing-window-title-bar"]');
+    expect(titleBar).not.toBeNull();
+    fireContextMenu(titleBar as Element);
+
+    const contextMenu = container.querySelector('[data-part="context-menu"]');
+    expect(contextMenu).not.toBeNull();
+    const adminExportAction = Array.from(contextMenu?.querySelectorAll('button') ?? []).find((button) =>
+      button.textContent?.includes('Admin Export'),
+    );
+    expect(adminExportAction).not.toBeUndefined();
+
+    act(() => {
+      adminExportAction?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+
+    expect(onCommand).toHaveBeenCalledWith(
+      'runtime.admin.export',
+      expect.objectContaining({
+        source: 'context-menu',
+        menuId: 'window-context',
+        windowId: runtimeWindowId,
       }),
     );
   });

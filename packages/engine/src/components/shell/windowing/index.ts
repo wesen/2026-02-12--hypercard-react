@@ -19,9 +19,7 @@ export {
   useDesktopWindowId,
   useOpenDesktopContextMenu,
   useRegisterContextActions,
-  useRegisterConversationContextActions,
   useRegisterIconContextActions,
-  useRegisterMessageContextActions,
   useRegisterWidgetContextActions,
   useRegisterWindowContextActions,
   useRegisterWindowMenuSections,
@@ -43,7 +41,6 @@ export {
 export {
   createAppWindowContentAdapter,
   createFallbackWindowContentAdapter,
-  createHypercardCardContentAdapter,
 } from './defaultWindowContentAdapters';
 export {
   routeDesktopCommand,
@@ -58,15 +55,14 @@ export {
   type WindowAdapterContext,
   type WindowContentAdapter,
 } from './windowContentAdapter';
-export { PluginCardRenderer, type PluginCardRendererProps } from './PluginCardRenderer';
-export { dispatchRuntimeIntent } from './pluginIntentRouting';
-export { PluginCardSessionHost, type PluginCardSessionHostProps } from './PluginCardSessionHost';
 export type {
   DesktopActionEntry,
   DesktopActionItem,
   DesktopActionSection,
   DesktopActionVisibility,
   DesktopActionVisibilityContext,
+  DesktopVisibilityContextResolver,
+  DesktopVisibilityContextResolverArgs,
   DesktopContextMenuOpenRequest,
   DesktopCommandInvocation,
   DesktopCommandSource,
