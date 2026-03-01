@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { useGetAppsQuery, useGetOSDocsQuery } from '../../api/appsApi';
-import type { AppManifestDocument, OSDocResult, OSDocsResponse } from '../../domain/types';
+import { useGetAppsQuery, useGetHelpDocsQuery, useGetOSDocsQuery } from '../../api/appsApi';
+import type { AppManifestDocument, ModuleDocDocument, OSDocResult, OSDocsResponse } from '../../domain/types';
 import { useDocBrowser } from './DocBrowserContext';
 import { createDocLinkHandlers } from './docLinkInteraction';
 
@@ -124,7 +124,80 @@ function DocTypeChips({ docTypes }: { docTypes: Array<{ slug: string; count: num
   );
 }
 
-export function DocCenterHome() {
+function HelpDocCard({ doc }: { doc: ModuleDocDocument }) {
+  const { openDoc, openDocNewWindow, showDocLinkMenu } = useDocBrowser();
+  const handlers = createDocLinkHandlers(
+    { moduleId: 'wesen-os', slug: doc.slug },
+    openDoc,
+    openDocNewWindow,
+    showDocLinkMenu,
+  );
+
+  return (
+    <button
+      type="button"
+      data-part="doc-entry-card"
+      onClick={handlers.onClick}
+      onAuxClick={handlers.onAuxClick}
+      onContextMenu={handlers.onContextMenu}
+    >
+      <div data-part="doc-entry-card-header">
+        <span data-part="doc-entry-card-title">{doc.title}</span>
+        <span data-part="doc-entry-card-arrow">{'\u203A'}</span>
+      </div>
+      {doc.summary && (
+        <div data-part="doc-entry-card-summary">{doc.summary}</div>
+      )}
+    </button>
+  );
+}
+
+function HelpCenterHome() {
+  const { data: helpResponse, isLoading } = useGetHelpDocsQuery();
+  const { openSearch } = useDocBrowser();
+
+  const docs = helpResponse?.docs ?? [];
+
+  if (isLoading) {
+    return (
+      <div data-part="doc-center-home">
+        <div data-part="doc-center-message">Loading help pages&hellip;</div>
+      </div>
+    );
+  }
+
+  if (docs.length === 0) {
+    return (
+      <div data-part="doc-center-home">
+        <DocSearchBar onSearch={openSearch} placeholder="Search help..." />
+        <div data-part="doc-center-message">
+          No help pages available yet.
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div data-part="doc-center-home">
+      <DocSearchBar onSearch={openSearch} placeholder="Search help..." />
+
+      <div>
+        <div data-part="doc-center-section">Help Pages</div>
+        <div data-part="doc-type-group">
+          {docs.map((doc) => (
+            <HelpDocCard key={doc.slug} doc={doc} />
+          ))}
+        </div>
+      </div>
+
+      <div data-part="doc-center-footer">
+        {docs.length} help page{docs.length !== 1 ? 's' : ''}
+      </div>
+    </div>
+  );
+}
+
+function AppsCenterHome() {
   const { data: apps, isLoading: appsLoading } = useGetAppsQuery();
   const { data: docsResponse, isLoading: docsLoading } = useGetOSDocsQuery({});
   const { openSearch } = useDocBrowser();
@@ -190,7 +263,12 @@ export function DocCenterHome() {
   );
 }
 
-function DocSearchBar({ onSearch }: { onSearch: (query?: string) => void }) {
+export function DocCenterHome() {
+  const { mode } = useDocBrowser();
+  return mode === 'help' ? <HelpCenterHome /> : <AppsCenterHome />;
+}
+
+function DocSearchBar({ onSearch, placeholder }: { onSearch: (query?: string) => void; placeholder?: string }) {
   return (
     <form
       data-part="doc-search-bar"
@@ -205,7 +283,7 @@ function DocSearchBar({ onSearch }: { onSearch: (query?: string) => void }) {
         data-part="doc-search-input"
         name="query"
         type="text"
-        placeholder="Search documentation..."
+        placeholder={placeholder ?? "Search documentation..."}
         autoComplete="off"
       />
       <button type="submit" data-part="doc-browser-nav-btn">

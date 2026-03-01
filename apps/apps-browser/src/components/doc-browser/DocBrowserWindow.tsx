@@ -7,9 +7,10 @@ import { TopicBrowserScreen } from './TopicBrowserScreen';
 import './DocBrowserWindow.css';
 
 function DocBrowserToolbar() {
-  const { location, canGoBack, goBack, goHome, openSearch, openModuleDocs, openTopicBrowser } = useDocBrowser();
+  const { mode, location, canGoBack, goBack, goHome, openSearch, openModuleDocs, openTopicBrowser } = useDocBrowser();
+  const isHelpMode = mode === 'help';
 
-  const showModuleBtn = (location.screen === 'reader' || location.screen === 'module-docs') && location.moduleId;
+  const showModuleBtn = !isHelpMode && (location.screen === 'reader' || location.screen === 'module-docs') && location.moduleId;
 
   return (
     <div data-part="doc-browser-toolbar">
@@ -38,14 +39,16 @@ function DocBrowserToolbar() {
       >
         Search
       </button>
-      <button
-        type="button"
-        data-part="doc-browser-nav-btn"
-        data-state={location.screen === 'topic-browser' ? 'active' : undefined}
-        onClick={() => openTopicBrowser()}
-      >
-        Topics
-      </button>
+      {!isHelpMode && (
+        <button
+          type="button"
+          data-part="doc-browser-nav-btn"
+          data-state={location.screen === 'topic-browser' ? 'active' : undefined}
+          onClick={() => openTopicBrowser()}
+        >
+          Topics
+        </button>
+      )}
       {showModuleBtn && (
         <button
           type="button"

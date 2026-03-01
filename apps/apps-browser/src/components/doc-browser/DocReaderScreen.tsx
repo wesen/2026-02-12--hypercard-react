@@ -4,7 +4,7 @@ import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import 'highlight.js/styles/github.css';
-import { useGetAppsQuery, useGetModuleDocQuery, useGetModuleDocsQuery } from '../../api/appsApi';
+import { useGetAppsQuery, useGetHelpDocQuery, useGetHelpDocsQuery, useGetModuleDocQuery, useGetModuleDocsQuery } from '../../api/appsApi';
 import type { ModuleDocDocument } from '../../domain/types';
 import { useDocBrowser } from './DocBrowserContext';
 import { createDocLinkHandlers } from './docLinkInteraction';
@@ -201,12 +201,25 @@ function PrevNextNav({
 }
 
 export function DocReaderScreen({ moduleId, slug }: DocReaderScreenProps) {
-  const { data: apps } = useGetAppsQuery();
-  const { data: tocResponse, isLoading: tocLoading } = useGetModuleDocsQuery(moduleId);
-  const { data: fullDoc, isLoading: docLoading } = useGetModuleDocQuery({ appId: moduleId, slug });
+  const { mode } = useDocBrowser();
+  const isHelpMode = mode === 'help';
+
+  // Apps mode queries
+  const { data: apps } = useGetAppsQuery(undefined, { skip: isHelpMode });
+  const { data: appTocResponse, isLoading: appTocLoading } = useGetModuleDocsQuery(moduleId, { skip: isHelpMode });
+  const { data: appFullDoc, isLoading: appDocLoading } = useGetModuleDocQuery({ appId: moduleId, slug }, { skip: isHelpMode });
+
+  // Help mode queries
+  const { data: helpTocResponse, isLoading: helpTocLoading } = useGetHelpDocsQuery(undefined, { skip: !isHelpMode });
+  const { data: helpFullDoc, isLoading: helpDocLoading } = useGetHelpDocQuery(slug, { skip: !isHelpMode });
+
+  const tocResponse = isHelpMode ? helpTocResponse : appTocResponse;
+  const fullDoc = isHelpMode ? helpFullDoc : appFullDoc;
+  const tocLoading = isHelpMode ? helpTocLoading : appTocLoading;
+  const docLoading = isHelpMode ? helpDocLoading : appDocLoading;
 
   const app = apps?.find((a) => a.app_id === moduleId);
-  const moduleName = app?.name ?? moduleId;
+  const moduleName = isHelpMode ? 'Help' : (app?.name ?? moduleId);
 
   const tocDoc = useMemo(() => {
     return tocResponse?.docs?.find((d) => d.slug === slug);

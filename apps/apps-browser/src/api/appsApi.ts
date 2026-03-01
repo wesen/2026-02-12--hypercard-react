@@ -46,7 +46,7 @@ function buildOSDocsPath(query?: OSDocsQuery): string {
 export const appsApi = createApi({
   reducerPath: 'appsApi',
   baseQuery: fetchBaseQuery({ baseUrl: '' }),
-  tagTypes: ['AppsList', 'Reflection', 'DocsTOC', 'DocsPage', 'OSDocs'],
+  tagTypes: ['AppsList', 'Reflection', 'DocsTOC', 'DocsPage', 'OSDocs', 'HelpDocs', 'HelpPage'],
   endpoints: (builder) => ({
     getApps: builder.query<import('../domain/types').AppManifestDocument[], void>({
       query: () => '/api/os/apps',
@@ -97,6 +97,20 @@ export const appsApi = createApi({
       }),
     }),
 
+    getHelpDocs: builder.query<ModuleDocsTOCResponse, void>({
+      query: () => '/api/os/help',
+      providesTags: ['HelpDocs'],
+      transformResponse: (response: ModuleDocsTOCResponse): ModuleDocsTOCResponse => ({
+        module_id: response.module_id,
+        docs: response.docs ?? [],
+      }),
+    }),
+
+    getHelpDoc: builder.query<ModuleDocDocument, string>({
+      query: (slug) => `/api/os/help/${encodeURIComponent(slug)}`,
+      providesTags: (_result, _error, slug) => [{ type: 'HelpPage', id: slug }],
+    }),
+
     getSchemaDocument: builder.query<unknown, string>({
       query: (schemaUrl) => ({
         url: schemaUrl,
@@ -119,5 +133,7 @@ export const {
   useGetModuleDocQuery,
   useLazyGetModuleDocQuery,
   useGetOSDocsQuery,
+  useGetHelpDocsQuery,
+  useGetHelpDocQuery,
   useLazyGetSchemaDocumentQuery,
 } = appsApi;
