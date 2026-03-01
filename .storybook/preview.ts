@@ -3,6 +3,7 @@ import React from 'react';
 import { initialize, mswLoader } from 'msw-storybook-addon';
 import { HyperCardTheme } from '@hypercard/engine';
 import '@hypercard/engine/theme';
+import '@hypercard/chat-runtime/theme';
 
 initialize();
 
