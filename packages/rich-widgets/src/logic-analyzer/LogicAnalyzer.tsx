@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Btn, Checkbox } from '@hypercard/engine';
 import { RICH_PARTS } from '../parts';
+import { LabeledSlider } from '../primitives/LabeledSlider';
 import { Separator } from '../primitives/Separator';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import type { SignalType, TriggerEdge, Protocol, Channel } from './types';
@@ -39,44 +40,6 @@ function generateSignal(
     default:
       return 0;
   }
-}
-
-// ── Slider control ───────────────────────────────────────────────────
-function LaSlider({
-  label,
-  value,
-  min,
-  max,
-  step,
-  onChange,
-  unit,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  onChange: (v: number) => void;
-  unit?: string;
-}) {
-  return (
-    <div data-part={RICH_PARTS.laSlider}>
-      <span data-part={RICH_PARTS.laSliderLabel}>{label}</span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
-        style={{ flex: 1 }}
-      />
-      <span data-part={RICH_PARTS.laSliderValue}>
-        {value}
-        {unit || ''}
-      </span>
-    </div>
-  );
 }
 
 // ── Props ────────────────────────────────────────────────────────────
@@ -416,7 +379,7 @@ export function LogicAnalyzer({
           {/* Timing */}
           <div data-part={RICH_PARTS.laControlGroup}>
             <div data-part={RICH_PARTS.laControlGroupTitle}>Timing</div>
-            <LaSlider
+            <LabeledSlider
               label="Speed"
               value={speed}
               min={0.1}
@@ -425,7 +388,7 @@ export function LogicAnalyzer({
               onChange={setSpeed}
               unit="x"
             />
-            <LaSlider
+            <LabeledSlider
               label="Zoom"
               value={zoom}
               min={0.2}

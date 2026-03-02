@@ -2,9 +2,10 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS } from '../parts';
 import { ModalOverlay } from '../primitives/ModalOverlay';
+import { CommandPalette } from '../primitives/CommandPalette';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
-import type { CalendarEvent, CalendarView, PaletteAction } from './types';
+import type { CalendarEvent, CalendarView } from './types';
 import {
   DAYS,
   MONTHS,
@@ -14,89 +15,6 @@ import {
   mkEventId,
 } from './types';
 import { INITIAL_EVENTS, EVENT_COLORS, makePaletteActions } from './sampleData';
-
-// ── Palette ─────────────────────────────────────────────────────────
-function Palette({
-  actions,
-  onSelect,
-  onClose,
-}: {
-  actions: PaletteAction[];
-  onSelect: (id: string) => void;
-  onClose: () => void;
-}) {
-  const [query, setQuery] = useState('');
-  const [idx, setIdx] = useState(0);
-  const ref = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    ref.current?.focus();
-  }, []);
-
-  const filtered = useMemo(() => {
-    const q = query.toLowerCase();
-    return actions.filter((a) => a.label.toLowerCase().includes(q)).slice(0, 14);
-  }, [query, actions]);
-
-  useEffect(() => {
-    setIdx(0);
-  }, [query]);
-
-  const handleKey = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') onClose();
-    else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setIdx((i) => Math.min(filtered.length - 1, i + 1));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setIdx((i) => Math.max(0, i - 1));
-    } else if (e.key === 'Enter' && filtered[idx]) {
-      e.preventDefault();
-      onSelect(filtered[idx].id);
-    }
-  };
-
-  return (
-    <ModalOverlay onClose={onClose} style={{ paddingTop: 40, alignItems: 'flex-start' }}>
-      <div
-        data-part={RICH_PARTS.calModal}
-        style={{ width: 400 }}
-      >
-        <div data-part={RICH_PARTS.calPaletteSearch}>
-          <span style={{ fontSize: 15, opacity: 0.4 }}>{'\uD83D\uDD0D'}</span>
-          <input
-            ref={ref}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKey}
-            placeholder="Search\u2026"
-            data-part={RICH_PARTS.calPaletteInput}
-          />
-          <kbd data-part={RICH_PARTS.calKbd}>esc</kbd>
-        </div>
-        <div style={{ maxHeight: 320, overflowY: 'auto' }}>
-          {filtered.map((a, i) => (
-            <div
-              key={a.id}
-              onClick={() => onSelect(a.id)}
-              onMouseEnter={() => setIdx(i)}
-              data-part={RICH_PARTS.calPaletteItem}
-              data-state={i === idx ? 'active' : undefined}
-            >
-              <span style={{ width: 22, textAlign: 'center', fontSize: 14 }}>
-                {a.icon}
-              </span>
-              <span style={{ flex: 1, fontSize: 16 }}>{a.label}</span>
-              {a.shortcut && (
-                <span style={{ fontSize: 12, opacity: 0.5 }}>{a.shortcut}</span>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    </ModalOverlay>
-  );
-}
 
 // ── Event Modal ─────────────────────────────────────────────────────
 function EventModal({
@@ -761,13 +679,14 @@ export function MacCalendar({
 
       {/* ── Command Palette ── */}
       {showPalette && (
-        <Palette
-          actions={actions}
+        <CommandPalette
+          items={actions}
           onSelect={(id) => {
             setShowPalette(false);
             execAction(id);
           }}
           onClose={() => setShowPalette(false)}
+          footer={false}
         />
       )}
     </div>

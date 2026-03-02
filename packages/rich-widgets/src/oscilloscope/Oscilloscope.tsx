@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Btn, Checkbox } from '@hypercard/engine';
 import { RICH_PARTS } from '../parts';
+import { LabeledSlider } from '../primitives/LabeledSlider';
 import { Separator } from '../primitives/Separator';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import type { WaveformType } from './types';
@@ -29,44 +30,6 @@ function generateWave(
     default:
       return 0;
   }
-}
-
-// ── Slider control ───────────────────────────────────────────────────
-function OscSlider({
-  label,
-  value,
-  min,
-  max,
-  step,
-  onChange,
-  unit,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  onChange: (v: number) => void;
-  unit?: string;
-}) {
-  return (
-    <div data-part={RICH_PARTS.oscSlider}>
-      <span data-part={RICH_PARTS.oscSliderLabel}>{label}</span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
-        style={{ flex: 1 }}
-      />
-      <span data-part={RICH_PARTS.oscSliderValue}>
-        {value}
-        {unit || ''}
-      </span>
-    </div>
-  );
 }
 
 // ── Props ────────────────────────────────────────────────────────────
@@ -320,7 +283,7 @@ export function Oscilloscope({
             <div data-part={RICH_PARTS.oscControlGroupTitle}>
               CH1 Parameters
             </div>
-            <OscSlider
+            <LabeledSlider
               label="Frequency"
               value={frequency}
               min={0.1}
@@ -329,7 +292,7 @@ export function Oscilloscope({
               onChange={setFrequency}
               unit=" Hz"
             />
-            <OscSlider
+            <LabeledSlider
               label="Amplitude"
               value={amplitude}
               min={0}
@@ -338,7 +301,7 @@ export function Oscilloscope({
               onChange={setAmplitude}
               unit="%"
             />
-            <OscSlider
+            <LabeledSlider
               label="Y Offset"
               value={offsetY}
               min={-100}
@@ -354,7 +317,7 @@ export function Oscilloscope({
             <div data-part={RICH_PARTS.oscControlGroupTitle}>
               Horizontal / Trigger
             </div>
-            <OscSlider
+            <LabeledSlider
               label="Time/Div"
               value={timebase}
               min={0.1}
@@ -363,7 +326,7 @@ export function Oscilloscope({
               onChange={setTimebase}
               unit="x"
             />
-            <OscSlider
+            <LabeledSlider
               label="Trig Level"
               value={triggerLevel}
               min={-100}
@@ -372,7 +335,7 @@ export function Oscilloscope({
               onChange={setTriggerLevel}
               unit=" mV"
             />
-            <OscSlider
+            <LabeledSlider
               label="Thickness"
               value={thickness}
               min={1}
@@ -405,7 +368,7 @@ export function Oscilloscope({
             </div>
             {channel2 && (
               <>
-                <OscSlider
+                <LabeledSlider
                   label="Frequency"
                   value={ch2Freq}
                   min={0.1}
@@ -414,7 +377,7 @@ export function Oscilloscope({
                   onChange={setCh2Freq}
                   unit=" Hz"
                 />
-                <OscSlider
+                <LabeledSlider
                   label="Amplitude"
                   value={ch2Amp}
                   min={0}
