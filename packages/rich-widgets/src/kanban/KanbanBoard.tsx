@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS } from '../parts';
+import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import type { Task, Column, TagId, Priority } from './types';
 import { TAG_LABELS, PRIORITY_LABELS, ALL_TAGS, ALL_PRIORITIES } from './types';
 import { INITIAL_COLUMNS, INITIAL_TASKS } from './sampleData';
@@ -274,7 +275,7 @@ export function KanbanBoard({
   return (
     <div data-part={RICH_PARTS.kanban}>
       {/* ── Toolbar ── */}
-      <div data-part={RICH_PARTS.kanbanToolbar}>
+      <WidgetToolbar>
         <Btn
           onClick={() => setEditingTask({ col: 'todo' })}
           style={{ fontSize: 10, fontWeight: 'bold' }}
@@ -332,7 +333,7 @@ export function KanbanBoard({
             ✕ Clear
           </Btn>
         )}
-      </div>
+      </WidgetToolbar>
 
       {/* ── Board ── */}
       <div data-part={RICH_PARTS.kanbanBoard}>

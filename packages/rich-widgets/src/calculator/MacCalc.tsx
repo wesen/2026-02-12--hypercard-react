@@ -7,6 +7,7 @@ import {
 } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS } from '../parts';
+import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import type { CellData, CellRange, ClipboardData, CellFormat } from './types';
 import {
   NUM_ROWS,
@@ -700,7 +701,7 @@ export function MacCalc({ initialCells }: MacCalcProps) {
   return (
     <div data-part={RICH_PARTS.calculator}>
       {/* Toolbar */}
-      <div data-part={RICH_PARTS.calcToolbar}>
+      <WidgetToolbar>
         <Btn
           onClick={() => execAction('bold')}
           data-state={currentCell.bold ? 'active' : undefined}
@@ -794,7 +795,7 @@ export function MacCalc({ initialCells }: MacCalcProps) {
         >
           {'\u2318'}P
         </Btn>
-      </div>
+      </WidgetToolbar>
 
       {/* Formula Bar */}
       <div data-part={RICH_PARTS.calcFormulaBar}>

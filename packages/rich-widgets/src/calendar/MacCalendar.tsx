@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS } from '../parts';
+import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import type { CalendarEvent, CalendarView, PaletteAction } from './types';
 import {
   DAYS,
@@ -648,7 +649,7 @@ export function MacCalendar({
   return (
     <div data-part={RICH_PARTS.calendar}>
       {/* ── Toolbar ── */}
-      <div data-part={RICH_PARTS.calToolbar}>
+      <WidgetToolbar>
         <Btn
           onClick={() =>
             view === 'month' ? navigateMonth(-1) : navigateWeek(-1)
@@ -703,7 +704,7 @@ export function MacCalendar({
         >
           {'\u2318'}P
         </Btn>
-      </div>
+      </WidgetToolbar>
 
       {/* ── Calendar Body ── */}
       {view === 'month' ? (

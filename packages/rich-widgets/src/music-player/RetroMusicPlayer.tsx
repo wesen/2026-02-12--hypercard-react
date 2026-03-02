@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS as P } from '../parts';
+import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import { type Track, type ViewMode, parseDuration, fmtTime } from './types';
 import { PLAYLISTS, ALBUMS, getTracksForPlaylist } from './sampleData';
 import type { Playlist } from './types';
@@ -266,7 +267,7 @@ export function RetroMusicPlayer({
         {/* Main content */}
         <div data-part={P.mpMain}>
           {/* Toolbar */}
-          <div data-part={P.mpToolbar}>
+          <WidgetToolbar>
             <Btn onClick={() => playTrack(tracks[0], 0)}>
               {'\u25B6'} Play All
             </Btn>
@@ -304,7 +305,7 @@ export function RetroMusicPlayer({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-          </div>
+          </WidgetToolbar>
 
           {/* Playlist header */}
           <div data-part={P.mpPlaylistHeader}>

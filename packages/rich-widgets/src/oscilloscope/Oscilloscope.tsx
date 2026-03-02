@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Btn, Checkbox } from '@hypercard/engine';
 import { RICH_PARTS } from '../parts';
+import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import type { WaveformType } from './types';
 import { WAVEFORM_TYPES, WAVEFORM_ICONS } from './types';
 
@@ -428,7 +429,7 @@ export function Oscilloscope({
       </div>
 
       {/* ── Bottom Toolbar ── */}
-      <div data-part={RICH_PARTS.oscToolbar}>
+      <WidgetToolbar>
         <Btn
           onClick={() => setRunning(!running)}
           style={{ fontSize: 10 }}
@@ -459,7 +460,7 @@ export function Oscilloscope({
           onChange={setPhosphor}
           label="Phosphor"
         />
-      </div>
+      </WidgetToolbar>
     </div>
   );
 }

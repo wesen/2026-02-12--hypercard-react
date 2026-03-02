@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS } from '../parts';
+import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import type { GraphNode, Connection, TempConnection } from './types';
 import { NODE_WIDTH } from './types';
 import { INITIAL_NODES, INITIAL_CONNECTIONS } from './sampleData';
@@ -400,7 +401,7 @@ export function NodeEditor({
   return (
     <div data-part={RICH_PARTS.nodeEditor}>
       {/* ── Toolbar ── */}
-      <div data-part={RICH_PARTS.nodeEditorToolbar}>
+      <WidgetToolbar>
         <Btn onClick={handleAddNode} style={{ fontSize: 10 }}>
           + Add Node
         </Btn>
@@ -411,7 +412,7 @@ export function NodeEditor({
         <span style={{ fontSize: 10, opacity: 0.6 }}>
           Nodes: {nodes.length} | Connections: {connections.length}
         </span>
-      </div>
+      </WidgetToolbar>
 
       {/* ── Canvas ── */}
       <div

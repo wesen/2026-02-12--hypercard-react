@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Btn, Checkbox } from '@hypercard/engine';
 import { RICH_PARTS } from '../parts';
+import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import { Sparkline } from '../primitives/Sparkline';
 import { type LogEntry, type LogLevel, LOG_LEVELS, ALL_LOG_LEVELS } from './types';
 import { generateLogEntry } from './sampleData';
@@ -262,7 +263,7 @@ export function LogViewer({
       {/* ── Center: Log Stream ── */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         {/* Search + Activity */}
-        <div data-part={RICH_PARTS.logViewerToolbar}>
+        <WidgetToolbar>
           <div data-part={RICH_PARTS.logViewerSearch}>
             <span style={{ fontSize: 12 }}>🔍</span>
             <input
@@ -298,7 +299,7 @@ export function LogViewer({
                 : 'No logs'}
             </span>
           </div>
-        </div>
+        </WidgetToolbar>
 
         {/* Log Table */}
         <div data-part={RICH_PARTS.logViewerTable}>

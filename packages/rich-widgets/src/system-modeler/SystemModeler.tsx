@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS } from '../parts';
+import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import type { BlockInstance, Wire, DragState, WiringState, BlockTypeDef, Point } from './types';
 import { BLOCK_TYPES, SOURCE_BLOCKS, MATH_BLOCKS, ROUTING_BLOCKS } from './types';
 import { INITIAL_BLOCKS, INITIAL_WIRES } from './sampleData';
@@ -482,7 +483,7 @@ export function SystemModeler({
   return (
     <div data-part={RICH_PARTS.systemModeler}>
       {/* Toolbar */}
-      <div data-part={RICH_PARTS.smToolbar}>
+      <WidgetToolbar>
         <Btn onClick={startSim} active={simRunning}>{'\u25B6'} Run</Btn>
         <Btn onClick={() => setSimRunning(false)}>{'\u23F9'}</Btn>
         <div data-part={RICH_PARTS.smSeparator} />
@@ -496,7 +497,7 @@ export function SystemModeler({
         <span data-part={RICH_PARTS.smTimeLabel}>
           {simRunning ? `\u23F3 ${simProgress}%` : `t = ${simTime}s`}
         </span>
-      </div>
+      </WidgetToolbar>
 
       <div data-part={RICH_PARTS.smBody}>
         {/* SVG Canvas */}

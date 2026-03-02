@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Btn, Checkbox } from '@hypercard/engine';
 import { RICH_PARTS } from '../parts';
+import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import type { Conversation, SearchParams } from './types';
 import { EMPTY_SEARCH } from './types';
 import { CONVERSATIONS, getAllTags, getAllModels } from './sampleData';
@@ -242,7 +243,7 @@ export function ChatBrowser({
       {/* Sidebar: conversation list */}
       <div data-part={RICH_PARTS.cbSidebar}>
         {/* Toolbar */}
-        <div data-part={RICH_PARTS.cbToolbar}>
+        <WidgetToolbar>
           <input
             data-part="field-input"
             placeholder="Quick filter..."
@@ -254,7 +255,7 @@ export function ChatBrowser({
           {searchResults && (
             <Btn onClick={clearSearch}>{'\u2715'}</Btn>
           )}
-        </div>
+        </WidgetToolbar>
 
         {/* List */}
         <div data-part={RICH_PARTS.cbConvoList}>

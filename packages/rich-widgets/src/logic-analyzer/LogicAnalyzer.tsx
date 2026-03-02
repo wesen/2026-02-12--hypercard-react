@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Btn, Checkbox } from '@hypercard/engine';
 import { RICH_PARTS } from '../parts';
+import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import type { SignalType, TriggerEdge, Protocol, Channel } from './types';
 import {
   CHANNEL_COLORS,
@@ -511,7 +512,7 @@ export function LogicAnalyzer({
       </div>
 
       {/* ── Bottom Toolbar ── */}
-      <div data-part={RICH_PARTS.laToolbar}>
+      <WidgetToolbar>
         <Btn onClick={() => setRunning(!running)} style={{ fontSize: 10 }}>
           {running ? '\u23F8 Stop' : '\u25B6 Capture'}
         </Btn>
@@ -548,7 +549,7 @@ export function LogicAnalyzer({
           label="Edges"
         />
         <Checkbox checked={busView} onChange={() => setBusView((v) => !v)} label="Bus" />
-      </div>
+      </WidgetToolbar>
     </div>
   );
 }

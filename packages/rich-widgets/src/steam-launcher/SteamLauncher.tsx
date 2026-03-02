@@ -1,6 +1,7 @@
 import { useState, type FC } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS as P } from '../parts';
+import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import type { SteamGame, SteamTab, GameFilter, Friend } from './types';
 import { TABS } from './types';
 import { GAMES, FRIENDS } from './sampleData';
@@ -292,7 +293,7 @@ export const SteamLauncher: FC<SteamLauncherProps> = ({
   return (
     <div data-part={P.steamLauncher} style={height ? { height } : undefined}>
       {/* Toolbar / filter */}
-      <div data-part={P.stToolbar}>
+      <WidgetToolbar>
         <div data-part={P.stFilterGroup}>
           {(['all', 'installed', 'notinstalled'] as GameFilter[]).map(f => (
             <Btn
@@ -307,7 +308,7 @@ export const SteamLauncher: FC<SteamLauncherProps> = ({
         <Btn onClick={() => setShowFriends(!showFriends)}>
           {'\uD83D\uDC65'} Friends
         </Btn>
-      </div>
+      </WidgetToolbar>
 
       {/* Tabs */}
       <TabBar tabs={TABS} active={activeTab} onChange={setActiveTab} />

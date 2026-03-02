@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useMemo } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS } from '../parts';
+import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import type { ViewMode, FormatAction, WordCount } from './types';
 import { parseMarkdown } from './markdown';
 import { SAMPLE_DOCUMENT } from './sampleData';
@@ -275,7 +276,7 @@ export function MacWrite({
   return (
     <div data-part={RICH_PARTS.macWrite}>
       {/* ── Toolbar ── */}
-      <div data-part={RICH_PARTS.macWriteToolbar}>
+      <WidgetToolbar>
         {/* Format buttons */}
         {FORMAT_ACTIONS.slice(0, 4).map((action) => (
           <Btn
@@ -351,7 +352,7 @@ export function MacWrite({
         >
           {viewMode === 'edit' ? '👁️' : viewMode === 'split' ? '📝' : '📄'}
         </Btn>
-      </div>
+      </WidgetToolbar>
 
       {/* ── Find & Replace Bar ── */}
       {showFind && (
