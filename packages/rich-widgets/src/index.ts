@@ -119,5 +119,28 @@ export {
   NODE_FILTER_TYPES,
 } from './graph-navigator/sampleData';
 
+// MacCalc (Spreadsheet)
+export { MacCalc, type MacCalcProps } from './calculator/MacCalc';
+export {
+  type CellData,
+  type CellFormat,
+  type CellAlign,
+  type CellRange,
+  type CalcAction,
+  type ClipboardData,
+  NUM_ROWS,
+  NUM_COLS,
+  DEFAULT_COL_W,
+  ROW_H,
+  HEADER_H,
+  ROW_HEADER_W,
+  colLabel,
+  cellId,
+  parseRef,
+  EMPTY_CELL,
+} from './calculator/types';
+export { evaluateFormula } from './calculator/formula';
+export { createSampleCells, CALC_ACTIONS } from './calculator/sampleData';
+
 // Parts
 export { RICH_PARTS, type RichPartName } from './parts';

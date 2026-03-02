@@ -9,3 +9,4 @@ import './oscilloscope.css';
 import './logic-analyzer.css';
 import './calendar.css';
 import './graph-navigator.css';
+import './calculator.css';

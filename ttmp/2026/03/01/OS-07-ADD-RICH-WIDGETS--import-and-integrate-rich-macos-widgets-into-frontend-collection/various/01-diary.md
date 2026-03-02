@@ -19,6 +19,44 @@ WhenToUse: "Review progress, understand decisions, onboard reviewers"
 
 # Implementation Diary
 
+## 2026-03-02 — MacCalc spreadsheet widget port
+
+### What was done
+
+Full port of `maccalc.jsx` → `MacCalc.tsx`. A spreadsheet/calculator with:
+- 50-row x 26-column grid with scrollable viewport, sticky row/column headers
+- Formula engine supporting SUM, AVERAGE, MIN, MAX, COUNT, ABS, SQRT, ROUND, POWER, IF, CONCAT
+- Cell formatting: bold, italic, alignment (left/center/right), number formats (plain/number/currency/percent)
+- Cell selection via click, drag selection for ranges, Shift+click range select
+- Column resize via drag handles
+- Formula bar showing raw formula for selected cell
+- Find & Replace with match highlighting
+- Command palette (Ctrl+Shift+P) with 25 actions across format/edit/function/view/file categories
+- Keyboard navigation (arrows, Tab, Enter, F2 to edit, Delete to clear)
+- Status bar with range statistics (SUM, AVG, COUNT) when range selected
+- CSV export to clipboard
+
+**Files created:**
+- `calculator/types.ts` — CellData, CellFormat, CellAlign, CellRange, constants, utility functions
+- `calculator/formula.ts` — evaluateFormula engine with all spreadsheet functions
+- `calculator/sampleData.ts` — Quarterly financial summary (Revenue/Expenses/Profit/Margin), CALC_ACTIONS
+- `calculator/MacCalc.tsx` — Main component + Palette + FindBar sub-components (~600 lines)
+- `calculator/MacCalc.stories.tsx` — Default, Empty, Compact stories
+- `theme/calculator.css` — 27 data-part rules for grid, cells, headers, palette, find bar
+
+**Key decisions:**
+- Split formula engine into its own file (`formula.ts`) since it's pure logic and testable in isolation
+- Dropped internal themes (classic/dark/green) — engine handles theming
+- Removed window chrome/title bar
+- Replaced TBtn custom toolbar button with `Btn` from engine
+- Used `data-state` for cell states: "selected", "in-range", "match" instead of inline styles
+
+### Verification
+
+All 3 Storybook stories render correctly. Formulas calculate (SUM=5,630, Margin=33.3%-40.6%). Grid scrolls with sticky headers. Controls panel shows initialCells prop.
+
+---
+
 ## 2026-03-02 — GraphNavigator widget port
 
 ### What was done
