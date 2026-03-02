@@ -2,6 +2,8 @@
 
 ## 2026-03-02
 
+- Added DesktopShell integration stories (task 24): 4 stories showing all widgets as desktop icons with startup window support, verified SteamLauncher renders fully inside DesktopShell window
+- Added LaunchableAppModule definitions for all 17 widgets (task 23): launcher/modules.tsx with RICH_WIDGET_MODULES array, ./launcher export path, @hypercard/desktop-os peer dep
 - **ALL 17 WIDGET IMPORTS PORTED** — complete set of rich macOS-style widgets now in packages/rich-widgets
 - Completed YouTubeRetro widget port (task 22): CRT video player with scanlines/vignette, home grid, watch view with comments/related videos, subscriptions sidebar, 3 stories
 - Completed SteamLauncher widget port (task 22): tabbed Library/Store/Community/Downloads, game detail, friends list, launch animation, 3 stories

@@ -42,5 +42,5 @@
 
 ## Phase 7: Desktop integration
 
-- [ ] 23. Register all widgets as launchable apps via AppManifest
-- [ ] 24. Integration testing with DesktopShell
+- [x] 23. Register all widgets as launchable apps via AppManifest
+- [x] 24. Integration testing with DesktopShell
