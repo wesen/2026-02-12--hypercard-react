@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useMemo } from 'react';
 import { Btn } from '@hypercard/engine';
-import { RICH_PARTS } from '../parts';
+import { RICH_PARTS as P } from '../parts';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import { Separator } from '../primitives/Separator';
 import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
@@ -276,7 +276,7 @@ export function MacWrite({
   };
 
   return (
-    <div data-part={RICH_PARTS.mw}>
+    <div data-part={P.mw}>
       {/* ── Toolbar ── */}
       <WidgetToolbar>
         {/* Format buttons */}
@@ -358,7 +358,7 @@ export function MacWrite({
 
       {/* ── Find & Replace Bar ── */}
       {showFind && (
-        <div data-part={RICH_PARTS.mwFindBar}>
+        <div data-part={P.mwFindBar}>
           <span style={{ fontSize: 12 }}>🔍</span>
           <input
             data-part="field-input"
@@ -415,11 +415,11 @@ export function MacWrite({
       )}
 
       {/* ── Editor / Preview ── */}
-      <div data-part={RICH_PARTS.mwBody}>
+      <div data-part={P.mwBody}>
         {viewMode !== 'preview' && (
           <textarea
             ref={editorRef}
-            data-part={RICH_PARTS.mwEditor}
+            data-part={P.mwEditor}
             value={content}
             onChange={(e) => updateContent(e.target.value)}
             onKeyDown={handleEditorKeyDown}
@@ -430,12 +430,12 @@ export function MacWrite({
           />
         )}
         {viewMode === 'split' && (
-          <div data-part={RICH_PARTS.mwDivider} />
+          <div data-part={P.mwDivider} />
         )}
         {viewMode !== 'edit' && (
           <div
             ref={previewRef}
-            data-part={RICH_PARTS.mwPreview}
+            data-part={P.mwPreview}
             dangerouslySetInnerHTML={{ __html: previewHtml }}
           />
         )}

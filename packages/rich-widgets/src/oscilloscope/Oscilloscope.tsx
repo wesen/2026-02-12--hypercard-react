@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { Btn, Checkbox } from '@hypercard/engine';
-import { RICH_PARTS } from '../parts';
+import { RICH_PARTS as P } from '../parts';
 import { LabeledSlider } from '../primitives/LabeledSlider';
 import { Separator } from '../primitives/Separator';
 import { useAnimationLoop } from '../primitives/useAnimationLoop';
@@ -230,12 +230,12 @@ export function Oscilloscope({
   useAnimationLoop(draw, true);
 
   return (
-    <div data-part={RICH_PARTS.oscilloscope}>
+    <div data-part={P.oscilloscope}>
       {/* ── Display + Controls ── */}
-      <div data-part={RICH_PARTS.oscMain}>
+      <div data-part={P.oscMain}>
         {/* CRT Display */}
-        <div data-part={RICH_PARTS.oscDisplay}>
-          <div data-part={RICH_PARTS.oscBezel}>
+        <div data-part={P.oscDisplay}>
+          <div data-part={P.oscBezel}>
             <canvas
               ref={canvasRef}
               width={canvasWidth}
@@ -244,7 +244,7 @@ export function Oscilloscope({
             />
           </div>
           {/* Status bar below display */}
-          <div data-part={RICH_PARTS.oscDisplayStatus}>
+          <div data-part={P.oscDisplayStatus}>
             <span>
               {running ? '▶ RUNNING' : '⏸ STOPPED'} | Sample Rate: 44.1kHz
             </span>
@@ -256,10 +256,10 @@ export function Oscilloscope({
         </div>
 
         {/* Controls Panel */}
-        <div data-part={RICH_PARTS.oscControls}>
+        <div data-part={P.oscControls}>
           {/* Waveform selector */}
-          <div data-part={RICH_PARTS.oscControlGroup}>
-            <div data-part={RICH_PARTS.oscControlGroupTitle}>CH1 Waveform</div>
+          <div data-part={P.oscControlGroup}>
+            <div data-part={P.oscControlGroupTitle}>CH1 Waveform</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
               {WAVEFORM_TYPES.map((w) => (
                 <Btn
@@ -275,8 +275,8 @@ export function Oscilloscope({
           </div>
 
           {/* CH1 Parameters */}
-          <div data-part={RICH_PARTS.oscControlGroup}>
-            <div data-part={RICH_PARTS.oscControlGroupTitle}>
+          <div data-part={P.oscControlGroup}>
+            <div data-part={P.oscControlGroupTitle}>
               CH1 Parameters
             </div>
             <LabeledSlider
@@ -309,8 +309,8 @@ export function Oscilloscope({
           </div>
 
           {/* Horizontal / Trigger */}
-          <div data-part={RICH_PARTS.oscControlGroup}>
-            <div data-part={RICH_PARTS.oscControlGroupTitle}>
+          <div data-part={P.oscControlGroup}>
+            <div data-part={P.oscControlGroupTitle}>
               Horizontal / Trigger
             </div>
             <LabeledSlider
@@ -344,11 +344,11 @@ export function Oscilloscope({
 
           {/* CH2 */}
           <div
-            data-part={RICH_PARTS.oscControlGroup}
+            data-part={P.oscControlGroup}
             style={{ opacity: channel2 ? 1 : 0.7 }}
           >
             <div
-              data-part={RICH_PARTS.oscControlGroupTitle}
+              data-part={P.oscControlGroupTitle}
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',

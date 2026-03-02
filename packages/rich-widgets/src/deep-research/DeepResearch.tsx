@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Btn, Checkbox, RadioButton } from '@hypercard/engine';
-import { RICH_PARTS } from '../parts';
+import { RICH_PARTS as P } from '../parts';
 import { EmptyState } from '../primitives/EmptyState';
 import type { ResearchStep, DepthLevel } from './types';
 import { DEPTH_LEVELS } from './types';
@@ -19,14 +19,14 @@ function SourceCard({
   snippet: string;
 }) {
   return (
-    <div data-part={RICH_PARTS.drStepSource}>
+    <div data-part={P.drStepSource}>
       <div style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
-        <span data-part={RICH_PARTS.drSourceIndex}>{index}</span>
+        <span data-part={P.drSourceIndex}>{index}</span>
         <span style={{ fontWeight: 'bold', wordBreak: 'break-word' }}>
           {title}
         </span>
       </div>
-      <div data-part={RICH_PARTS.drSourceUrl}>
+      <div data-part={P.drSourceUrl}>
         {'\uD83D\uDCC4'} {url}
       </div>
       <div style={{ fontSize: 11, lineHeight: 1.4 }}>{snippet}</div>
@@ -43,9 +43,9 @@ function ProgressBar({
   indeterminate: boolean;
 }) {
   return (
-    <div data-part={RICH_PARTS.drProgressBar}>
+    <div data-part={P.drProgressBar}>
       <div
-        data-part={RICH_PARTS.drProgressFill}
+        data-part={P.drProgressFill}
         data-state={indeterminate ? 'indeterminate' : undefined}
         style={indeterminate ? undefined : { width: `${progress}%` }}
       />
@@ -119,18 +119,18 @@ export function DeepResearch({ initialSteps }: DeepResearchProps) {
   const visibleSteps = steps.filter((s) => s.type !== 'done');
 
   return (
-    <div data-part={RICH_PARTS.deepResearch}>
+    <div data-part={P.deepResearch}>
       {/* ── Left: Controls ── */}
-      <div data-part={RICH_PARTS.drSidebar}>
+      <div data-part={P.drSidebar}>
         {/* Query input */}
         <div>
-          <div data-part={RICH_PARTS.drLabel}>Research Query:</div>
+          <div data-part={P.drLabel}>Research Query:</div>
           <textarea
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="What would you like to research?"
             disabled={isResearching}
-            data-part={RICH_PARTS.drQueryInput}
+            data-part={P.drQueryInput}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && e.metaKey) startResearch();
             }}
@@ -139,7 +139,7 @@ export function DeepResearch({ initialSteps }: DeepResearchProps) {
 
         {/* Depth selector */}
         <div>
-          <div data-part={RICH_PARTS.drLabel}>Research Depth:</div>
+          <div data-part={P.drLabel}>Research Depth:</div>
           {DEPTH_LEVELS.map((level) => (
             <RadioButton
               key={level.value}
@@ -152,8 +152,8 @@ export function DeepResearch({ initialSteps }: DeepResearchProps) {
         </div>
 
         {/* Options */}
-        <div data-part={RICH_PARTS.drOptionsSection}>
-          <div data-part={RICH_PARTS.drLabel}>Options:</div>
+        <div data-part={P.drOptionsSection}>
+          <div data-part={P.drLabel}>Options:</div>
           <Checkbox
             checked={webSearch}
             onChange={() => setWebSearch((v) => !v)}
@@ -178,7 +178,7 @@ export function DeepResearch({ initialSteps }: DeepResearchProps) {
         </Btn>
 
         {isResearching && (
-          <div data-part={RICH_PARTS.drSourceCount}>
+          <div data-part={P.drSourceCount}>
             {'\uD83D\uDCE1'} {sourceCount} source
             {sourceCount !== 1 ? 's' : ''} found
           </div>
@@ -186,15 +186,15 @@ export function DeepResearch({ initialSteps }: DeepResearchProps) {
       </div>
 
       {/* ── Right: Research Activity ── */}
-      <div data-part={RICH_PARTS.drActivity}>
+      <div data-part={P.drActivity}>
         {/* Progress bar */}
         {(isResearching || report) && (
-          <div data-part={RICH_PARTS.drProgressSection}>
+          <div data-part={P.drProgressSection}>
             <ProgressBar
               progress={progress}
               indeterminate={isResearching && progress < 15}
             />
-            <div data-part={RICH_PARTS.drProgressStatus}>
+            <div data-part={P.drProgressStatus}>
               <span>
                 {isResearching
                   ? 'Researching\u2026'
@@ -206,7 +206,7 @@ export function DeepResearch({ initialSteps }: DeepResearchProps) {
         )}
 
         {/* Steps / Report area */}
-        <div data-part={RICH_PARTS.drStepsArea}>
+        <div data-part={P.drStepsArea}>
           {/* Empty state */}
           {!isResearching && steps.length === 0 && !report && (
             <EmptyState
@@ -242,9 +242,9 @@ export function DeepResearch({ initialSteps }: DeepResearchProps) {
           {visibleSteps.map((step, i) => (
             <div key={i} style={{ marginBottom: 8 }}>
               {step.type === 'status' && (
-                <div data-part={RICH_PARTS.drStepStatus}>
+                <div data-part={P.drStepStatus}>
                   {isResearching && i === visibleSteps.length - 1 ? (
-                    <span data-part={RICH_PARTS.drBlink}>
+                    <span data-part={P.drBlink}>
                       {'\u25B6'}
                     </span>
                   ) : (
@@ -266,7 +266,7 @@ export function DeepResearch({ initialSteps }: DeepResearchProps) {
                 />
               )}
               {step.type === 'thinking' && (
-                <div data-part={RICH_PARTS.drStepThinking}>
+                <div data-part={P.drStepThinking}>
                   {'\uD83D\uDCAD'} {step.text}
                 </div>
               )}
@@ -275,11 +275,11 @@ export function DeepResearch({ initialSteps }: DeepResearchProps) {
 
           {/* Final report */}
           {report && (
-            <div data-part={RICH_PARTS.drReport}>
-              <div data-part={RICH_PARTS.drReportHeader}>
+            <div data-part={P.drReport}>
+              <div data-part={P.drReportHeader}>
                 {'\uD83D\uDCCB'} RESEARCH REPORT
               </div>
-              <div data-part={RICH_PARTS.drReportBody}>{report}</div>
+              <div data-part={P.drReportBody}>{report}</div>
             </div>
           )}
           <div ref={stepsEndRef} />

@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { Btn, Checkbox } from '@hypercard/engine';
-import { RICH_PARTS } from '../parts';
+import { RICH_PARTS as P } from '../parts';
 import { LabeledSlider } from '../primitives/LabeledSlider';
 import { Separator } from '../primitives/Separator';
 import { useAnimationLoop } from '../primitives/useAnimationLoop';
@@ -313,12 +313,12 @@ export function LogicAnalyzer({
   };
 
   return (
-    <div data-part={RICH_PARTS.logicAnalyzer}>
+    <div data-part={P.logicAnalyzer}>
       {/* ── Display + Controls ── */}
-      <div data-part={RICH_PARTS.laMain}>
+      <div data-part={P.laMain}>
         {/* Canvas display */}
-        <div data-part={RICH_PARTS.laDisplay}>
-          <div data-part={RICH_PARTS.laBezel}>
+        <div data-part={P.laDisplay}>
+          <div data-part={P.laBezel}>
             <canvas
               ref={canvasRef}
               width={canvasWidth}
@@ -327,9 +327,9 @@ export function LogicAnalyzer({
               onMouseMove={handleCanvasMouseMove}
               onMouseLeave={() => setCursorPos(null)}
             />
-            <div data-part={RICH_PARTS.laBezelReflection} />
+            <div data-part={P.laBezelReflection} />
           </div>
-          <div data-part={RICH_PARTS.laDisplayStatus}>
+          <div data-part={P.laDisplayStatus}>
             <span>
               {running ? '\u25B6 CAPTURING' : '\u23F8 STOPPED'} |{' '}
               {enabledChannels.length} CH Active | Depth: 64K samples
@@ -343,15 +343,15 @@ export function LogicAnalyzer({
         </div>
 
         {/* Controls panel */}
-        <div data-part={RICH_PARTS.laControls}>
+        <div data-part={P.laControls}>
           {/* Channels */}
-          <div data-part={RICH_PARTS.laControlGroup}>
-            <div data-part={RICH_PARTS.laControlGroupTitle}>Channels</div>
+          <div data-part={P.laControlGroup}>
+            <div data-part={P.laControlGroupTitle}>Channels</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {channels.map((ch, i) => (
                 <div
                   key={i}
-                  data-part={RICH_PARTS.laChannelRow}
+                  data-part={P.laChannelRow}
                   style={{ opacity: ch.enabled ? 1 : 0.4 }}
                 >
                   <Checkbox
@@ -360,7 +360,7 @@ export function LogicAnalyzer({
                     label=""
                   />
                   <span
-                    data-part={RICH_PARTS.laChannelColor}
+                    data-part={P.laChannelColor}
                     style={{ background: ch.color }}
                   />
                   <span style={{ fontSize: 9, fontWeight: 'bold' }}>
@@ -372,8 +372,8 @@ export function LogicAnalyzer({
           </div>
 
           {/* Timing */}
-          <div data-part={RICH_PARTS.laControlGroup}>
-            <div data-part={RICH_PARTS.laControlGroupTitle}>Timing</div>
+          <div data-part={P.laControlGroup}>
+            <div data-part={P.laControlGroupTitle}>Timing</div>
             <LabeledSlider
               label="Speed"
               value={speed}
@@ -395,8 +395,8 @@ export function LogicAnalyzer({
           </div>
 
           {/* Trigger */}
-          <div data-part={RICH_PARTS.laControlGroup}>
-            <div data-part={RICH_PARTS.laControlGroupTitle}>Trigger</div>
+          <div data-part={P.laControlGroup}>
+            <div data-part={P.laControlGroupTitle}>Trigger</div>
             <div style={{ display: 'flex', gap: 3, marginBottom: 4, flexWrap: 'wrap' }}>
               {CHANNEL_NAMES.slice(0, 6).map((name, i) => (
                 <Btn
@@ -428,8 +428,8 @@ export function LogicAnalyzer({
           </div>
 
           {/* Protocol Decode */}
-          <div data-part={RICH_PARTS.laControlGroup}>
-            <div data-part={RICH_PARTS.laControlGroupTitle}>
+          <div data-part={P.laControlGroup}>
+            <div data-part={P.laControlGroupTitle}>
               Protocol Decode
             </div>
             <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
@@ -447,8 +447,8 @@ export function LogicAnalyzer({
           </div>
 
           {/* Display */}
-          <div data-part={RICH_PARTS.laControlGroup}>
-            <div data-part={RICH_PARTS.laControlGroupTitle}>Display</div>
+          <div data-part={P.laControlGroup}>
+            <div data-part={P.laControlGroupTitle}>Display</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <Checkbox
                 checked={showGrid}

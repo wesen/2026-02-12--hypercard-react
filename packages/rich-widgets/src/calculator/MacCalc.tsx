@@ -6,7 +6,7 @@ import {
   useMemo,
 } from 'react';
 import { Btn } from '@hypercard/engine';
-import { RICH_PARTS } from '../parts';
+import { RICH_PARTS as P } from '../parts';
 import { CommandPalette } from '../primitives/CommandPalette';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import { Separator } from '../primitives/Separator';
@@ -51,7 +51,7 @@ function FindBar({
   }, [find, onFind]);
 
   return (
-    <div data-part={RICH_PARTS.calcFindBar}>
+    <div data-part={P.calcFindBar}>
       <span style={{ color: 'var(--hc-confirm-selected-bg, #000)' }}>
         {'\uD83D\uDD0D'}
       </span>
@@ -63,7 +63,7 @@ function FindBar({
           if (e.key === 'Escape') onClose();
         }}
         placeholder="Find\u2026"
-        data-part={RICH_PARTS.calcFindInput}
+        data-part={P.calcFindInput}
       />
       <input
         value={replace}
@@ -72,7 +72,7 @@ function FindBar({
           if (e.key === 'Escape') onClose();
         }}
         placeholder="Replace\u2026"
-        data-part={RICH_PARTS.calcFindInput}
+        data-part={P.calcFindInput}
       />
       <Btn onClick={() => onReplace(find, replace)} style={{ fontSize: 11 }}>
         Replace
@@ -596,7 +596,7 @@ export function MacCalc({ initialCells }: MacCalcProps) {
   const formulaDisplay = editing ? editVal : currentCell.raw;
 
   return (
-    <div data-part={RICH_PARTS.calculator}>
+    <div data-part={P.calculator}>
       {/* Toolbar */}
       <WidgetToolbar>
         <Btn
@@ -695,8 +695,8 @@ export function MacCalc({ initialCells }: MacCalcProps) {
       </WidgetToolbar>
 
       {/* Formula Bar */}
-      <div data-part={RICH_PARTS.calcFormulaBar}>
-        <div data-part={RICH_PARTS.calcCellRef}>
+      <div data-part={P.calcFormulaBar}>
+        <div data-part={P.calcCellRef}>
           {cellId(sel.r, sel.c)}
         </div>
         <span style={{ color: 'var(--hc-color-muted)' }}>
@@ -722,7 +722,7 @@ export function MacCalc({ initialCells }: MacCalcProps) {
           onFocus={() => {
             if (!editing) startEdit(sel.r, sel.c);
           }}
-          data-part={RICH_PARTS.calcFormulaInput}
+          data-part={P.calcFormulaInput}
         />
       </div>
 
@@ -742,19 +742,19 @@ export function MacCalc({ initialCells }: MacCalcProps) {
 
       {/* Grid */}
       <div
-        data-part={RICH_PARTS.calcGrid}
+        data-part={P.calcGrid}
         ref={gridRef}
         tabIndex={0}
         onKeyDown={handleGridKeyDown}
       >
         <div
-          data-part={RICH_PARTS.calcGridInner}
+          data-part={P.calcGridInner}
           style={{ width: totalW, height: totalH }}
         >
           {/* Column headers */}
-          <div data-part={RICH_PARTS.calcColHeaders}>
+          <div data-part={P.calcColHeaders}>
             <div
-              data-part={RICH_PARTS.calcCornerCell}
+              data-part={P.calcCornerCell}
               style={{ width: ROW_HEADER_W, height: HEADER_H }}
             >
               {'\u229E'}
@@ -762,7 +762,7 @@ export function MacCalc({ initialCells }: MacCalcProps) {
             {Array.from({ length: NUM_COLS }, (_, c) => (
               <div
                 key={c}
-                data-part={RICH_PARTS.calcColHeader}
+                data-part={P.calcColHeader}
                 data-state={sel.c === c ? 'active' : undefined}
                 style={{
                   width: colWidths[c],
@@ -772,7 +772,7 @@ export function MacCalc({ initialCells }: MacCalcProps) {
                 {colLabel(c)}
                 <div
                   onMouseDown={(e) => handleColResizeStart(c, e)}
-                  data-part={RICH_PARTS.calcColResize}
+                  data-part={P.calcColResize}
                 />
               </div>
             ))}
@@ -780,9 +780,9 @@ export function MacCalc({ initialCells }: MacCalcProps) {
 
           {/* Rows */}
           {Array.from({ length: NUM_ROWS }, (_, r) => (
-            <div key={r} data-part={RICH_PARTS.calcRow}>
+            <div key={r} data-part={P.calcRow}>
               <div
-                data-part={RICH_PARTS.calcRowHeader}
+                data-part={P.calcRowHeader}
                 data-state={sel.r === r ? 'active' : undefined}
                 style={{ width: ROW_HEADER_W, height: ROW_H }}
               >
@@ -807,7 +807,7 @@ export function MacCalc({ initialCells }: MacCalcProps) {
                     key={c}
                     onMouseDown={(e) => handleCellMouseDown(r, c, e)}
                     onMouseEnter={() => handleCellMouseEnter(r, c)}
-                    data-part={RICH_PARTS.calcCell}
+                    data-part={P.calcCell}
                     data-state={
                       isSel
                         ? 'selected'
@@ -836,7 +836,7 @@ export function MacCalc({ initialCells }: MacCalcProps) {
                     {isSel && editing ? (
                       <input
                         ref={editRef}
-                        data-part={RICH_PARTS.calcCellEdit}
+                        data-part={P.calcCellEdit}
                         value={editVal}
                         onChange={(e) => setEditVal(e.target.value)}
                         onKeyDown={(e) => {

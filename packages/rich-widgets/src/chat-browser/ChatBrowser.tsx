@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Btn, Checkbox } from '@hypercard/engine';
-import { RICH_PARTS } from '../parts';
+import { RICH_PARTS as P } from '../parts';
 import { EmptyState } from '../primitives/EmptyState';
 import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
@@ -29,24 +29,24 @@ function ConvoRow({
 }) {
   return (
     <div
-      data-part={RICH_PARTS.cbConvoRow}
+      data-part={P.cbConvoRow}
       data-selected={selected || undefined}
       data-even={even || undefined}
       onClick={onSelect}
     >
-      <div data-part={RICH_PARTS.cbConvoRowTop}>
-        <span data-part={RICH_PARTS.cbConvoTitle}>
+      <div data-part={P.cbConvoRowTop}>
+        <span data-part={P.cbConvoTitle}>
           {'\uD83D\uDCAC'} {convo.title}
         </span>
-        <span data-part={RICH_PARTS.cbConvoMsgCount}>{convo.messages.length} msgs</span>
+        <span data-part={P.cbConvoMsgCount}>{convo.messages.length} msgs</span>
       </div>
-      <div data-part={RICH_PARTS.cbConvoRowMeta}>
+      <div data-part={P.cbConvoRowMeta}>
         <span>{'\uD83E\uDD16'} {convo.model}</span>
         <span>{'\uD83D\uDCC5'} {convo.date}</span>
       </div>
-      <div data-part={RICH_PARTS.cbConvoTags}>
+      <div data-part={P.cbConvoTags}>
         {convo.tags.map((t) => (
-          <span key={t} data-part={RICH_PARTS.cbTag}>{t}</span>
+          <span key={t} data-part={P.cbTag}>{t}</span>
         ))}
       </div>
     </div>
@@ -62,16 +62,16 @@ function MessageBubble({
 }) {
   return (
     <div
-      data-part={RICH_PARTS.cbMessage}
+      data-part={P.cbMessage}
       data-role={message.role}
     >
-      <div data-part={RICH_PARTS.cbMessageHeader}>
-        <span data-part={RICH_PARTS.cbMessageIcon}>
+      <div data-part={P.cbMessageHeader}>
+        <span data-part={P.cbMessageIcon}>
           {message.role === 'user' ? '\uD83D\uDC64' : '\uD83E\uDD16'}
         </span>
         {message.role === 'user' ? 'You' : model}
       </div>
-      <div data-part={RICH_PARTS.cbMessageText}>{message.text}</div>
+      <div data-part={P.cbMessageText}>{message.text}</div>
     </div>
   );
 }
@@ -103,9 +103,9 @@ function SearchPanel({
   };
 
   return (
-    <div data-part={RICH_PARTS.cbSearchPanel}>
-      <div data-part={RICH_PARTS.cbSearchSection}>
-        <div data-part={RICH_PARTS.cbSearchLabel}>Search Text:</div>
+    <div data-part={P.cbSearchPanel}>
+      <div data-part={P.cbSearchSection}>
+        <div data-part={P.cbSearchLabel}>Search Text:</div>
         <input
           data-part="field-input"
           value={params.text}
@@ -115,7 +115,7 @@ function SearchPanel({
         />
       </div>
 
-      <div data-part={RICH_PARTS.cbSearchScope}>
+      <div data-part={P.cbSearchScope}>
         <Checkbox
           label="In titles"
           checked={params.inTitles}
@@ -128,9 +128,9 @@ function SearchPanel({
         />
       </div>
 
-      <div data-part={RICH_PARTS.cbSearchSection}>
-        <div data-part={RICH_PARTS.cbSearchLabel}>Model:</div>
-        <div data-part={RICH_PARTS.cbModelFilter}>
+      <div data-part={P.cbSearchSection}>
+        <div data-part={P.cbSearchLabel}>Model:</div>
+        <div data-part={P.cbModelFilter}>
           <Btn
             active={!params.model}
             onClick={() => onChange({ ...params, model: '' })}
@@ -145,13 +145,13 @@ function SearchPanel({
         </div>
       </div>
 
-      <div data-part={RICH_PARTS.cbSearchSection}>
-        <div data-part={RICH_PARTS.cbSearchLabel}>Tags:</div>
-        <div data-part={RICH_PARTS.cbTagFilter}>
+      <div data-part={P.cbSearchSection}>
+        <div data-part={P.cbSearchLabel}>Tags:</div>
+        <div data-part={P.cbTagFilter}>
           {allTags.map((t) => (
             <span
               key={t}
-              data-part={RICH_PARTS.cbFilterTag}
+              data-part={P.cbFilterTag}
               data-active={params.tags.includes(t) || undefined}
               onClick={() => toggleTag(t)}
             >
@@ -161,9 +161,9 @@ function SearchPanel({
         </div>
       </div>
 
-      <div data-part={RICH_PARTS.cbSearchSection}>
-        <div data-part={RICH_PARTS.cbSearchLabel}>Date Range:</div>
-        <div data-part={RICH_PARTS.cbDateRange}>
+      <div data-part={P.cbSearchSection}>
+        <div data-part={P.cbSearchLabel}>Date Range:</div>
+        <div data-part={P.cbDateRange}>
           <input
             data-part="field-input"
             type="date"
@@ -180,7 +180,7 @@ function SearchPanel({
         </div>
       </div>
 
-      <div data-part={RICH_PARTS.cbSearchActions}>
+      <div data-part={P.cbSearchActions}>
         <Btn onClick={() => { onClear(); onClose(); }}>Clear</Btn>
         <Btn onClick={onClose}>Cancel</Btn>
         <Btn onClick={onSearch}>{'\uD83D\uDD0D'} Search</Btn>
@@ -241,9 +241,9 @@ export function ChatBrowser({
   };
 
   return (
-    <div data-part={RICH_PARTS.chatBrowser}>
+    <div data-part={P.chatBrowser}>
       {/* Sidebar: conversation list */}
-      <div data-part={RICH_PARTS.cbSidebar}>
+      <div data-part={P.cbSidebar}>
         {/* Toolbar */}
         <WidgetToolbar>
           <input
@@ -260,7 +260,7 @@ export function ChatBrowser({
         </WidgetToolbar>
 
         {/* List */}
-        <div data-part={RICH_PARTS.cbConvoList}>
+        <div data-part={P.cbConvoList}>
           {displayedConvos.length === 0 && (
             <EmptyState message="No conversations found." />
           )}
@@ -283,7 +283,7 @@ export function ChatBrowser({
       </div>
 
       {/* Main: viewer or search */}
-      <div data-part={RICH_PARTS.cbMain}>
+      <div data-part={P.cbMain}>
         {showSearch ? (
           <SearchPanel
             params={searchParams}
@@ -302,22 +302,22 @@ export function ChatBrowser({
         ) : (
           <>
             {/* Conversation header */}
-            <div data-part={RICH_PARTS.cbViewerHeader}>
-              <div data-part={RICH_PARTS.cbViewerTitle}>{selectedConvo.title}</div>
-              <div data-part={RICH_PARTS.cbViewerMeta}>
+            <div data-part={P.cbViewerHeader}>
+              <div data-part={P.cbViewerTitle}>{selectedConvo.title}</div>
+              <div data-part={P.cbViewerMeta}>
                 <span>{'\uD83E\uDD16'} Model: {selectedConvo.model}</span>
                 <span>{'\uD83D\uDCC5'} {selectedConvo.date}</span>
                 <span>{'\uD83D\uDCAC'} {selectedConvo.messages.length} messages</span>
               </div>
-              <div data-part={RICH_PARTS.cbViewerTags}>
+              <div data-part={P.cbViewerTags}>
                 {selectedConvo.tags.map((t) => (
-                  <span key={t} data-part={RICH_PARTS.cbTag}>{t}</span>
+                  <span key={t} data-part={P.cbTag}>{t}</span>
                 ))}
               </div>
             </div>
 
             {/* Messages */}
-            <div data-part={RICH_PARTS.cbMessages}>
+            <div data-part={P.cbMessages}>
               {selectedConvo.messages.map((m, i) => (
                 <MessageBubble key={i} message={m} model={selectedConvo.model} />
               ))}

@@ -1,4 +1,4 @@
-import { RICH_PARTS } from '../parts';
+import { RICH_PARTS as P } from '../parts';
 
 export interface SearchBarProps {
   value: string;
@@ -16,16 +16,16 @@ export function SearchBar({
   className,
 }: SearchBarProps) {
   return (
-    <div data-part={RICH_PARTS.widgetSearchBar} className={className}>
-      <span data-part={RICH_PARTS.widgetSearchIcon}>🔍</span>
+    <div data-part={P.widgetSearchBar} className={className}>
+      <span data-part={P.widgetSearchIcon}>🔍</span>
       <input
-        data-part={RICH_PARTS.widgetSearchInput}
+        data-part={P.widgetSearchInput}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
       />
       {count !== undefined && (
-        <span data-part={RICH_PARTS.widgetSearchCount}>{count} results</span>
+        <span data-part={P.widgetSearchCount}>{count} results</span>
       )}
     </div>
   );

@@ -1,5 +1,5 @@
 import { Btn } from '@hypercard/engine';
-import { RICH_PARTS } from '../parts';
+import { RICH_PARTS as P } from '../parts';
 
 export interface ButtonGroupProps<T extends string> {
   options: { value: T; label: string }[];
@@ -15,7 +15,7 @@ export function ButtonGroup<T extends string>({
   className,
 }: ButtonGroupProps<T>) {
   return (
-    <div data-part={RICH_PARTS.buttonGroup} className={className}>
+    <div data-part={P.buttonGroup} className={className}>
       {options.map((opt) => (
         <Btn
           key={opt.value}

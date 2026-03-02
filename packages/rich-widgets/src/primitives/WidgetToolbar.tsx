@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { RICH_PARTS } from '../parts';
+import { RICH_PARTS as P } from '../parts';
 
 export interface WidgetToolbarProps {
   children: ReactNode;
@@ -8,7 +8,7 @@ export interface WidgetToolbarProps {
 
 export function WidgetToolbar({ children, className }: WidgetToolbarProps) {
   return (
-    <div data-part={RICH_PARTS.widgetToolbar} className={className}>
+    <div data-part={P.widgetToolbar} className={className}>
       {children}
     </div>
   );

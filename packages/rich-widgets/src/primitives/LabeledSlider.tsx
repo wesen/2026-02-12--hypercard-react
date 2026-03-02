@@ -1,4 +1,4 @@
-import { RICH_PARTS } from '../parts';
+import { RICH_PARTS as P } from '../parts';
 
 export interface LabeledSliderProps {
   label: string;
@@ -20,8 +20,8 @@ export function LabeledSlider({
   unit,
 }: LabeledSliderProps) {
   return (
-    <div data-part={RICH_PARTS.labeledSlider}>
-      <span data-part={RICH_PARTS.labeledSliderLabel}>{label}</span>
+    <div data-part={P.labeledSlider}>
+      <span data-part={P.labeledSliderLabel}>{label}</span>
       <input
         type="range"
         min={min}
@@ -31,7 +31,7 @@ export function LabeledSlider({
         onChange={(e) => onChange(parseFloat(e.target.value))}
         style={{ flex: 1 }}
       />
-      <span data-part={RICH_PARTS.labeledSliderValue}>
+      <span data-part={P.labeledSliderValue}>
         {value}
         {unit || ''}
       </span>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Btn, Checkbox } from '@hypercard/engine';
-import { RICH_PARTS } from '../parts';
+import { RICH_PARTS as P } from '../parts';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import { Sparkline } from '../primitives/Sparkline';
@@ -155,20 +155,20 @@ export function LogViewer({
 
   return (
     <div
-      data-part={RICH_PARTS.lv}
+      data-part={P.lv}
       data-state={compactMode ? 'compact' : undefined}
     >
       {/* ── Left Sidebar ── */}
-      <div data-part={RICH_PARTS.lvSidebar}>
+      <div data-part={P.lvSidebar}>
         {/* Level Filters */}
-        <div data-part={RICH_PARTS.lvFilterGroup}>
+        <div data-part={P.lvFilterGroup}>
           <div style={{ fontWeight: 'bold', fontSize: 10, marginBottom: 4 }}>
             Log Levels
           </div>
           {ALL_LOG_LEVELS.map((level) => (
             <div
               key={level}
-              data-part={RICH_PARTS.lvFilterItem}
+              data-part={P.lvFilterItem}
               onClick={() => toggleLevel(level)}
             >
               <Checkbox
@@ -193,7 +193,7 @@ export function LogViewer({
         </div>
 
         {/* Service Filter */}
-        <div data-part={RICH_PARTS.lvFilterGroup}>
+        <div data-part={P.lvFilterGroup}>
           <div style={{ fontWeight: 'bold', fontSize: 10, marginBottom: 4 }}>
             Services
           </div>
@@ -201,7 +201,7 @@ export function LogViewer({
             {services.map((svc) => (
               <div
                 key={svc}
-                data-part={RICH_PARTS.lvFilterItem}
+                data-part={P.lvFilterItem}
                 data-state={serviceFilter === svc ? 'selected' : undefined}
                 onClick={() => setServiceFilter(svc)}
                 style={{
@@ -218,7 +218,7 @@ export function LogViewer({
         </div>
 
         {/* Controls */}
-        <div data-part={RICH_PARTS.lvControls}>
+        <div data-part={P.lvControls}>
           <Btn
             onClick={() => setStreaming(!streaming)}
             active={streaming}
@@ -265,7 +265,7 @@ export function LogViewer({
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         {/* Search + Activity */}
         <WidgetToolbar>
-          <div data-part={RICH_PARTS.lvSearch}>
+          <div data-part={P.lvSearch}>
             <span style={{ fontSize: 12 }}>🔍</span>
             <input
               data-part="field-input"
@@ -290,7 +290,7 @@ export function LogViewer({
               {filtered.length} / {liveLogs.length} lines
             </div>
           </div>
-          <div data-part={RICH_PARTS.lvActivity}>
+          <div data-part={P.lvActivity}>
             <span style={{ fontWeight: 'bold' }}>ACTIVITY:</span>
             <Sparkline data={sparkData} width={200} height={20} />
             <div style={{ flex: 1 }} />
@@ -303,8 +303,8 @@ export function LogViewer({
         </WidgetToolbar>
 
         {/* Log Table */}
-        <div data-part={RICH_PARTS.lvTable}>
-          <div data-part={RICH_PARTS.lvHeader}>
+        <div data-part={P.lvTable}>
+          <div data-part={P.lvHeader}>
             <span style={{ textAlign: 'center' }}>Lv</span>
             <span>Timestamp</span>
             <span>Service</span>
@@ -332,27 +332,27 @@ export function LogViewer({
               return (
                 <div
                   key={log.id}
-                  data-part={RICH_PARTS.lvRow}
+                  data-part={P.lvRow}
                   data-state={rowState}
                   onClick={() => setSelected(isSel ? null : log.id)}
                 >
-                  <span data-part={RICH_PARTS.lvLevelBadge}>
+                  <span data-part={P.lvLevelBadge}>
                     {meta.emoji}
                   </span>
                   <span
-                    data-part={RICH_PARTS.lvCell}
+                    data-part={P.lvCell}
                     style={{ fontSize: compactMode ? 9 : 10, opacity: 0.7 }}
                   >
                     {fmtTime(log.timestamp)}
                   </span>
                   <span
-                    data-part={RICH_PARTS.lvCell}
+                    data-part={P.lvCell}
                     style={{ fontSize: compactMode ? 9 : 10 }}
                   >
                     {log.service}
                   </span>
                   <span
-                    data-part={RICH_PARTS.lvCell}
+                    data-part={P.lvCell}
                     style={{
                       whiteSpace: wrapLines ? 'pre-wrap' : 'nowrap',
                       wordBreak: wrapLines ? 'break-all' : undefined,
@@ -394,11 +394,11 @@ export function LogViewer({
       </div>
 
       {/* ── Right: Inspector ── */}
-      <div data-part={RICH_PARTS.lvDetail}>
+      <div data-part={P.lvDetail}>
         {selectedLog ? (
           <>
             {/* Header */}
-            <div data-part={RICH_PARTS.lvDetailHeader}>
+            <div data-part={P.lvDetailHeader}>
               <div
                 style={{
                   display: 'flex',
@@ -462,7 +462,7 @@ export function LogViewer({
                   ['Version', selectedLog.metadata.version],
                 ] as const
               ).map(([k, v]) => (
-                <div key={k} data-part={RICH_PARTS.lvDetailField}>
+                <div key={k} data-part={P.lvDetailField}>
                   <span style={{ fontWeight: 'bold' }}>{k}</span>
                   <span
                     style={{
@@ -492,7 +492,7 @@ export function LogViewer({
                 >
                   🚫 Stack Trace
                 </div>
-                <pre data-part={RICH_PARTS.lvDetailStack}>
+                <pre data-part={P.lvDetailStack}>
                   {selectedLog.stackTrace}
                 </pre>
               </div>

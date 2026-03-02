@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { RICH_PARTS } from '../parts';
+import { RICH_PARTS as P } from '../parts';
 import { ModalOverlay } from './ModalOverlay';
 
 export interface PaletteItem {
@@ -64,8 +64,8 @@ export function CommandPalette({
 
   return (
     <ModalOverlay onClose={onClose}>
-      <div data-part={RICH_PARTS.commandPalette}>
-        <div data-part={RICH_PARTS.commandPaletteSearch}>
+      <div data-part={P.commandPalette}>
+        <div data-part={P.commandPaletteSearch}>
           <span style={{ fontSize: 15, opacity: 0.4 }}>🔍</span>
           <input
             ref={ref}
@@ -73,9 +73,9 @@ export function CommandPalette({
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKey}
             placeholder={placeholder}
-            data-part={RICH_PARTS.commandPaletteInput}
+            data-part={P.commandPaletteInput}
           />
-          <kbd data-part={RICH_PARTS.commandPaletteKbd}>esc</kbd>
+          <kbd data-part={P.commandPaletteKbd}>esc</kbd>
         </div>
         <div style={{ maxHeight: 340, overflowY: 'auto' }}>
           {filtered.length === 0 && (
@@ -94,7 +94,7 @@ export function CommandPalette({
               key={a.id}
               onClick={() => onSelect(a.id)}
               onMouseEnter={() => setIdx(i)}
-              data-part={RICH_PARTS.commandPaletteItem}
+              data-part={P.commandPaletteItem}
               data-state={i === idx ? 'active' : undefined}
             >
               {a.icon && (
@@ -117,7 +117,7 @@ export function CommandPalette({
           ))}
         </div>
         {footer && (
-          <div data-part={RICH_PARTS.commandPaletteFooter}>
+          <div data-part={P.commandPaletteFooter}>
             <span>↑↓ navigate</span>
             <span>⏎ run</span>
             <span>esc close</span>

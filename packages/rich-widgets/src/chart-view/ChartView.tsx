@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { RadioButton } from '@hypercard/engine';
-import { RICH_PARTS } from '../parts';
+import { RICH_PARTS as P } from '../parts';
 import type { ChartType, ChartDataset, ChartTooltip } from './types';
 import { SAMPLE_DATASETS } from './sampleData';
 import {
@@ -116,7 +116,7 @@ function LegendBar({
   chartType: ChartType;
 }) {
   return (
-    <div data-part={RICH_PARTS.cvLegend}>
+    <div data-part={P.cvLegend}>
       {series.map((s, i) => (
         <div
           key={s.name}
@@ -191,9 +191,9 @@ export function ChartView({
   const types = availableTypes ?? CHART_TYPE_OPTIONS.map((o) => o.value);
 
   return (
-    <div data-part={RICH_PARTS.cv}>
+    <div data-part={P.cv}>
       {/* Chart area */}
-      <div data-part={RICH_PARTS.cvCanvas}>
+      <div data-part={P.cvCanvas}>
         {title && (
           <div
             style={{
@@ -219,9 +219,9 @@ export function ChartView({
       </div>
 
       {/* Controls panel */}
-      <div data-part={RICH_PARTS.cvControls}>
+      <div data-part={P.cvControls}>
         {/* Chart type */}
-        <div data-part={RICH_PARTS.cvControlGroup}>
+        <div data-part={P.cvControlGroup}>
           <div
             style={{
               fontSize: 10,
@@ -249,7 +249,7 @@ export function ChartView({
 
         {/* Dataset selector */}
         {datasets && (
-          <div data-part={RICH_PARTS.cvControlGroup}>
+          <div data-part={P.cvControlGroup}>
             <div
               style={{
                 fontSize: 10,
@@ -277,7 +277,7 @@ export function ChartView({
         )}
 
         {/* Info */}
-        <div data-part={RICH_PARTS.cvInfo}>
+        <div data-part={P.cvInfo}>
           <b>ℹ️ Info</b>
           <br />
           Series: {data.series.length}

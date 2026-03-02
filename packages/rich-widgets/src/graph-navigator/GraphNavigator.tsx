@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Btn } from '@hypercard/engine';
-import { RICH_PARTS } from '../parts';
+import { RICH_PARTS as P } from '../parts';
 import type { GraphNavNode, GraphNavEdge } from './types';
 import { TYPE_STYLES } from './types';
 import {
@@ -502,13 +502,13 @@ export function GraphNavigator({
   }, [initialEdges]);
 
   return (
-    <div data-part={RICH_PARTS.graphNav}>
+    <div data-part={P.graphNav}>
       {/* ── Left Sidebar ── */}
-      <div data-part={RICH_PARTS.gnSidebar}>
+      <div data-part={P.gnSidebar}>
         {/* Node Browser */}
-        <div data-part={RICH_PARTS.gnPanel} style={{ flex: 1, minHeight: 0 }}>
-          <div data-part={RICH_PARTS.gnPanelHeader}>Node Browser</div>
-          <div data-part={RICH_PARTS.gnFilterBar}>
+        <div data-part={P.gnPanel} style={{ flex: 1, minHeight: 0 }}>
+          <div data-part={P.gnPanelHeader}>Node Browser</div>
+          <div data-part={P.gnFilterBar}>
             {NODE_FILTER_TYPES.map((t) => (
               <Btn
                 key={t}
@@ -523,12 +523,12 @@ export function GraphNavigator({
               </Btn>
             ))}
           </div>
-          <div data-part={RICH_PARTS.gnNodeList}>
+          <div data-part={P.gnNodeList}>
             {filteredNodes.map((n) => (
               <div
                 key={n.id}
                 onClick={() => setSelected(n.id)}
-                data-part={RICH_PARTS.gnNodeItem}
+                data-part={P.gnNodeItem}
                 data-state={selected === n.id ? 'selected' : undefined}
               >
                 <span style={{ fontSize: 12 }}>
@@ -542,9 +542,9 @@ export function GraphNavigator({
         </div>
 
         {/* Stats */}
-        <div data-part={RICH_PARTS.gnPanel} style={{ flexShrink: 0 }}>
-          <div data-part={RICH_PARTS.gnPanelHeader}>Statistics</div>
-          <div data-part={RICH_PARTS.gnStats}>
+        <div data-part={P.gnPanel} style={{ flexShrink: 0 }}>
+          <div data-part={P.gnPanelHeader}>Statistics</div>
+          <div data-part={P.gnStats}>
             <div>
               Nodes: <b>{stats.nodes}</b>
             </div>
@@ -559,11 +559,11 @@ export function GraphNavigator({
       </div>
 
       {/* ── Center ── */}
-      <div data-part={RICH_PARTS.gnCenter}>
+      <div data-part={P.gnCenter}>
         {/* Graph View */}
-        <div data-part={RICH_PARTS.gnPanel} style={{ flex: 1, minHeight: 0 }}>
-          <div data-part={RICH_PARTS.gnPanelHeader}>Graph View</div>
-          <div ref={graphRef} data-part={RICH_PARTS.gnGraphArea}>
+        <div data-part={P.gnPanel} style={{ flex: 1, minHeight: 0 }}>
+          <div data-part={P.gnPanelHeader}>Graph View</div>
+          <div ref={graphRef} data-part={P.gnGraphArea}>
             <GraphCanvas
               nodes={filteredNodes}
               edges={filteredEdges}
@@ -573,7 +573,7 @@ export function GraphNavigator({
               width={dims.w}
               height={dims.h}
             />
-            <div data-part={RICH_PARTS.gnLegend}>
+            <div data-part={P.gnLegend}>
               {Object.entries(TYPE_STYLES).map(([type, s]) => (
                 <span key={type}>
                   {s.emoji} {type}
@@ -586,12 +586,12 @@ export function GraphNavigator({
 
         {/* Query Console */}
         <div
-          data-part={RICH_PARTS.gnPanel}
+          data-part={P.gnPanel}
           style={{ height: 140, flexShrink: 0 }}
         >
-          <div data-part={RICH_PARTS.gnPanelHeader}>Query Console</div>
-          <div data-part={RICH_PARTS.gnConsole}>
-            <div data-part={RICH_PARTS.gnConsoleLog}>
+          <div data-part={P.gnPanelHeader}>Query Console</div>
+          <div data-part={P.gnConsole}>
+            <div data-part={P.gnConsoleLog}>
               {queryLog.map((l, i) => (
                 <div
                   key={i}
@@ -604,16 +604,16 @@ export function GraphNavigator({
                   {l}
                 </div>
               ))}
-              <span data-part={RICH_PARTS.gnCursor}>{'\u258C'}</span>
+              <span data-part={P.gnCursor}>{'\u258C'}</span>
             </div>
-            <div data-part={RICH_PARTS.gnConsoleInput}>
-              <span data-part={RICH_PARTS.gnPrompt}>{'>'}</span>
+            <div data-part={P.gnConsoleInput}>
+              <span data-part={P.gnPrompt}>{'>'}</span>
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && runQuery()}
                 placeholder="MATCH (n:Person) RETURN n"
-                data-part={RICH_PARTS.gnQueryInput}
+                data-part={P.gnQueryInput}
               />
               <Btn
                 onClick={runQuery}
@@ -627,13 +627,13 @@ export function GraphNavigator({
       </div>
 
       {/* ── Right Sidebar ── */}
-      <div data-part={RICH_PARTS.gnInspector}>
+      <div data-part={P.gnInspector}>
         {/* Node Inspector */}
-        <div data-part={RICH_PARTS.gnPanel} style={{ flex: 1, minHeight: 0 }}>
-          <div data-part={RICH_PARTS.gnPanelHeader}>Node Inspector</div>
+        <div data-part={P.gnPanel} style={{ flex: 1, minHeight: 0 }}>
+          <div data-part={P.gnPanelHeader}>Node Inspector</div>
           {selectedNode ? (
             <div style={{ flex: 1, overflowY: 'auto' }}>
-              <div data-part={RICH_PARTS.gnInspectorHeader}>
+              <div data-part={P.gnInspectorHeader}>
                 <span style={{ fontSize: 22 }}>
                   {TYPE_STYLES[selectedNode.type]?.emoji}
                 </span>
@@ -646,17 +646,17 @@ export function GraphNavigator({
                   </div>
                 </div>
               </div>
-              <div data-part={RICH_PARTS.gnPropsSection}>
-                <div data-part={RICH_PARTS.gnSectionTitle}>Properties</div>
+              <div data-part={P.gnPropsSection}>
+                <div data-part={P.gnSectionTitle}>Properties</div>
                 {Object.entries(selectedNode.props).map(([k, v]) => (
-                  <div key={k} data-part={RICH_PARTS.gnPropRow}>
+                  <div key={k} data-part={P.gnPropRow}>
                     <span style={{ fontWeight: 'bold' }}>{k}:</span>
                     <span>{String(v)}</span>
                   </div>
                 ))}
               </div>
-              <div data-part={RICH_PARTS.gnPropsSection}>
-                <div data-part={RICH_PARTS.gnSectionTitle}>
+              <div data-part={P.gnPropsSection}>
+                <div data-part={P.gnSectionTitle}>
                   Relationships ({connectedEdges.length})
                 </div>
                 {connectedEdges.map((e, i) => {
@@ -667,10 +667,10 @@ export function GraphNavigator({
                     <div
                       key={i}
                       onClick={() => setSelected(otherId)}
-                      data-part={RICH_PARTS.gnRelItem}
+                      data-part={P.gnRelItem}
                     >
                       <span>{isOut ? '\u2192' : '\u2190'}</span>
-                      <span data-part={RICH_PARTS.gnRelLabel}>
+                      <span data-part={P.gnRelLabel}>
                         {e.label}
                       </span>
                       <span>
@@ -682,7 +682,7 @@ export function GraphNavigator({
               </div>
             </div>
           ) : (
-            <div data-part={RICH_PARTS.gnEmptyInspector}>
+            <div data-part={P.gnEmptyInspector}>
               <div style={{ fontSize: 32, marginBottom: 8 }}>{'\uD83D\uDD0E'}</div>
               Click a node in the graph
               <br />
@@ -695,15 +695,15 @@ export function GraphNavigator({
 
         {/* Edge Types */}
         <div
-          data-part={RICH_PARTS.gnPanel}
+          data-part={P.gnPanel}
           style={{ height: 140, flexShrink: 0 }}
         >
-          <div data-part={RICH_PARTS.gnPanelHeader}>Edge Types</div>
+          <div data-part={P.gnPanelHeader}>Edge Types</div>
           <div style={{ overflowY: 'auto', padding: 6 }}>
             {edgeTypes.map(([label, count]) => (
-              <div key={label} data-part={RICH_PARTS.gnEdgeTypeRow}>
+              <div key={label} data-part={P.gnEdgeTypeRow}>
                 <span style={{ fontWeight: 'bold' }}>{label}</span>
-                <span data-part={RICH_PARTS.gnEdgeCount}>
+                <span data-part={P.gnEdgeCount}>
                   {'\u00D7'}
                   {count}
                 </span>

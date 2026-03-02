@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback } from 'react';
-import { RICH_PARTS } from '../parts';
+import { RICH_PARTS as P } from '../parts';
 import type { LogLine } from './types';
 import { clamp } from './types';
 
@@ -101,13 +101,13 @@ export function AnalogGauge({
   }, [value, min, max, danger, size, r, sA, eA]);
 
   return (
-    <div data-part={RICH_PARTS.crGauge}>
-      <div data-part={RICH_PARTS.crGaugeCanvas}>
+    <div data-part={P.crGauge}>
+      <div data-part={P.crGaugeCanvas}>
         <canvas ref={canvasRef} width={size} height={size} style={{ display: 'block' }} />
       </div>
-      <div data-part={RICH_PARTS.crGaugeLabel}>
-        <span data-part={RICH_PARTS.crGaugeLabelText}>{label}</span>
-        <span data-part={RICH_PARTS.crGaugeValue}>
+      <div data-part={P.crGaugeLabel}>
+        <span data-part={P.crGaugeLabelText}>{label}</span>
+        <span data-part={P.crGaugeValue}>
           {value.toFixed(1)}
           {unit}
         </span>
@@ -136,28 +136,28 @@ export function BarMeter({
   const frac = clamp(value / max, 0, 1);
   const isAlert = value >= danger;
   return (
-    <div data-part={RICH_PARTS.crBarMeter}>
-      <span data-part={RICH_PARTS.crBarLabel}>{label}</span>
-      <div data-part={RICH_PARTS.crBarTrack} style={{ height }}>
+    <div data-part={P.crBarMeter}>
+      <span data-part={P.crBarLabel}>{label}</span>
+      <div data-part={P.crBarTrack} style={{ height }}>
         <div
-          data-part={RICH_PARTS.crBarDanger}
+          data-part={P.crBarDanger}
           style={{ bottom: `${(danger / max) * 100}%` }}
         />
         <div
-          data-part={RICH_PARTS.crBarFill}
+          data-part={P.crBarFill}
           data-alert={isAlert || undefined}
           style={{ height: `${frac * 100}%` }}
         />
         {Array.from({ length: 11 }, (_, i) => (
           <div
             key={i}
-            data-part={RICH_PARTS.crBarTick}
+            data-part={P.crBarTick}
             data-major={i % 5 === 0 || undefined}
             style={{ bottom: `${(i / 10) * 100}%` }}
           />
         ))}
       </div>
-      <span data-part={RICH_PARTS.crBarValue}>{Math.round(value)}</span>
+      <span data-part={P.crBarValue}>{Math.round(value)}</span>
     </div>
   );
 }
@@ -177,13 +177,13 @@ export function HorizontalBar({
 }: HorizontalBarProps) {
   const frac = clamp(value / max, 0, 1);
   return (
-    <div data-part={RICH_PARTS.crHBar}>
-      <div data-part={RICH_PARTS.crHBarHeader}>
-        <span data-part={RICH_PARTS.crHBarLabel}>{label}</span>
-        <span data-part={RICH_PARTS.crHBarPct}>{Math.round(frac * 100)}%</span>
+    <div data-part={P.crHBar}>
+      <div data-part={P.crHBarHeader}>
+        <span data-part={P.crHBarLabel}>{label}</span>
+        <span data-part={P.crHBarPct}>{Math.round(frac * 100)}%</span>
       </div>
-      <div data-part={RICH_PARTS.crHBarTrack}>
-        <div data-part={RICH_PARTS.crHBarFill} style={{ width: `${frac * 100}%` }} />
+      <div data-part={P.crHBarTrack}>
+        <div data-part={P.crHBarFill} style={{ width: `${frac * 100}%` }} />
       </div>
     </div>
   );
@@ -199,16 +199,16 @@ export interface LEDProps {
 
 export function LED({ on = false, color = '#00AA00', label = '' }: LEDProps) {
   return (
-    <div data-part={RICH_PARTS.crLed}>
+    <div data-part={P.crLed}>
       <div
-        data-part={RICH_PARTS.crLedDot}
+        data-part={P.crLedDot}
         data-on={on || undefined}
         style={{
           background: on ? color : '#808080',
           boxShadow: on ? `0 0 4px ${color}` : 'inset 1px 1px 2px rgba(0,0,0,0.3)',
         }}
       />
-      {label && <span data-part={RICH_PARTS.crLedLabel}>{label}</span>}
+      {label && <span data-part={P.crLedLabel}>{label}</span>}
     </div>
   );
 }
@@ -223,18 +223,18 @@ export interface ToggleSwitchProps {
 
 export function ToggleSwitch({ on, onToggle, label = '' }: ToggleSwitchProps) {
   return (
-    <div data-part={RICH_PARTS.crToggle}>
+    <div data-part={P.crToggle}>
       <div
-        data-part={RICH_PARTS.crToggleTrack}
+        data-part={P.crToggleTrack}
         data-on={on || undefined}
         onClick={onToggle}
       >
         <div
-          data-part={RICH_PARTS.crToggleThumb}
+          data-part={P.crToggleThumb}
           style={{ left: on ? 20 : 1 }}
         />
       </div>
-      <span data-part={RICH_PARTS.crToggleLabel}>{label}</span>
+      <span data-part={P.crToggleLabel}>{label}</span>
     </div>
   );
 }
@@ -250,11 +250,11 @@ export interface SevenSegProps {
 export function SevenSeg({ value = '0000', label = '', digits = 4 }: SevenSegProps) {
   const display = String(value).padStart(digits, ' ').slice(-digits);
   return (
-    <div data-part={RICH_PARTS.crSevenSeg}>
-      {label && <span data-part={RICH_PARTS.crSevenSegLabel}>{label}</span>}
-      <div data-part={RICH_PARTS.crSevenSegDisplay}>
+    <div data-part={P.crSevenSeg}>
+      {label && <span data-part={P.crSevenSegLabel}>{label}</span>}
+      <div data-part={P.crSevenSegDisplay}>
         {display.split('').map((ch, i) => (
-          <span key={i} data-part={RICH_PARTS.crSevenSegDigit}>
+          <span key={i} data-part={P.crSevenSegDigit}>
             {ch}
           </span>
         ))}
@@ -315,23 +315,23 @@ export function Knob({
   }, [min, max, onChange]);
 
   return (
-    <div data-part={RICH_PARTS.crKnob}>
-      {label && <span data-part={RICH_PARTS.crKnobLabel}>{label}</span>}
+    <div data-part={P.crKnob}>
+      {label && <span data-part={P.crKnobLabel}>{label}</span>}
       <div
-        data-part={RICH_PARTS.crKnobDial}
+        data-part={P.crKnobDial}
         onMouseDown={handleMouseDown}
         style={{ width: size, height: size }}
       >
         <div
-          data-part={RICH_PARTS.crKnobPointer}
+          data-part={P.crKnobPointer}
           style={{
             height: size / 2 - 6,
             transform: `translate(-50%,0) rotate(${angle}deg)`,
           }}
         />
-        <div data-part={RICH_PARTS.crKnobCenter} />
+        <div data-part={P.crKnobCenter} />
       </div>
-      <span data-part={RICH_PARTS.crKnobValue}>{Math.round(value)}</span>
+      <span data-part={P.crKnobValue}>{Math.round(value)}</span>
     </div>
   );
 }
@@ -348,9 +348,9 @@ export function ScrollLog({ lines = [] }: ScrollLogProps) {
     if (ref.current) ref.current.scrollTop = ref.current.scrollHeight;
   }, [lines]);
   return (
-    <div ref={ref} data-part={RICH_PARTS.crScrollLog}>
+    <div ref={ref} data-part={P.crScrollLog}>
       {lines.map((line, i) => (
-        <div key={i} data-part={RICH_PARTS.crLogLine} data-type={line.type}>
+        <div key={i} data-part={P.crLogLine} data-type={line.type}>
           {line.time} {line.msg}
         </div>
       ))}
@@ -420,9 +420,9 @@ export function Scope({
   }, [data, width, height]);
 
   return (
-    <div data-part={RICH_PARTS.crScope}>
-      <span data-part={RICH_PARTS.crScopeLabel}>{label}</span>
-      <div data-part={RICH_PARTS.crScopeCanvas}>
+    <div data-part={P.crScope}>
+      <span data-part={P.crScopeLabel}>{label}</span>
+      <div data-part={P.crScopeCanvas}>
         <canvas ref={canvasRef} width={width} height={height} style={{ display: 'block' }} />
       </div>
     </div>

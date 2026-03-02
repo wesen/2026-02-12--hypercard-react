@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { Btn } from '@hypercard/engine';
-import { RICH_PARTS } from '../parts';
+import { RICH_PARTS as P } from '../parts';
 import { ModalOverlay } from '../primitives/ModalOverlay';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import { Separator } from '../primitives/Separator';
@@ -25,7 +25,7 @@ function TaskCard({
 }) {
   return (
     <div
-      data-part={RICH_PARTS.kbCard}
+      data-part={P.kbCard}
       data-priority={task.priority}
       draggable
       onDragStart={(e) => {
@@ -34,14 +34,14 @@ function TaskCard({
       }}
       onClick={() => onEdit(task)}
     >
-      <div data-part={RICH_PARTS.kbCardTitle}>{task.title}</div>
+      <div data-part={P.kbCardTitle}>{task.title}</div>
       {task.desc && (
-        <div data-part={RICH_PARTS.kbCardDesc}>{task.desc}</div>
+        <div data-part={P.kbCardDesc}>{task.desc}</div>
       )}
       {task.tags.length > 0 && (
-        <div data-part={RICH_PARTS.kbCardTags}>
+        <div data-part={P.kbCardTags}>
           {task.tags.map((t) => (
-            <span key={t} data-part={RICH_PARTS.kbTag} data-tag={t}>
+            <span key={t} data-part={P.kbTag} data-tag={t}>
               {TAG_LABELS[t]}
             </span>
           ))}
@@ -79,14 +79,14 @@ function TaskModal({
 
   return (
     <ModalOverlay onClose={onClose}>
-      <div data-part={RICH_PARTS.kbModal}>
-        <div data-part={RICH_PARTS.kbModalHeader}>
+      <div data-part={P.kbModal}>
+        <div data-part={P.kbModalHeader}>
           <span>{isNew ? 'New Task' : 'Edit Task'}</span>
           <Btn onClick={onClose} style={{ fontSize: 9 }}>
             ✕
           </Btn>
         </div>
-        <div data-part={RICH_PARTS.kbModalBody}>
+        <div data-part={P.kbModalBody}>
           <div>
             <label>Title</label>
             <input
@@ -151,7 +151,7 @@ function TaskModal({
             </div>
           </div>
         </div>
-        <div data-part={RICH_PARTS.kbModalFooter}>
+        <div data-part={P.kbModalFooter}>
           {!isNew && (
             <Btn
               onClick={() => {
@@ -273,7 +273,7 @@ export function KanbanBoard({
   const hasFilters = !!(filterTag || filterPriority || searchQuery);
 
   return (
-    <div data-part={RICH_PARTS.kb}>
+    <div data-part={P.kb}>
       {/* ── Toolbar ── */}
       <WidgetToolbar>
         <Btn
@@ -336,7 +336,7 @@ export function KanbanBoard({
       </WidgetToolbar>
 
       {/* ── Board ── */}
-      <div data-part={RICH_PARTS.kbBoard}>
+      <div data-part={P.kbBoard}>
         {columns.map((column) => {
           const colTasks = tasksByCol[column.id] || [];
           const total = totalByCol[column.id];
@@ -346,7 +346,7 @@ export function KanbanBoard({
           return (
             <div
               key={column.id}
-              data-part={RICH_PARTS.kbColumn}
+              data-part={P.kbColumn}
               data-state={
                 collapsed ? 'collapsed' : isOver ? 'drag-over' : undefined
               }
@@ -358,14 +358,14 @@ export function KanbanBoard({
               onDrop={(e) => handleDrop(column.id, e)}
             >
               <div
-                data-part={RICH_PARTS.kbColumnHeader}
+                data-part={P.kbColumnHeader}
                 onClick={() => toggleCollapse(column.id)}
               >
                 <span>
                   {column.icon} {column.title}
                 </span>
                 {!collapsed && (
-                  <span data-part={RICH_PARTS.kbColumnCount}>
+                  <span data-part={P.kbColumnCount}>
                     {colTasks.length}
                     {colTasks.length !== total ? `/${total}` : ''}
                     <span
@@ -381,7 +381,7 @@ export function KanbanBoard({
                 )}
               </div>
               {!collapsed && (
-                <div data-part={RICH_PARTS.kbColumnCards}>
+                <div data-part={P.kbColumnCards}>
                   {colTasks.length === 0 && (
                     <div
                       style={{

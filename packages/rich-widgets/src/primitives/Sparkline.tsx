@@ -1,4 +1,4 @@
-import { RICH_PARTS } from '../parts';
+import { RICH_PARTS as P } from '../parts';
 
 export interface SparklineProps {
   data: number[];
@@ -13,7 +13,7 @@ export function Sparkline({ data, width = 160, height = 32 }: SparklineProps) {
   const barWidth = Math.max(1, Math.floor(width / data.length) - 1);
 
   return (
-    <svg data-part={RICH_PARTS.sparkline} width={width} height={height}>
+    <svg data-part={P.sparkline} width={width} height={height}>
       {data.map((value, i) => {
         const barHeight = (value / max) * (height - 2);
         return (

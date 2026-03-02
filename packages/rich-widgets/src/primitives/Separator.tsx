@@ -1,4 +1,4 @@
-import { RICH_PARTS } from '../parts';
+import { RICH_PARTS as P } from '../parts';
 
 export interface SeparatorProps {
   orientation?: 'vertical' | 'horizontal';
@@ -8,7 +8,7 @@ export interface SeparatorProps {
 export function Separator({ orientation = 'vertical', className }: SeparatorProps) {
   return (
     <span
-      data-part={RICH_PARTS.widgetSeparator}
+      data-part={P.widgetSeparator}
       data-orientation={orientation}
       className={className}
     />

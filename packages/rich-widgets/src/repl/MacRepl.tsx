@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { RICH_PARTS } from '../parts';
+import { RICH_PARTS as P } from '../parts';
 import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import type { TerminalLine } from './types';
 import {
@@ -407,17 +407,17 @@ export function MacRepl({
   };
 
   return (
-    <div data-part={RICH_PARTS.repl}>
+    <div data-part={P.repl}>
       {/* ── Terminal Body ── */}
       <div
-        data-part={RICH_PARTS.replBody}
+        data-part={P.replBody}
         ref={scrollRef}
         onClick={() => inputRef.current?.focus()}
       >
         {lines.map((line, i) => (
           <div
             key={i}
-            data-part={RICH_PARTS.replLine}
+            data-part={P.replLine}
             data-line-type={line.type}
           >
             {line.type === 'input' ? (
@@ -432,12 +432,12 @@ export function MacRepl({
         ))}
 
         {/* ── Input Line ── */}
-        <div data-part={RICH_PARTS.replInputLine}>
-          <span data-part={RICH_PARTS.replPrompt}>{prompt}</span>
+        <div data-part={P.replInputLine}>
+          <span data-part={P.replPrompt}>{prompt}</span>
           <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center' }}>
             <input
               ref={inputRef}
-              data-part={RICH_PARTS.replInput}
+              data-part={P.replInput}
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -448,18 +448,18 @@ export function MacRepl({
             />
             {suggestion && (
               <span
-                data-part={RICH_PARTS.replGhost}
+                data-part={P.replGhost}
                 style={{ left: `${input.length * 7.2}px` }}
               >
                 {suggestion}
               </span>
             )}
             {showCompletion && completions.length > 1 && (
-              <div data-part={RICH_PARTS.replCompletionPopup}>
+              <div data-part={P.replCompletionPopup}>
                 {completions.map((c, i) => (
                   <div
                     key={c}
-                    data-part={RICH_PARTS.replCompletionItem}
+                    data-part={P.replCompletionItem}
                     data-state={i === completionIdx ? 'active' : undefined}
                     onMouseDown={(e) => {
                       e.preventDefault();

@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Btn } from '@hypercard/engine';
-import { RICH_PARTS } from '../parts';
+import { RICH_PARTS as P } from '../parts';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import type { GraphNode, Connection, TempConnection } from './types';
@@ -124,7 +124,7 @@ function NodeComponent({
 }) {
   return (
     <div
-      data-part={RICH_PARTS.neNode}
+      data-part={P.neNode}
       data-state={selected ? 'selected' : undefined}
       style={{ left: node.x, top: node.y, width: NODE_WIDTH }}
       onMouseDown={(e) => {
@@ -133,14 +133,14 @@ function NodeComponent({
       }}
     >
       {/* Title bar */}
-      <div data-part={RICH_PARTS.neNodeHeader}>
+      <div data-part={P.neNodeHeader}>
         <span>
           {node.icon} {node.title}
         </span>
       </div>
 
       {/* Fields */}
-      <div data-part={RICH_PARTS.neNodeFields}>
+      <div data-part={P.neNodeFields}>
         {node.fields.map((f, fi) => (
           <div key={fi} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 20 }}>
             <span style={{ fontSize: 10, opacity: 0.6, minWidth: 40 }}>
@@ -157,7 +157,7 @@ function NodeComponent({
       </div>
 
       {/* Ports */}
-      <div data-part={RICH_PARTS.neNodePorts}>
+      <div data-part={P.neNodePorts}>
         {node.outputs.map((port, pi) => (
           <div
             key={`o-${pi}`}
@@ -172,7 +172,7 @@ function NodeComponent({
           >
             <span style={{ fontSize: 9, opacity: 0.6 }}>{port.label}</span>
             <div
-              data-part={RICH_PARTS.nePort}
+              data-part={P.nePort}
               data-port={port.id}
               data-port-type="output"
               onMouseDown={(e) => {
@@ -194,7 +194,7 @@ function NodeComponent({
             }}
           >
             <div
-              data-part={RICH_PARTS.nePort}
+              data-part={P.nePort}
               data-port={port.id}
               data-port-type="input"
               onMouseDown={(e) => {
@@ -400,7 +400,7 @@ export function NodeEditor({
   };
 
   return (
-    <div data-part={RICH_PARTS.ne}>
+    <div data-part={P.ne}>
       {/* ── Toolbar ── */}
       <WidgetToolbar>
         <Btn onClick={handleAddNode} style={{ fontSize: 10 }}>
@@ -418,7 +418,7 @@ export function NodeEditor({
       {/* ── Canvas ── */}
       <div
         ref={canvasRef}
-        data-part={RICH_PARTS.neCanvas}
+        data-part={P.neCanvas}
         onMouseDown={handleCanvasMouseDown}
         style={{ cursor: panning ? 'grabbing' : 'default' }}
       >

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { RICH_PARTS } from '../parts';
+import { RICH_PARTS as P } from '../parts';
 
 export interface WidgetStatusBarProps {
   children: ReactNode;
@@ -8,7 +8,7 @@ export interface WidgetStatusBarProps {
 
 export function WidgetStatusBar({ children, className }: WidgetStatusBarProps) {
   return (
-    <div data-part={RICH_PARTS.widgetStatusBar} className={className}>
+    <div data-part={P.widgetStatusBar} className={className}>
       {children}
     </div>
   );

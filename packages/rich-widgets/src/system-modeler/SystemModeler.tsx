@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Btn } from '@hypercard/engine';
-import { RICH_PARTS } from '../parts';
+import { RICH_PARTS as P } from '../parts';
 import { ModalOverlay } from '../primitives/ModalOverlay';
 import { ProgressBar } from '../primitives/ProgressBar';
 import { Separator } from '../primitives/Separator';
@@ -44,14 +44,14 @@ function PaletteSection({
 }) {
   return (
     <>
-      <div data-part={RICH_PARTS.smPaletteSectionTitle}>{title}</div>
+      <div data-part={P.smPaletteSectionTitle}>{title}</div>
       {blocks.map((bt) => (
         <div
           key={bt.type}
-          data-part={RICH_PARTS.smPaletteItem}
+          data-part={P.smPaletteItem}
           onClick={() => onAdd(bt)}
         >
-          <span data-part={RICH_PARTS.smPaletteItemIcon}>{bt.emoji}</span>
+          <span data-part={P.smPaletteItemIcon}>{bt.emoji}</span>
           {bt.label}
         </div>
       ))}
@@ -68,29 +68,29 @@ function ParamsDialog({
 }) {
   return (
     <ModalOverlay onClose={onClose}>
-      <div data-part={RICH_PARTS.smDialog}>
-        <div data-part={RICH_PARTS.smDialogHeader}>
+      <div data-part={P.smDialog}>
+        <div data-part={P.smDialogHeader}>
           {block.emoji} {block.label} Parameters
         </div>
-        <div data-part={RICH_PARTS.smDialogBody}>
-          <div data-part={RICH_PARTS.smParamInfo}>
+        <div data-part={P.smDialogBody}>
+          <div data-part={P.smParamInfo}>
             <div>Block: <b>{block.label}</b></div>
             <div>Type: {block.type}</div>
             <div>Ports: {block.inputs} in / {block.outputs} out</div>
           </div>
           {block.type === 'gain' && (
-            <div data-part={RICH_PARTS.smParamRow}>
+            <div data-part={P.smParamRow}>
               <span>Gain:</span>
               <input data-part="field-input" defaultValue="1.0" style={{ width: 80 }} />
             </div>
           )}
           {block.type === 'source' && (
             <>
-              <div data-part={RICH_PARTS.smParamRow}>
+              <div data-part={P.smParamRow}>
                 <span>Amplitude:</span>
                 <input data-part="field-input" defaultValue="1.0" style={{ width: 60 }} />
               </div>
-              <div data-part={RICH_PARTS.smParamRow}>
+              <div data-part={P.smParamRow}>
                 <span>Frequency:</span>
                 <input data-part="field-input" defaultValue="1.0" style={{ width: 60 }} />
                 <span>rad/s</span>
@@ -98,19 +98,19 @@ function ParamsDialog({
             </>
           )}
           {block.type === 'constant' && (
-            <div data-part={RICH_PARTS.smParamRow}>
+            <div data-part={P.smParamRow}>
               <span>Value:</span>
               <input data-part="field-input" defaultValue="1.0" style={{ width: 80 }} />
             </div>
           )}
           {block.type === 'delay' && (
-            <div data-part={RICH_PARTS.smParamRow}>
+            <div data-part={P.smParamRow}>
               <span>Delay:</span>
               <input data-part="field-input" defaultValue="0.1" style={{ width: 60 }} />
               <span>sec</span>
             </div>
           )}
-          <div data-part={RICH_PARTS.smDialogActions}>
+          <div data-part={P.smDialogActions}>
             <Btn onClick={onClose}>Cancel</Btn>
             <Btn onClick={onClose}>OK</Btn>
           </div>
@@ -131,10 +131,10 @@ function SimParamsDialog({
 }) {
   return (
     <ModalOverlay onClose={onClose}>
-      <div data-part={RICH_PARTS.smDialog}>
-        <div data-part={RICH_PARTS.smDialogHeader}>Simulation Parameters</div>
-        <div data-part={RICH_PARTS.smDialogBody}>
-          <div data-part={RICH_PARTS.smParamRow}>
+      <div data-part={P.smDialog}>
+        <div data-part={P.smDialogHeader}>Simulation Parameters</div>
+        <div data-part={P.smDialogBody}>
+          <div data-part={P.smParamRow}>
             <span>Stop Time:</span>
             <input
               data-part="field-input"
@@ -144,7 +144,7 @@ function SimParamsDialog({
             />
             <span>sec</span>
           </div>
-          <div data-part={RICH_PARTS.smParamRow}>
+          <div data-part={P.smParamRow}>
             <span>Solver:</span>
             <select data-part="field-input">
               <option>ode45 (Dormand-Prince)</option>
@@ -153,11 +153,11 @@ function SimParamsDialog({
               <option>Euler (Fixed Step)</option>
             </select>
           </div>
-          <div data-part={RICH_PARTS.smParamRow}>
+          <div data-part={P.smParamRow}>
             <span>Max Step:</span>
             <input data-part="field-input" defaultValue="auto" style={{ width: 80 }} />
           </div>
-          <div data-part={RICH_PARTS.smDialogActions}>
+          <div data-part={P.smDialogActions}>
             <Btn onClick={onClose}>Cancel</Btn>
             <Btn onClick={onClose}>OK</Btn>
           </div>
@@ -485,7 +485,7 @@ export function SystemModeler({
     : null;
 
   return (
-    <div data-part={RICH_PARTS.systemModeler}>
+    <div data-part={P.systemModeler}>
       {/* Toolbar */}
       <WidgetToolbar>
         <Btn onClick={startSim} active={simRunning}>{'\u25B6'} Run</Btn>
@@ -498,21 +498,21 @@ export function SystemModeler({
         <Btn onClick={() => setShowPalette(!showPalette)}>
           {showPalette ? 'Hide Palette' : 'Show Palette'}
         </Btn>
-        <span data-part={RICH_PARTS.smTimeLabel}>
+        <span data-part={P.smTimeLabel}>
           {simRunning ? `\u23F3 ${simProgress}%` : `t = ${simTime}s`}
         </span>
       </WidgetToolbar>
 
-      <div data-part={RICH_PARTS.smBody}>
+      <div data-part={P.smBody}>
         {/* SVG Canvas */}
-        <div data-part={RICH_PARTS.smCanvas} ref={canvasRef}>
+        <div data-part={P.smCanvas} ref={canvasRef}>
           <svg
             width="100%"
             height="100%"
             onMouseMove={onCanvasMouseMove}
             onMouseUp={onCanvasMouseUp}
             onClick={() => setSelected(null)}
-            data-part={RICH_PARTS.smSvg}
+            data-part={P.smSvg}
           >
             {wires.map((w) => (
               <SvgWire key={w.id} wire={w} blocks={blocks} onDelete={deleteWire} />
@@ -549,9 +549,9 @@ export function SystemModeler({
 
         {/* Block Palette sidebar */}
         {showPalette && (
-          <div data-part={RICH_PARTS.smPalette}>
-            <div data-part={RICH_PARTS.smPaletteHeader}>Block Palette</div>
-            <div data-part={RICH_PARTS.smPaletteList}>
+          <div data-part={P.smPalette}>
+            <div data-part={P.smPaletteHeader}>Block Palette</div>
+            <div data-part={P.smPaletteList}>
               <PaletteSection title={'\u25C6 Sources'} blocks={SOURCE_BLOCKS} onAdd={addBlock} />
               <PaletteSection title={'\u25C6 Math Operations'} blocks={MATH_BLOCKS} onAdd={addBlock} />
               <PaletteSection title={'\u25C6 Routing & Sinks'} blocks={ROUTING_BLOCKS} onAdd={addBlock} />
@@ -562,8 +562,8 @@ export function SystemModeler({
 
       {/* Simulation progress bar */}
       {simRunning && (
-        <div data-part={RICH_PARTS.smProgressOverlay}>
-          <div data-part={RICH_PARTS.smProgressLabel}>
+        <div data-part={P.smProgressOverlay}>
+          <div data-part={P.smProgressLabel}>
             {'\u23F3'} Simulating model\u2026 {simProgress}%
           </div>
           <ProgressBar value={simProgress} max={100} />

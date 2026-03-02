@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { RICH_PARTS } from '../parts';
+import { RICH_PARTS as P } from '../parts';
 
 export interface EmptyStateProps {
   icon?: string;
@@ -9,8 +9,8 @@ export interface EmptyStateProps {
 
 export function EmptyState({ icon, message, className }: EmptyStateProps) {
   return (
-    <div data-part={RICH_PARTS.widgetEmptyState} className={className}>
-      {icon && <div data-part={RICH_PARTS.widgetEmptyIcon}>{icon}</div>}
+    <div data-part={P.widgetEmptyState} className={className}>
+      {icon && <div data-part={P.widgetEmptyIcon}>{icon}</div>}
       <div>{message}</div>
     </div>
   );

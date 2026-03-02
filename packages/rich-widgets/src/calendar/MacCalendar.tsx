@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Btn } from '@hypercard/engine';
-import { RICH_PARTS } from '../parts';
+import { RICH_PARTS as P } from '../parts';
 import { ModalOverlay } from '../primitives/ModalOverlay';
 import { CommandPalette } from '../primitives/CommandPalette';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
@@ -44,10 +44,10 @@ function EventModal({
   return (
     <ModalOverlay onClose={onClose}>
       <div
-        data-part={RICH_PARTS.calModal}
+        data-part={P.calModal}
         style={{ width: 400 }}
       >
-        <div data-part={RICH_PARTS.calModalHeader}>
+        <div data-part={P.calModalHeader}>
           <span style={{ fontWeight: 'bold' }}>
             {isNew ? '\uD83D\uDCC5 New Event' : '\u270F\uFE0F Edit Event'}
           </span>
@@ -58,33 +58,33 @@ function EventModal({
             {'\u2715'}
           </span>
         </div>
-        <div data-part={RICH_PARTS.calModalBody}>
+        <div data-part={P.calModalBody}>
           <div>
-            <div data-part={RICH_PARTS.calFieldLabel}>Title</div>
+            <div data-part={P.calFieldLabel}>Title</div>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               autoFocus
-              data-part={RICH_PARTS.calFieldInput}
+              data-part={P.calFieldInput}
             />
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
             <div style={{ flex: 1 }}>
-              <div data-part={RICH_PARTS.calFieldLabel}>Date</div>
+              <div data-part={P.calFieldLabel}>Date</div>
               <input
                 type="date"
                 value={dateStr}
                 onChange={(e) => setDateStr(e.target.value)}
-                data-part={RICH_PARTS.calFieldInput}
+                data-part={P.calFieldInput}
               />
             </div>
             <div>
-              <div data-part={RICH_PARTS.calFieldLabel}>Time</div>
+              <div data-part={P.calFieldLabel}>Time</div>
               <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                 <select
                   value={hour}
                   onChange={(e) => setHour(parseInt(e.target.value))}
-                  data-part={RICH_PARTS.calFieldInput}
+                  data-part={P.calFieldInput}
                 >
                   {Array.from({ length: 24 }, (_, i) => (
                     <option key={i} value={i}>
@@ -96,7 +96,7 @@ function EventModal({
                 <select
                   value={minute}
                   onChange={(e) => setMinute(parseInt(e.target.value))}
-                  data-part={RICH_PARTS.calFieldInput}
+                  data-part={P.calFieldInput}
                 >
                   {[0, 15, 30, 45].map((m) => (
                     <option key={m} value={m}>
@@ -108,7 +108,7 @@ function EventModal({
             </div>
           </div>
           <div>
-            <div data-part={RICH_PARTS.calFieldLabel}>Duration</div>
+            <div data-part={P.calFieldLabel}>Duration</div>
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
               {DURATION_OPTIONS.map((d) => (
                 <Btn
@@ -123,13 +123,13 @@ function EventModal({
             </div>
           </div>
           <div>
-            <div data-part={RICH_PARTS.calFieldLabel}>Color</div>
+            <div data-part={P.calFieldLabel}>Color</div>
             <div style={{ display: 'flex', gap: 6 }}>
               {eventColors.map((c, i) => (
                 <div
                   key={i}
                   onClick={() => setColor(i)}
-                  data-part={RICH_PARTS.calColorSwatch}
+                  data-part={P.calColorSwatch}
                   data-state={color === i ? 'active' : undefined}
                   style={{ background: c }}
                 />
@@ -137,7 +137,7 @@ function EventModal({
             </div>
           </div>
         </div>
-        <div data-part={RICH_PARTS.calModalFooter}>
+        <div data-part={P.calModalFooter}>
           {!isNew && (
             <Btn
               onClick={() => {
@@ -217,21 +217,21 @@ function MonthView({
   for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
 
   return (
-    <div data-part={RICH_PARTS.calBody}>
-      <div data-part={RICH_PARTS.calDayHeaders}>
+    <div data-part={P.calBody}>
+      <div data-part={P.calDayHeaders}>
         {DAYS.map((d, i) => (
           <div
             key={d}
-            data-part={RICH_PARTS.calDayHeader}
+            data-part={P.calDayHeader}
             data-state={i === 0 || i === 6 ? 'weekend' : undefined}
           >
             {d}
           </div>
         ))}
       </div>
-      <div data-part={RICH_PARTS.calWeeks}>
+      <div data-part={P.calWeeks}>
         {weeks.map((week, wi) => (
-          <div key={wi} data-part={RICH_PARTS.calWeekRow}>
+          <div key={wi} data-part={P.calWeekRow}>
             {week.map((cell, di) => {
               const isToday = sameDay(cell.date, today);
               const dayEvents = events.filter((e) => sameDay(e.date, cell.date));
@@ -239,7 +239,7 @@ function MonthView({
                 <div
                   key={di}
                   onClick={() => onDayClick(cell.date)}
-                  data-part={RICH_PARTS.calDayCell}
+                  data-part={P.calDayCell}
                   data-state={
                     isToday
                       ? 'today'
@@ -249,13 +249,13 @@ function MonthView({
                   }
                   data-current={cell.current ? '' : undefined}
                 >
-                  <div data-part={RICH_PARTS.calDayNumber}>
-                    {isToday && <span data-part={RICH_PARTS.calTodayDot} />}
+                  <div data-part={P.calDayNumber}>
+                    {isToday && <span data-part={P.calTodayDot} />}
                     <span data-muted={!cell.current ? '' : undefined}>
                       {cell.day}
                     </span>
                   </div>
-                  <div data-part={RICH_PARTS.calDayEvents}>
+                  <div data-part={P.calDayEvents}>
                     {dayEvents.slice(0, 3).map((ev) => (
                       <div
                         key={ev.id}
@@ -263,7 +263,7 @@ function MonthView({
                           e.stopPropagation();
                           onEventClick(ev);
                         }}
-                        data-part={RICH_PARTS.calEventChip}
+                        data-part={P.calEventChip}
                         style={{
                           background:
                             eventColors[ev.color % eventColors.length],
@@ -323,15 +323,15 @@ function WeekView({
   const nowOffset = (now.getHours() + now.getMinutes() / 60) * HOUR_HEIGHT;
 
   return (
-    <div data-part={RICH_PARTS.calBody}>
-      <div data-part={RICH_PARTS.calDayHeaders}>
-        <div data-part={RICH_PARTS.calTimeGutterHeader} />
+    <div data-part={P.calBody}>
+      <div data-part={P.calDayHeaders}>
+        <div data-part={P.calTimeGutterHeader} />
         {days.map((d, i) => {
           const isT = sameDay(d, today);
           return (
             <div
               key={i}
-              data-part={RICH_PARTS.calDayHeader}
+              data-part={P.calDayHeader}
               data-state={
                 isT ? 'today' : i === 0 || i === 6 ? 'weekend' : undefined
               }
@@ -342,7 +342,7 @@ function WeekView({
           );
         })}
       </div>
-      <div ref={scrollRef} data-part={RICH_PARTS.calTimeGrid}>
+      <div ref={scrollRef} data-part={P.calTimeGrid}>
         <div
           style={{
             display: 'flex',
@@ -350,11 +350,11 @@ function WeekView({
             position: 'relative',
           }}
         >
-          <div data-part={RICH_PARTS.calTimeGutter}>
+          <div data-part={P.calTimeGutter}>
             {hours.map((h) => (
               <div
                 key={h}
-                data-part={RICH_PARTS.calTimeLabel}
+                data-part={P.calTimeLabel}
                 style={{ height: HOUR_HEIGHT }}
               >
                 {fmtTime(h, 0)}
@@ -367,7 +367,7 @@ function WeekView({
             return (
               <div
                 key={di}
-                data-part={RICH_PARTS.calWeekDayCol}
+                data-part={P.calWeekDayCol}
                 data-state={isT ? 'today' : undefined}
                 onClick={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
@@ -386,7 +386,7 @@ function WeekView({
                 {hours.map((h) => (
                   <div
                     key={h}
-                    data-part={RICH_PARTS.calHourSlot}
+                    data-part={P.calHourSlot}
                     style={{ height: HOUR_HEIGHT }}
                   />
                 ))}
@@ -405,7 +405,7 @@ function WeekView({
                         e.stopPropagation();
                         onEventClick(ev);
                       }}
-                      data-part={RICH_PARTS.calWeekEvent}
+                      data-part={P.calWeekEvent}
                       style={{
                         top,
                         height,
@@ -433,10 +433,10 @@ function WeekView({
                 })}
                 {di === nowDay && (
                   <div
-                    data-part={RICH_PARTS.calNowLine}
+                    data-part={P.calNowLine}
                     style={{ top: nowOffset }}
                   >
-                    <div data-part={RICH_PARTS.calNowDot} />
+                    <div data-part={P.calNowDot} />
                   </div>
                 )}
               </div>
@@ -561,7 +561,7 @@ export function MacCalendar({
         })()}`;
 
   return (
-    <div data-part={RICH_PARTS.calendar}>
+    <div data-part={P.calendar}>
       {/* ── Toolbar ── */}
       <WidgetToolbar>
         <Btn
@@ -583,9 +583,9 @@ export function MacCalendar({
         >
           {'\u25B6'}
         </Btn>
-        <span data-part={RICH_PARTS.calHeaderText}>{headerText}</span>
+        <span data-part={P.calHeaderText}>{headerText}</span>
         <div style={{ flex: 1 }} />
-        <div data-part={RICH_PARTS.calViewToggle}>
+        <div data-part={P.calViewToggle}>
           <Btn
             onClick={() => setView('month')}
             data-state={view === 'month' ? 'active' : undefined}

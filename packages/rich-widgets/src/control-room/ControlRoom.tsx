@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { RICH_PARTS } from '../parts';
+import { RICH_PARTS as P } from '../parts';
 import type { LogLine, SwitchState, SwitchKey } from './types';
 import {
   AnalogGauge,
@@ -23,9 +23,9 @@ export interface ControlRoomProps {
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div data-part={RICH_PARTS.crPanel}>
-      <div data-part={RICH_PARTS.crPanelHeader}>{title}</div>
-      <div data-part={RICH_PARTS.crPanelBody}>{children}</div>
+    <div data-part={P.crPanel}>
+      <div data-part={P.crPanelHeader}>{title}</div>
+      <div data-part={P.crPanelBody}>{children}</div>
     </div>
   );
 }
@@ -89,19 +89,19 @@ export function ControlRoom({ tickInterval = 400 }: ControlRoomProps = {}) {
   const tog = (k: SwitchKey) => setSw((s) => ({ ...s, [k]: !s[k] }));
 
   return (
-    <div data-part={RICH_PARTS.controlRoom}>
+    <div data-part={P.controlRoom}>
       {/* Title bar */}
-      <div data-part={RICH_PARTS.crTitleBar}>
+      <div data-part={P.crTitleBar}>
         <span>{'\uD83D\uDDA5\uFE0F'}</span>
-        <span data-part={RICH_PARTS.crTitleText}>SYSTEM CONTROL \u2014 STATION 7</span>
+        <span data-part={P.crTitleText}>SYSTEM CONTROL \u2014 STATION 7</span>
         <span>{'\u2699\uFE0F'}</span>
       </div>
 
       {/* Dashboard panels */}
-      <div data-part={RICH_PARTS.crDashboard}>
+      <div data-part={P.crDashboard}>
         {/* Primary Gauges */}
         <Panel title="Primary Gauges">
-          <div data-part={RICH_PARTS.crGaugeRow}>
+          <div data-part={P.crGaugeRow}>
             <AnalogGauge value={temp} min={0} max={100} label="TEMP" unit={'\u00B0C'} danger={75} size={150} />
             <AnalogGauge value={pressure} min={0} max={100} label="PSI" danger={85} size={150} />
           </div>
@@ -116,7 +116,7 @@ export function ControlRoom({ tickInterval = 400 }: ControlRoomProps = {}) {
 
         {/* Levels */}
         <Panel title="Levels">
-          <div data-part={RICH_PARTS.crBarRow}>
+          <div data-part={P.crBarRow}>
             <BarMeter value={flow} max={100} label="FLOW" danger={90} />
             <BarMeter value={load} max={100} label="LOAD" danger={80} />
             <BarMeter value={cpu} max={100} label="CPU" danger={85} />
@@ -126,7 +126,7 @@ export function ControlRoom({ tickInterval = 400 }: ControlRoomProps = {}) {
 
         {/* Digital Readout */}
         <Panel title="Digital Readout">
-          <div data-part={RICH_PARTS.crDigitalCol}>
+          <div data-part={P.crDigitalCol}>
             <SevenSeg value={String(Math.round(rpm)).padStart(4, '0')} label="RPM" digits={4} />
             <SevenSeg value={String(temp.toFixed(1)).replace('.', '').padStart(4, '0')} label="TEMP x10" digits={4} />
             <SevenSeg value={String(Math.round(pressure)).padStart(4, '0')} label="PRESSURE" digits={4} />
@@ -135,12 +135,12 @@ export function ControlRoom({ tickInterval = 400 }: ControlRoomProps = {}) {
 
         {/* Controls */}
         <Panel title="Controls">
-          <div data-part={RICH_PARTS.crControlsLayout}>
-            <div data-part={RICH_PARTS.crKnobRow}>
+          <div data-part={P.crControlsLayout}>
+            <div data-part={P.crKnobRow}>
               <Knob value={knobVal} onChange={setKnobVal} label="FLOW" size={52} />
               <Knob value={knob2} onChange={setKnob2} label="LOAD" size={52} />
             </div>
-            <div data-part={RICH_PARTS.crToggleCol}>
+            <div data-part={P.crToggleCol}>
               <ToggleSwitch on={sw.main} onToggle={() => tog('main')} label="MAIN PWR" />
               <ToggleSwitch on={sw.aux} onToggle={() => tog('aux')} label="AUX SYS" />
               <ToggleSwitch on={sw.pump} onToggle={() => tog('pump')} label="PUMP" />
@@ -151,7 +151,7 @@ export function ControlRoom({ tickInterval = 400 }: ControlRoomProps = {}) {
 
         {/* Status */}
         <Panel title="Status">
-          <div data-part={RICH_PARTS.crLedCol}>
+          <div data-part={P.crLedCol}>
             <LED on={sw.main} color="#00AA00" label="MAIN POWER" />
             <LED on={sw.aux} color="#3388FF" label="AUX SYSTEMS" />
             <LED on={sw.pump} color="#00AA00" label="PUMP ACTIVE" />
@@ -164,7 +164,7 @@ export function ControlRoom({ tickInterval = 400 }: ControlRoomProps = {}) {
 
         {/* System Resources */}
         <Panel title="System Resources">
-          <div data-part={RICH_PARTS.crResourceCol}>
+          <div data-part={P.crResourceCol}>
             <HorizontalBar value={cpu} max={100} label="CPU USAGE" />
             <HorizontalBar value={mem} max={100} label="MEMORY" />
             <HorizontalBar value={net} max={100} label="NETWORK I/O" />
@@ -175,7 +175,7 @@ export function ControlRoom({ tickInterval = 400 }: ControlRoomProps = {}) {
         {/* Oscilloscope */}
         <Panel title="Oscilloscope">
           <Scope data={scopeData} width={246} height={90} label="CH1 \u2014 SIGNAL" />
-          <div data-part={RICH_PARTS.crScopeMeta}>
+          <div data-part={P.crScopeMeta}>
             <span>1ms/div</span>
             <span>500mV/div</span>
           </div>
@@ -188,7 +188,7 @@ export function ControlRoom({ tickInterval = 400 }: ControlRoomProps = {}) {
       </div>
 
       {/* Status footer */}
-      <div data-part={RICH_PARTS.crFooter}>
+      <div data-part={P.crFooter}>
         <span>{'\u23F1\uFE0F'} UPTIME: {Math.floor((tick * 0.4) / 60)}m {Math.floor(tick * 0.4) % 60}s</span>
         <span>{'\uD83C\uDF21\uFE0F'} {temp.toFixed(1)}{'\u00B0C'}</span>
         <span>{'\uD83D\uDCCA'} {Math.round(cpu)}% CPU</span>
