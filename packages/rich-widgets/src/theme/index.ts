@@ -17,3 +17,4 @@ import './stream-launcher.css';
 import './steam-launcher.css';
 import './youtube-retro.css';
 import './chat-browser.css';
+import './system-modeler.css';

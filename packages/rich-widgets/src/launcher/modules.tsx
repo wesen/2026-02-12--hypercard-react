@@ -20,6 +20,7 @@ import { StreamLauncher } from '../stream-launcher/StreamLauncher';
 import { SteamLauncher } from '../steam-launcher/SteamLauncher';
 import { YouTubeRetro } from '../youtube-retro/YouTubeRetro';
 import { ChatBrowser } from '../chat-browser/ChatBrowser';
+import { SystemModeler } from '../system-modeler/SystemModeler';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -153,6 +154,11 @@ export const chatBrowserModule = widget(
   () => <ChatBrowser />,
 );
 
+export const systemModelerModule = widget(
+  'system-modeler', 'SystemModeler', '\uD83D\uDDA5\uFE0F', 118, 960, 640,
+  () => <SystemModeler />,
+);
+
 // ---------------------------------------------------------------------------
 // All modules as a single array for convenience
 // ---------------------------------------------------------------------------
@@ -176,4 +182,5 @@ export const RICH_WIDGET_MODULES: readonly LaunchableAppModule[] = [
   steamLauncherModule,
   youtubeRetroModule,
   chatBrowserModule,
+  systemModelerModule,
 ];

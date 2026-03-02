@@ -1,0 +1,225 @@
+/* ── SystemModeler ───────────────────────────────────────────────── */
+
+[data-part='system-modeler'] {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background: var(--mac-surface, #fff);
+  font-family: var(--mac-font, 'Geneva', 'Chicago', monospace);
+  font-size: 12px;
+  user-select: none;
+  overflow: hidden;
+}
+
+[data-part='sm-toolbar'] {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border-bottom: 2px solid var(--mac-border, #000);
+  background: var(--mac-surface, #fff);
+  flex-shrink: 0;
+}
+
+[data-part='sm-separator'] {
+  width: 1px;
+  height: 18px;
+  background: var(--mac-border, #000);
+  margin: 0 4px;
+}
+
+[data-part='sm-time-label'] {
+  font-size: 11px;
+  font-family: var(--mac-font, 'Geneva', monospace);
+  margin-left: 8px;
+}
+
+[data-part='sm-body'] {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+[data-part='sm-canvas'] {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+}
+
+[data-part='sm-svg'] {
+  background:
+    repeating-linear-gradient(0deg, transparent, transparent 19px, #ddd 19px, #ddd 20px),
+    repeating-linear-gradient(90deg, transparent, transparent 19px, #ddd 19px, #ddd 20px);
+}
+
+/* ── Palette ── */
+[data-part='sm-palette'] {
+  width: 200px;
+  border-left: 2px solid var(--mac-border, #000);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  background: var(--mac-surface, #fff);
+}
+
+[data-part='sm-palette-header'] {
+  font-weight: bold;
+  padding: 6px 8px;
+  border-bottom: 2px solid var(--mac-border, #000);
+  background:
+    repeating-linear-gradient(0deg, #000 0px, #000 1px, #fff 1px, #fff 3px);
+  color: #000;
+  text-align: center;
+}
+
+[data-part='sm-palette-header']::after {
+  content: '';
+  display: block;
+}
+
+[data-part='sm-palette-list'] {
+  flex: 1;
+  overflow: auto;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+[data-part='sm-palette-section-title'] {
+  font-weight: bold;
+  font-size: 11px;
+  border-bottom: 1px solid var(--mac-border, #000);
+  padding: 2px 4px;
+  margin-top: 6px;
+  margin-bottom: 4px;
+}
+
+[data-part='sm-palette-section-title']:first-child {
+  margin-top: 0;
+}
+
+[data-part='sm-palette-item'] {
+  padding: 4px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  background: var(--mac-surface, #fff);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+[data-part='sm-palette-item']:hover {
+  background: #000;
+  color: #fff;
+}
+
+[data-part='sm-palette-item-icon'] {
+  font-size: 14px;
+}
+
+/* ── Simulation progress ── */
+[data-part='sm-progress-overlay'] {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  background: var(--mac-surface, #fff);
+  border: 2px solid var(--mac-border, #000);
+  box-shadow: 2px 2px 0 #000;
+  padding: 12px;
+  z-index: 50;
+}
+
+[data-part='sm-progress-label'] {
+  font-size: 11px;
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+[data-part='sm-progress-bar'] {
+  height: 16px;
+  border: 2px solid var(--mac-border, #000);
+  background: #fff;
+}
+
+[data-part='sm-progress-fill'] {
+  height: 100%;
+  transition: width 80ms;
+  background: repeating-linear-gradient(45deg, #000 0px, #000 4px, #fff 4px, #fff 8px);
+}
+
+/* ── Status bar ── */
+[data-part='sm-status-bar'] {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 2px 8px;
+  border-top: 2px solid var(--mac-border, #000);
+  font-size: 11px;
+  background: var(--mac-surface, #fff);
+  flex-shrink: 0;
+}
+
+/* ── Dialogs ── */
+[data-part='sm-dialog-overlay'] {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+[data-part='sm-dialog'] {
+  width: 320px;
+  background: var(--mac-surface, #fff);
+  border: 2px solid var(--mac-border, #000);
+  box-shadow: 4px 4px 0 #000;
+  z-index: 101;
+}
+
+[data-part='sm-dialog-header'] {
+  padding: 4px 8px;
+  font-weight: bold;
+  text-align: center;
+  background:
+    repeating-linear-gradient(0deg, #000 0px, #000 1px, #fff 1px, #fff 3px);
+  border-bottom: 2px solid var(--mac-border, #000);
+}
+
+[data-part='sm-dialog-body'] {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+[data-part='sm-param-info'] {
+  padding: 8px;
+  border: 1px solid var(--mac-border, #000);
+  margin-bottom: 4px;
+  background:
+    repeating-conic-gradient(#eee 0% 25%, #fff 0% 50%);
+  background-size: 4px 4px;
+  font-size: 12px;
+}
+
+[data-part='sm-param-row'] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+[data-part='sm-dialog-actions'] {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}

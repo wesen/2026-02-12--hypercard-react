@@ -260,5 +260,23 @@ export {
   getAllModels as getChatModels,
 } from './chat-browser/sampleData';
 
+// SystemModeler
+export {
+  SystemModeler,
+  type SystemModelerProps,
+} from './system-modeler/SystemModeler';
+export {
+  type BlockTypeDef,
+  type BlockInstance,
+  type Wire,
+  type DragState,
+  type WiringState,
+  BLOCK_TYPES,
+  SOURCE_BLOCKS,
+  MATH_BLOCKS,
+  ROUTING_BLOCKS,
+} from './system-modeler/types';
+export { INITIAL_BLOCKS, INITIAL_WIRES } from './system-modeler/sampleData';
+
 // Parts
 export { RICH_PARTS, type RichPartName } from './parts';

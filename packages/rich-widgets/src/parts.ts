@@ -618,6 +618,33 @@ export const RICH_PARTS = {
   cbDateRange: 'cb-date-range',
   cbSearchActions: 'cb-search-actions',
   cbEmptyState: 'cb-empty-state',
+
+  // SystemModeler
+  systemModeler: 'system-modeler',
+  smToolbar: 'sm-toolbar',
+  smSeparator: 'sm-separator',
+  smTimeLabel: 'sm-time-label',
+  smBody: 'sm-body',
+  smCanvas: 'sm-canvas',
+  smSvg: 'sm-svg',
+  smPalette: 'sm-palette',
+  smPaletteHeader: 'sm-palette-header',
+  smPaletteList: 'sm-palette-list',
+  smPaletteSectionTitle: 'sm-palette-section-title',
+  smPaletteItem: 'sm-palette-item',
+  smPaletteItemIcon: 'sm-palette-item-icon',
+  smProgressOverlay: 'sm-progress-overlay',
+  smProgressLabel: 'sm-progress-label',
+  smProgressBar: 'sm-progress-bar',
+  smProgressFill: 'sm-progress-fill',
+  smStatusBar: 'sm-status-bar',
+  smDialogOverlay: 'sm-dialog-overlay',
+  smDialog: 'sm-dialog',
+  smDialogHeader: 'sm-dialog-header',
+  smDialogBody: 'sm-dialog-body',
+  smParamInfo: 'sm-param-info',
+  smParamRow: 'sm-param-row',
+  smDialogActions: 'sm-dialog-actions',
 } as const;
 
 export type RichPartName = (typeof RICH_PARTS)[keyof typeof RICH_PARTS];
