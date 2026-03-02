@@ -4,6 +4,21 @@
  * camelCase keys → kebab-case values in the DOM.
  */
 export const RICH_PARTS = {
+  // Shared Primitives
+  widgetToolbar: 'widget-toolbar',
+  widgetStatusBar: 'widget-status-bar',
+  modalOverlay: 'modal-overlay',
+  modalContent: 'modal-content',
+  widgetProgressBar: 'widget-progress-bar',
+  widgetProgressFill: 'widget-progress-fill',
+  widgetEmptyState: 'widget-empty-state',
+  widgetEmptyIcon: 'widget-empty-icon',
+  widgetSearchBar: 'widget-search-bar',
+  widgetSearchIcon: 'widget-search-icon',
+  widgetSearchInput: 'widget-search-input',
+  widgetSearchCount: 'widget-search-count',
+  widgetSeparator: 'widget-separator',
+
   // Sparkline
   sparkline: 'sparkline',
 

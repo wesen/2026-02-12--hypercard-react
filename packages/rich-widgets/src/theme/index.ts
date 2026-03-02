@@ -1,3 +1,4 @@
+import './primitives.css';
 import './sparkline.css';
 import './log-viewer.css';
 import './chart-view.css';

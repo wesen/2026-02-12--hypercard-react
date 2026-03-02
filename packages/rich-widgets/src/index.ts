@@ -1,5 +1,12 @@
 // Primitives
 export { Sparkline, type SparklineProps } from './primitives/Sparkline';
+export { WidgetToolbar, type WidgetToolbarProps } from './primitives/WidgetToolbar';
+export { WidgetStatusBar, type WidgetStatusBarProps } from './primitives/WidgetStatusBar';
+export { ModalOverlay, type ModalOverlayProps } from './primitives/ModalOverlay';
+export { ProgressBar, type ProgressBarProps } from './primitives/ProgressBar';
+export { EmptyState, type EmptyStateProps } from './primitives/EmptyState';
+export { SearchBar, type SearchBarProps } from './primitives/SearchBar';
+export { Separator, type SeparatorProps } from './primitives/Separator';
 
 // LogViewer
 export { LogViewer, type LogViewerProps } from './log-viewer/LogViewer';
