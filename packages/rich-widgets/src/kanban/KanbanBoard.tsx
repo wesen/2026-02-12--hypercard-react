@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useReducer, useMemo, useCallback } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS as P } from '../parts';
 import { ModalOverlay } from '../primitives/ModalOverlay';
@@ -12,6 +12,79 @@ import { INITIAL_COLUMNS, INITIAL_TASKS } from './sampleData';
 // ── ID generator ──
 let idSeq = 0;
 const mkId = () => `task-${Date.now()}-${++idSeq}`;
+
+// ── Reducer types ─────────────────────────────────────────────────────
+interface KanbanState {
+  tasks: Task[];
+  columns: Column[];
+  editingTask: Partial<Task> | null;
+  filterTag: TagId | null;
+  filterPriority: Priority | null;
+  searchQuery: string;
+  dragOverCol: string | null;
+  collapsedCols: Record<string, boolean>;
+}
+
+type KanbanAction =
+  | { type: 'SET_TASKS'; tasks: Task[] }
+  | { type: 'ADD_TASK'; task: Task }
+  | { type: 'UPDATE_TASK'; id: string; updates: Partial<Task> }
+  | { type: 'DELETE_TASK'; id: string }
+  | { type: 'MOVE_TASK'; id: string; col: string }
+  | { type: 'SET_EDITING_TASK'; task: Partial<Task> | null }
+  | { type: 'SET_FILTER_TAG'; tag: TagId | null }
+  | { type: 'SET_FILTER_PRIORITY'; priority: Priority | null }
+  | { type: 'SET_SEARCH'; query: string }
+  | { type: 'CLEAR_FILTERS' }
+  | { type: 'SET_DRAG_OVER_COL'; col: string | null }
+  | { type: 'TOGGLE_COLLAPSED'; col: string };
+
+function kanbanReducer(state: KanbanState, action: KanbanAction): KanbanState {
+  switch (action.type) {
+    case 'SET_TASKS':
+      return { ...state, tasks: action.tasks };
+    case 'ADD_TASK':
+      return { ...state, tasks: [...state.tasks, action.task] };
+    case 'UPDATE_TASK':
+      return {
+        ...state,
+        tasks: state.tasks.map((t) =>
+          t.id === action.id ? { ...t, ...action.updates } : t,
+        ),
+      };
+    case 'DELETE_TASK':
+      return { ...state, tasks: state.tasks.filter((t) => t.id !== action.id) };
+    case 'MOVE_TASK':
+      return {
+        ...state,
+        tasks: state.tasks.map((t) =>
+          t.id === action.id ? { ...t, col: action.col } : t,
+        ),
+      };
+    case 'SET_EDITING_TASK':
+      return { ...state, editingTask: action.task };
+    case 'SET_FILTER_TAG':
+      return { ...state, filterTag: action.tag };
+    case 'SET_FILTER_PRIORITY':
+      return { ...state, filterPriority: action.priority };
+    case 'SET_SEARCH':
+      return { ...state, searchQuery: action.query };
+    case 'CLEAR_FILTERS':
+      return { ...state, filterTag: null, filterPriority: null, searchQuery: '' };
+    case 'SET_DRAG_OVER_COL':
+      return { ...state, dragOverCol: action.col };
+    case 'TOGGLE_COLLAPSED':
+      return {
+        ...state,
+        collapsedCols: {
+          ...state.collapsedCols,
+          [action.col]: !state.collapsedCols[action.col],
+        },
+      };
+    default:
+      return state;
+  }
+}
 
 // ── TaskCard ─────────────────────────────────────────────────────────
 function TaskCard({
@@ -201,16 +274,17 @@ export function KanbanBoard({
   initialTasks = INITIAL_TASKS,
   initialColumns = INITIAL_COLUMNS,
 }: KanbanBoardProps) {
-  const [tasks, setTasks] = useState(initialTasks);
-  const [columns] = useState(initialColumns);
-  const [editingTask, setEditingTask] = useState<Partial<Task> | null>(null);
-  const [filterTag, setFilterTag] = useState<TagId | null>(null);
-  const [filterPriority, setFilterPriority] = useState<Priority | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [dragOverCol, setDragOverCol] = useState<string | null>(null);
-  const [collapsedCols, setCollapsedCols] = useState<Record<string, boolean>>(
-    {},
-  );
+  const [state, dispatch] = useReducer(kanbanReducer, {
+    tasks: initialTasks,
+    columns: initialColumns,
+    editingTask: null,
+    filterTag: null,
+    filterPriority: null,
+    searchQuery: '',
+    dragOverCol: null,
+    collapsedCols: {},
+  });
+  const { tasks, columns, editingTask, filterTag, filterPriority, searchQuery, dragOverCol, collapsedCols } = state;
 
   const filteredTasks = useMemo(() => {
     return tasks.filter((t) => {
@@ -246,29 +320,28 @@ export function KanbanBoard({
       e.preventDefault();
       const taskId = e.dataTransfer.getData('text/plain');
       if (taskId) {
-        setTasks((prev) =>
-          prev.map((t) => (t.id === taskId ? { ...t, col: colId } : t)),
-        );
+        dispatch({ type: 'MOVE_TASK', id: taskId, col: colId });
       }
-      setDragOverCol(null);
+      dispatch({ type: 'SET_DRAG_OVER_COL', col: null });
     },
     [],
   );
 
   const handleSave = useCallback((task: Task) => {
-    setTasks((prev) => {
-      const exists = prev.find((t) => t.id === task.id);
-      if (exists) return prev.map((t) => (t.id === task.id ? task : t));
-      return [...prev, task];
-    });
-  }, []);
+    const exists = state.tasks.find((t) => t.id === task.id);
+    if (exists) {
+      dispatch({ type: 'UPDATE_TASK', id: task.id, updates: task });
+    } else {
+      dispatch({ type: 'ADD_TASK', task });
+    }
+  }, [state.tasks]);
 
   const handleDelete = useCallback((id: string) => {
-    setTasks((prev) => prev.filter((t) => t.id !== id));
+    dispatch({ type: 'DELETE_TASK', id });
   }, []);
 
   const toggleCollapse = (colId: string) =>
-    setCollapsedCols((prev) => ({ ...prev, [colId]: !prev[colId] }));
+    dispatch({ type: 'TOGGLE_COLLAPSED', col: colId });
 
   const hasFilters = !!(filterTag || filterPriority || searchQuery);
 
@@ -277,7 +350,7 @@ export function KanbanBoard({
       {/* ── Toolbar ── */}
       <WidgetToolbar>
         <Btn
-          onClick={() => setEditingTask({ col: 'todo' })}
+          onClick={() => dispatch({ type: 'SET_EDITING_TASK', task: { col: 'todo' } })}
           style={{ fontSize: 10, fontWeight: 'bold' }}
         >
           + New
@@ -288,7 +361,7 @@ export function KanbanBoard({
         <input
           data-part="field-input"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => dispatch({ type: 'SET_SEARCH', query: e.target.value })}
           placeholder="Search..."
           style={{ width: 120 }}
         />
@@ -298,7 +371,7 @@ export function KanbanBoard({
         {ALL_TAGS.map((key) => (
           <Btn
             key={key}
-            onClick={() => setFilterTag((prev) => (prev === key ? null : key))}
+            onClick={() => dispatch({ type: 'SET_FILTER_TAG', tag: filterTag === key ? null : key })}
             data-state={filterTag === key ? 'active' : undefined}
             style={{ fontSize: 9, padding: '1px 5px' }}
           >
@@ -312,7 +385,7 @@ export function KanbanBoard({
           <Btn
             key={key}
             onClick={() =>
-              setFilterPriority((prev) => (prev === key ? null : key))
+              dispatch({ type: 'SET_FILTER_PRIORITY', priority: filterPriority === key ? null : key })
             }
             data-state={filterPriority === key ? 'active' : undefined}
             style={{ fontSize: 9, padding: '1px 5px' }}
@@ -323,11 +396,7 @@ export function KanbanBoard({
 
         {hasFilters && (
           <Btn
-            onClick={() => {
-              setFilterTag(null);
-              setFilterPriority(null);
-              setSearchQuery('');
-            }}
+            onClick={() => dispatch({ type: 'CLEAR_FILTERS' })}
             style={{ fontSize: 9 }}
           >
             ✕ Clear
@@ -352,9 +421,9 @@ export function KanbanBoard({
               }
               onDragOver={(e) => {
                 e.preventDefault();
-                setDragOverCol(column.id);
+                dispatch({ type: 'SET_DRAG_OVER_COL', col: column.id });
               }}
-              onDragLeave={() => setDragOverCol(null)}
+              onDragLeave={() => dispatch({ type: 'SET_DRAG_OVER_COL', col: null })}
               onDrop={(e) => handleDrop(column.id, e)}
             >
               <div
@@ -371,7 +440,7 @@ export function KanbanBoard({
                     <span
                       onClick={(e) => {
                         e.stopPropagation();
-                        setEditingTask({ col: column.id });
+                        dispatch({ type: 'SET_EDITING_TASK', task: { col: column.id } });
                       }}
                       style={{ cursor: 'pointer', marginLeft: 6 }}
                     >
@@ -398,7 +467,7 @@ export function KanbanBoard({
                     <TaskCard
                       key={task.id}
                       task={task}
-                      onEdit={(t) => setEditingTask(t)}
+                      onEdit={(t) => dispatch({ type: 'SET_EDITING_TASK', task: t })}
                       onDragStart={() => {}}
                     />
                   ))}
@@ -424,7 +493,7 @@ export function KanbanBoard({
           columns={columns}
           onSave={handleSave}
           onDelete={handleDelete}
-          onClose={() => setEditingTask(null)}
+          onClose={() => dispatch({ type: 'SET_EDITING_TASK', task: null })}
         />
       )}
     </div>

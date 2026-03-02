@@ -1,5 +1,6 @@
 import {
   useState,
+  useReducer,
   useRef,
   useEffect,
   useCallback,
@@ -25,6 +26,159 @@ import {
 } from './types';
 import { evaluateFormula } from './formula';
 import { createSampleCells, CALC_ACTIONS } from './sampleData';
+
+// ── Reducer types ────────────────────────────────────────────────────
+interface CalcState {
+  cells: Record<string, CellData>;
+  clipboard: ClipboardData | null;
+  sel: { r: number; c: number };
+  selRange: CellRange | null;
+  isDragging: boolean;
+  dragStart: { r: number; c: number } | null;
+  editing: boolean;
+  editVal: string;
+  showFind: boolean;
+  findQuery: string;
+  showPalette: boolean;
+  colWidths: number[];
+}
+
+type CalcAction =
+  | { type: 'SET_CELLS'; cells: Record<string, CellData> }
+  | {
+      type: 'UPDATE_CELLS';
+      updater: (prev: Record<string, CellData>) => Record<string, CellData>;
+    }
+  | { type: 'SET_SEL'; r: number; c: number }
+  | { type: 'SET_SEL_RANGE'; range: CellRange | null }
+  | { type: 'START_DRAG'; r: number; c: number }
+  | { type: 'END_DRAG' }
+  | { type: 'SET_EDITING'; editing: boolean }
+  | { type: 'SET_EDIT_VAL'; val: string }
+  | { type: 'START_EDIT'; r: number; c: number; val: string }
+  | { type: 'COMMIT_EDIT' }
+  | {
+      type: 'NAVIGATE';
+      dr: number;
+      dc: number;
+    }
+  | { type: 'TOGGLE_PALETTE' }
+  | { type: 'SHOW_PALETTE' }
+  | { type: 'HIDE_PALETTE' }
+  | { type: 'TOGGLE_FIND' }
+  | { type: 'HIDE_FIND' }
+  | { type: 'SET_FIND_QUERY'; query: string }
+  | { type: 'SET_CLIPBOARD'; data: ClipboardData | null }
+  | { type: 'RESIZE_COL'; col: number; width: number };
+
+function calcReducer(state: CalcState, action: CalcAction): CalcState {
+  switch (action.type) {
+    case 'SET_CELLS':
+      return { ...state, cells: action.cells };
+
+    case 'UPDATE_CELLS':
+      return { ...state, cells: action.updater(state.cells) };
+
+    case 'SET_SEL':
+      return { ...state, sel: { r: action.r, c: action.c } };
+
+    case 'SET_SEL_RANGE':
+      return { ...state, selRange: action.range };
+
+    case 'START_DRAG':
+      return {
+        ...state,
+        isDragging: true,
+        dragStart: { r: action.r, c: action.c },
+      };
+
+    case 'END_DRAG':
+      return { ...state, isDragging: false, dragStart: null };
+
+    case 'SET_EDITING':
+      return { ...state, editing: action.editing };
+
+    case 'SET_EDIT_VAL':
+      return { ...state, editVal: action.val };
+
+    case 'START_EDIT':
+      return {
+        ...state,
+        sel: { r: action.r, c: action.c },
+        editing: true,
+        editVal: action.val,
+      };
+
+    case 'COMMIT_EDIT': {
+      if (!state.editing) return state;
+      const key = cellId(state.sel.r, state.sel.c);
+      const existing = state.cells[key] ?? EMPTY_CELL;
+      return {
+        ...state,
+        cells: {
+          ...state.cells,
+          [key]: { ...existing, raw: state.editVal },
+        },
+        editing: false,
+      };
+    }
+
+    case 'NAVIGATE': {
+      // First commit any active edit, then move selection
+      let cells = state.cells;
+      if (state.editing) {
+        const key = cellId(state.sel.r, state.sel.c);
+        const existing = state.cells[key] ?? EMPTY_CELL;
+        cells = { ...state.cells, [key]: { ...existing, raw: state.editVal } };
+      }
+      const newR = Math.max(
+        0,
+        Math.min(NUM_ROWS - 1, state.sel.r + action.dr),
+      );
+      const newC = Math.max(
+        0,
+        Math.min(NUM_COLS - 1, state.sel.c + action.dc),
+      );
+      return {
+        ...state,
+        cells,
+        editing: false,
+        sel: { r: newR, c: newC },
+        selRange: null,
+      };
+    }
+
+    case 'TOGGLE_PALETTE':
+      return { ...state, showPalette: !state.showPalette };
+
+    case 'SHOW_PALETTE':
+      return { ...state, showPalette: true };
+
+    case 'HIDE_PALETTE':
+      return { ...state, showPalette: false };
+
+    case 'TOGGLE_FIND':
+      return { ...state, showFind: !state.showFind };
+
+    case 'HIDE_FIND':
+      return { ...state, showFind: false, findQuery: '' };
+
+    case 'SET_FIND_QUERY':
+      return { ...state, findQuery: action.query };
+
+    case 'SET_CLIPBOARD':
+      return { ...state, clipboard: action.data };
+
+    case 'RESIZE_COL': {
+      const widths = [...state.colWidths];
+      widths[action.col] = Math.max(40, action.width);
+      return { ...state, colWidths: widths };
+    }
+
+    default:
+      return state;
+  }
+}
 
 // ── Find Bar ────────────────────────────────────────────────────────
 function FindBar({
@@ -108,25 +262,39 @@ export interface MacCalcProps {
 
 // ── Main Component ──────────────────────────────────────────────────
 export function MacCalc({ initialCells }: MacCalcProps) {
-  const [cells, setCells] = useState<Record<string, CellData>>(
-    () => initialCells ?? createSampleCells(),
+  const [state, dispatch] = useReducer(
+    calcReducer,
+    undefined,
+    (): CalcState => ({
+      cells: initialCells ?? createSampleCells(),
+      clipboard: null,
+      sel: { r: 0, c: 0 },
+      selRange: null,
+      isDragging: false,
+      dragStart: null,
+      editing: false,
+      editVal: '',
+      showFind: false,
+      findQuery: '',
+      showPalette: false,
+      colWidths: Array(NUM_COLS).fill(DEFAULT_COL_W) as number[],
+    }),
   );
-  const [sel, setSel] = useState({ r: 0, c: 0 });
-  const [selRange, setSelRange] = useState<CellRange | null>(null);
-  const [editing, setEditing] = useState(false);
-  const [editVal, setEditVal] = useState('');
-  const [showPalette, setShowPalette] = useState(false);
-  const [showFind, setShowFind] = useState(false);
-  const [findQuery, setFindQuery] = useState('');
-  const [colWidths, setColWidths] = useState<number[]>(() =>
-    Array(NUM_COLS).fill(DEFAULT_COL_W),
-  );
-  const [clipboard, setClipboard] = useState<ClipboardData | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState<{
-    r: number;
-    c: number;
-  } | null>(null);
+
+  const {
+    cells,
+    clipboard,
+    sel,
+    selRange,
+    isDragging,
+    dragStart,
+    editing,
+    editVal,
+    showFind,
+    findQuery,
+    showPalette,
+    colWidths,
+  } = state;
 
   const gridRef = useRef<HTMLDivElement>(null);
   const editRef = useRef<HTMLInputElement>(null);
@@ -139,12 +307,15 @@ export function MacCalc({ initialCells }: MacCalcProps) {
 
   const setCell = useCallback(
     (r: number, c: number, updates: Partial<CellData>) => {
-      setCells((prev) => ({
-        ...prev,
-        [cellId(r, c)]: { ...getCell(r, c), ...updates },
-      }));
+      dispatch({
+        type: 'UPDATE_CELLS',
+        updater: (prev) => ({
+          ...prev,
+          [cellId(r, c)]: { ...(prev[cellId(r, c)] ?? EMPTY_CELL), ...updates },
+        }),
+      });
     },
-    [getCell],
+    [],
   );
 
   const getCellDisplay = useCallback(
@@ -189,33 +360,24 @@ export function MacCalc({ initialCells }: MacCalcProps) {
   );
 
   const commitEdit = useCallback(() => {
-    if (editing) {
-      setCell(sel.r, sel.c, { raw: editVal });
-      setEditing(false);
-    }
-  }, [editing, editVal, sel, setCell]);
+    dispatch({ type: 'COMMIT_EDIT' });
+  }, []);
 
   const startEdit = useCallback(
     (r: number, c: number, initialVal?: string) => {
-      setSel({ r, c });
-      setEditing(true);
-      setEditVal(initialVal !== undefined ? initialVal : getCell(r, c).raw);
+      const val =
+        initialVal !== undefined
+          ? initialVal
+          : (cells[cellId(r, c)] ?? EMPTY_CELL).raw;
+      dispatch({ type: 'START_EDIT', r, c, val });
       setTimeout(() => editRef.current?.focus(), 0);
     },
-    [getCell],
+    [cells],
   );
 
-  const navigate = useCallback(
-    (dr: number, dc: number) => {
-      commitEdit();
-      setSel((prev) => ({
-        r: Math.max(0, Math.min(NUM_ROWS - 1, prev.r + dr)),
-        c: Math.max(0, Math.min(NUM_COLS - 1, prev.c + dc)),
-      }));
-      setSelRange(null);
-    },
-    [commitEdit],
-  );
+  const navigate = useCallback((dr: number, dc: number) => {
+    dispatch({ type: 'NAVIGATE', dr, dc });
+  }, []);
 
   const matchCount = useMemo(() => {
     if (!findQuery) return 0;
@@ -227,11 +389,15 @@ export function MacCalc({ initialCells }: MacCalcProps) {
     return count;
   }, [findQuery, cells]);
 
-  const handleFind = useCallback((q: string) => setFindQuery(q), []);
-  const handleReplace = useCallback(
-    (f: string, r: string) => {
-      if (!f) return;
-      setCells((prev) => {
+  const handleFind = useCallback(
+    (q: string) => dispatch({ type: 'SET_FIND_QUERY', query: q }),
+    [],
+  );
+  const handleReplace = useCallback((f: string, r: string) => {
+    if (!f) return;
+    dispatch({
+      type: 'UPDATE_CELLS',
+      updater: (prev) => {
         const next = { ...prev };
         const fl = f.toLowerCase();
         for (const k in next) {
@@ -239,10 +405,7 @@ export function MacCalc({ initialCells }: MacCalcProps) {
             next[k] = {
               ...next[k],
               raw: next[k].raw.replace(
-                new RegExp(
-                  f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
-                  'i',
-                ),
+                new RegExp(f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'),
                 r,
               ),
             };
@@ -250,14 +413,14 @@ export function MacCalc({ initialCells }: MacCalcProps) {
           }
         }
         return next;
-      });
-    },
-    [],
-  );
-  const handleReplaceAll = useCallback(
-    (f: string, r: string) => {
-      if (!f) return;
-      setCells((prev) => {
+      },
+    });
+  }, []);
+  const handleReplaceAll = useCallback((f: string, r: string) => {
+    if (!f) return;
+    dispatch({
+      type: 'UPDATE_CELLS',
+      updater: (prev) => {
         const next = { ...prev };
         const regex = new RegExp(
           f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
@@ -266,10 +429,9 @@ export function MacCalc({ initialCells }: MacCalcProps) {
         for (const k in next)
           next[k] = { ...next[k], raw: next[k].raw.replace(regex, r) };
         return next;
-      });
-    },
-    [],
-  );
+      },
+    });
+  }, []);
 
   const execAction = useCallback(
     (id: string) => {
@@ -332,41 +494,41 @@ export function MacCalc({ initialCells }: MacCalcProps) {
           startEdit(sel.r, sel.c, '=IF(,, )');
           break;
         case 'find':
-          setShowFind((v) => !v);
+          dispatch({ type: 'TOGGLE_FIND' });
           break;
         case 'copy': {
           const data: Record<string, CellData> = {};
           applyToRange((r, c) => {
             data[`${r - r1},${c - c1}`] = { ...getCell(r, c) };
           });
-          setClipboard({
-            data,
-            rows: r2 - r1 + 1,
-            cols: c2 - c1 + 1,
+          dispatch({
+            type: 'SET_CLIPBOARD',
+            data: { data, rows: r2 - r1 + 1, cols: c2 - c1 + 1 },
           });
           break;
         }
         case 'paste': {
           if (!clipboard) break;
-          setCells((prev) => {
-            const next = { ...prev };
-            for (let dr = 0; dr < clipboard.rows; dr++) {
-              for (let dc = 0; dc < clipboard.cols; dc++) {
-                const src = clipboard.data[`${dr},${dc}`];
-                if (src)
-                  next[cellId(sel.r + dr, sel.c + dc)] = { ...src };
+          dispatch({
+            type: 'UPDATE_CELLS',
+            updater: (prev) => {
+              const next = { ...prev };
+              for (let dr = 0; dr < clipboard.rows; dr++) {
+                for (let dc = 0; dc < clipboard.cols; dc++) {
+                  const src = clipboard.data[`${dr},${dc}`];
+                  if (src)
+                    next[cellId(sel.r + dr, sel.c + dc)] = { ...src };
+                }
               }
-            }
-            return next;
+              return next;
+            },
           });
           break;
         }
         case 'select-all':
-          setSelRange({
-            r1: 0,
-            c1: 0,
-            r2: NUM_ROWS - 1,
-            c2: NUM_COLS - 1,
+          dispatch({
+            type: 'SET_SEL_RANGE',
+            range: { r1: 0, c1: 0, r2: NUM_ROWS - 1, c2: NUM_COLS - 1 },
           });
           break;
         case 'export': {
@@ -403,19 +565,19 @@ export function MacCalc({ initialCells }: MacCalcProps) {
       if (showPalette) return;
       if (e.key === 'Escape') {
         if (editing) {
-          setEditing(false);
-          setEditVal('');
+          dispatch({ type: 'SET_EDITING', editing: false });
+          dispatch({ type: 'SET_EDIT_VAL', val: '' });
         }
         return;
       }
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'p') {
         e.preventDefault();
-        setShowPalette(true);
+        dispatch({ type: 'SHOW_PALETTE' });
         return;
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
         e.preventDefault();
-        setShowFind((v) => !v);
+        dispatch({ type: 'TOGGLE_FIND' });
         return;
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
@@ -445,11 +607,9 @@ export function MacCalc({ initialCells }: MacCalcProps) {
       if (editing) {
         if (e.key === 'Enter') {
           e.preventDefault();
-          commitEdit();
           navigate(1, 0);
         } else if (e.key === 'Tab') {
           e.preventDefault();
-          commitEdit();
           navigate(0, e.shiftKey ? -1 : 1);
         }
         return;
@@ -496,15 +656,7 @@ export function MacCalc({ initialCells }: MacCalcProps) {
           }
       }
     },
-    [
-      editing,
-      sel,
-      navigate,
-      commitEdit,
-      startEdit,
-      execAction,
-      showPalette,
-    ],
+    [editing, sel, navigate, startEdit, execAction, showPalette],
   );
 
   // Mouse selection
@@ -517,33 +669,31 @@ export function MacCalc({ initialCells }: MacCalcProps) {
       startEdit(r, c);
       return;
     }
-    commitEdit();
-    setSel({ r, c });
+    dispatch({ type: 'COMMIT_EDIT' });
     if (e.shiftKey) {
-      setSelRange({ r1: sel.r, c1: sel.c, r2: r, c2: c });
+      dispatch({ type: 'SET_SEL', r, c });
+      dispatch({
+        type: 'SET_SEL_RANGE',
+        range: { r1: sel.r, c1: sel.c, r2: r, c2: c },
+      });
     } else {
-      setSelRange(null);
-      setDragStart({ r, c });
-      setIsDragging(true);
+      dispatch({ type: 'SET_SEL', r, c });
+      dispatch({ type: 'SET_SEL_RANGE', range: null });
+      dispatch({ type: 'START_DRAG', r, c });
     }
   };
 
   const handleCellMouseEnter = (r: number, c: number) => {
     if (isDragging && dragStart) {
-      setSelRange({
-        r1: dragStart.r,
-        c1: dragStart.c,
-        r2: r,
-        c2: c,
+      dispatch({
+        type: 'SET_SEL_RANGE',
+        range: { r1: dragStart.r, c1: dragStart.c, r2: r, c2: c },
       });
     }
   };
 
   useEffect(() => {
-    const up = () => {
-      setIsDragging(false);
-      setDragStart(null);
-    };
+    const up = () => dispatch({ type: 'END_DRAG' });
     window.addEventListener('mouseup', up);
     return () => window.removeEventListener('mouseup', up);
   }, []);
@@ -575,11 +725,7 @@ export function MacCalc({ initialCells }: MacCalcProps) {
     const startW = colWidths[colIdx];
     const onMove = (ev: MouseEvent) => {
       const diff = ev.clientX - startX;
-      setColWidths((prev) => {
-        const n = [...prev];
-        n[colIdx] = Math.max(40, startW + diff);
-        return n;
-      });
+      dispatch({ type: 'RESIZE_COL', col: colIdx, width: startW + diff });
     };
     const onUp = () => {
       document.removeEventListener('mousemove', onMove);
@@ -681,13 +827,13 @@ export function MacCalc({ initialCells }: MacCalcProps) {
         </Btn>
         <div style={{ flex: 1 }} />
         <Btn
-          onClick={() => setShowFind((v) => !v)}
+          onClick={() => dispatch({ type: 'TOGGLE_FIND' })}
           style={{ fontSize: 12, padding: '2px 7px' }}
         >
           {'\uD83D\uDD0D'}
         </Btn>
         <Btn
-          onClick={() => setShowPalette(true)}
+          onClick={() => dispatch({ type: 'SHOW_PALETTE' })}
           style={{ fontSize: 11, padding: '2px 7px' }}
         >
           {'\u2318'}P
@@ -706,7 +852,7 @@ export function MacCalc({ initialCells }: MacCalcProps) {
           value={formulaDisplay}
           onChange={(e) => {
             if (!editing) startEdit(sel.r, sel.c, e.target.value);
-            else setEditVal(e.target.value);
+            else dispatch({ type: 'SET_EDIT_VAL', val: e.target.value });
           }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
@@ -714,8 +860,8 @@ export function MacCalc({ initialCells }: MacCalcProps) {
               commitEdit();
               gridRef.current?.focus();
             } else if (e.key === 'Escape') {
-              setEditing(false);
-              setEditVal('');
+              dispatch({ type: 'SET_EDITING', editing: false });
+              dispatch({ type: 'SET_EDIT_VAL', val: '' });
               gridRef.current?.focus();
             }
           }}
@@ -732,8 +878,7 @@ export function MacCalc({ initialCells }: MacCalcProps) {
           onReplace={handleReplace}
           onReplaceAll={handleReplaceAll}
           onClose={() => {
-            setShowFind(false);
-            setFindQuery('');
+            dispatch({ type: 'HIDE_FIND' });
             gridRef.current?.focus();
           }}
           matchCount={matchCount}
@@ -838,21 +983,24 @@ export function MacCalc({ initialCells }: MacCalcProps) {
                         ref={editRef}
                         data-part={P.calcCellEdit}
                         value={editVal}
-                        onChange={(e) => setEditVal(e.target.value)}
+                        onChange={(e) =>
+                          dispatch({
+                            type: 'SET_EDIT_VAL',
+                            val: e.target.value,
+                          })
+                        }
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             e.preventDefault();
-                            commitEdit();
                             navigate(1, 0);
                             gridRef.current?.focus();
                           } else if (e.key === 'Tab') {
                             e.preventDefault();
-                            commitEdit();
                             navigate(0, e.shiftKey ? -1 : 1);
                             gridRef.current?.focus();
                           } else if (e.key === 'Escape') {
-                            setEditing(false);
-                            setEditVal('');
+                            dispatch({ type: 'SET_EDITING', editing: false });
+                            dispatch({ type: 'SET_EDIT_VAL', val: '' });
                             gridRef.current?.focus();
                           }
                         }}
@@ -935,12 +1083,12 @@ export function MacCalc({ initialCells }: MacCalcProps) {
         <CommandPalette
           items={CALC_ACTIONS}
           onSelect={(id) => {
-            setShowPalette(false);
+            dispatch({ type: 'HIDE_PALETTE' });
             execAction(id);
             setTimeout(() => gridRef.current?.focus(), 0);
           }}
           onClose={() => {
-            setShowPalette(false);
+            dispatch({ type: 'HIDE_PALETTE' });
             gridRef.current?.focus();
           }}
         />

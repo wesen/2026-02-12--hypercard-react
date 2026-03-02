@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useReducer } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS as P } from '../parts';
 import { EmptyState } from '../primitives/EmptyState';
@@ -7,6 +7,86 @@ import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import { type Track, type ViewMode, parseDuration, fmtTime } from './types';
 import { PLAYLISTS, ALBUMS, getTracksForPlaylist } from './sampleData';
 import type { Playlist } from './types';
+
+/* ── Player State & Reducer ── */
+interface PlayerState {
+  currentTrack: Track | null;
+  trackIdx: number;
+  playing: boolean;
+  elapsed: number;
+  selPlaylist: Playlist;
+  searchTerm: string;
+  showQueue: boolean;
+  showEq: boolean;
+  view: ViewMode;
+  volume: number;
+  shuffle: boolean;
+  repeat: boolean;
+  liked: Record<string, boolean>;
+}
+
+type PlayerAction =
+  | { type: 'PLAY_TRACK'; track: Track; idx: number }
+  | { type: 'TOGGLE_PLAYING' }
+  | { type: 'TICK' }
+  | { type: 'SET_ELAPSED'; elapsed: number }
+  | { type: 'SET_VOLUME'; volume: number }
+  | { type: 'TOGGLE_SHUFFLE' }
+  | { type: 'SET_SHUFFLE'; shuffle: boolean }
+  | { type: 'TOGGLE_REPEAT' }
+  | { type: 'TOGGLE_QUEUE' }
+  | { type: 'TOGGLE_EQ' }
+  | { type: 'SET_VIEW'; view: ViewMode }
+  | { type: 'SELECT_PLAYLIST'; playlist: Playlist }
+  | { type: 'SET_SEARCH'; term: string }
+  | { type: 'TOGGLE_LIKE'; key: string };
+
+function playerReducer(state: PlayerState, action: PlayerAction): PlayerState {
+  switch (action.type) {
+    case 'PLAY_TRACK':
+      return {
+        ...state,
+        currentTrack: action.track,
+        trackIdx: action.idx,
+        playing: true,
+        elapsed: 0,
+      };
+    case 'TOGGLE_PLAYING':
+      return {
+        ...state,
+        playing: state.currentTrack ? !state.playing : false,
+      };
+    case 'TICK':
+      return { ...state, elapsed: state.elapsed + 1 };
+    case 'SET_ELAPSED':
+      return { ...state, elapsed: action.elapsed };
+    case 'SET_VOLUME':
+      return { ...state, volume: action.volume };
+    case 'TOGGLE_SHUFFLE':
+      return { ...state, shuffle: !state.shuffle };
+    case 'SET_SHUFFLE':
+      return { ...state, shuffle: action.shuffle };
+    case 'TOGGLE_REPEAT':
+      return { ...state, repeat: !state.repeat };
+    case 'TOGGLE_QUEUE':
+      return { ...state, showQueue: !state.showQueue };
+    case 'TOGGLE_EQ':
+      return { ...state, showEq: !state.showEq };
+    case 'SET_VIEW':
+      return { ...state, view: action.view };
+    case 'SELECT_PLAYLIST':
+      return { ...state, selPlaylist: action.playlist, searchTerm: '' };
+    case 'SET_SEARCH':
+      return { ...state, searchTerm: action.term };
+    case 'TOGGLE_LIKE':
+      return {
+        ...state,
+        liked: { ...state.liked, [action.key]: !state.liked[action.key] },
+      };
+    default:
+      return state;
+  }
+}
 
 /* ── EQ Visualizer ── */
 function EqViz({ playing }: { playing: boolean }) {
@@ -55,35 +135,49 @@ export interface RetroMusicPlayerProps {
 export function RetroMusicPlayer({
   initialPlaylists = PLAYLISTS,
 }: RetroMusicPlayerProps) {
-  const [selPlaylist, setSelPlaylist] = useState(initialPlaylists[0]);
-  const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
-  const [trackIdx, setTrackIdx] = useState(0);
-  const [playing, setPlaying] = useState(false);
-  const [volume, setVolume] = useState(72);
-  const [elapsed, setElapsed] = useState(0);
-  const [shuffle, setShuffle] = useState(false);
-  const [repeat, setRepeat] = useState(false);
-  const [showQueue, setShowQueue] = useState(false);
-  const [showEq, setShowEq] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [liked, setLiked] = useState<Record<string, boolean>>({});
-  const [view, setView] = useState<ViewMode>('list');
+  const [state, dispatch] = useReducer(playerReducer, {
+    currentTrack: null,
+    trackIdx: 0,
+    playing: false,
+    elapsed: 0,
+    selPlaylist: initialPlaylists[0],
+    searchTerm: '',
+    showQueue: false,
+    showEq: true,
+    view: 'list',
+    volume: 72,
+    shuffle: false,
+    repeat: false,
+    liked: {},
+  });
+  const {
+    currentTrack,
+    trackIdx,
+    playing,
+    elapsed,
+    selPlaylist,
+    searchTerm,
+    showQueue,
+    showEq,
+    view,
+    volume,
+    shuffle,
+    repeat,
+    liked,
+  } = state;
 
   const tracks = getTracksForPlaylist(selPlaylist.id);
 
   // Elapsed timer
   useEffect(() => {
     if (!playing) return;
-    const id = setInterval(() => setElapsed((e) => e + 1), 1000);
+    const id = setInterval(() => dispatch({ type: 'TICK' }), 1000);
     return () => clearInterval(id);
   }, [playing, currentTrack]);
 
   const playTrack = useCallback(
     (track: Track, idx: number) => {
-      setCurrentTrack(track);
-      setTrackIdx(idx);
-      setPlaying(true);
-      setElapsed(0);
+      dispatch({ type: 'PLAY_TRACK', track, idx });
     },
     [],
   );
@@ -104,7 +198,7 @@ export function RetroMusicPlayer({
 
   const prevTrack = useCallback(() => {
     if (elapsed > 3) {
-      setElapsed(0);
+      dispatch({ type: 'SET_ELAPSED', elapsed: 0 });
       return;
     }
     const prev = (trackIdx - 1 + tracks.length) % tracks.length;
@@ -115,7 +209,7 @@ export function RetroMusicPlayer({
   useEffect(() => {
     if (playing && currentTrack && elapsed >= totalDuration) {
       if (repeat) {
-        setElapsed(0);
+        dispatch({ type: 'SET_ELAPSED', elapsed: 0 });
       } else {
         nextTrack();
       }
@@ -133,7 +227,7 @@ export function RetroMusicPlayer({
 
   const toggleLike = (t: Track) => {
     const key = `${t.title}-${t.artist}`;
-    setLiked((prev) => ({ ...prev, [key]: !prev[key] }));
+    dispatch({ type: 'TOGGLE_LIKE', key });
   };
 
   return (
@@ -162,7 +256,7 @@ export function RetroMusicPlayer({
             {/* Transport */}
             <div data-part={P.mpTransport}>
               <Btn
-                onClick={() => setShuffle(!shuffle)}
+                onClick={() => dispatch({ type: 'TOGGLE_SHUFFLE' })}
                 data-state={shuffle ? 'active' : undefined}
               >
                 {'\uD83D\uDD00'}
@@ -174,7 +268,7 @@ export function RetroMusicPlayer({
                   if (!currentTrack && tracks.length) {
                     playTrack(tracks[0], 0);
                   } else {
-                    setPlaying(!playing);
+                    dispatch({ type: 'TOGGLE_PLAYING' });
                   }
                 }}
               >
@@ -182,7 +276,7 @@ export function RetroMusicPlayer({
               </Btn>
               <Btn onClick={nextTrack}>{'\u23ED'}</Btn>
               <Btn
-                onClick={() => setRepeat(!repeat)}
+                onClick={() => dispatch({ type: 'TOGGLE_REPEAT' })}
                 data-state={repeat ? 'active' : undefined}
               >
                 {repeat ? '\uD83D\uDD02' : '\uD83D\uDD01'}
@@ -197,7 +291,7 @@ export function RetroMusicPlayer({
                     if (!currentTrack) return;
                     const rect = e.currentTarget.getBoundingClientRect();
                     const pct = (e.clientX - rect.left) / rect.width;
-                    setElapsed(Math.floor(pct * totalDuration));
+                    dispatch({ type: 'SET_ELAPSED', elapsed: Math.floor(pct * totalDuration) });
                   }}
                 >
                   <div
@@ -217,7 +311,7 @@ export function RetroMusicPlayer({
                 min="0"
                 max="100"
                 value={volume}
-                onChange={(e) => setVolume(+e.target.value)}
+                onChange={(e) => dispatch({ type: 'SET_VOLUME', volume: +e.target.value })}
                 data-part={P.mpVolSlider}
               />
               <span data-part={P.mpVolIcon}>{'\uD83D\uDD0A'}</span>
@@ -252,10 +346,7 @@ export function RetroMusicPlayer({
               key={p.id}
               data-part={P.mpPlaylistRow}
               data-state={selPlaylist.id === p.id ? 'active' : undefined}
-              onClick={() => {
-                setSelPlaylist(p);
-                setSearchTerm('');
-              }}
+              onClick={() => dispatch({ type: 'SELECT_PLAYLIST', playlist: p })}
             >
               <span data-part={P.mpPlaylistIcon}>{p.icon}</span>
               <div data-part={P.mpPlaylistInfo}>
@@ -277,24 +368,24 @@ export function RetroMusicPlayer({
               onClick={() => {
                 const i = Math.floor(Math.random() * tracks.length);
                 playTrack(tracks[i], i);
-                setShuffle(true);
+                dispatch({ type: 'SET_SHUFFLE', shuffle: true });
               }}
             >
               {'\uD83D\uDD00'} Shuffle
             </Btn>
             <Btn
-              onClick={() => setView(view === 'list' ? 'grid' : 'list')}
+              onClick={() => dispatch({ type: 'SET_VIEW', view: view === 'list' ? 'grid' : 'list' })}
             >
               {view === 'list' ? 'Grid' : 'List'}
             </Btn>
             <Btn
-              onClick={() => setShowEq(!showEq)}
+              onClick={() => dispatch({ type: 'TOGGLE_EQ' })}
               data-state={showEq ? 'active' : undefined}
             >
               EQ
             </Btn>
             <Btn
-              onClick={() => setShowQueue(!showQueue)}
+              onClick={() => dispatch({ type: 'TOGGLE_QUEUE' })}
               data-state={showQueue ? 'active' : undefined}
             >
               Queue
@@ -305,7 +396,7 @@ export function RetroMusicPlayer({
               type="text"
               placeholder="Search in playlist\u2026"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => dispatch({ type: 'SET_SEARCH', term: e.target.value })}
             />
           </WidgetToolbar>
 
@@ -404,7 +495,7 @@ export function RetroMusicPlayer({
           <div data-part={P.mpQueue}>
             <div data-part={P.mpQueueHeader}>
               <span>Up Next</span>
-              <Btn onClick={() => setShowQueue(false)}>{'\u00D7'}</Btn>
+              <Btn onClick={() => dispatch({ type: 'TOGGLE_QUEUE' })}>{'\u00D7'}</Btn>
             </div>
             <div data-part={P.mpQueueList}>
               {tracks
