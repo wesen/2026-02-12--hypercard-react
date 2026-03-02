@@ -335,3 +335,64 @@ Ported `imports/mac-chat-browser.jsx` (629 lines) → `packages/rich-widgets/src
 - TypeScript: clean
 - Storybook: all 3 stories render correctly, conversation selection and viewer verified
 - Registered in launcher modules and desktop integration story
+
+---
+
+## Step 16: SystemModeler Widget Port
+
+**Source:** `imports/system-modeler.jsx` (717 lines)
+**Widget:** Simulink-style block diagram modeler
+
+### What happened
+Ported as `SystemModeler` widget — a visual block diagram modeling tool with SVG canvas.
+
+### Files created
+- `system-modeler/types.ts` — BlockTypeDef, BlockInstance, Wire, DragState, WiringState, Point; 14 BLOCK_TYPES with categories
+- `system-modeler/sampleData.ts` — INITIAL_BLOCKS (Sine Wave → Gain → Scope), INITIAL_WIRES (2 connections)
+- `system-modeler/SystemModeler.tsx` — Main component with SVG rendering (SvgBlock, SvgPort, SvgWire), block palette, simulation progress, parameter dialogs
+- `system-modeler/SystemModeler.stories.tsx` — 3 stories (Default, Compact, EmptyCanvas)
+- `theme/system-modeler.css` — 27 data-part CSS rules
+
+**Features:** SVG canvas with draggable blocks + bezier wire connections, port-to-port wiring by click-drag, block palette sidebar with 3 categories (Sources, Math Operations, Routing & Sinks), simulation runner with progress bar, block parameter dialogs (Gain, Source amplitude/frequency, Constant value, Delay time), Delete/Backspace block removal, wire click-to-delete.
+
+### Key decisions
+- Stripped window chrome, menu bar, desktop, and about dialog
+- Kept all 14 block types with proper SVG rendering (title bar + emoji + ports)
+- Simulation is cosmetic (progress bar animation only)
+- Block palette is a toggleable sidebar panel instead of a separate window
+
+### Verification
+- TypeScript: no new errors (all pre-existing)
+- Storybook: 3 stories render, blocks visible, palette categories correct
+- Registered in launcher modules (order 118) and desktop integration story
+
+---
+
+## Step 17: ControlRoom Dashboard Port
+
+**Source:** `imports/control-room(1).jsx` (349 lines)
+**Widget:** Industrial control room dashboard with 9 instrument panels
+
+### What happened
+Ported as a single `ControlRoom` widget. The original has 9 Mac-style window panels with various instrument components. All instrument sub-components are reusable and exported.
+
+### Files created
+- `control-room/types.ts` — LogLine, SwitchState, SwitchKey, clamp()
+- `control-room/instruments.tsx` — 9 reusable instrument components: AnalogGauge (canvas), BarMeter, HorizontalBar, LED, ToggleSwitch, SevenSeg, Knob (drag), ScrollLog, Scope (canvas)
+- `control-room/ControlRoom.tsx` — Main dashboard composing all instruments into 9 Panel sections with live simulated data
+- `control-room/ControlRoom.stories.tsx` — 3 stories (Default, Compact, FastTick)
+- `theme/control-room.css` — 57 data-part CSS rules (Win95-style bevel borders)
+
+**Features:** Live-updating analog gauges with canvas needle rendering, vertical bar meters with danger thresholds, horizontal progress bars with hatched fill, LED indicators with glow effect, toggle switches with thumb animation, seven-segment LED displays (green-on-black), rotary knobs with mouse drag, auto-scrolling event log, oscilloscope trace with canvas rendering, configurable tick interval.
+
+### Key decisions
+- Ported as one widget (not 9 separate ones) since the dashboard is the product
+- All instrument components are exported from index.ts for reuse
+- Win95/System 7 bevel styling preserved via CSS data-part attributes
+- Panel component replaces the original MacWindow wrapper (simpler, themeable)
+
+### Verification
+- TypeScript: no new errors
+- Storybook: all 3 stories render, gauges animate, data updates live
+- Registered in launcher modules (order 119) and desktop integration story
+- Total: now 20 widgets in packages/rich-widgets

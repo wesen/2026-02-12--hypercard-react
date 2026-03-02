@@ -2,6 +2,9 @@
 
 ## 2026-03-02
 
+- Completed ControlRoom dashboard widget port: 9 instrument panels (AnalogGauge, BarMeter, HorizontalBar, LED, ToggleSwitch, SevenSeg, Knob, ScrollLog, Scope), live simulation, 57 CSS rules, 3 stories — from imports/control-room(1).jsx
+- Completed SystemModeler widget port: SVG block diagram canvas with 14 block types, bezier wires, block palette sidebar, simulation progress, parameter dialogs, 27 CSS rules, 3 stories — from imports/system-modeler.jsx
+- **20 WIDGETS TOTAL** in packages/rich-widgets (18 original imports + SystemModeler + ControlRoom)
 - Completed ChatBrowser widget port: conversation list with quick filter, message viewer, advanced search (text/model/tags/date), 33 CSS rules, 3 stories — new widget from imports/mac-chat-browser.jsx
 - Fixed DesktopShell icon double-click: added DesktopCommandHandler contributions so all widgets open on icon double-click
 - Fixed ChartView crashing in desktop demo: added default sample data when no `data` prop provided
