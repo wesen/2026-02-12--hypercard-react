@@ -1,0 +1,93 @@
+/* ── NodeEditor ── */
+[data-part="node-editor"] {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-family: var(--hc-font-family);
+  font-size: var(--hc-font-size);
+  color: var(--hc-color-fg);
+  background: var(--hc-color-alt, #ccc);
+  overflow: hidden;
+}
+
+[data-part="node-editor-toolbar"] {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  gap: 6px;
+  background: var(--hc-color-alt, #ddd);
+  border-bottom: 2px solid var(--hc-color-border);
+  flex-shrink: 0;
+}
+
+[data-part="node-editor-canvas"] {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+[data-part="node-editor-node"] {
+  position: absolute;
+  background: var(--hc-color-bg);
+  border: 2px solid var(--hc-color-border);
+  box-shadow: 2px 2px 0 var(--hc-color-border);
+  cursor: grab;
+  z-index: 10;
+  user-select: none;
+}
+
+[data-part="node-editor-node"][data-state="selected"] {
+  border-width: 3px;
+  z-index: 100;
+}
+
+[data-part="node-editor-node-header"] {
+  height: 22px;
+  background: var(--hc-color-alt, #eee);
+  border-bottom: 2px solid var(--hc-color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 0 4px;
+}
+
+[data-part="node-editor-node"][data-state="selected"] [data-part="node-editor-node-header"] {
+  background: var(--hc-confirm-selected-bg);
+  color: var(--hc-confirm-selected-fg);
+}
+
+[data-part="node-editor-node-fields"] {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--hc-color-border);
+}
+
+[data-part="node-editor-node-ports"] {
+  padding: 4px 0;
+}
+
+[data-part="node-editor-port"] {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--hc-color-border);
+  border-radius: 50%;
+  background: var(--hc-color-bg);
+  cursor: crosshair;
+  flex-shrink: 0;
+}
+
+[data-part="node-editor-port"][data-port-type="input"] {
+  background: var(--hc-color-fg);
+}
+
+[data-part="node-editor-status-bar"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 2px solid var(--hc-color-border);
+  padding: 2px 8px;
+  background: var(--hc-color-bg);
+  font-size: 10px;
+  flex-shrink: 0;
+}
