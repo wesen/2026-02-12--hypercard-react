@@ -2,9 +2,9 @@ import { configureStore } from '@reduxjs/toolkit';
 import type { Meta, StoryObj } from '@storybook/react';
 import { type ReactNode, useMemo } from 'react';
 import { Provider } from 'react-redux';
-import { windowingReducer, type OpenWindowPayload } from '@hypercard/engine/desktop-core';
+import { windowingReducer, openWindow, type OpenWindowPayload } from '@hypercard/engine/desktop-core';
 import { notificationsReducer, type CardStackDefinition } from '@hypercard/engine';
-import { DesktopShell, type DesktopIconDef, type DesktopContribution } from '@hypercard/engine/desktop-react';
+import { DesktopShell, type DesktopIconDef, type DesktopContribution, type DesktopCommandHandler } from '@hypercard/engine/desktop-react';
 
 import { LogViewer } from '../log-viewer/LogViewer';
 import { ChartView } from '../chart-view/ChartView';
@@ -80,19 +80,38 @@ const DESKTOP_ICONS: DesktopIconDef[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// Contributions: startup windows for quick open
+// Contributions: command handlers + startup windows
 // ---------------------------------------------------------------------------
 
-function makeStartupWindow(wDef: WidgetDef, idx: number): OpenWindowPayload {
+let windowCounter = 0;
+
+function buildWindowPayload(wDef: WidgetDef, dedupeKey?: string): OpenWindowPayload {
+  windowCounter++;
   return {
-    id: `window:${wDef.id}:startup`,
+    id: `window:${wDef.id}:${windowCounter}`,
     title: wDef.name,
     icon: wDef.icon,
-    bounds: { x: 100 + (idx % 4) * 30, y: 60 + (idx % 4) * 20, w: wDef.w, h: wDef.h },
+    bounds: {
+      x: 100 + Math.floor(Math.random() * 80),
+      y: 60 + Math.floor(Math.random() * 40),
+      w: wDef.w,
+      h: wDef.h,
+    },
     content: { kind: 'app', appKey: wDef.id },
-    dedupeKey: `${wDef.id}:startup`,
+    dedupeKey,
   };
 }
+
+/** Command handlers that open a window when an icon is double-clicked. */
+const ICON_OPEN_COMMANDS: DesktopCommandHandler[] = WIDGETS.map((wDef): DesktopCommandHandler => ({
+  id: `rich-widgets.open.${wDef.id}`,
+  priority: 200,
+  matches: (commandId: string) => commandId === `icon.open.${wDef.id}`,
+  run: (_commandId, ctx) => {
+    ctx.dispatch(openWindow(buildWindowPayload(wDef, wDef.id)));
+    return 'handled';
+  },
+}));
 
 // ---------------------------------------------------------------------------
 // Minimal stack (the shell requires one, even if we don't use cards)
@@ -136,15 +155,19 @@ function renderAppWindow(appKey: string): ReactNode {
 function RichWidgetsDesktopFrame({ startupWidget }: { startupWidget?: string }) {
   const store = useMemo(() => createStore(), []);
   const contributions = useMemo<DesktopContribution[]>(() => {
-    if (!startupWidget) return [];
-    const wDef = WIDGET_MAP.get(startupWidget);
-    if (!wDef) return [];
-    return [
-      {
-        id: 'rich-widgets-startup',
-        startupWindows: [{ id: `startup:${wDef.id}`, create: () => makeStartupWindow(wDef, 0) }],
-      },
+    const result: DesktopContribution[] = [
+      { id: 'rich-widgets-launchers', commands: ICON_OPEN_COMMANDS },
     ];
+    if (startupWidget) {
+      const wDef = WIDGET_MAP.get(startupWidget);
+      if (wDef) {
+        result.push({
+          id: 'rich-widgets-startup',
+          startupWindows: [{ id: `startup:${wDef.id}`, create: () => buildWindowPayload(wDef, `${wDef.id}:startup`) }],
+        });
+      }
+    }
+    return result;
   }, [startupWidget]);
 
   return (
