@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS } from '../parts';
 import { ModalOverlay } from '../primitives/ModalOverlay';
+import { ProgressBar } from '../primitives/ProgressBar';
 import { Separator } from '../primitives/Separator';
 import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
@@ -565,12 +566,7 @@ export function SystemModeler({
           <div data-part={RICH_PARTS.smProgressLabel}>
             {'\u23F3'} Simulating model\u2026 {simProgress}%
           </div>
-          <div data-part={RICH_PARTS.smProgressBar}>
-            <div
-              data-part={RICH_PARTS.smProgressFill}
-              style={{ width: `${simProgress}%` }}
-            />
-          </div>
+          <ProgressBar value={simProgress} max={100} />
         </div>
       )}
 

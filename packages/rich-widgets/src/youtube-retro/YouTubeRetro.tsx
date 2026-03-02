@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, type FC } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS as P } from '../parts';
+import { EmptyState } from '../primitives/EmptyState';
 import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import type { YtVideo, YtComment as YtCommentT, YtView } from './types';
 import { CATEGORIES, parseDuration, fmtTime } from './types';
@@ -326,10 +327,7 @@ export const YouTubeRetro: FC<YouTubeRetroProps> = ({
                   <VideoCard key={v.id} video={v} onClick={() => openVideo(v)} />
                 ))
               ) : (
-                <div data-part={P.ytEmptyState}>
-                  <div style={{ fontSize: 40, marginBottom: 8 }}>{'\uD83D\uDCED'}</div>
-                  No videos found.
-                </div>
+                <EmptyState icon={'\uD83D\uDCED'} message="No videos found." />
               )}
             </div>
           </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS as P } from '../parts';
+import { EmptyState } from '../primitives/EmptyState';
 import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import { type Track, type ViewMode, parseDuration, fmtTime } from './types';
@@ -374,7 +375,7 @@ export function RetroMusicPlayer({
                 );
               })}
               {filteredTracks.length === 0 && (
-                <div data-part={P.mpEmptyState}>No matching tracks.</div>
+                <EmptyState message="No matching tracks." />
               )}
             </div>
           ) : (
@@ -427,7 +428,7 @@ export function RetroMusicPlayer({
                   </div>
                 ))}
               {tracks.slice(trackIdx + 1).length === 0 && (
-                <div data-part={P.mpEmptyState}>Queue empty.</div>
+                <EmptyState message="Queue empty." />
               )}
             </div>
           </div>

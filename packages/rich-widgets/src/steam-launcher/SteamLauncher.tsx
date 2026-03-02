@@ -1,6 +1,7 @@
 import { useState, type FC } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS as P } from '../parts';
+import { EmptyState } from '../primitives/EmptyState';
 import { ModalOverlay } from '../primitives/ModalOverlay';
 import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
@@ -233,10 +234,7 @@ const DownloadsTab: FC<{
           );
         })
       ) : (
-        <div data-part={P.stEmptyState}>
-          <div style={{ fontSize: 32, marginBottom: 8 }}>{'\uD83D\uDCED'}</div>
-          No downloads in progress.
-        </div>
+        <EmptyState icon={'\uD83D\uDCED'} message="No downloads in progress." />
       )}
     </div>
   );
@@ -342,7 +340,7 @@ export const SteamLauncher: FC<SteamLauncherProps> = ({
                   />
                 ))}
                 {filteredGames.length === 0 && (
-                  <div data-part={P.stEmptyState}>No games found.</div>
+                  <EmptyState message="No games found." />
                 )}
               </div>
             </div>

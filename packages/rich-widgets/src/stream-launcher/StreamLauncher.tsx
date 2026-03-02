@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, type FC } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS as P } from '../parts';
+import { EmptyState } from '../primitives/EmptyState';
+import { SearchBar } from '../primitives/SearchBar';
 import { Separator } from '../primitives/Separator';
 import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import type { Stream, StreamSort } from './types';
@@ -299,24 +301,17 @@ export const StreamLauncher: FC<StreamLauncherProps> = ({
         ) : (
           <>
             {/* Search bar */}
-            <div data-part={P.slSearchBar}>
-              <span>{'\uD83D\uDD0D'}</span>
-              <input
-                data-part={P.slSearchInput}
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search streams\u2026"
-              />
-              <span data-part={P.slSearchCount}>{filtered.length} results</span>
-            </div>
+            <SearchBar
+              value={search}
+              onChange={setSearch}
+              placeholder="Search streams…"
+              count={filtered.length}
+            />
 
             {/* Stream list */}
             <div data-part={P.slStreamList}>
               {filtered.length === 0 ? (
-                <div data-part={P.slEmptyState}>
-                  <div style={{ fontSize: 36, marginBottom: 8 }}>{'\uD83D\uDCFA'}</div>
-                  No streams found
-                </div>
+                <EmptyState icon={'\uD83D\uDCFA'} message="No streams found" />
               ) : (
                 filtered.map(s => (
                   <StreamCard

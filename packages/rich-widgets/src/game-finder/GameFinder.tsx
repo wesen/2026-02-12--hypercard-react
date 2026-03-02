@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS as P } from '../parts';
+import { EmptyState } from '../primitives/EmptyState';
 import { ModalOverlay } from '../primitives/ModalOverlay';
+import { ProgressBar } from '../primitives/ProgressBar';
 import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import { drawGameArt } from './gameArt';
 import {
@@ -89,9 +91,7 @@ function DownloadBar({
         <span>{'Installing '}{game.title}{'\u2026'}</span>
         <span>{pct}%</span>
       </div>
-      <div data-part={P.gfProgressBar}>
-        <div data-part={P.gfProgressFill} style={{ width: `${pct}%` }} />
-      </div>
+      <ProgressBar value={pct} max={100} />
       <div data-part={P.gfDownloadMeta}>
         {game.size} total {'\u00B7'}{' '}
         {Math.round(progress * parseFloat(game.size) * 10) / 10}K downloaded
@@ -180,12 +180,7 @@ function GameDetail({
           Achievements ({doneCount}/{totalCount})
         </div>
         <div data-part={P.gfAchievementsBar}>
-          <div data-part={P.gfProgressBar}>
-            <div
-              data-part={P.gfProgressFill}
-              style={{ width: `${pct}%` }}
-            />
-          </div>
+          <ProgressBar value={pct} max={100} />
           <span data-part={P.gfAchievementsPct}>{pct}%</span>
         </div>
         {game.achievements.map((a, i) => (
@@ -406,14 +401,7 @@ export function GameFinder({ initialGames = SAMPLE_GAMES }: GameFinderProps) {
             <div>
               Achievements: {totalAchievements}/{totalPossible}
             </div>
-            <div data-part={P.gfProgressBar}>
-              <div
-                data-part={P.gfProgressFill}
-                style={{
-                  width: `${totalPossible ? (totalAchievements / totalPossible) * 100 : 0}%`,
-                }}
-              />
-            </div>
+            <ProgressBar value={totalAchievements} max={totalPossible || 1} />
           </div>
         </div>
 
@@ -470,12 +458,7 @@ export function GameFinder({ initialGames = SAMPLE_GAMES }: GameFinderProps) {
                 />
               ))}
               {filtered.length === 0 && (
-                <div data-part={P.gfEmptyState}>
-                  <div style={{ fontSize: 32, marginBottom: 8 }}>
-                    {'\uD83D\uDD79\uFE0F'}
-                  </div>
-                  No games found
-                </div>
+                <EmptyState icon={'\uD83D\uDD79\uFE0F'} message="No games found" />
               )}
             </div>
           )}

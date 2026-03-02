@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Btn, Checkbox } from '@hypercard/engine';
 import { RICH_PARTS } from '../parts';
+import { EmptyState } from '../primitives/EmptyState';
 import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import type { Conversation, SearchParams } from './types';
@@ -261,7 +262,7 @@ export function ChatBrowser({
         {/* List */}
         <div data-part={RICH_PARTS.cbConvoList}>
           {displayedConvos.length === 0 && (
-            <div data-part={RICH_PARTS.cbEmptyState}>No conversations found.</div>
+            <EmptyState message="No conversations found." />
           )}
           {displayedConvos.map((c, i) => (
             <ConvoRow
@@ -294,11 +295,10 @@ export function ChatBrowser({
             onClose={() => setShowSearch(false)}
           />
         ) : !selectedConvo ? (
-          <div data-part={RICH_PARTS.cbEmptyState}>
-            <div style={{ fontSize: 32 }}>{'\uD83D\uDDC4\uFE0F'}</div>
-            <div style={{ fontWeight: 'bold', marginBottom: 8 }}>No Conversation Selected</div>
-            <div>Select a conversation from the list to view it here.</div>
-          </div>
+          <EmptyState
+            icon={'\uD83D\uDDC4\uFE0F'}
+            message={<><div style={{ fontWeight: 'bold', marginBottom: 8 }}>No Conversation Selected</div><div>Select a conversation from the list to view it here.</div></>}
+          />
         ) : (
           <>
             {/* Conversation header */}

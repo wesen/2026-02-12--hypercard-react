@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Btn, Checkbox } from '@hypercard/engine';
 import { RICH_PARTS } from '../parts';
+import { EmptyState } from '../primitives/EmptyState';
 import type { ResearchStep, DepthLevel } from './types';
 import { DEPTH_LEVELS } from './types';
 import { DEMO_STEPS, generateReport, WEB_ONLY_INDICES, ACADEMIC_INDICES } from './sampleData';
@@ -228,38 +229,33 @@ export function DeepResearch({ initialSteps }: DeepResearchProps) {
         <div data-part={RICH_PARTS.drStepsArea}>
           {/* Empty state */}
           {!isResearching && steps.length === 0 && !report && (
-            <div data-part={RICH_PARTS.drEmptyState}>
-              <div style={{ fontSize: 48, marginBottom: 12 }}>
-                {'\uD83D\uDD0D'}
-              </div>
-              <div
-                style={{
-                  fontSize: 13,
-                  fontWeight: 'bold',
-                  marginBottom: 8,
-                }}
-              >
-                Deep Research
-              </div>
-              <div style={{ fontSize: 11, lineHeight: 1.6 }}>
-                Enter a research query and click "Begin Research" to
-                start. I'll search multiple sources, analyze findings,
-                and synthesize a comprehensive report.
-              </div>
-              <div
-                style={{
-                  marginTop: 16,
-                  fontSize: 10,
-                  color: 'var(--hc-color-muted)',
-                  borderTop:
-                    '1px solid var(--hc-color-row-odd, #ccc)',
-                  paddingTop: 8,
-                }}
-              >
-                {'\u2318'}+Enter to start {'\u00B7'} Tip: be specific
-                for better results
-              </div>
-            </div>
+            <EmptyState
+              icon={'\uD83D\uDD0D'}
+              message={
+                <>
+                  <div style={{ fontSize: 13, fontWeight: 'bold', marginBottom: 8 }}>
+                    Deep Research
+                  </div>
+                  <div style={{ fontSize: 11, lineHeight: 1.6 }}>
+                    Enter a research query and click "Begin Research" to
+                    start. I'll search multiple sources, analyze findings,
+                    and synthesize a comprehensive report.
+                  </div>
+                  <div
+                    style={{
+                      marginTop: 16,
+                      fontSize: 10,
+                      color: 'var(--hc-color-muted)',
+                      borderTop: '1px solid var(--hc-color-row-odd, #ccc)',
+                      paddingTop: 8,
+                    }}
+                  >
+                    {'\u2318'}+Enter to start {'\u00B7'} Tip: be specific
+                    for better results
+                  </div>
+                </>
+              }
+            />
           )}
 
           {/* Activity log */}
