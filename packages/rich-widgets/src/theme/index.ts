@@ -11,3 +11,4 @@ import './calendar.css';
 import './graph-navigator.css';
 import './calculator.css';
 import './deep-research.css';
+import './game-finder.css';

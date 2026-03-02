@@ -154,5 +154,19 @@ export {
 } from './deep-research/types';
 export { DEMO_STEPS, generateReport } from './deep-research/sampleData';
 
+// GameFinder
+export { GameFinder, type GameFinderProps } from './game-finder/GameFinder';
+export {
+  type Game,
+  type Achievement,
+  type ArtType,
+  type GameFilter,
+  type GameSort,
+  FILTER_OPTIONS,
+  SORT_OPTIONS,
+} from './game-finder/types';
+export { SAMPLE_GAMES } from './game-finder/sampleData';
+export { drawGameArt } from './game-finder/gameArt';
+
 // Parts
 export { RICH_PARTS, type RichPartName } from './parts';

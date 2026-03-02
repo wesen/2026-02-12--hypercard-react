@@ -129,6 +129,35 @@ Ported `imports/deep-research-mac.jsx` (889 lines) → `packages/rich-widgets/sr
 - The ResearchStep union type with discriminated `type` field makes step rendering clean via switch/case
 - Barberpole progress bar animation reuses the same technique from the indeterminate progress pattern
 
+## Step 9: GameFinder Widget Port (Phase 14)
+
+### What was done
+Ported `imports/gamefinder.jsx` (612 lines) → `packages/rich-widgets/src/game-finder/GameFinder.tsx`.
+
+**Files created:**
+- `game-finder/types.ts` — Game, Achievement, ArtType, GameFilter, GameSort, FILTER_OPTIONS, SORT_OPTIONS
+- `game-finder/sampleData.ts` — SAMPLE_GAMES (8 classic Mac games with achievements)
+- `game-finder/gameArt.ts` — drawGameArt() canvas-based pixel art for 8 game types
+- `game-finder/GameFinder.tsx` — Main component + GameArt + StarRating + DownloadBar + GameDetail + GameRow
+- `game-finder/GameFinder.stories.tsx` — 3 stories (Default, Compact, FewGames)
+- `theme/game-finder.css` — ~60 data-part rules, launch animation
+
+**Features:** Sidebar with navigation/filter/sort/profile stats, game list with canvas art thumbnails, detail view with hero, description, stats, achievements with progress, install/download simulation, launch overlay with progress animation, search.
+
+### Key decisions
+- Canvas pixel art kept as separate `gameArt.ts` utility for reuse
+- Removed window chrome (MacWindow), menu bar, desktop background
+- Used `Btn` from engine for Play/Back/Install buttons
+- Radio buttons for sort kept as custom elements (same as DeepResearch)
+
+### Verification
+- TypeScript: clean
+- Storybook: all 3 stories render correctly on port 6007
+- Detail view verified by clicking Dark Castle — shows hero, achievements, stats
+
+### Lessons learned
+- Unicode escapes (`\u00B7`) in JSX text content render literally — must wrap in `{'\u00B7'}` expressions. This applies to all JSX text content between tags, NOT to string literals in `{}` expressions or JSX attributes.
+
 ### Code review instructions
 
 - Review the analysis doc for completeness: `ttmp/.../design-doc/01-rich-widget-import-analysis-and-integration-plan.md`
