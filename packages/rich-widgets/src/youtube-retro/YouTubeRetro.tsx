@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, type FC } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS as P } from '../parts';
+import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import type { YtVideo, YtComment as YtCommentT, YtView } from './types';
 import { CATEGORIES, parseDuration, fmtTime } from './types';
 import { CHANNELS, VIDEOS, COMMENTS } from './sampleData';
@@ -463,7 +464,7 @@ export const YouTubeRetro: FC<YouTubeRetroProps> = ({
       )}
 
       {/* Status bar */}
-      <div data-part={P.ytStatusBar}>
+      <WidgetStatusBar>
         <span>{playing ? '\u25B6 Playing' : '\u23F8 Idle'}</span>
         <span>{'\uD83D\uDCFA'} {videos.length} videos</span>
         <div style={{ flex: 1 }} />
@@ -475,7 +476,7 @@ export const YouTubeRetro: FC<YouTubeRetroProps> = ({
           {'\uD83D\uDC4D'}{' '}
           {Object.values(likedVids).filter(Boolean).length} liked
         </span>
-      </div>
+      </WidgetStatusBar>
     </div>
   );
 };

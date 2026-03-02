@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS } from '../parts';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
+import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import type { GraphNode, Connection, TempConnection } from './types';
 import { NODE_WIDTH } from './types';
 import { INITIAL_NODES, INITIAL_CONNECTIONS } from './sampleData';
@@ -482,7 +483,7 @@ export function NodeEditor({
       </div>
 
       {/* ── Status Bar ── */}
-      <div data-part={RICH_PARTS.nodeEditorStatusBar}>
+      <WidgetStatusBar>
         <span>
           {selected
             ? `Selected: ${nodes.find((n) => n.id === selected)?.title || '—'}`
@@ -491,7 +492,7 @@ export function NodeEditor({
         <span>
           Pan: ({Math.round(pan.x)}, {Math.round(pan.y)})
         </span>
-      </div>
+      </WidgetStatusBar>
     </div>
   );
 }

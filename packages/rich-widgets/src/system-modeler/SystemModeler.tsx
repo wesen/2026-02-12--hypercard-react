@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS } from '../parts';
+import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import type { BlockInstance, Wire, DragState, WiringState, BlockTypeDef, Point } from './types';
 import { BLOCK_TYPES, SOURCE_BLOCKS, MATH_BLOCKS, ROUTING_BLOCKS } from './types';
@@ -572,11 +573,11 @@ export function SystemModeler({
       )}
 
       {/* Status bar */}
-      <div data-part={RICH_PARTS.smStatusBar}>
+      <WidgetStatusBar>
         <span>{blocks.length} blocks</span>
         <span>{wires.length} wires</span>
         <span>{simRunning ? '\u23F3 Simulating' : '\u2705 Ready'}</span>
-      </div>
+      </WidgetStatusBar>
 
       {/* Dialogs */}
       {showParams === 'sim' && (

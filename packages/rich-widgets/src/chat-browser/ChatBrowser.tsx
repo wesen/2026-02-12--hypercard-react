@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Btn, Checkbox } from '@hypercard/engine';
 import { RICH_PARTS } from '../parts';
+import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import type { Conversation, SearchParams } from './types';
 import { EMPTY_SEARCH } from './types';
@@ -274,10 +275,10 @@ export function ChatBrowser({
         </div>
 
         {/* Status */}
-        <div data-part={RICH_PARTS.cbStatusBar}>
+        <WidgetStatusBar>
           <span>{displayedConvos.length} conversations</span>
           <span>{searchResults ? '\uD83D\uDD0D Filtered' : '\uD83D\uDCC2 All'}</span>
-        </div>
+        </WidgetStatusBar>
       </div>
 
       {/* Main: viewer or search */}

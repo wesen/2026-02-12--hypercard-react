@@ -1,6 +1,7 @@
 import { useState, type FC } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS as P } from '../parts';
+import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import type { SteamGame, SteamTab, GameFilter, Friend } from './types';
 import { TABS } from './types';
@@ -386,13 +387,13 @@ export const SteamLauncher: FC<SteamLauncherProps> = ({
       )}
 
       {/* Status bar */}
-      <div data-part={P.stStatusBar}>
+      <WidgetStatusBar>
         <span>{'\uD83D\uDFE2'} Online</span>
         <span data-part={P.stStatusSep} />
         <span>{'\uD83D\uDCDA'} {installedCount} games installed</span>
         <div style={{ flex: 1 }} />
         <span>{'\uD83D\uDCBE'} {totalSize} GB used</span>
-      </div>
+      </WidgetStatusBar>
     </div>
   );
 };

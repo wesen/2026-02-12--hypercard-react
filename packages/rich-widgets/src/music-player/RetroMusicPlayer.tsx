@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS as P } from '../parts';
+import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import { type Track, type ViewMode, parseDuration, fmtTime } from './types';
 import { PLAYLISTS, ALBUMS, getTracksForPlaylist } from './sampleData';
@@ -434,14 +435,14 @@ export function RetroMusicPlayer({
       </div>
 
       {/* Status bar */}
-      <div data-part={P.mpStatusBar}>
+      <WidgetStatusBar>
         <span>{playing ? '\uD83D\uDD0A Playing' : '\u23F8 Paused'}</span>
         {shuffle && <span>{'\uD83D\uDD00'} Shuffle</span>}
         {repeat && <span>{'\uD83D\uDD02'} Repeat</span>}
         <div style={{ flex: 1 }} />
         <span>Vol: {volume}%</span>
         <span>{initialPlaylists.length} playlists</span>
-      </div>
+      </WidgetStatusBar>
     </div>
   );
 }

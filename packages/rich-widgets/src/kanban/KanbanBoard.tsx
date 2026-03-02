@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS } from '../parts';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
+import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import type { Task, Column, TagId, Priority } from './types';
 import { TAG_LABELS, PRIORITY_LABELS, ALL_TAGS, ALL_PRIORITIES } from './types';
 import { INITIAL_COLUMNS, INITIAL_TASKS } from './sampleData';
@@ -410,12 +411,12 @@ export function KanbanBoard({
       </div>
 
       {/* ── Status Bar ── */}
-      <div data-part={RICH_PARTS.kanbanStatusBar}>
+      <WidgetStatusBar>
         <span>{tasks.length} total</span>
         <span>{tasks.filter((t) => t.priority === 'high').length} high</span>
         <span>{tasks.filter((t) => t.col === 'done').length} done</span>
         {hasFilters && <span>filtered</span>}
-      </div>
+      </WidgetStatusBar>
 
       {/* ── Modal ── */}
       {editingTask && (

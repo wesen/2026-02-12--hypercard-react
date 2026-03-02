@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Btn, Checkbox } from '@hypercard/engine';
 import { RICH_PARTS } from '../parts';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
+import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import { Sparkline } from '../primitives/Sparkline';
 import { type LogEntry, type LogLevel, LOG_LEVELS, ALL_LOG_LEVELS } from './types';
 import { generateLogEntry } from './sampleData';
@@ -375,7 +376,7 @@ export function LogViewer({
           </div>
 
           {/* Status bar */}
-          <div data-part={RICH_PARTS.logViewerStatusBar}>
+          <WidgetStatusBar>
             <span>{filtered.length} entries shown</span>
             <span style={{ opacity: 0.4 }}>|</span>
             <span>Filter: {serviceFilter}</span>
@@ -388,7 +389,7 @@ export function LogViewer({
               </span>
             )}
             {autoScroll && <span>📌 AUTO-SCROLL</span>}
-          </div>
+          </WidgetStatusBar>
         </div>
       </div>
 

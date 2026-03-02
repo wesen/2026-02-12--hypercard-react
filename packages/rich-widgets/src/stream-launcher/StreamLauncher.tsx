@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, type FC } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS as P } from '../parts';
+import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import type { Stream, StreamSort } from './types';
 import { CATEGORIES, SORT_OPTIONS } from './types';
 import { STREAMS, CHAT_MESSAGES } from './sampleData';
@@ -331,7 +332,7 @@ export const StreamLauncher: FC<StreamLauncherProps> = ({
       </div>
 
       {/* Status bar */}
-      <div data-part={P.slStatusBar}>
+      <WidgetStatusBar>
         <span>
           {playing
             ? `\u25B6 Now playing: ${playing.title}`
@@ -340,7 +341,7 @@ export const StreamLauncher: FC<StreamLauncherProps> = ({
         <span>
           {'\uD83D\uDCFA'} Stream Launcher v1.0 {'\u2502'} {category}
         </span>
-      </div>
+      </WidgetStatusBar>
     </div>
   );
 };

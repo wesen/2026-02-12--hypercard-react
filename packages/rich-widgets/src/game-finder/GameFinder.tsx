@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS as P } from '../parts';
+import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import { drawGameArt } from './gameArt';
 import {
   type Game,
@@ -481,7 +482,7 @@ export function GameFinder({ initialGames = SAMPLE_GAMES }: GameFinderProps) {
       </div>
 
       {/* Status bar */}
-      <div data-part={P.gfStatusBar}>
+      <WidgetStatusBar>
         <span>
           {installing
             ? `Installing ${games.find((g) => g.id === installing)?.title}\u2026`
@@ -493,7 +494,7 @@ export function GameFinder({ initialGames = SAMPLE_GAMES }: GameFinderProps) {
           {'GameFinder v1.0 \u2502 '}{installedCount}/{games.length}
           {' installed \u2502 '}{totalAchievements}/{totalPossible}{' achievements'}
         </span>
-      </div>
+      </WidgetStatusBar>
     </div>
   );
 }

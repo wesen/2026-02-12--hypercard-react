@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS } from '../parts';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
+import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import type { CalendarEvent, CalendarView, PaletteAction } from './types';
 import {
   DAYS,
@@ -739,7 +740,7 @@ export function MacCalendar({
       )}
 
       {/* ── Status Bar ── */}
-      <div data-part={RICH_PARTS.calStatusBar}>
+      <WidgetStatusBar>
         <div style={{ display: 'flex', gap: 14 }}>
           <span>{events.length} events</span>
           <span>
@@ -750,7 +751,7 @@ export function MacCalendar({
           N = new {'\u00B7'} T = today {'\u00B7'} M/W = view {'\u00B7'}{' '}
           {'\u2190\u2192'} = navigate
         </span>
-      </div>
+      </WidgetStatusBar>
 
       {/* ── Event Modal ── */}
       {editEvent && (

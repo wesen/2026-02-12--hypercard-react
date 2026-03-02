@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useMemo } from 'react';
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS } from '../parts';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
+import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import type { ViewMode, FormatAction, WordCount } from './types';
 import { parseMarkdown } from './markdown';
 import { SAMPLE_DOCUMENT } from './sampleData';
@@ -440,7 +441,7 @@ export function MacWrite({
       </div>
 
       {/* ── Status Bar ── */}
-      <div data-part={RICH_PARTS.macWriteStatusBar}>
+      <WidgetStatusBar>
         <div style={{ display: 'flex', gap: 14 }}>
           <span>
             Ln {cursorPos.line}, Col {cursorPos.col}
@@ -465,7 +466,7 @@ export function MacWrite({
                 : 'Preview'}
           </span>
         </div>
-      </div>
+      </WidgetStatusBar>
     </div>
   );
 }

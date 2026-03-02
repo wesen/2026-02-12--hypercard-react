@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { RICH_PARTS } from '../parts';
+import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import type { TerminalLine } from './types';
 import {
   BUILT_IN_COMMANDS,
@@ -482,10 +483,10 @@ export function MacRepl({
       </div>
 
       {/* ── Status Bar ── */}
-      <div data-part={RICH_PARTS.replStatusBar}>
+      <WidgetStatusBar>
         <span>{envVars.HOME}</span>
         <span>{historyStack.length} cmds</span>
-      </div>
+      </WidgetStatusBar>
     </div>
   );
 }

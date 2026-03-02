@@ -8,6 +8,7 @@ import {
 import { Btn } from '@hypercard/engine';
 import { RICH_PARTS } from '../parts';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
+import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import type { CellData, CellRange, ClipboardData, CellFormat } from './types';
 import {
   NUM_ROWS,
@@ -984,7 +985,7 @@ export function MacCalc({ initialCells }: MacCalcProps) {
       </div>
 
       {/* Status Bar */}
-      <div data-part={RICH_PARTS.calcStatusBar}>
+      <WidgetStatusBar>
         <div style={{ display: 'flex', gap: 14 }}>
           <span style={{ fontWeight: 'bold' }}>
             {cellId(sel.r, sel.c)}
@@ -1031,7 +1032,7 @@ export function MacCalc({ initialCells }: MacCalcProps) {
         <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
           <span>{currentCell.fmt}</span>
         </div>
-      </div>
+      </WidgetStatusBar>
 
       {/* Palette */}
       {showPalette && (
