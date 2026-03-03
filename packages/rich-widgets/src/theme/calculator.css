@@ -12,26 +12,6 @@
   user-select: none;
 }
 
-/* ── Toolbar ── */
-[data-part="calc-toolbar"] {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 2px 8px;
-  flex-wrap: wrap;
-  background: var(--hc-color-alt, #f0f0f0);
-  border-bottom: 2px solid var(--hc-color-border);
-  flex-shrink: 0;
-}
-
-[data-part="calc-separator"] {
-  width: 1px;
-  height: 16px;
-  background: var(--hc-color-border);
-  opacity: 0.3;
-  margin: 0 3px;
-}
-
 /* ── Formula Bar ── */
 [data-part="calc-formula-bar"] {
   display: flex;
@@ -245,88 +225,4 @@
   padding: 0 5px;
   outline: none;
   z-index: 10;
-}
-
-/* ── Status Bar ── */
-[data-part="calc-status-bar"] {
-  height: 20px;
-  border-top: 2px solid var(--hc-color-border);
-  background: var(--hc-color-bg);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 10px;
-  font-size: 10px;
-  color: var(--hc-color-muted);
-  flex-shrink: 0;
-}
-
-/* ── Palette ── */
-[data-part="calc-palette-overlay"] {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 200;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 40px;
-}
-
-[data-part="calc-palette"] {
-  width: 420px;
-  max-width: 92%;
-  background: var(--hc-color-bg);
-  border: 2px solid var(--hc-color-border);
-  box-shadow: 3px 3px 0 var(--hc-color-border);
-  overflow: hidden;
-}
-
-[data-part="calc-palette-search"] {
-  display: flex;
-  align-items: center;
-  padding: 10px 12px;
-  gap: 8px;
-  border-bottom: 1px solid var(--hc-color-border);
-  background: var(--hc-color-alt, #eee);
-}
-
-[data-part="calc-palette-input"] {
-  flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
-  color: var(--hc-color-fg);
-  font-family: var(--hc-font-family);
-  font-size: var(--hc-font-size);
-}
-
-[data-part="calc-palette-item"] {
-  padding: 7px 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  border-left: 3px solid transparent;
-}
-
-[data-part="calc-palette-item"][data-state="active"] {
-  background: var(--hc-color-row-hover, #e8e8e8);
-  border-left-color: var(--hc-confirm-selected-bg, #000);
-}
-
-[data-part="calc-palette-footer"] {
-  padding: 6px 14px;
-  border-top: 1px solid var(--hc-color-border);
-  font-size: 10px;
-  color: var(--hc-color-muted);
-  display: flex;
-  gap: 16px;
-}
-
-[data-part="calc-kbd"] {
-  font-size: 10px;
-  color: var(--hc-color-muted);
-  border: 1px solid var(--hc-color-border);
-  padding: 1px 6px;
 }

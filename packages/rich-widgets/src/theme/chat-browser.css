@@ -22,15 +22,6 @@
   background: var(--hc-color-bg);
 }
 
-[data-part="cb-toolbar"] {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px;
-  border-bottom: 2px solid var(--hc-color-border);
-  background: var(--hc-color-surface, #ddd);
-}
-
 [data-part="cb-convo-list"] {
   flex: 1;
   overflow-y: auto;
@@ -101,15 +92,6 @@
   border: 1px solid currentColor;
   padding: 0 4px;
   border-radius: 2px;
-}
-
-[data-part="cb-status-bar"] {
-  border-top: 2px solid var(--hc-color-border);
-  padding: 2px 8px;
-  font-size: 10px;
-  background: var(--hc-color-surface, #ddd);
-  display: flex;
-  justify-content: space-between;
 }
 
 /* ── Main viewer ─────────────────────────────────────────────────── */
@@ -262,18 +244,4 @@
   margin-top: auto;
   padding-top: 8px;
   border-top: 1px solid var(--hc-color-border);
-}
-
-/* ── Empty state ─────────────────────────────────────────────────── */
-
-[data-part="cb-empty-state"] {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  text-align: center;
-  color: var(--hc-color-fg);
-  opacity: 0.7;
-  flex: 1;
 }

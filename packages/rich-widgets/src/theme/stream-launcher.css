@@ -62,15 +62,6 @@
   margin-bottom: 4px;
 }
 
-[data-part='sl-sort-item'] {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 9px;
-  cursor: pointer;
-  margin-bottom: 2px;
-}
-
 [data-part='sl-sidebar-stats'] {
   padding: 8px;
   border-top: 1px solid var(--hc-color-border);
@@ -86,35 +77,6 @@
   flex-direction: column;
   min-width: 0;
   overflow: hidden;
-}
-
-/* --- Search bar --- */
-[data-part='sl-search-bar'] {
-  display: flex;
-  padding: 6px 8px;
-  border-bottom: 1px solid var(--hc-color-border);
-  background: var(--hc-color-surface);
-  gap: 6px;
-  align-items: center;
-  flex-shrink: 0;
-  font-size: 10px;
-}
-
-[data-part='sl-search-input'] {
-  flex: 1;
-  border: 1px solid var(--hc-color-border);
-  font-family: var(--hc-font-family);
-  font-size: 10px;
-  padding: 2px 6px;
-  background: var(--hc-color-bg);
-  color: var(--hc-color-fg);
-  outline: none;
-  box-shadow: inset 1px 1px 0 var(--hc-color-border);
-}
-
-[data-part='sl-search-count'] {
-  font-size: 9px;
-  color: var(--hc-color-fg-muted);
 }
 
 /* --- Stream list --- */
@@ -212,13 +174,6 @@
   margin-top: 3px;
   font-size: 8px;
   color: var(--hc-color-fg-muted);
-}
-
-[data-part='sl-empty-state'] {
-  text-align: center;
-  padding: 40px;
-  color: var(--hc-color-fg-muted);
-  font-size: 10px;
 }
 
 /* --- Player view --- */
@@ -332,13 +287,6 @@
   align-items: center;
   gap: 6px;
   padding: 0 8px;
-}
-
-[data-part='sl-separator'] {
-  width: 1px;
-  height: 14px;
-  background: var(--hc-color-border);
-  margin: 0 4px;
 }
 
 [data-part='sl-volume'] {
@@ -467,18 +415,4 @@
   padding: 4px 6px;
   background: var(--hc-color-bg);
   color: var(--hc-color-fg);
-}
-
-/* --- Status bar --- */
-[data-part='sl-status-bar'] {
-  width: 100%;
-  height: 20px;
-  background: var(--hc-color-surface);
-  border-top: var(--hc-border-width) solid var(--hc-color-border);
-  display: flex;
-  align-items: center;
-  padding: 0 12px;
-  font-size: 10px;
-  justify-content: space-between;
-  flex-shrink: 0;
 }

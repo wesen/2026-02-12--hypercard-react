@@ -101,14 +101,3 @@
   background: var(--hc-confirm-selected-bg);
   color: var(--hc-confirm-selected-fg);
 }
-
-[data-part="repl-status-bar"] {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-top: 1px solid var(--hc-color-border);
-  padding: 2px 8px;
-  background: var(--hc-color-alt, #eee);
-  font-size: 9px;
-  flex-shrink: 0;
-}

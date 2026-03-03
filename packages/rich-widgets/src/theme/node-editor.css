@@ -10,16 +10,6 @@
   overflow: hidden;
 }
 
-[data-part="ne-toolbar"] {
-  display: flex;
-  align-items: center;
-  padding: 4px 8px;
-  gap: 6px;
-  background: var(--hc-color-alt, #ddd);
-  border-bottom: 2px solid var(--hc-color-border);
-  flex-shrink: 0;
-}
-
 [data-part="ne-canvas"] {
   flex: 1;
   position: relative;
@@ -79,15 +69,4 @@
 
 [data-part="ne-port"][data-port-type="input"] {
   background: var(--hc-color-fg);
-}
-
-[data-part="ne-status-bar"] {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-top: 2px solid var(--hc-color-border);
-  padding: 2px 8px;
-  background: var(--hc-color-bg);
-  font-size: 10px;
-  flex-shrink: 0;
 }

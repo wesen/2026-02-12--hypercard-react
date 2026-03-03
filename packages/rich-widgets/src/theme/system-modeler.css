@@ -12,23 +12,6 @@
   overflow: hidden;
 }
 
-[data-part='sm-toolbar'] {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 6px;
-  border-bottom: 2px solid var(--mac-border, #000);
-  background: var(--mac-surface, #fff);
-  flex-shrink: 0;
-}
-
-[data-part='sm-separator'] {
-  width: 1px;
-  height: 18px;
-  background: var(--mac-border, #000);
-  margin: 0 4px;
-}
-
 [data-part='sm-time-label'] {
   font-size: 11px;
   font-family: var(--mac-font, 'Geneva', monospace);
@@ -141,41 +124,7 @@
   margin-bottom: 6px;
 }
 
-[data-part='sm-progress-bar'] {
-  height: 16px;
-  border: 2px solid var(--mac-border, #000);
-  background: #fff;
-}
-
-[data-part='sm-progress-fill'] {
-  height: 100%;
-  transition: width 80ms;
-  background: repeating-linear-gradient(45deg, #000 0px, #000 4px, #fff 4px, #fff 8px);
-}
-
-/* ── Status bar ── */
-[data-part='sm-status-bar'] {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 2px 8px;
-  border-top: 2px solid var(--mac-border, #000);
-  font-size: 11px;
-  background: var(--mac-surface, #fff);
-  flex-shrink: 0;
-}
-
 /* ── Dialogs ── */
-[data-part='sm-dialog-overlay'] {
-  position: absolute;
-  inset: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.1);
-}
-
 [data-part='sm-dialog'] {
   width: 320px;
   background: var(--mac-surface, #fff);

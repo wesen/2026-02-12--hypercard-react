@@ -280,13 +280,6 @@
   color: var(--hc-color-fg-muted);
 }
 
-[data-part='yt-empty-state'] {
-  text-align: center;
-  padding: 40px;
-  color: var(--hc-color-fg-muted);
-  grid-column: 1 / -1;
-}
-
 /* --- Watch layout --- */
 [data-part='yt-watch-layout'] {
   display: flex;
@@ -634,17 +627,4 @@
   color: var(--hc-color-fg-muted);
   margin-bottom: 6px;
   font-weight: bold;
-}
-
-/* --- Status bar --- */
-[data-part='yt-status-bar'] {
-  height: 18px;
-  background: var(--hc-color-surface);
-  border-top: var(--hc-border-width) solid var(--hc-color-border);
-  display: flex;
-  align-items: center;
-  padding: 0 8px;
-  font-size: 10px;
-  gap: 16px;
-  flex-shrink: 0;
 }
