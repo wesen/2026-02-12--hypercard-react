@@ -44,3 +44,14 @@ Uploaded independent review bundle (design doc 03 + investigation diary) to reMa
 - /home/manuel/workspaces/2026-03-01/add-macos-rich-widgets/go-go-os-frontend/ttmp/2026/03/02/OS-08-CLEANUP-RICH-WIDGETS--cleanup-and-refactor-rich-macos-widgets-extract-primitives-normalize-state-reduce-duplication/design-doc/03-independent-review-redux-usage-storybook-state-simulation-modularization-and-css-duplication.md — Uploaded in review bundle
 - /home/manuel/workspaces/2026-03-01/add-macos-rich-widgets/go-go-os-frontend/ttmp/2026/03/02/OS-08-CLEANUP-RICH-WIDGETS--cleanup-and-refactor-rich-macos-widgets-extract-primitives-normalize-state-reduce-duplication/reference/01-investigation-diary.md — Uploaded in review bundle
 
+
+## 2026-03-02
+
+Phase A Task 1 complete (commit 6c766dad9bb19cb31c96984ce6da1b59e9a8bddc): added launcher Redux slice for rich-widget launch stats, wired launch dispatch across modules, and registered shared state key app_rich_widgets.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-03-01/add-macos-rich-widgets/go-go-os-frontend/packages/rich-widgets/src/launcher/modules.tsx — Dispatch markLaunched on launch and register module state
+- /home/manuel/workspaces/2026-03-01/add-macos-rich-widgets/go-go-os-frontend/packages/rich-widgets/src/launcher/richWidgetsLauncherState.test.ts — Reducer test coverage
+- /home/manuel/workspaces/2026-03-01/add-macos-rich-widgets/go-go-os-frontend/packages/rich-widgets/src/launcher/richWidgetsLauncherState.ts — New launcher reducer and actions
+

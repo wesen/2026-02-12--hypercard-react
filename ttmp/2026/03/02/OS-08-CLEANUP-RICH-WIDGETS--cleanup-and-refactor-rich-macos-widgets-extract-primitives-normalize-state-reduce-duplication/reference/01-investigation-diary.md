@@ -14,6 +14,12 @@ RelatedFiles:
     - Path: packages/rich-widgets/src/index.ts:Main barrel export for all widgets
     - Path: packages/rich-widgets/src/launcher/RichWidgetsDesktop.stories.tsx
       Note: Storybook run and Redux coverage evidence
+    - Path: packages/rich-widgets/src/launcher/modules.tsx
+      Note: Task 1 wiring across module launch paths (commit 6c766dad9bb19cb31c96984ce6da1b59e9a8bddc)
+    - Path: packages/rich-widgets/src/launcher/richWidgetsLauncherState.test.ts
+      Note: Task 1 verification (commit 6c766dad9bb19cb31c96984ce6da1b59e9a8bddc)
+    - Path: packages/rich-widgets/src/launcher/richWidgetsLauncherState.ts
+      Note: Task 1 reducer implementation (commit 6c766dad9bb19cb31c96984ce6da1b59e9a8bddc)
     - Path: packages/rich-widgets/src/parts.ts
       Note: Dead part constants audit script input
     - Path: packages/rich-widgets/src/parts.ts:Data-part constants registry
@@ -28,6 +34,7 @@ LastUpdated: 2026-03-02T23:30:00-05:00
 WhatFor: ""
 WhenToUse: ""
 ---
+
 
 
 # Investigation Diary — OS-08-CLEANUP-RICH-WIDGETS
@@ -332,3 +339,76 @@ You can run storybook and such if you want."
   - `find packages/rich-widgets/src -name '*.stories.tsx' | wc -l`
   - `rg -l "configureStore|Provider|createStoryHelpers|storeDecorator" packages/rich-widgets/src/**/*.stories.tsx`
   - dead-part usage scripts comparing `parts.ts` keys against `P.<key>` references and CSS selectors.
+
+## Step 5: Task 1 implementation — launcher Redux state target (2026-03-03)
+
+I started implementation work from the new independent review plan, explicitly following the user’s request to move task-by-task with commit checkpoints and frequent diary updates. The first concrete task was adding a real Redux reducer target for rich widgets in launcher runtime, instead of leaving state purely local/ephemeral.
+
+I implemented this as a package-level launcher slice that tracks launch stats by widget app id, then wired launch dispatch into all rich widget modules while registering the reducer once on `logViewerModule`.
+
+### Prompt Context
+
+**User prompt (verbatim):** "Yes. Work task by task, commit at appropriate intervals, keep a frequent diary."
+
+**Assistant interpretation:** Start implementing the remediation plan now, in small task increments, with focused commits and regular diary bookkeeping after each step.
+
+**Inferred user intent:** See steady, reviewable progress instead of a single large batch.
+
+**Commit (code):** `6c766dad9bb19cb31c96984ce6da1b59e9a8bddc` — "feat(rich-widgets): track widget launches in launcher redux state"
+
+### What I did
+- Added new launcher state slice:
+  - `packages/rich-widgets/src/launcher/richWidgetsLauncherState.ts`
+  - Tracks `launchCount` + `lastLaunchReason` per `appId`.
+- Added reducer test:
+  - `packages/rich-widgets/src/launcher/richWidgetsLauncherState.test.ts`
+- Updated launcher module wiring:
+  - `packages/rich-widgets/src/launcher/modules.tsx`
+  - Dispatches `markLaunched({ appId, reason })` in `buildLaunchWindow`.
+  - Registers reducer once under `stateKey: 'app_rich_widgets'` on `logViewerModule`.
+- Ran validation:
+  - `npm run test -w packages/rich-widgets` (pass).
+
+### Why
+- This is the smallest high-signal implementation of “first Redux target”:
+  - zero UI behavior risk,
+  - immediate store observability,
+  - aligns rich widgets with existing launcher module state patterns used by app modules.
+
+### What worked
+- Slice wiring integrated cleanly with existing launcher module helper.
+- Test passed quickly and verifies per-app launch accounting behavior.
+- Commit remained focused to 3 files.
+
+### What didn't work
+- Running `npm run typecheck -w packages/rich-widgets` emitted a large pre-existing workspace/typeconfig failure set (rootDir/path alias issues and known widget TS errors), and also generated transient untracked build artifacts under `packages/engine/src`.
+- I cleaned generated artifacts with:
+  - `git clean -fd packages/engine/src`
+
+### What I learned
+- `typecheck` in this workspace is currently not a reliable gate for targeted rich-widget changes because it drags in broad cross-package compile constraints.
+- Focused `vitest` checks are currently the practical verification path for incremental rich-widget changes.
+
+### What was tricky to build
+- The tricky part was avoiding broad launcher refactors while still introducing a meaningful reducer target.
+- Registering one shared reducer key (`app_rich_widgets`) and dispatching from every module launch path gives value immediately without introducing 20 separate state keys.
+
+### What warrants a second pair of eyes
+- Whether `logViewerModule` is the right owner for shared rich-widget launcher state, versus introducing a dedicated infrastructure module.
+- Whether we should expose selectors for `app_rich_widgets` in a shared helper file now or after Storybook/state tooling lands.
+
+### What should be done in the future
+- Next task: add store-seeded Storybook scenarios for rich widgets (Redux-backed scenario simulation), then commit + diary again.
+
+### Code review instructions
+- Start in:
+  - `packages/rich-widgets/src/launcher/richWidgetsLauncherState.ts`
+  - `packages/rich-widgets/src/launcher/modules.tsx`
+- Validate with:
+  - `npm run test -w packages/rich-widgets`
+
+### Technical details
+- Key commands:
+  - `npm run test -w packages/rich-widgets`
+  - `npm run typecheck -w packages/rich-widgets` (known workspace failures)
+  - `git clean -fd packages/engine/src` (cleanup of generated artifacts from failed typecheck)

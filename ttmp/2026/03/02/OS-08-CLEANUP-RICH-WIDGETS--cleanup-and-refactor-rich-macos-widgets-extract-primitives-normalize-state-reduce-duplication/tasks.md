@@ -61,3 +61,7 @@
 - [x] Re-review OS-07 and OS-08 assumptions against current code and live Storybook
 - [x] Write independent analysis report (design doc 03)
 - [x] Upload independent review bundle to reMarkable
+
+### Phase A Execution (2026-03-03)
+- [x] Task 1: Add launcher-level Redux reducer target for rich widget launch stats
+- [ ] Task 2: Add Redux-seeded Storybook scenarios for rich widgets
