@@ -548,3 +548,46 @@ I continued with the next incremental cleanup task from the independent review p
   - `rg -n "lvToolbar|lvStatusBar|lv-toolbar|lv-status-bar" packages/rich-widgets/src`
   - `npm run test -w packages/rich-widgets`
   - `npm run storybook:check`
+
+## Step 8: Re-upload refreshed OS-08 bundle to reMarkable (2026-03-03)
+
+After Task 3 code and ticket-doc updates were committed, I refreshed the reMarkable artifact so the uploaded OS-08 package reflects the latest execution state.
+
+### Prompt Context
+
+**User prompt (verbatim):** "Store the result of your analysis in OS-08 and upload to remarkable."
+
+**Assistant interpretation:** Keep the remote reMarkable copy current as implementation/diary updates continue.
+
+**Inferred user intent:** The reMarkable folder should contain the latest ticket narrative, not only the initial independent review upload.
+
+### What I did
+- Verified remarquee auth/session:
+  - `remarquee status`
+  - `remarquee cloud account --non-interactive`
+- Dry-ran upload bundle command with four docs:
+  - design doc 03
+  - investigation diary
+  - tasks
+  - changelog
+- Uploaded real bundle:
+  - name: `OS-08-CLEANUP-RICH-WIDGETS-update-2026-03-03`
+  - remote dir: `/ai/2026/03/03/OS-08-CLEANUP-RICH-WIDGETS`
+- Verified remote listing:
+  - `remarquee cloud ls /ai/2026/03/03/OS-08-CLEANUP-RICH-WIDGETS --long --non-interactive`
+
+### Why
+- This keeps the analysis deliverable synchronized with in-progress execution work and avoids stale review artifacts on device/cloud.
+
+### What worked
+- Dry-run and actual upload both succeeded.
+- Remote listing confirms both previous and refreshed PDFs are present.
+
+### What didn't work
+- N/A
+
+### Technical details
+- Key commands:
+  - `remarquee upload bundle --dry-run ... --name "OS-08-CLEANUP-RICH-WIDGETS-update-2026-03-03" --remote-dir /ai/2026/03/03/OS-08-CLEANUP-RICH-WIDGETS --toc-depth 2`
+  - `remarquee upload bundle ... --name "OS-08-CLEANUP-RICH-WIDGETS-update-2026-03-03" --remote-dir /ai/2026/03/03/OS-08-CLEANUP-RICH-WIDGETS --toc-depth 2`
+  - `remarquee cloud ls /ai/2026/03/03/OS-08-CLEANUP-RICH-WIDGETS --long --non-interactive`
