@@ -67,3 +67,4 @@
 - [x] Task 2: Add Redux-seeded Storybook scenarios for rich widgets
 - [x] Task 3: Remove dead LogViewer toolbar/status part constants and legacy CSS selectors
 - [x] Task 4: Remove dead MacWrite toolbar/separator/status part constants and legacy CSS selectors
+- [x] Task 5: Remove dead Kanban toolbar/separator/modal-overlay/status part constants and legacy CSS selectors

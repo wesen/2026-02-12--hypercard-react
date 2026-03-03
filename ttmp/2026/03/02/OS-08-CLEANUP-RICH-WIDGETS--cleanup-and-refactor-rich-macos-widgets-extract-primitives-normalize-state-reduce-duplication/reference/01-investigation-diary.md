@@ -675,3 +675,48 @@ I refreshed the reMarkable upload again so the cloud/device copy contains Task 4
   - `remarquee upload bundle --dry-run ... --name "OS-08-CLEANUP-RICH-WIDGETS-update-2026-03-03-task4" --remote-dir /ai/2026/03/03/OS-08-CLEANUP-RICH-WIDGETS --toc-depth 2`
   - `remarquee upload bundle ... --name "OS-08-CLEANUP-RICH-WIDGETS-update-2026-03-03-task4" --remote-dir /ai/2026/03/03/OS-08-CLEANUP-RICH-WIDGETS --toc-depth 2`
   - `remarquee cloud ls /ai/2026/03/03/OS-08-CLEANUP-RICH-WIDGETS --long --non-interactive`
+
+## Step 11: Task 5 implementation — remove dead Kanban toolbar/separator/modal-overlay/status residue (2026-03-03)
+
+I continued the same Phase D cleanup pattern on KanbanBoard, removing part keys and selectors that became obsolete after migration to shared primitives.
+
+### Prompt Context
+
+**User prompt (verbatim):** "continue"
+
+**Assistant interpretation:** Keep executing the next small cleanup task with commit and diary cadence.
+
+**Commit (code):** `1f8737ca7a8ef5d958b9da55326725214fc8ff95` — "chore(rich-widgets): remove dead kanban part selectors"
+
+### What I did
+- Updated:
+  - `packages/rich-widgets/src/parts.ts`
+  - `packages/rich-widgets/src/theme/kanban.css`
+- Removed dead Kanban part constants:
+  - `kbToolbar`
+  - `kbSeparator`
+  - `kbModalOverlay`
+  - `kbStatusBar`
+- Removed matching legacy selectors:
+  - `[data-part="kb-toolbar"]`
+  - `[data-part="kb-separator"]`
+  - `[data-part="kb-modal-overlay"]`
+  - `[data-part="kb-status-bar"]`
+- Verified no remaining references:
+  - `rg -n "kbToolbar|kbSeparator|kbModalOverlay|kbStatusBar|kb-toolbar|kb-separator|kb-modal-overlay|kb-status-bar" packages/rich-widgets/src` → no matches
+- Validation:
+  - `npm run test -w packages/rich-widgets` (pass)
+  - `npm run storybook:check` (pass)
+
+### Why
+- `KanbanBoard.tsx` now uses `WidgetToolbar`, `Separator`, `ModalOverlay`, and `WidgetStatusBar`, so widget-specific selectors/constants for those regions are dead residue.
+
+### What worked
+- Cleanup remained deletion-only and behavior-safe.
+- Dead key count dropped further in quick audit (`672` keys total, `67` dead before this task; `668` keys total, `63` dead after this task).
+
+### Technical details
+- Key commands:
+  - `rg -n "kbToolbar|kbSeparator|kbModalOverlay|kbStatusBar|kb-toolbar|kb-separator|kb-modal-overlay|kb-status-bar" packages/rich-widgets/src || echo "no matches"`
+  - `npm run test -w packages/rich-widgets`
+  - `npm run storybook:check`
