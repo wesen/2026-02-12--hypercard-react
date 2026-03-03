@@ -64,3 +64,12 @@ Phase A Task 2 complete (commit 0a57c34b118824e70d02c8d3db90c54b0d3f2b9d): added
 
 - /home/manuel/workspaces/2026-03-01/add-macos-rich-widgets/go-go-os-frontend/packages/rich-widgets/src/launcher/RichWidgetsDesktop.stories.tsx — Redux-seeded scenario support and new stories
 
+
+## 2026-03-03
+
+Phase A Task 3 complete (commit 25ee144f321db6251dfce9951dbf167cd419f93a): removed dead LogViewer toolbar/status part constants and their legacy selectors after primitive migration.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-03-01/add-macos-rich-widgets/go-go-os-frontend/packages/rich-widgets/src/parts.ts — Removed `lvToolbar` and `lvStatusBar` dead part constants
+- /home/manuel/workspaces/2026-03-01/add-macos-rich-widgets/go-go-os-frontend/packages/rich-widgets/src/theme/log-viewer.css — Removed unused `lv-toolbar`/`lv-status-bar` selectors

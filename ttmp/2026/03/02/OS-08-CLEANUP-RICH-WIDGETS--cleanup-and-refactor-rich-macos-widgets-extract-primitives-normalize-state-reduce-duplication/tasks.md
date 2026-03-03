@@ -65,3 +65,4 @@
 ### Phase A Execution (2026-03-03)
 - [x] Task 1: Add launcher-level Redux reducer target for rich widget launch stats
 - [x] Task 2: Add Redux-seeded Storybook scenarios for rich widgets
+- [x] Task 3: Remove dead LogViewer toolbar/status part constants and legacy CSS selectors

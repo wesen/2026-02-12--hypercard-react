@@ -484,3 +484,67 @@ The change is intentionally story-only and non-runtime, so it improves test/debu
 - Key commands:
   - `npm run storybook:check`
   - `npm run test -w packages/rich-widgets`
+
+## Step 7: Task 3 implementation — remove dead LogViewer toolbar/status residue (2026-03-03)
+
+I continued with the next incremental cleanup task from the independent review plan, focused on CSS/parts de-duplication with low behavior risk. This step targets migration residue left after `WidgetToolbar` and `WidgetStatusBar` adoption in LogViewer.
+
+### Prompt Context
+
+**User prompt (verbatim):** "continue"
+
+**Assistant interpretation:** Execute the next pending cleanup task with a small, reviewable commit and then update ticket diary/changelog.
+
+**Inferred user intent:** Keep making concrete progress task-by-task and document each step.
+
+**Commit (code):** `25ee144f321db6251dfce9951dbf167cd419f93a` — "chore(rich-widgets): remove dead log-viewer part selectors"
+
+### What I did
+- Updated:
+  - `packages/rich-widgets/src/parts.ts`
+  - `packages/rich-widgets/src/theme/log-viewer.css`
+- Removed dead LogViewer part constants no longer referenced in TSX:
+  - `lvToolbar`
+  - `lvStatusBar`
+- Removed matching obsolete CSS selectors:
+  - `[data-part="lv-toolbar"]`
+  - `[data-part="lv-status-bar"]`
+- Validated:
+  - `npm run test -w packages/rich-widgets` (pass)
+  - `npm run storybook:check` (pass)
+
+### Why
+- LogViewer now renders primitive wrappers (`WidgetToolbar`, `WidgetStatusBar`) rather than widget-specific toolbar/status parts.
+- Keeping the old selectors/constants creates duplication and ambiguity about canonical styling ownership.
+
+### What worked
+- Cleanup was fully surgical (2 files, deletions only) and did not affect runtime behavior.
+- Existing widget tests and Storybook taxonomy checks remained green.
+
+### What didn't work
+- N/A
+
+### What I learned
+- Small residue removals are safe to land incrementally and reduce the dead `RICH_PARTS`/CSS surface without large refactor risk.
+
+### What was tricky to build
+- Confirming selector/constant deadness required checking both part key references and raw selector usage so we did not remove active styles accidentally.
+
+### What warrants a second pair of eyes
+- Whether we should now batch-remove the remaining dead parts/selectors across all widgets in one pass, or continue widget-by-widget for easier review.
+
+### What should be done in the future
+- Next task should continue Phase D with another widget-scoped dead selector/constants cleanup, then re-count remaining dead parts.
+
+### Code review instructions
+- Verify no remaining references to removed parts:
+  - `rg -n "lvToolbar|lvStatusBar|lv-toolbar|lv-status-bar" packages/rich-widgets/src`
+- Validate:
+  - `npm run test -w packages/rich-widgets`
+  - `npm run storybook:check`
+
+### Technical details
+- Key commands:
+  - `rg -n "lvToolbar|lvStatusBar|lv-toolbar|lv-status-bar" packages/rich-widgets/src`
+  - `npm run test -w packages/rich-widgets`
+  - `npm run storybook:check`
