@@ -794,3 +794,33 @@ Per the “do them all, don’t stop” instruction, I switched from widget-by-w
   - `npm run test -w packages/rich-widgets`
   - `npm run storybook:check`
   - legacy-selector spot check grep after sweep
+
+## Step 14: Final reMarkable refresh after Task 6 (2026-03-03)
+
+After the full sweep and docs update commits, I refreshed the OS-08 reMarkable bundle one more time so the delivered artifact reflects the final `dead_keys=0` state.
+
+### Prompt Context
+
+**User prompt (verbatim):** "ok do them all, don't stop before"
+
+**Assistant interpretation:** complete implementation and keep remote deliverables current at completion.
+
+### What I did
+- Ran dry-run + real upload bundle using:
+  - design doc 03
+  - investigation diary
+  - tasks
+  - changelog
+- Uploaded artifact:
+  - `OS-08-CLEANUP-RICH-WIDGETS-update-2026-03-03-task6-final`
+  - destination `/ai/2026/03/03/OS-08-CLEANUP-RICH-WIDGETS`
+- Verified remote listing includes the new final artifact.
+
+### What worked
+- Upload succeeded and listing confirms cumulative history plus final bundle.
+
+### Technical details
+- Key commands:
+  - `remarquee upload bundle --dry-run ... --name "OS-08-CLEANUP-RICH-WIDGETS-update-2026-03-03-task6-final" --remote-dir /ai/2026/03/03/OS-08-CLEANUP-RICH-WIDGETS --toc-depth 2`
+  - `remarquee upload bundle ... --name "OS-08-CLEANUP-RICH-WIDGETS-update-2026-03-03-task6-final" --remote-dir /ai/2026/03/03/OS-08-CLEANUP-RICH-WIDGETS --toc-depth 2`
+  - `remarquee cloud ls /ai/2026/03/03/OS-08-CLEANUP-RICH-WIDGETS --long --non-interactive`
