@@ -152,14 +152,51 @@ function createStore() {
   });
 }
 
+type RichWidgetsDesktopStore = ReturnType<typeof createStore>;
+type SeedStore = (store: RichWidgetsDesktopStore) => void;
+
 function renderAppWindow(appKey: string): ReactNode {
   const w = WIDGET_MAP.get(appKey);
   if (!w) return null;
   return <div style={{ width: '100%', height: '100%', overflow: 'auto' }}>{w.render()}</div>;
 }
 
-function RichWidgetsDesktopFrame({ startupWidget }: { startupWidget?: string }) {
-  const store = useMemo(() => createStore(), []);
+function seedWindows(widgetIds: readonly string[]): SeedStore {
+  return (store) => {
+    for (const widgetId of widgetIds) {
+      const widget = WIDGET_MAP.get(widgetId);
+      if (!widget) {
+        continue;
+      }
+      store.dispatch(
+        openWindow(buildWindowPayload(widget, `${widget.id}:seeded`)),
+      );
+    }
+  };
+}
+
+const SEED_LOG_AND_MUSIC = seedWindows([
+  'log-viewer',
+  'retro-music-player',
+]);
+const SEED_INSTRUMENTS = seedWindows([
+  'oscilloscope',
+  'logic-analyzer',
+  'system-modeler',
+]);
+
+function RichWidgetsDesktopFrame({
+  startupWidget,
+  seedStore,
+}: {
+  startupWidget?: string;
+  seedStore?: SeedStore;
+}) {
+  const store = useMemo(() => {
+    const seededStore = createStore();
+    seedStore?.(seededStore);
+    return seededStore;
+  }, [seedStore]);
   const contributions = useMemo<DesktopContribution[]>(() => {
     const result: DesktopContribution[] = [
       { id: 'rich-widgets-launchers', commands: ICON_OPEN_COMMANDS },
@@ -215,4 +252,12 @@ export const StartWithMusicPlayer: Story = {
 
 export const StartWithSteamLauncher: Story = {
   render: () => <RichWidgetsDesktopFrame startupWidget="steam-launcher" />,
+};
+
+export const SeedLogAndMusicWindows: Story = {
+  render: () => <RichWidgetsDesktopFrame seedStore={SEED_LOG_AND_MUSIC} />,
+};
+
+export const SeedInstrumentCluster: Story = {
+  render: () => <RichWidgetsDesktopFrame seedStore={SEED_INSTRUMENTS} />,
 };
