@@ -1,0 +1,69 @@
+/* ── Oscilloscope ── */
+[data-part="oscilloscope"] {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-family: var(--hc-font-family);
+  font-size: var(--hc-font-size);
+  color: var(--hc-color-fg);
+  background: var(--hc-color-alt, #c0c0c0);
+  overflow: hidden;
+}
+
+[data-part="osc-main"] {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
+[data-part="osc-display"] {
+  flex: 1;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+[data-part="osc-bezel"] {
+  border: 3px solid var(--hc-color-border);
+  background: #1a1a1a;
+  padding: 3px;
+  position: relative;
+}
+
+[data-part="osc-display-status"] {
+  margin-top: 4px;
+  padding: 2px 6px;
+  border: 1px solid var(--hc-color-border);
+  background: var(--hc-color-bg);
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  font-size: 9px;
+}
+
+[data-part="osc-controls"] {
+  width: 230px;
+  flex-shrink: 0;
+  border-left: 2px solid var(--hc-color-border);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--hc-color-alt, #d8d8d8);
+  overflow-y: auto;
+}
+
+[data-part="osc-control-group"] {
+  border: 2px solid var(--hc-color-border);
+  padding: 4px;
+}
+
+[data-part="osc-control-group-title"] {
+  font-size: 10px;
+  font-weight: bold;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--hc-color-border);
+  padding-bottom: 2px;
+}

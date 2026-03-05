@@ -1,0 +1,77 @@
+/* ── MacWrite ── */
+[data-part="mw"] {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-family: var(--hc-font-family);
+  font-size: var(--hc-font-size);
+  color: var(--hc-color-fg);
+  background: var(--hc-color-bg);
+  overflow: hidden;
+}
+
+[data-part="mw-find-bar"] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--hc-color-alt, #eee);
+  border-bottom: 1px solid var(--hc-color-border);
+  flex-shrink: 0;
+  font-size: 11px;
+}
+
+[data-part="mw-body"] {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+[data-part="mw-editor"] {
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  resize: none;
+  border: none;
+  outline: none;
+  background: var(--hc-color-bg);
+  color: var(--hc-color-fg);
+  font-family: var(--hc-font-family);
+  font-size: var(--hc-font-size);
+  line-height: 1.55;
+  padding: 14px 16px;
+  tab-size: 2;
+}
+
+[data-part="mw-divider"] {
+  width: 2px;
+  background: var(--hc-color-border);
+  flex-shrink: 0;
+}
+
+[data-part="mw-preview"] {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 14px 20px;
+  font-family: var(--hc-font-family);
+  font-size: var(--hc-font-size);
+  line-height: 1.6;
+  color: var(--hc-color-fg);
+  background: var(--hc-color-alt, #f8f8f5);
+}
+
+[data-part="mw-preview"] strong {
+  font-weight: bold;
+  color: var(--hc-color-accent);
+}
+
+[data-part="mw-preview"] em {
+  font-style: italic;
+}
+
+[data-part="mw-preview"] del {
+  text-decoration: line-through;
+  opacity: 0.5;
+}

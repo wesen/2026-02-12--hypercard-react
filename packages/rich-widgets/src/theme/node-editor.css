@@ -1,0 +1,72 @@
+/* ── NodeEditor ── */
+[data-part="ne"] {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-family: var(--hc-font-family);
+  font-size: var(--hc-font-size);
+  color: var(--hc-color-fg);
+  background: var(--hc-color-alt, #ccc);
+  overflow: hidden;
+}
+
+[data-part="ne-canvas"] {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+[data-part="ne-node"] {
+  position: absolute;
+  background: var(--hc-color-bg);
+  border: 2px solid var(--hc-color-border);
+  box-shadow: 2px 2px 0 var(--hc-color-border);
+  cursor: grab;
+  z-index: 10;
+  user-select: none;
+}
+
+[data-part="ne-node"][data-state="selected"] {
+  border-width: 3px;
+  z-index: 100;
+}
+
+[data-part="ne-node-header"] {
+  height: 22px;
+  background: var(--hc-color-alt, #eee);
+  border-bottom: 2px solid var(--hc-color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 0 4px;
+}
+
+[data-part="ne-node"][data-state="selected"] [data-part="ne-node-header"] {
+  background: var(--hc-confirm-selected-bg);
+  color: var(--hc-confirm-selected-fg);
+}
+
+[data-part="ne-node-fields"] {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--hc-color-border);
+}
+
+[data-part="ne-node-ports"] {
+  padding: 4px 0;
+}
+
+[data-part="ne-port"] {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--hc-color-border);
+  border-radius: 50%;
+  background: var(--hc-color-bg);
+  cursor: crosshair;
+  flex-shrink: 0;
+}
+
+[data-part="ne-port"][data-port-type="input"] {
+  background: var(--hc-color-fg);
+}
