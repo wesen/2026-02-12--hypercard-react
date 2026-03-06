@@ -158,7 +158,13 @@ export function TimelineDebugWindow({ conversationId, initialSnapshot }: Timelin
         {/* Detail pane (right) */}
         <div data-part="timeline-debug-detail" style={detailPaneStyle}>
           {selectedEntity ? (
-            <EntityDetail entity={selectedEntity} viewMode={viewMode} conversationId={conversationId} />
+            <EntityDetail
+              entity={selectedEntity}
+              viewMode={viewMode}
+              conversationId={conversationId}
+              copyFeedback={entityCopyFeedback[selectedEntity.id] ?? null}
+              onCopy={() => copyEntity(selectedEntity)}
+            />
           ) : (
             <div style={{ color: '#999', textAlign: 'center', padding: 24, fontSize: 12 }}>
               Select an entity to inspect
@@ -245,15 +251,26 @@ function EntityDetail({
   entity,
   viewMode,
   conversationId,
+  copyFeedback,
+  onCopy,
 }: {
   entity: TimelineDebugEntitySnapshot;
   viewMode: 'tree' | 'yaml';
   conversationId: string;
+  copyFeedback: 'ok' | 'error' | null;
+  onCopy: () => void;
 }) {
   if (viewMode === 'yaml') {
     const yaml = buildEntityYamlForCopy(entity, conversationId);
     return (
       <div style={{ padding: '4px 8px', overflow: 'auto', height: '100%' }}>
+        <div style={detailToolbarStyle}>
+          <button type="button" onClick={onCopy} style={controlBtnStyle}>
+            📋 Copy Payload
+          </button>
+          {copyFeedback === 'ok' && <span style={feedbackOkStyle}>Copied</span>}
+          {copyFeedback === 'error' && <span style={feedbackErrorStyle}>Copy failed</span>}
+        </div>
         <SyntaxHighlight
           code={yaml}
           language="yaml"
@@ -266,6 +283,13 @@ function EntityDetail({
 
   return (
     <div style={{ padding: '4px 8px', overflow: 'auto', height: '100%' }}>
+      <div style={detailToolbarStyle}>
+        <button type="button" onClick={onCopy} style={controlBtnStyle}>
+          📋 Copy Payload
+        </button>
+        {copyFeedback === 'ok' && <span style={feedbackOkStyle}>Copied</span>}
+        {copyFeedback === 'error' && <span style={feedbackErrorStyle}>Copy failed</span>}
+      </div>
       <div style={{ marginBottom: 8, display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 11 }}>
         <span>
           <b style={{ color: '#7c3aed' }}>id:</b> <span style={{ color: '#0550ae' }}>{entity.id}</span>
@@ -350,6 +374,13 @@ const listPaneStyle: React.CSSProperties = {
 const detailPaneStyle: React.CSSProperties = {
   flex: 1,
   overflow: 'auto',
+};
+
+const detailToolbarStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 6,
+  marginBottom: 8,
 };
 
 const controlBtnStyle: React.CSSProperties = {
