@@ -1,5 +1,13 @@
-import { useState, useReducer, useMemo, useCallback } from 'react';
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useReducer,
+  useState,
+} from 'react';
 import { Btn } from '@hypercard/engine';
+import { ReactReduxContext, useDispatch, useSelector } from 'react-redux';
 import { RICH_PARTS as P } from '../parts';
 import { ModalOverlay } from '../primitives/ModalOverlay';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
@@ -8,83 +16,19 @@ import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import type { Task, Column, TagId, Priority } from './types';
 import { TAG_LABELS, PRIORITY_LABELS, ALL_TAGS, ALL_PRIORITIES } from './types';
 import { INITIAL_COLUMNS, INITIAL_TASKS } from './sampleData';
+import {
+  createKanbanStateSeed,
+  KANBAN_STATE_KEY,
+  kanbanActions,
+  kanbanReducer,
+  selectKanbanState,
+  type KanbanAction,
+  type KanbanState,
+} from './kanbanState';
 
 // ── ID generator ──
 let idSeq = 0;
 const mkId = () => `task-${Date.now()}-${++idSeq}`;
-
-// ── Reducer types ─────────────────────────────────────────────────────
-interface KanbanState {
-  tasks: Task[];
-  columns: Column[];
-  editingTask: Partial<Task> | null;
-  filterTag: TagId | null;
-  filterPriority: Priority | null;
-  searchQuery: string;
-  dragOverCol: string | null;
-  collapsedCols: Record<string, boolean>;
-}
-
-type KanbanAction =
-  | { type: 'SET_TASKS'; tasks: Task[] }
-  | { type: 'ADD_TASK'; task: Task }
-  | { type: 'UPDATE_TASK'; id: string; updates: Partial<Task> }
-  | { type: 'DELETE_TASK'; id: string }
-  | { type: 'MOVE_TASK'; id: string; col: string }
-  | { type: 'SET_EDITING_TASK'; task: Partial<Task> | null }
-  | { type: 'SET_FILTER_TAG'; tag: TagId | null }
-  | { type: 'SET_FILTER_PRIORITY'; priority: Priority | null }
-  | { type: 'SET_SEARCH'; query: string }
-  | { type: 'CLEAR_FILTERS' }
-  | { type: 'SET_DRAG_OVER_COL'; col: string | null }
-  | { type: 'TOGGLE_COLLAPSED'; col: string };
-
-function kanbanReducer(state: KanbanState, action: KanbanAction): KanbanState {
-  switch (action.type) {
-    case 'SET_TASKS':
-      return { ...state, tasks: action.tasks };
-    case 'ADD_TASK':
-      return { ...state, tasks: [...state.tasks, action.task] };
-    case 'UPDATE_TASK':
-      return {
-        ...state,
-        tasks: state.tasks.map((t) =>
-          t.id === action.id ? { ...t, ...action.updates } : t,
-        ),
-      };
-    case 'DELETE_TASK':
-      return { ...state, tasks: state.tasks.filter((t) => t.id !== action.id) };
-    case 'MOVE_TASK':
-      return {
-        ...state,
-        tasks: state.tasks.map((t) =>
-          t.id === action.id ? { ...t, col: action.col } : t,
-        ),
-      };
-    case 'SET_EDITING_TASK':
-      return { ...state, editingTask: action.task };
-    case 'SET_FILTER_TAG':
-      return { ...state, filterTag: action.tag };
-    case 'SET_FILTER_PRIORITY':
-      return { ...state, filterPriority: action.priority };
-    case 'SET_SEARCH':
-      return { ...state, searchQuery: action.query };
-    case 'CLEAR_FILTERS':
-      return { ...state, filterTag: null, filterPriority: null, searchQuery: '' };
-    case 'SET_DRAG_OVER_COL':
-      return { ...state, dragOverCol: action.col };
-    case 'TOGGLE_COLLAPSED':
-      return {
-        ...state,
-        collapsedCols: {
-          ...state.collapsedCols,
-          [action.col]: !state.collapsedCols[action.col],
-        },
-      };
-    default:
-      return state;
-  }
-}
 
 // ── TaskCard ─────────────────────────────────────────────────────────
 function TaskCard({
@@ -267,24 +211,42 @@ function TaskModal({
 export interface KanbanBoardProps {
   initialTasks?: Task[];
   initialColumns?: Column[];
+  initialEditingTask?: Partial<Task> | null;
+  initialFilterTag?: TagId | null;
+  initialFilterPriority?: Priority | null;
+  initialSearchQuery?: string;
+  initialCollapsedCols?: Record<string, boolean>;
 }
 
-// ── Component ────────────────────────────────────────────────────────
-export function KanbanBoard({
-  initialTasks = INITIAL_TASKS,
-  initialColumns = INITIAL_COLUMNS,
-}: KanbanBoardProps) {
-  const [state, dispatch] = useReducer(kanbanReducer, {
-    tasks: initialTasks,
-    columns: initialColumns,
-    editingTask: null,
-    filterTag: null,
-    filterPriority: null,
-    searchQuery: '',
-    dragOverCol: null,
-    collapsedCols: {},
+function createInitialSeed(props: KanbanBoardProps) {
+  return createKanbanStateSeed({
+    initialTasks: props.initialTasks ?? INITIAL_TASKS,
+    initialColumns: props.initialColumns ?? INITIAL_COLUMNS,
+    editingTask: props.initialEditingTask,
+    filterTag: props.initialFilterTag,
+    filterPriority: props.initialFilterPriority,
+    searchQuery: props.initialSearchQuery,
+    collapsedCols: props.initialCollapsedCols,
   });
-  const { tasks, columns, editingTask, filterTag, filterPriority, searchQuery, dragOverCol, collapsedCols } = state;
+}
+
+function KanbanBoardFrame({
+  state,
+  dispatch,
+}: {
+  state: KanbanState;
+  dispatch: (action: KanbanAction) => void;
+}) {
+  const [dragOverCol, setDragOverCol] = useState<string | null>(null);
+  const {
+    tasks,
+    columns,
+    editingTask,
+    filterTag,
+    filterPriority,
+    searchQuery,
+    collapsedCols,
+  } = state;
 
   const filteredTasks = useMemo(() => {
     return tasks.filter((t) => {
@@ -320,28 +282,23 @@ export function KanbanBoard({
       e.preventDefault();
       const taskId = e.dataTransfer.getData('text/plain');
       if (taskId) {
-        dispatch({ type: 'MOVE_TASK', id: taskId, col: colId });
+        dispatch(kanbanActions.moveTask({ id: taskId, col: colId }));
       }
-      dispatch({ type: 'SET_DRAG_OVER_COL', col: null });
+      setDragOverCol(null);
     },
-    [],
+    [dispatch],
   );
 
   const handleSave = useCallback((task: Task) => {
-    const exists = state.tasks.find((t) => t.id === task.id);
-    if (exists) {
-      dispatch({ type: 'UPDATE_TASK', id: task.id, updates: task });
-    } else {
-      dispatch({ type: 'ADD_TASK', task });
-    }
-  }, [state.tasks]);
+    dispatch(kanbanActions.upsertTask(task));
+  }, [dispatch]);
 
   const handleDelete = useCallback((id: string) => {
-    dispatch({ type: 'DELETE_TASK', id });
-  }, []);
+    dispatch(kanbanActions.deleteTask(id));
+  }, [dispatch]);
 
   const toggleCollapse = (colId: string) =>
-    dispatch({ type: 'TOGGLE_COLLAPSED', col: colId });
+    dispatch(kanbanActions.toggleCollapsed(colId));
 
   const hasFilters = !!(filterTag || filterPriority || searchQuery);
 
@@ -350,7 +307,7 @@ export function KanbanBoard({
       {/* ── Toolbar ── */}
       <WidgetToolbar>
         <Btn
-          onClick={() => dispatch({ type: 'SET_EDITING_TASK', task: { col: 'todo' } })}
+          onClick={() => dispatch(kanbanActions.setEditingTask({ col: 'todo' }))}
           style={{ fontSize: 10, fontWeight: 'bold' }}
         >
           + New
@@ -361,7 +318,7 @@ export function KanbanBoard({
         <input
           data-part="field-input"
           value={searchQuery}
-          onChange={(e) => dispatch({ type: 'SET_SEARCH', query: e.target.value })}
+          onChange={(e) => dispatch(kanbanActions.setSearchQuery(e.target.value))}
           placeholder="Search..."
           style={{ width: 120 }}
         />
@@ -371,7 +328,7 @@ export function KanbanBoard({
         {ALL_TAGS.map((key) => (
           <Btn
             key={key}
-            onClick={() => dispatch({ type: 'SET_FILTER_TAG', tag: filterTag === key ? null : key })}
+            onClick={() => dispatch(kanbanActions.setFilterTag(filterTag === key ? null : key))}
             data-state={filterTag === key ? 'active' : undefined}
             style={{ fontSize: 9, padding: '1px 5px' }}
           >
@@ -384,9 +341,9 @@ export function KanbanBoard({
         {ALL_PRIORITIES.map((key) => (
           <Btn
             key={key}
-            onClick={() =>
-              dispatch({ type: 'SET_FILTER_PRIORITY', priority: filterPriority === key ? null : key })
-            }
+            onClick={() => dispatch(
+              kanbanActions.setFilterPriority(filterPriority === key ? null : key),
+            )}
             data-state={filterPriority === key ? 'active' : undefined}
             style={{ fontSize: 9, padding: '1px 5px' }}
           >
@@ -396,7 +353,7 @@ export function KanbanBoard({
 
         {hasFilters && (
           <Btn
-            onClick={() => dispatch({ type: 'CLEAR_FILTERS' })}
+            onClick={() => dispatch(kanbanActions.clearFilters())}
             style={{ fontSize: 9 }}
           >
             ✕ Clear
@@ -421,9 +378,9 @@ export function KanbanBoard({
               }
               onDragOver={(e) => {
                 e.preventDefault();
-                dispatch({ type: 'SET_DRAG_OVER_COL', col: column.id });
+                setDragOverCol(column.id);
               }}
-              onDragLeave={() => dispatch({ type: 'SET_DRAG_OVER_COL', col: null })}
+              onDragLeave={() => setDragOverCol(null)}
               onDrop={(e) => handleDrop(column.id, e)}
             >
               <div
@@ -440,7 +397,7 @@ export function KanbanBoard({
                     <span
                       onClick={(e) => {
                         e.stopPropagation();
-                        dispatch({ type: 'SET_EDITING_TASK', task: { col: column.id } });
+                        dispatch(kanbanActions.setEditingTask({ col: column.id }));
                       }}
                       style={{ cursor: 'pointer', marginLeft: 6 }}
                     >
@@ -467,7 +424,7 @@ export function KanbanBoard({
                     <TaskCard
                       key={task.id}
                       task={task}
-                      onEdit={(t) => dispatch({ type: 'SET_EDITING_TASK', task: t })}
+                      onEdit={(t) => dispatch(kanbanActions.setEditingTask(t))}
                       onDragStart={() => {}}
                     />
                   ))}
@@ -493,9 +450,58 @@ export function KanbanBoard({
           columns={columns}
           onSave={handleSave}
           onDelete={handleDelete}
-          onClose={() => dispatch({ type: 'SET_EDITING_TASK', task: null })}
+          onClose={() => dispatch(kanbanActions.setEditingTask(null))}
         />
       )}
     </div>
   );
+}
+
+function StandaloneKanbanBoard(props: KanbanBoardProps) {
+  const [state, dispatch] = useReducer(kanbanReducer, createInitialSeed(props));
+
+  return <KanbanBoardFrame state={state} dispatch={dispatch} />;
+}
+
+function ConnectedKanbanBoard(props: KanbanBoardProps) {
+  const reduxDispatch = useDispatch();
+  const state = useSelector(selectKanbanState);
+
+  useEffect(() => {
+    reduxDispatch(kanbanActions.initializeIfNeeded(createInitialSeed(props)));
+  }, [
+    props.initialCollapsedCols,
+    props.initialColumns,
+    props.initialEditingTask,
+    props.initialFilterPriority,
+    props.initialFilterTag,
+    props.initialSearchQuery,
+    props.initialTasks,
+    reduxDispatch,
+  ]);
+
+  const effectiveState = state.initialized ? state : createInitialSeed(props);
+
+  const dispatch = useCallback((action: KanbanAction) => {
+    reduxDispatch(action);
+  }, [reduxDispatch]);
+
+  return <KanbanBoardFrame state={effectiveState} dispatch={dispatch} />;
+}
+
+// ── Component ────────────────────────────────────────────────────────
+export function KanbanBoard(props: KanbanBoardProps) {
+  const reduxContext = useContext(ReactReduxContext);
+  const store = reduxContext?.store;
+  const rootState = store?.getState();
+  const hasRegisteredSlice =
+    typeof rootState === 'object' &&
+    rootState !== null &&
+    KANBAN_STATE_KEY in (rootState as Record<string, unknown>);
+
+  if (hasRegisteredSlice) {
+    return <ConnectedKanbanBoard {...props} />;
+  }
+
+  return <StandaloneKanbanBoard {...props} />;
 }

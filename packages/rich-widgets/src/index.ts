@@ -60,6 +60,13 @@ export { SAMPLE_DOCUMENT } from './mac-write/sampleData';
 // KanbanBoard
 export { KanbanBoard, type KanbanBoardProps } from './kanban/KanbanBoard';
 export {
+  KANBAN_STATE_KEY,
+  createKanbanStateSeed,
+  kanbanActions,
+  kanbanReducer,
+  selectKanbanState,
+} from './kanban/kanbanState';
+export {
   type Task,
   type Column,
   type TagId,

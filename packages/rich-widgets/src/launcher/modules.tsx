@@ -15,6 +15,10 @@ import { LogViewer } from '../log-viewer/LogViewer';
 import { ChartView } from '../chart-view/ChartView';
 import { MacWrite } from '../mac-write/MacWrite';
 import { KanbanBoard } from '../kanban/KanbanBoard';
+import {
+  KANBAN_STATE_KEY,
+  kanbanReducer,
+} from '../kanban/kanbanState';
 import { MacRepl } from '../repl/MacRepl';
 import { NodeEditor } from '../node-editor/NodeEditor';
 import { Oscilloscope } from '../oscilloscope/Oscilloscope';
@@ -119,10 +123,16 @@ export const macWriteModule = widget(
   () => <MacWrite />,
 );
 
-export const kanbanBoardModule = widget(
-  'kanban-board', 'Kanban Board', '\uD83D\uDCCB', 103, 960, 640,
-  () => <KanbanBoard />,
-);
+export const kanbanBoardModule: LaunchableAppModule = {
+  ...widget(
+    'kanban-board', 'Kanban Board', '\uD83D\uDCCB', 103, 960, 640,
+    () => <KanbanBoard />,
+  ),
+  state: {
+    stateKey: KANBAN_STATE_KEY,
+    reducer: kanbanReducer,
+  },
+};
 
 export const macReplModule = widget(
   'mac-repl', 'MacRepl', '\uD83D\uDCBB', 104, 720, 480,
