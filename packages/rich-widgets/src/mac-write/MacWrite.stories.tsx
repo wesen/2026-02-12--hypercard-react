@@ -1,7 +1,16 @@
+import { configureStore } from '@reduxjs/toolkit';
 import type { Meta, StoryObj } from '@storybook/react';
+import type { ComponentProps } from 'react';
+import { fixedFrameDecorator, fullscreenDecorator } from '../storybook/frameDecorators';
+import { SeededStoreProvider, type SeedStore } from '../storybook/seededStore';
 import { MacWrite } from './MacWrite';
 import { SAMPLE_DOCUMENT } from './sampleData';
-import { fixedFrameDecorator, fullscreenDecorator } from '../storybook/frameDecorators';
+import {
+  createMacWriteStateSeed,
+  MAC_WRITE_STATE_KEY,
+  macWriteActions,
+  macWriteReducer,
+} from './macWriteState';
 import '@hypercard/rich-widgets/theme';
 
 const meta: Meta<typeof MacWrite> = {
@@ -53,39 +62,57 @@ This sentence uses **bold**, *italics*, \`inline code\`, and ~~strikethrough~~ i
 \`\`\`
 `;
 
+function createMacWriteStoryStore() {
+  return configureStore({
+    reducer: {
+      [MAC_WRITE_STATE_KEY]: macWriteReducer,
+    },
+  });
+}
+
+type MacWriteStoryStore = ReturnType<typeof createMacWriteStoryStore>;
+type MacWriteSeedStore = SeedStore<MacWriteStoryStore>;
+
+function renderWithStore(seedStore: MacWriteSeedStore, props?: ComponentProps<typeof MacWrite>) {
+  return () => (
+    <SeededStoreProvider createStore={createMacWriteStoryStore} seedStore={seedStore}>
+      <MacWrite {...props} />
+    </SeededStoreProvider>
+  );
+}
+
+function renderSeededStory(
+  seed: Parameters<typeof createMacWriteStateSeed>[0],
+  props?: ComponentProps<typeof MacWrite>,
+) {
+  return renderWithStore((store) => {
+    store.dispatch(macWriteActions.replaceState(createMacWriteStateSeed(seed)));
+  }, props);
+}
+
 export const Default: Story = {
-  args: {
-    initialContent: SAMPLE_DOCUMENT,
-  },
+  render: renderSeededStory({ content: SAMPLE_DOCUMENT }),
   decorators: [fullscreenDecorator],
 };
 
 export const Empty: Story = {
-  args: {
-    initialContent: '',
-  },
+  render: renderSeededStory({ content: '' }),
   decorators: [fullscreenDecorator],
 };
 
 export const EditOnly: Story = {
-  args: {
-    initialContent: SAMPLE_DOCUMENT,
-    initialViewMode: 'edit',
-  },
+  render: renderSeededStory({ content: SAMPLE_DOCUMENT, viewMode: 'edit' }),
   decorators: [fullscreenDecorator],
 };
 
 export const PreviewOnly: Story = {
-  args: {
-    initialContent: SAMPLE_DOCUMENT,
-    initialViewMode: 'preview',
-  },
+  render: renderSeededStory({ content: SAMPLE_DOCUMENT, viewMode: 'preview' }),
   decorators: [fullscreenDecorator],
 };
 
 export const CodeHeavy: Story = {
-  args: {
-    initialContent: `# Code Documentation
+  render: renderSeededStory({
+    content: `# Code Documentation
 
 ## JavaScript Example
 
@@ -109,44 +136,41 @@ def quicksort(arr):
     left = [x for x in arr if x < pivot]
     middle = [x for x in arr if x == pivot]
     right = [x for x in arr if x > pivot]
-    return quicksort(left) + middle + quicksort(right)
+    return quicksort(left) + middle + right
 \`\`\`
 
 Some \`inline code\` mixed with **bold** and *italic* text.
 `,
-  },
+  }),
   decorators: [fullscreenDecorator],
 };
 
 export const LongDocument: Story = {
-  args: {
-    initialContent: Array.from(
+  render: renderSeededStory({
+    content: Array.from(
       { length: 20 },
-      (_, i) =>
-        `## Section ${i + 1}\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.\n\n- Item ${i * 3 + 1}\n- Item ${i * 3 + 2}\n- Item ${i * 3 + 3}\n`,
+      (_, index) =>
+        `## Section ${index + 1}\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.\n\n- Item ${index * 3 + 1}\n- Item ${index * 3 + 2}\n- Item ${index * 3 + 3}\n`,
     ).join('\n'),
-  },
+  }),
   decorators: [fullscreenDecorator],
 };
 
 export const MeetingNotes: Story = {
-  args: {
-    initialContent: meetingNotes,
-  },
+  render: renderSeededStory({ content: meetingNotes }),
   decorators: [fullscreenDecorator],
 };
 
 export const MarkdownEdgeCases: Story = {
-  args: {
-    initialContent: markdownEdgeCases,
-  },
+  render: renderSeededStory({
+    content: markdownEdgeCases,
+    showFind: true,
+    findQuery: 'state',
+  }),
   decorators: [fullscreenDecorator],
 };
 
 export const CompactPreview: Story = {
-  args: {
-    initialContent: meetingNotes,
-    initialViewMode: 'preview',
-  },
+  render: renderSeededStory({ content: meetingNotes, viewMode: 'preview' }),
   decorators: [fixedFrameDecorator(760, 420)],
 };

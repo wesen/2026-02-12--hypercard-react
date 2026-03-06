@@ -1,14 +1,22 @@
-import { useState, useRef, useCallback, useMemo } from 'react';
-import { Btn } from '@hypercard/engine';
+import { useCallback, useContext, useMemo, useReducer, useRef, useState, useEffect } from 'react';
+import { ReactReduxContext, useDispatch, useSelector } from 'react-redux';
 import { RICH_PARTS as P } from '../parts';
-import { WidgetToolbar } from '../primitives/WidgetToolbar';
-import { Separator } from '../primitives/Separator';
 import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
-import type { ViewMode, FormatAction, WordCount } from './types';
 import { parseMarkdown } from './markdown';
 import { SAMPLE_DOCUMENT } from './sampleData';
+import { MacWriteFindBar } from './MacWriteFindBar';
+import { MacWriteToolbar } from './MacWriteToolbar';
+import {
+  MAC_WRITE_STATE_KEY,
+  createMacWriteStateSeed,
+  macWriteActions,
+  macWriteReducer,
+  selectMacWriteState,
+  type MacWriteAction,
+  type MacWriteState,
+} from './macWriteState';
+import type { ViewMode, FormatAction, WordCount } from './types';
 
-// ── Format actions registry ──────────────────────────────────────────
 const FORMAT_ACTIONS: FormatAction[] = [
   { id: 'bold', label: 'Bold', icon: '𝐁', shortcut: 'Ctrl+B', category: 'format' },
   { id: 'italic', label: 'Italic', icon: '𝐼', shortcut: 'Ctrl+I', category: 'format' },
@@ -27,141 +35,129 @@ const FORMAT_ACTIONS: FormatAction[] = [
   { id: 'table', label: 'Table', icon: '⊞', category: 'insert' },
 ];
 
-// ── Props ────────────────────────────────────────────────────────────
 export interface MacWriteProps {
-  /** Initial markdown content */
   initialContent?: string;
-  /** Initial view mode (default: 'split') */
   initialViewMode?: ViewMode;
-  /** Callback when content changes */
   onChange?: (content: string) => void;
 }
 
-// ── Component ────────────────────────────────────────────────────────
-export function MacWrite({
-  initialContent = SAMPLE_DOCUMENT,
-  initialViewMode = 'split',
-  onChange,
-}: MacWriteProps) {
-  const [content, setContent] = useState(initialContent);
-  const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
-  const [showFind, setShowFind] = useState(false);
-  const [findQuery, setFindQuery] = useState('');
-  const [replaceQuery, setReplaceQuery] = useState('');
-  const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
-  const [scrollSync, setScrollSync] = useState(true);
+function createInitialSeed(props: MacWriteProps): MacWriteState {
+  return createMacWriteStateSeed({
+    content: props.initialContent,
+    viewMode: props.initialViewMode,
+  });
+}
 
+function MacWriteFrame({
+  state,
+  dispatch,
+  onChange,
+}: {
+  state: MacWriteState;
+  dispatch: (action: MacWriteAction) => void;
+  onChange?: (content: string) => void;
+}) {
+  const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
 
-  // ── Derived state ──
   const wordCount = useMemo<WordCount>(() => {
-    const words = content.trim().split(/\s+/).filter(Boolean).length;
-    const chars = content.length;
-    const lines = content.split('\n').length;
+    const words = state.content.trim().split(/\s+/).filter(Boolean).length;
+    const chars = state.content.length;
+    const lines = state.content.split('\n').length;
     return { words, chars, lines };
-  }, [content]);
+  }, [state.content]);
 
   const matchCount = useMemo(() => {
-    if (!findQuery) return 0;
+    if (!state.findQuery) return 0;
     try {
-      const regex = new RegExp(
-        findQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
-        'gi',
-      );
-      return (content.match(regex) || []).length;
+      const regex = new RegExp(state.findQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+      return (state.content.match(regex) || []).length;
     } catch {
       return 0;
     }
-  }, [content, findQuery]);
+  }, [state.content, state.findQuery]);
 
-  const previewHtml = useMemo(() => parseMarkdown(content), [content]);
+  const previewHtml = useMemo(() => parseMarkdown(state.content), [state.content]);
 
-  // ── Content updates ──
   const updateContent = useCallback(
     (newContent: string) => {
-      setContent(newContent);
+      dispatch(macWriteActions.setContent(newContent));
       onChange?.(newContent);
     },
-    [onChange],
+    [dispatch, onChange],
   );
 
-  // ── Cursor position ──
   const updateCursor = useCallback(() => {
-    const el = editorRef.current;
-    if (!el) return;
-    const pos = el.selectionStart;
-    const before = content.slice(0, pos);
+    const element = editorRef.current;
+    if (!element) return;
+    const position = element.selectionStart;
+    const before = state.content.slice(0, position);
     const line = (before.match(/\n/g) || []).length + 1;
-    const col = pos - before.lastIndexOf('\n');
+    const col = position - before.lastIndexOf('\n');
     setCursorPos({ line, col });
-  }, [content]);
+  }, [state.content]);
 
-  // ── Scroll sync ──
   const handleEditorScroll = useCallback(() => {
-    if (!scrollSync || !editorRef.current || !previewRef.current) return;
-    const ed = editorRef.current;
-    const ratio = ed.scrollTop / (ed.scrollHeight - ed.clientHeight || 1);
-    const pv = previewRef.current;
-    pv.scrollTop = ratio * (pv.scrollHeight - pv.clientHeight);
-  }, [scrollSync]);
+    if (!state.scrollSync || !editorRef.current || !previewRef.current) return;
+    const editor = editorRef.current;
+    const ratio = editor.scrollTop / (editor.scrollHeight - editor.clientHeight || 1);
+    const preview = previewRef.current;
+    preview.scrollTop = ratio * (preview.scrollHeight - preview.clientHeight);
+  }, [state.scrollSync]);
 
-  // ── Text manipulation helpers ──
   const wrapSelection = useCallback(
     (before: string, after?: string) => {
-      const el = editorRef.current;
-      if (!el) return;
-      const start = el.selectionStart;
-      const end = el.selectionEnd;
-      const selected = content.slice(start, end) || 'text';
+      const element = editorRef.current;
+      if (!element) return;
+      const start = element.selectionStart;
+      const end = element.selectionEnd;
+      const selected = state.content.slice(start, end) || 'text';
       const newContent =
-        content.slice(0, start) +
+        state.content.slice(0, start) +
         before +
         selected +
         (after ?? before) +
-        content.slice(end);
+        state.content.slice(end);
       updateContent(newContent);
       setTimeout(() => {
-        el.focus();
-        el.selectionStart = start + before.length;
-        el.selectionEnd = start + before.length + selected.length;
+        element.focus();
+        element.selectionStart = start + before.length;
+        element.selectionEnd = start + before.length + selected.length;
       }, 0);
     },
-    [content, updateContent],
+    [state.content, updateContent],
   );
 
   const insertAtCursor = useCallback(
     (text: string) => {
-      const el = editorRef.current;
-      if (!el) return;
-      const start = el.selectionStart;
-      updateContent(content.slice(0, start) + text + content.slice(start));
+      const element = editorRef.current;
+      if (!element) return;
+      const start = element.selectionStart;
+      updateContent(state.content.slice(0, start) + text + state.content.slice(start));
       setTimeout(() => {
-        el.focus();
-        el.selectionStart = el.selectionEnd = start + text.length;
+        element.focus();
+        element.selectionStart = element.selectionEnd = start + text.length;
       }, 0);
     },
-    [content, updateContent],
+    [state.content, updateContent],
   );
 
   const prependLine = useCallback(
     (prefix: string) => {
-      const el = editorRef.current;
-      if (!el) return;
-      const start = el.selectionStart;
-      const lineStart = content.lastIndexOf('\n', start - 1) + 1;
-      updateContent(
-        content.slice(0, lineStart) + prefix + content.slice(lineStart),
-      );
+      const element = editorRef.current;
+      if (!element) return;
+      const start = element.selectionStart;
+      const lineStart = state.content.lastIndexOf('\n', start - 1) + 1;
+      updateContent(state.content.slice(0, lineStart) + prefix + state.content.slice(lineStart));
       setTimeout(() => {
-        el.focus();
-        el.selectionStart = el.selectionEnd = start + prefix.length;
+        element.focus();
+        element.selectionStart = element.selectionEnd = start + prefix.length;
       }, 0);
     },
-    [content, updateContent],
+    [state.content, updateContent],
   );
 
-  // ── Execute action ──
   const execAction = useCallback(
     (id: string) => {
       switch (id) {
@@ -208,266 +204,160 @@ export function MacWrite({
           insertAtCursor('\n---\n');
           break;
         case 'table':
-          insertAtCursor(
-            '\n| Header | Header |\n|--------|--------|\n| Cell   | Cell   |\n',
-          );
+          insertAtCursor('\n| Header | Header |\n|--------|--------|\n| Cell   | Cell   |\n');
           break;
       }
     },
-    [wrapSelection, insertAtCursor, prependLine],
+    [insertAtCursor, prependLine, wrapSelection],
   );
 
-  // ── Keyboard shortcuts ──
-  const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'b' && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      execAction('bold');
-    } else if (e.key === 'i' && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      execAction('italic');
-    } else if (e.key === 'e' && e.ctrlKey) {
-      e.preventDefault();
-      execAction('code');
-    } else if (e.key === 'k' && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      execAction('link');
-    } else if (e.key === 'p' && e.ctrlKey && !e.shiftKey) {
-      e.preventDefault();
-      setViewMode((v) =>
-        v === 'split' ? 'edit' : v === 'edit' ? 'preview' : 'split',
-      );
-    } else if (e.key === 'f' && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      setShowFind((v) => !v);
-    } else if (e.key === 'Tab') {
-      e.preventDefault();
-      const el = editorRef.current!;
-      const start = el.selectionStart;
-      updateContent(content.slice(0, start) + '  ' + content.slice(start));
-      setTimeout(() => {
-        el.selectionStart = el.selectionEnd = start + 2;
-      }, 0);
-    }
-  };
-
-  // ── Find & Replace ──
-  const handleReplace = () => {
-    if (!findQuery) return;
-    const regex = new RegExp(
-      findQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
-      'i',
+  const cycleViewMode = useCallback(() => {
+    dispatch(
+      macWriteActions.setViewMode(
+        state.viewMode === 'split' ? 'edit' : state.viewMode === 'edit' ? 'preview' : 'split',
+      ),
     );
-    updateContent(content.replace(regex, replaceQuery));
+  }, [dispatch, state.viewMode]);
+
+  const handleReplace = () => {
+    if (!state.findQuery) return;
+    const regex = new RegExp(state.findQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+    updateContent(state.content.replace(regex, state.replaceQuery));
   };
 
   const handleReplaceAll = () => {
-    if (!findQuery) return;
-    const regex = new RegExp(
-      findQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
-      'gi',
-    );
-    updateContent(content.replace(regex, replaceQuery));
-  };
-
-  const cycleViewMode = () => {
-    setViewMode((v) =>
-      v === 'split' ? 'edit' : v === 'edit' ? 'preview' : 'split',
-    );
+    if (!state.findQuery) return;
+    const regex = new RegExp(state.findQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    updateContent(state.content.replace(regex, state.replaceQuery));
   };
 
   return (
     <div data-part={P.mw}>
-      {/* ── Toolbar ── */}
-      <WidgetToolbar>
-        {/* Format buttons */}
-        {FORMAT_ACTIONS.slice(0, 4).map((action) => (
-          <Btn
-            key={action.id}
-            onClick={() => execAction(action.id)}
-            title={`${action.label}${action.shortcut ? ` (${action.shortcut})` : ''}`}
-            style={{ fontSize: 11, padding: '2px 6px' }}
-          >
-            {action.icon}
-          </Btn>
-        ))}
+      <MacWriteToolbar
+        formatActions={FORMAT_ACTIONS}
+        viewMode={state.viewMode}
+        onExecAction={execAction}
+        onToggleFind={() => dispatch(macWriteActions.setShowFind(!state.showFind))}
+        onCycleViewMode={cycleViewMode}
+      />
 
-        <Separator />
-
-        {/* Heading buttons */}
-        {FORMAT_ACTIONS.filter((a) => a.category === 'heading').map((action) => (
-          <Btn
-            key={action.id}
-            onClick={() => execAction(action.id)}
-            title={action.label}
-            style={{ fontSize: 11, padding: '2px 6px' }}
-          >
-            {action.icon}
-          </Btn>
-        ))}
-
-        <Separator />
-
-        {/* Insert buttons */}
-        {FORMAT_ACTIONS.filter((a) => a.category === 'insert')
-          .slice(0, 4)
-          .map((action) => (
-            <Btn
-              key={action.id}
-              onClick={() => execAction(action.id)}
-              title={`${action.label}${action.shortcut ? ` (${action.shortcut})` : ''}`}
-              style={{ fontSize: 11, padding: '2px 6px' }}
-            >
-              {action.icon}
-            </Btn>
-          ))}
-
-        <Separator />
-
-        {/* Remaining insert buttons */}
-        {FORMAT_ACTIONS.filter((a) => a.category === 'insert')
-          .slice(4)
-          .map((action) => (
-            <Btn
-              key={action.id}
-              onClick={() => execAction(action.id)}
-              title={action.label}
-              style={{ fontSize: 11, padding: '2px 6px' }}
-            >
-              {action.icon}
-            </Btn>
-          ))}
-
-        <div style={{ flex: 1 }} />
-
-        {/* View controls */}
-        <Btn
-          onClick={() => setShowFind((v) => !v)}
-          title="Find & Replace (Ctrl+F)"
-          style={{ fontSize: 11, padding: '2px 6px' }}
-        >
-          🔍
-        </Btn>
-        <Btn
-          onClick={cycleViewMode}
-          title="Toggle View (Ctrl+P)"
-          style={{ fontSize: 11, padding: '2px 6px' }}
-        >
-          {viewMode === 'edit' ? '👁️' : viewMode === 'split' ? '📝' : '📄'}
-        </Btn>
-      </WidgetToolbar>
-
-      {/* ── Find & Replace Bar ── */}
-      {showFind && (
-        <div data-part={P.mwFindBar}>
-          <span style={{ fontSize: 12 }}>🔍</span>
-          <input
-            data-part="field-input"
-            value={findQuery}
-            onChange={(e) => setFindQuery(e.target.value)}
-            placeholder="Find..."
-            style={{ width: 140 }}
-            autoFocus
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') {
-                setShowFind(false);
-                setFindQuery('');
-              }
-            }}
-          />
-          <input
-            data-part="field-input"
-            value={replaceQuery}
-            onChange={(e) => setReplaceQuery(e.target.value)}
-            placeholder="Replace..."
-            style={{ width: 140 }}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') {
-                setShowFind(false);
-                setFindQuery('');
-              }
-            }}
-          />
-          <Btn onClick={handleReplace} style={{ fontSize: 9 }}>
-            Replace
-          </Btn>
-          <Btn onClick={handleReplaceAll} style={{ fontSize: 9 }}>
-            All
-          </Btn>
-          <span style={{ fontSize: 9, opacity: 0.6 }}>
-            {matchCount > 0
-              ? `${matchCount} found`
-              : findQuery
-                ? 'No matches'
-                : ''}
-          </span>
-          <div style={{ marginLeft: 'auto' }}>
-            <Btn
-              onClick={() => {
-                setShowFind(false);
-                setFindQuery('');
-              }}
-              style={{ fontSize: 9 }}
-            >
-              ✕
-            </Btn>
-          </div>
-        </div>
+      {state.showFind && (
+        <MacWriteFindBar
+          findQuery={state.findQuery}
+          replaceQuery={state.replaceQuery}
+          matchCount={matchCount}
+          onFindQueryChange={(value) => dispatch(macWriteActions.setFindQuery(value))}
+          onReplaceQueryChange={(value) => dispatch(macWriteActions.setReplaceQuery(value))}
+          onReplace={handleReplace}
+          onReplaceAll={handleReplaceAll}
+          onClose={() => {
+            dispatch(macWriteActions.setShowFind(false));
+            dispatch(macWriteActions.setFindQuery(''));
+          }}
+        />
       )}
 
-      {/* ── Editor / Preview ── */}
       <div data-part={P.mwBody}>
-        {viewMode !== 'preview' && (
+        {state.viewMode !== 'preview' && (
           <textarea
             ref={editorRef}
             data-part={P.mwEditor}
-            value={content}
-            onChange={(e) => updateContent(e.target.value)}
-            onKeyDown={handleEditorKeyDown}
+            value={state.content}
+            onChange={(event) => updateContent(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'b' && (event.ctrlKey || event.metaKey)) {
+                event.preventDefault();
+                execAction('bold');
+              } else if (event.key === 'i' && (event.ctrlKey || event.metaKey)) {
+                event.preventDefault();
+                execAction('italic');
+              } else if (event.key === 'e' && event.ctrlKey) {
+                event.preventDefault();
+                execAction('code');
+              } else if (event.key === 'k' && (event.ctrlKey || event.metaKey)) {
+                event.preventDefault();
+                execAction('link');
+              } else if (event.key === 'p' && event.ctrlKey && !event.shiftKey) {
+                event.preventDefault();
+                cycleViewMode();
+              } else if (event.key === 'f' && (event.ctrlKey || event.metaKey)) {
+                event.preventDefault();
+                dispatch(macWriteActions.setShowFind(!state.showFind));
+              } else if (event.key === 'Tab') {
+                event.preventDefault();
+                const element = editorRef.current!;
+                const start = element.selectionStart;
+                updateContent(state.content.slice(0, start) + '  ' + state.content.slice(start));
+                setTimeout(() => {
+                  element.selectionStart = element.selectionEnd = start + 2;
+                }, 0);
+              }
+            }}
             onKeyUp={updateCursor}
             onClick={updateCursor}
             onScroll={handleEditorScroll}
             spellCheck={false}
           />
         )}
-        {viewMode === 'split' && (
-          <div data-part={P.mwDivider} />
-        )}
-        {viewMode !== 'edit' && (
-          <div
-            ref={previewRef}
-            data-part={P.mwPreview}
-            dangerouslySetInnerHTML={{ __html: previewHtml }}
-          />
+        {state.viewMode === 'split' && <div data-part={P.mwDivider} />}
+        {state.viewMode !== 'edit' && (
+          <div ref={previewRef} data-part={P.mwPreview} dangerouslySetInnerHTML={{ __html: previewHtml }} />
         )}
       </div>
 
-      {/* ── Status Bar ── */}
       <WidgetStatusBar>
         <div style={{ display: 'flex', gap: 14 }}>
-          <span>
-            Ln {cursorPos.line}, Col {cursorPos.col}
-          </span>
+          <span>Ln {cursorPos.line}, Col {cursorPos.col}</span>
           <span>{wordCount.words} words</span>
           <span>{wordCount.chars} chars</span>
           <span>{wordCount.lines} lines</span>
         </div>
         <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
           <span
-            onClick={() => setScrollSync((v) => !v)}
-            style={{ cursor: 'pointer', opacity: scrollSync ? 1 : 0.4 }}
+            onClick={() => dispatch(macWriteActions.setScrollSync(!state.scrollSync))}
+            style={{ cursor: 'pointer', opacity: state.scrollSync ? 1 : 0.4 }}
             title="Scroll sync"
           >
-            {scrollSync ? '🔒' : '🔓'} sync
+            {state.scrollSync ? '🔒' : '🔓'} sync
           </span>
           <span style={{ cursor: 'pointer' }} onClick={cycleViewMode}>
-            {viewMode === 'split'
-              ? 'Split'
-              : viewMode === 'edit'
-                ? 'Edit'
-                : 'Preview'}
+            {state.viewMode === 'split' ? 'Split' : state.viewMode === 'edit' ? 'Edit' : 'Preview'}
           </span>
         </div>
       </WidgetStatusBar>
     </div>
   );
+}
+
+function StandaloneMacWrite(props: MacWriteProps) {
+  const [state, dispatch] = useReducer(macWriteReducer, createInitialSeed(props));
+  return <MacWriteFrame state={state} dispatch={dispatch} onChange={props.onChange} />;
+}
+
+function ConnectedMacWrite(props: MacWriteProps) {
+  const reduxDispatch = useDispatch();
+  const state = useSelector(selectMacWriteState);
+
+  useEffect(() => {
+    reduxDispatch(macWriteActions.initializeIfNeeded(createInitialSeed(props)));
+  }, [props.initialContent, props.initialViewMode, reduxDispatch]);
+
+  const effectiveState = state.initialized ? state : createInitialSeed(props);
+  return <MacWriteFrame state={effectiveState} dispatch={(action) => reduxDispatch(action)} onChange={props.onChange} />;
+}
+
+export function MacWrite(props: MacWriteProps) {
+  const reduxContext = useContext(ReactReduxContext);
+  const store = reduxContext?.store;
+  const rootState = store?.getState();
+  const hasRegisteredSlice =
+    typeof rootState === 'object' &&
+    rootState !== null &&
+    MAC_WRITE_STATE_KEY in (rootState as Record<string, unknown>);
+
+  if (hasRegisteredSlice) {
+    return <ConnectedMacWrite {...props} />;
+  }
+
+  return <StandaloneMacWrite {...props} />;
 }

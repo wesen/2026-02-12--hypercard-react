@@ -18,6 +18,10 @@ import {
   chartViewReducer,
 } from '../chart-view/chartViewState';
 import { MacWrite } from '../mac-write/MacWrite';
+import {
+  MAC_WRITE_STATE_KEY,
+  macWriteReducer,
+} from '../mac-write/macWriteState';
 import { KanbanBoard } from '../kanban/KanbanBoard';
 import {
   KANBAN_STATE_KEY,
@@ -180,10 +184,16 @@ export const chartViewModule: LaunchableAppModule = {
   },
 };
 
-export const macWriteModule = widget(
-  'mac-write', 'MacWrite', '\u270D\uFE0F', 102, 800, 620,
-  () => <MacWrite />,
-);
+export const macWriteModule: LaunchableAppModule = {
+  ...widget(
+    'mac-write', 'MacWrite', '\u270D\uFE0F', 102, 800, 620,
+    () => <MacWrite />,
+  ),
+  state: {
+    stateKey: MAC_WRITE_STATE_KEY,
+    reducer: macWriteReducer,
+  },
+};
 
 export const kanbanBoardModule: LaunchableAppModule = {
   ...widget(

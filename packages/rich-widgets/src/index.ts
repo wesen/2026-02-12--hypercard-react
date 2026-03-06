@@ -60,6 +60,13 @@ export { SAMPLE_DATASETS, DATASET_NAMES } from './chart-view/sampleData';
 
 // MacWrite
 export { MacWrite, type MacWriteProps } from './mac-write/MacWrite';
+export {
+  MAC_WRITE_STATE_KEY,
+  createMacWriteStateSeed,
+  macWriteActions,
+  macWriteReducer,
+  selectMacWriteState,
+} from './mac-write/macWriteState';
 export { type ViewMode, type FormatAction, type WordCount } from './mac-write/types';
 export { parseMarkdown } from './mac-write/markdown';
 export { SAMPLE_DOCUMENT } from './mac-write/sampleData';
