@@ -161,6 +161,12 @@
   font-size: 12px;
 }
 
+[data-part="ms-palette-button"] {
+  padding: 2px 10px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
 [data-part="ms-nav-row"] [data-part="ms-toolbar-button"] {
   padding: 3px 12px;
   font-size: 11px;

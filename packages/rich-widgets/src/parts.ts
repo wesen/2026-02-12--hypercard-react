@@ -194,6 +194,7 @@ export const RICH_PARTS = {
   msSlideThumbContent: 'ms-slide-thumb-content',
   msNavRow: 'ms-nav-row',
   msToolbarButton: 'ms-toolbar-button',
+  msPaletteButton: 'ms-palette-button',
   msToolbarSpacer: 'ms-toolbar-spacer',
   msAlignToggle: 'ms-align-toggle',
   msDeckStats: 'ms-deck-stats',
