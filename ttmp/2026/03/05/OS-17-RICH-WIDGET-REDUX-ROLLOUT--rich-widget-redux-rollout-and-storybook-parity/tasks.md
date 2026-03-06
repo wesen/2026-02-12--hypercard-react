@@ -21,5 +21,7 @@
 - [x] Task 14 — Migrate `GraphNavigator` to `app_rw_graph_navigator`, keep simulation layout local, and add Redux-seeded graph/filter stories
 - [x] Task 15 — Migrate `MacRepl` to `app_rw_mac_repl`, keep input/completion UI local, and add Redux-seeded history/error stories
 - [x] Task 16 — Migrate `LogicAnalyzer` to `app_rw_logic_analyzer`, keep cursor/timing local, and add Redux-seeded capture/display stories
-- [ ] Task 17 — Revisit the remaining partial-slice widget (`ControlRoom`)
-- [ ] Task 18 — Reassess local-only widgets (`ChartView`, `MacWrite`, `Oscilloscope`) after the partial-slice pass
+- [x] Task 17 — Migrate `ControlRoom` to `app_rw_control_room`, keep timer/reset behavior local, and add Redux-seeded console scenarios
+- [x] Task 18 — Migrate `ChartView` to `app_rw_chart_view`, keep canvas tooltip behavior local, and add Redux-seeded chart/dataset scenarios
+- [x] Task 19 — Migrate `MacWrite` to `app_rw_mac_write`, keep cursor/editor DOM behavior local, and add Redux-seeded document/find scenarios
+- [x] Task 20 — Migrate `Oscilloscope` to `app_rw_oscilloscope`, keep render loop timing local, and add Redux-seeded waveform/display scenarios

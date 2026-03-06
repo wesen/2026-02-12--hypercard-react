@@ -45,3 +45,9 @@
 - Completed Task 16: migrated `LogicAnalyzer` to a partial Redux slice, split the canvas and controls into their own files, and added Redux-seeded capture/display stories
 - Re-ran `docmgr doctor --ticket OS-17-RICH-WIDGET-REDUX-ROLLOUT --stale-after 30` after Task 16 with all checks passing
 - Uploaded the refreshed OS-17 bundle to reMarkable at `/ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT` as `OS-17-RICH-WIDGET-REDUX-ROLLOUT-2026-03-06-task16`
+- Completed Task 17: migrated `ControlRoom` to a dedicated Redux slice, split the panel/telemetry helpers into their own files, and added Redux-seeded console states
+- Completed Task 18: migrated `ChartView` to a dedicated Redux slice, split canvas/legend helpers into their own files, and added Redux-seeded chart/dataset scenarios
+- Completed Task 19: migrated `MacWrite` to a dedicated Redux slice, split toolbar/find helpers into their own files, and added Redux-seeded document/find scenarios
+- Completed Task 20: migrated `Oscilloscope` to a dedicated Redux slice, split the display/controls into their own files, and added Redux-seeded waveform/display scenarios
+- Re-ran `docmgr doctor --ticket OS-17-RICH-WIDGET-REDUX-ROLLOUT --stale-after 30` after Task 20 with all checks passing
+- Uploaded the refreshed OS-17 bundle to reMarkable at `/ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT` as `OS-17-RICH-WIDGET-REDUX-ROLLOUT-2026-03-06-task20`

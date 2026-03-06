@@ -431,6 +431,165 @@ remarquee upload bundle \
 remarquee cloud ls /ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT --long --non-interactive
 ```
 
+## 2026-03-06 — Task 17 (`ControlRoom`)
+
+### What changed
+
+1. Added `packages/rich-widgets/src/control-room/controlRoomState.ts` with a dedicated `app_rw_control_room` slice covering:
+   - tick counter and running state
+   - switch states
+   - knob values
+   - event log history
+   - scope sample buffer
+2. Added reducer coverage in `packages/rich-widgets/src/control-room/controlRoomState.test.ts`.
+3. Split the touched widget logic into its own files:
+   - `packages/rich-widgets/src/control-room/ControlRoomPanel.tsx`
+   - `packages/rich-widgets/src/control-room/controlRoomTelemetry.ts`
+4. Reworked `packages/rich-widgets/src/control-room/ControlRoom.tsx` into the connected/standalone pattern while keeping interval wiring and reset timing local.
+5. Converted `packages/rich-widgets/src/control-room/ControlRoom.stories.tsx` to Redux-seeded scenarios and added explicit alarm and paused-console states.
+6. Wired launcher registration and public exports to the new slice key.
+
+### Commands run
+
+```bash
+npm run test -w packages/rich-widgets
+npm run storybook:check
+```
+
+### Results
+
+- `npm run test -w packages/rich-widgets` ✅
+- `npm run storybook:check` ✅
+- Live Storybook verification on port `6006` ✅ for:
+  - `richwidgets-controlroom--alarm-armed`
+- Playwright MCP only showed the existing Storybook/MSW asset warnings; no `ControlRoom`-specific runtime errors surfaced.
+
+### Next task
+
+Continue with `ChartView`.
+
+## 2026-03-06 — Task 18 (`ChartView`)
+
+### What changed
+
+1. Added `packages/rich-widgets/src/chart-view/chartViewState.ts` with a dedicated `app_rw_chart_view` slice covering:
+   - selected chart type
+   - selected dataset key
+2. Added reducer coverage in `packages/rich-widgets/src/chart-view/chartViewState.test.ts`.
+3. Split the touched widget logic into its own files:
+   - `packages/rich-widgets/src/chart-view/ChartCanvas.tsx`
+   - `packages/rich-widgets/src/chart-view/LegendBar.tsx`
+4. Reworked `packages/rich-widgets/src/chart-view/ChartView.tsx` into the connected/standalone pattern while keeping hover tooltip state local to the canvas.
+5. Converted `packages/rich-widgets/src/chart-view/ChartView.stories.tsx` to Redux-seeded scenarios and added explicit dataset-switcher state seeding.
+6. Wired launcher registration and public exports to the new slice key.
+
+### Commands run
+
+```bash
+npm run test -w packages/rich-widgets
+npm run storybook:check
+```
+
+### Results
+
+- `npm run test -w packages/rich-widgets` ✅
+- `npm run storybook:check` ✅
+- Live Storybook verification on port `6006` ✅ for:
+  - `richwidgets-chartview--with-dataset-switcher`
+- Playwright MCP only showed the existing Storybook/MSW asset warnings; no `ChartView`-specific runtime errors surfaced.
+
+### Next task
+
+Continue with `MacWrite`.
+
+## 2026-03-06 — Task 19 (`MacWrite`)
+
+### What changed
+
+1. Added `packages/rich-widgets/src/mac-write/macWriteState.ts` with a dedicated `app_rw_mac_write` slice covering:
+   - document content
+   - view mode
+   - find/replace visibility and queries
+   - scroll sync mode
+2. Added reducer coverage in `packages/rich-widgets/src/mac-write/macWriteState.test.ts`.
+3. Split the touched widget logic into its own files:
+   - `packages/rich-widgets/src/mac-write/MacWriteToolbar.tsx`
+   - `packages/rich-widgets/src/mac-write/MacWriteFindBar.tsx`
+4. Reworked `packages/rich-widgets/src/mac-write/MacWrite.tsx` into the connected/standalone pattern while keeping cursor position and editor DOM selection behavior local.
+5. Converted `packages/rich-widgets/src/mac-write/MacWrite.stories.tsx` to Redux-seeded scenarios and added explicit find-bar/document states.
+6. Wired launcher registration and public exports to the new slice key.
+
+### Commands run
+
+```bash
+npm run test -w packages/rich-widgets
+npm run storybook:check
+```
+
+### Results
+
+- `npm run test -w packages/rich-widgets` ✅
+- `npm run storybook:check` ✅
+- Live Storybook verification on port `6006` ✅ for:
+  - `richwidgets-macwrite--markdown-edge-cases`
+- Playwright MCP only showed the existing Storybook/MSW asset warnings; no `MacWrite`-specific runtime errors surfaced.
+
+### Next task
+
+Continue with `Oscilloscope`.
+
+## 2026-03-06 — Task 20 (`Oscilloscope`)
+
+### What changed
+
+1. Added `packages/rich-widgets/src/oscilloscope/oscilloscopeState.ts` with a dedicated `app_rw_oscilloscope` slice covering:
+   - waveform and channel parameters
+   - running state
+   - display toggles
+   - trigger and thickness controls
+2. Added reducer coverage in `packages/rich-widgets/src/oscilloscope/oscilloscopeState.test.ts`.
+3. Split the touched widget logic into its own files:
+   - `packages/rich-widgets/src/oscilloscope/OscilloscopeCanvas.tsx`
+   - `packages/rich-widgets/src/oscilloscope/OscilloscopeControls.tsx`
+4. Reworked `packages/rich-widgets/src/oscilloscope/Oscilloscope.tsx` into the connected/standalone pattern while keeping render-loop timing local to the canvas.
+5. Converted `packages/rich-widgets/src/oscilloscope/Oscilloscope.stories.tsx` to Redux-seeded scenarios and added explicit dual-channel and paused states.
+6. Wired launcher registration and public exports to the new slice key.
+
+### Commands run
+
+```bash
+npm run test -w packages/rich-widgets
+npm run storybook:check
+```
+
+### Results
+
+- `npm run test -w packages/rich-widgets` ✅
+- `npm run storybook:check` ✅
+- Live Storybook verification on port `6006` ✅ for:
+  - `richwidgets-oscilloscope--dual-channel`
+- Playwright MCP only showed the existing Storybook/MSW asset warnings; no `Oscilloscope`-specific runtime errors surfaced.
+
+### Next task
+
+No widget backlog remains in `OS-17`.
+
+### Publication refresh
+
+```bash
+docmgr doctor --ticket OS-17-RICH-WIDGET-REDUX-ROLLOUT --stale-after 30
+remarquee upload bundle \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/index.md \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/design/01-redux-rollout-backlog-and-sequencing.md \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/tasks.md \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/changelog.md \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/reference/01-investigation-diary.md \
+  --name "OS-17-RICH-WIDGET-REDUX-ROLLOUT-2026-03-06-task20" \
+  --remote-dir "/ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT" \
+  --toc-depth 2 --non-interactive
+remarquee cloud ls /ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT --long --non-interactive
+```
+
 ## 2026-03-06 — Task 14 (`GraphNavigator`)
 
 ### What changed

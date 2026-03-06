@@ -18,7 +18,7 @@ RelatedFiles:
     - packages/rich-widgets/src/calendar/MacCalendar.tsx
 ExternalSources: []
 Summary: ""
-LastUpdated: 2026-03-06T12:55:00-05:00
+LastUpdated: 2026-03-06T14:05:00-05:00
 WhatFor: ""
 WhenToUse: ""
 ---
@@ -54,13 +54,13 @@ This ticket executes the OS-16 migration plan. The rule for this rollout is:
 - [x] `GraphNavigator`
 - [x] `MacRepl`
 - [x] `LogicAnalyzer`
-- [ ] `ControlRoom`
+- [x] `ControlRoom`
 
-### Phase 3 — Keep local unless requirements change
+### Phase 3 — Reassessed after partial slices
 
-- [ ] `ChartView`
-- [ ] `MacWrite`
-- [ ] `Oscilloscope`
+- [x] `ChartView`
+- [x] `MacWrite`
+- [x] `Oscilloscope`
 
 ## Execution notes
 
@@ -72,6 +72,8 @@ This ticket executes the OS-16 migration plan. The rule for this rollout is:
 4. seed deterministic Storybook states via Redux;
 5. preserve non-Redux standalone usage when the widget is rendered outside launcher/store context.
 
-The partial-slice phase is now mostly complete. `GraphNavigator`, `MacRepl`, and `LogicAnalyzer` all use launcher-visible Redux state for durable controls and seeded Storybook scenarios, while keeping transient layout and DOM-interaction state local.
+The partial-slice phase is complete. `GraphNavigator`, `MacRepl`, `LogicAnalyzer`, and `ControlRoom` all use launcher-visible Redux state for durable controls and seeded Storybook scenarios, while keeping transient layout, timing, or DOM-interaction state local.
 
-The next implementation task is `ControlRoom`.
+The post-review phase also changed direction: `ChartView`, `MacWrite`, and `Oscilloscope` were originally listed as local-only candidates, but the reassessment showed enough story-seedable durable UI state to justify slices. They are now migrated as well.
+
+There is no remaining widget backlog in OS-17.
