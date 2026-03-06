@@ -104,6 +104,9 @@ export function HypercardCardRenderer({ e, ctx }: { e: RenderEntity; ctx?: Rende
         <strong>{title}</strong>{cardId ? ` · runtime=${cardId}` : ''}
         {detail ? ` — ${detail}` : ''}
       </div>
+      <div style={{ fontSize: 11, whiteSpace: 'pre-wrap', opacity: 0.8 }}>
+        status: {status}
+      </div>
       {hasCardCode && (
         <SyntaxHighlight
           code={cardCode}
@@ -111,11 +114,6 @@ export function HypercardCardRenderer({ e, ctx }: { e: RenderEntity; ctx?: Rende
           maxLines={18}
           style={{ marginTop: 6 }}
         />
-      )}
-      {!hasCardCode && (
-        <div style={{ fontSize: 11, whiteSpace: 'pre-wrap', opacity: 0.8 }}>
-          {status}
-        </div>
       )}
       {ctx?.mode === 'debug' && (
         <pre

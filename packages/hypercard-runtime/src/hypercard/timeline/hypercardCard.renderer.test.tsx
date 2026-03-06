@@ -79,6 +79,7 @@ describe('HypercardCardRenderer', () => {
     });
 
     expect(container.textContent).toContain('Low Stock Card');
+    expect(container.textContent).toContain('status: streaming');
     expect(container.textContent).toContain('({ ui }) =>');
     expect(container.textContent).toContain('ui.text("low stock")');
     expect(container.textContent).not.toContain('Open');
@@ -113,6 +114,7 @@ describe('HypercardCardRenderer', () => {
     });
 
     expect(container.textContent).toContain('Inventory Drilldown');
+    expect(container.textContent).toContain('status: success');
     expect(container.textContent).toContain('ready');
     expect(container.textContent).toContain('Open');
     expect(container.textContent).toContain('Edit');
