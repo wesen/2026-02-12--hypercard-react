@@ -20,6 +20,10 @@ import {
   kanbanReducer,
 } from '../kanban/kanbanState';
 import { MacRepl } from '../repl/MacRepl';
+import {
+  MAC_REPL_STATE_KEY,
+  macReplReducer,
+} from '../repl/replState';
 import { NodeEditor } from '../node-editor/NodeEditor';
 import {
   NODE_EDITOR_STATE_KEY,
@@ -174,10 +178,16 @@ export const kanbanBoardModule: LaunchableAppModule = {
   },
 };
 
-export const macReplModule = widget(
-  'mac-repl', 'MacRepl', '\uD83D\uDCBB', 104, 720, 480,
-  () => <MacRepl />,
-);
+export const macReplModule: LaunchableAppModule = {
+  ...widget(
+    'mac-repl', 'MacRepl', '\uD83D\uDCBB', 104, 720, 480,
+    () => <MacRepl />,
+  ),
+  state: {
+    stateKey: MAC_REPL_STATE_KEY,
+    reducer: macReplReducer,
+  },
+};
 
 export const nodeEditorModule: LaunchableAppModule = {
   ...widget(

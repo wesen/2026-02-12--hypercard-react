@@ -80,6 +80,13 @@ export { INITIAL_COLUMNS, INITIAL_TASKS } from './kanban/sampleData';
 
 // MacRepl
 export { MacRepl, type MacReplProps } from './repl/MacRepl';
+export {
+  MAC_REPL_STATE_KEY,
+  createMacReplStateSeed,
+  macReplActions,
+  macReplReducer,
+  selectMacReplState,
+} from './repl/replState';
 export { type TerminalLine, type LineType, type CommandInfo } from './repl/types';
 export { BUILT_IN_COMMANDS, FORTUNES, INITIAL_LINES } from './repl/sampleData';
 
