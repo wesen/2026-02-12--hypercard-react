@@ -36,13 +36,13 @@ This ticket executes the OS-16 migration plan. The rule for this rollout is:
 ### Phase 1 — Durable widgets (`Redux now`)
 
 - [x] `LogViewer`
-- [ ] `MacCalc`
-- [ ] `MacCalendar`
+- [x] `MacCalc`
+- [x] `MacCalendar`
 - [x] `KanbanBoard`
 - [x] `DeepResearch`
 - [x] `ChatBrowser`
 - [x] `GameFinder`
-- [ ] `RetroMusicPlayer`
+- [x] `RetroMusicPlayer`
 - [ ] `StreamLauncher`
 - [ ] `SteamLauncher`
 - [ ] `YouTubeRetro`
@@ -72,4 +72,4 @@ This ticket executes the OS-16 migration plan. The rule for this rollout is:
 4. seed deterministic Storybook states via Redux;
 5. preserve non-Redux standalone usage when the widget is rendered outside launcher/store context.
 
-The next implementation task is `RetroMusicPlayer`.
+The next implementation task is `StreamLauncher`.

@@ -9,7 +9,7 @@
 - [x] Task 5 — Migrate `DeepResearch` to `app_rw_deep_research` and add seeded progress/report scenarios
 - [x] Task 6 — Migrate `ChatBrowser` to `app_rw_chat_browser` and add seeded search/result scenarios
 - [x] Task 7 — Migrate `GameFinder` to `app_rw_game_finder` and add seeded browse/install/launch scenarios
-- [ ] Task 8 — Migrate `RetroMusicPlayer` to `app_rw_music_player` and add seeded playback/library scenarios
+- [x] Task 8 — Migrate `RetroMusicPlayer` to `app_rw_music_player` and add seeded playback/library scenarios
 - [ ] Task 9 — Migrate `StreamLauncher` to `app_rw_stream_launcher` and add seeded browse/player scenarios
 - [ ] Task 10 — Migrate `SteamLauncher` to `app_rw_steam_launcher` and add seeded library/install/launch scenarios
 - [ ] Task 11 — Migrate `YouTubeRetro` to `app_rw_youtube_retro` and add seeded watch/list/filter scenarios

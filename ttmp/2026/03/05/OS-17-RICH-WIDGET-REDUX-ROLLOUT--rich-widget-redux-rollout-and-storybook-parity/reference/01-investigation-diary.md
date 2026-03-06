@@ -436,6 +436,59 @@ remarquee cloud ls /ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT --long --non-i
 - Remote listing now shows:
   - `/ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT/OS-17-RICH-WIDGET-REDUX-ROLLOUT`
   - `/ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT/OS-17-RICH-WIDGET-REDUX-ROLLOUT-2026-03-06-task4`
+
+## 2026-03-06 — Task 8 (`RetroMusicPlayer`)
+
+### What changed
+
+1. Added `packages/rich-widgets/src/music-player/musicPlayerState.ts` with a dedicated `app_rw_music_player` slice covering:
+   - playback selection and elapsed state
+   - playlist selection and search state
+   - queue/EQ/view toggles
+   - volume, shuffle, repeat, and liked-track state
+2. Added reducer coverage in `packages/rich-widgets/src/music-player/musicPlayerState.test.ts`.
+3. Reworked `packages/rich-widgets/src/music-player/RetroMusicPlayer.tsx` into the connected/standalone pattern used across OS-17, while keeping the EQ bar animation local.
+4. Converted `packages/rich-widgets/src/music-player/RetroMusicPlayer.stories.tsx` to Redux-seeded scenarios and added explicit stories for:
+   - active playback with queue open
+   - grid-view browsing
+   - playlist search results
+5. Wired launcher registration and public exports to the new slice key.
+6. Fixed one normalization gap discovered during validation by clamping seeded volume values in the slice seed path.
+
+### Commands run
+
+```bash
+npm run test -w packages/rich-widgets
+npm run storybook:check
+```
+
+### Results
+
+- `npm run test -w packages/rich-widgets` ✅
+- `npm run storybook:check` ✅
+- Live Storybook verification on port `6006` ✅ for:
+  - `richwidgets-retromusicplayer--redux-playing-queue`
+- Playwright MCP only showed the existing Storybook/MSW asset warnings; no `RetroMusicPlayer`-specific runtime errors surfaced.
+
+### Next task
+
+Continue with `StreamLauncher`.
+
+### Publication refresh
+
+```bash
+docmgr doctor --ticket OS-17-RICH-WIDGET-REDUX-ROLLOUT --stale-after 30
+remarquee upload bundle \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/index.md \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/design/01-redux-rollout-backlog-and-sequencing.md \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/tasks.md \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/changelog.md \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/reference/01-investigation-diary.md \
+  --name "OS-17-RICH-WIDGET-REDUX-ROLLOUT-2026-03-06-task8" \
+  --remote-dir "/ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT" \
+  --toc-depth 2 --non-interactive
+remarquee cloud ls /ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT --long --non-interactive
+```
   - `/ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT/OS-17-RICH-WIDGET-REDUX-ROLLOUT-2026-03-06-task5`
   - `/ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT/OS-17-RICH-WIDGET-REDUX-ROLLOUT-2026-03-06-task6`
   - `/ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT/OS-17-RICH-WIDGET-REDUX-ROLLOUT-2026-03-06-task7`
