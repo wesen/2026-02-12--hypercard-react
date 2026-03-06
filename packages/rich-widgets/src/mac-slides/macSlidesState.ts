@@ -1,4 +1,4 @@
-import { createSelector, createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 export const MAC_SLIDES_STATE_KEY = 'app_rw_mac_slides' as const;
 
@@ -96,7 +96,5 @@ const selectRawMacSlidesState = (rootState: unknown): MacSlidesState | undefined
     ? (rootState as Record<string, MacSlidesModuleState>)[MAC_SLIDES_STATE_KEY]
     : undefined;
 
-export const selectMacSlidesState = createSelector(
-  [selectRawMacSlidesState],
-  (state) => state ?? initialState,
-);
+export const selectMacSlidesState = (rootState: unknown): MacSlidesState =>
+  selectRawMacSlidesState(rootState) ?? initialState;

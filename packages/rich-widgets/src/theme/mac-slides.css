@@ -182,6 +182,11 @@
   box-shadow: 1px 1px 0 var(--hc-color-border);
 }
 
+[data-part="ms-align-toggle"][data-disabled="true"] {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
 [data-part="ms-deck-stats"] {
   display: inline-flex;
   align-items: center;

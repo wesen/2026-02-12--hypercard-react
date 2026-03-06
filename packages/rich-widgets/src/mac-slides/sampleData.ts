@@ -49,5 +49,5 @@ export function createDenseDeckMarkdown(): string {
 }
 
 export function createEmptyDeckMarkdown(): string {
-  return '# New Presentation\n\n';
+  return '';
 }
