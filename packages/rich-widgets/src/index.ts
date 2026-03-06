@@ -172,10 +172,14 @@ export {
 } from './logic-analyzer/types';
 
 // GraphNavigator
+export { GraphNavigator, type GraphNavigatorProps } from './graph-navigator/GraphNavigator';
 export {
-  GraphNavigator,
-  type GraphNavigatorProps,
-} from './graph-navigator/GraphNavigator';
+  GRAPH_NAVIGATOR_STATE_KEY,
+  createGraphNavigatorStateSeed,
+  graphNavigatorActions,
+  graphNavigatorReducer,
+  selectGraphNavigatorState,
+} from './graph-navigator/graphNavigatorState';
 export {
   type GraphNavNode,
   type GraphNavEdge,

@@ -1,7 +1,15 @@
+import { configureStore } from '@reduxjs/toolkit';
 import type { Meta, StoryObj } from '@storybook/react';
-import { GraphNavigator } from './GraphNavigator';
-import { SAMPLE_EDGES, SAMPLE_NODES } from './sampleData';
 import { fixedFrameDecorator, fullscreenDecorator } from '../storybook/frameDecorators';
+import { SeededStoreProvider, type SeedStore } from '../storybook/seededStore';
+import { SAMPLE_EDGES, SAMPLE_NODES } from './sampleData';
+import { GraphNavigator } from './GraphNavigator';
+import {
+  createGraphNavigatorStateSeed,
+  graphNavigatorActions,
+  graphNavigatorReducer,
+  GRAPH_NAVIGATOR_STATE_KEY,
+} from './graphNavigatorState';
 import '@hypercard/rich-widgets/theme';
 
 const meta: Meta<typeof GraphNavigator> = {
@@ -14,6 +22,33 @@ const meta: Meta<typeof GraphNavigator> = {
 
 export default meta;
 type Story = StoryObj<typeof GraphNavigator>;
+
+function createGraphNavigatorStoryStore() {
+  return configureStore({
+    reducer: {
+      [GRAPH_NAVIGATOR_STATE_KEY]: graphNavigatorReducer,
+    },
+  });
+}
+
+type GraphNavigatorStoryStore = ReturnType<typeof createGraphNavigatorStoryStore>;
+type GraphNavigatorSeedStore = SeedStore<GraphNavigatorStoryStore>;
+
+function renderWithStore(seedStore: GraphNavigatorSeedStore) {
+  return () => (
+    <SeededStoreProvider createStore={createGraphNavigatorStoryStore} seedStore={seedStore}>
+      <GraphNavigator />
+    </SeededStoreProvider>
+  );
+}
+
+function renderSeededStory(seed: Parameters<typeof createGraphNavigatorStateSeed>[0]) {
+  return renderWithStore((store) => {
+    store.dispatch(
+      graphNavigatorActions.replaceState(createGraphNavigatorStateSeed(seed)),
+    );
+  });
+}
 
 const denseNodes = [
   ...SAMPLE_NODES,
@@ -39,25 +74,25 @@ const denseEdges = [
 ];
 
 export const Default: Story = {
-  args: {},
+  render: renderSeededStory({}),
   decorators: [fullscreenDecorator],
 };
 
 export const Compact: Story = {
-  args: {},
+  render: renderSeededStory({}),
   decorators: [fixedFrameDecorator(800, 500)],
 };
 
 export const Empty: Story = {
-  args: {
+  render: renderSeededStory({
     initialNodes: [],
     initialEdges: [],
-  },
+  }),
   decorators: [fullscreenDecorator],
 };
 
 export const PersonsOnly: Story = {
-  args: {
+  render: renderSeededStory({
     initialNodes: [
       { id: 'n1', label: 'Alice', type: 'Person', props: { age: 32, role: 'Engineer' } },
       { id: 'n2', label: 'Bob', type: 'Person', props: { age: 28, role: 'Designer' } },
@@ -68,25 +103,29 @@ export const PersonsOnly: Story = {
       { source: 'n2', target: 'n3', label: 'REPORTS_TO' },
       { source: 'n3', target: 'n1', label: 'KNOWS' },
     ],
-  },
+    filterType: 'Person',
+  }),
   decorators: [fullscreenDecorator],
 };
 
 export const DenseGraph: Story = {
-  args: {
+  render: renderSeededStory({
     initialNodes: denseNodes,
     initialEdges: denseEdges,
-  },
+    selectedNodeId: 'dx-3',
+  }),
   decorators: [fullscreenDecorator],
 };
 
 export const CompanyProjectMap: Story = {
-  args: {
+  render: renderSeededStory({
     initialNodes: SAMPLE_NODES.filter((node) => node.type !== 'Person'),
-    initialEdges: SAMPLE_EDGES.filter((edge) =>
-      ['n3', 'n4', 'n5', 'n8', 'n9', 'n12'].includes(edge.source) ||
-      ['n3', 'n4', 'n5', 'n8', 'n9', 'n12'].includes(edge.target),
+    initialEdges: SAMPLE_EDGES.filter(
+      (edge) =>
+        ['n3', 'n4', 'n5', 'n8', 'n9', 'n12'].includes(edge.source) ||
+        ['n3', 'n4', 'n5', 'n8', 'n9', 'n12'].includes(edge.target),
     ),
-  },
+    selectedNodeId: 'n4',
+  }),
   decorators: [fullscreenDecorator],
 };

@@ -38,6 +38,10 @@ import {
   macSlidesReducer,
 } from '../mac-slides/macSlidesState';
 import { GraphNavigator } from '../graph-navigator/GraphNavigator';
+import {
+  GRAPH_NAVIGATOR_STATE_KEY,
+  graphNavigatorReducer,
+} from '../graph-navigator/graphNavigatorState';
 import { MacCalc } from '../calculator/MacCalc';
 import {
   MAC_CALC_STATE_KEY,
@@ -218,10 +222,16 @@ export const macSlidesModule: LaunchableAppModule = {
   },
 };
 
-export const graphNavigatorModule = widget(
-  'graph-navigator', 'Graph Navigator', '\uD83C\uDF10', 109, 900, 640,
-  () => <GraphNavigator />,
-);
+export const graphNavigatorModule: LaunchableAppModule = {
+  ...widget(
+    'graph-navigator', 'Graph Navigator', '\uD83C\uDF10', 109, 900, 640,
+    () => <GraphNavigator />,
+  ),
+  state: {
+    stateKey: GRAPH_NAVIGATOR_STATE_KEY,
+    reducer: graphNavigatorReducer,
+  },
+};
 
 export const macCalcModule: LaunchableAppModule = {
   ...widget(
