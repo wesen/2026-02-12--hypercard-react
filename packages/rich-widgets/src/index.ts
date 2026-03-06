@@ -168,6 +168,13 @@ export {
   type LogicAnalyzerProps,
 } from './logic-analyzer/LogicAnalyzer';
 export {
+  LOGIC_ANALYZER_STATE_KEY,
+  createLogicAnalyzerStateSeed,
+  logicAnalyzerActions,
+  logicAnalyzerReducer,
+  selectLogicAnalyzerState,
+} from './logic-analyzer/logicAnalyzerState';
+export {
   type SignalType,
   type TriggerEdge,
   type Protocol,

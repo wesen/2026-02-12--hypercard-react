@@ -31,6 +31,10 @@ import {
 } from '../node-editor/nodeEditorState';
 import { Oscilloscope } from '../oscilloscope/Oscilloscope';
 import { LogicAnalyzer } from '../logic-analyzer/LogicAnalyzer';
+import {
+  LOGIC_ANALYZER_STATE_KEY,
+  logicAnalyzerReducer,
+} from '../logic-analyzer/logicAnalyzerState';
 import { MacCalendar } from '../calendar/MacCalendar';
 import {
   MAC_CALENDAR_STATE_KEY,
@@ -205,10 +209,16 @@ export const oscilloscopeModule = widget(
   () => <Oscilloscope />,
 );
 
-export const logicAnalyzerModule = widget(
-  'logic-analyzer', 'Logic Analyzer', '\uD83D\uDD0C', 107, 900, 560,
-  () => <LogicAnalyzer />,
-);
+export const logicAnalyzerModule: LaunchableAppModule = {
+  ...widget(
+    'logic-analyzer', 'Logic Analyzer', '\uD83D\uDD0C', 107, 900, 560,
+    () => <LogicAnalyzer />,
+  ),
+  state: {
+    stateKey: LOGIC_ANALYZER_STATE_KEY,
+    reducer: logicAnalyzerReducer,
+  },
+};
 
 export const macCalendarModule: LaunchableAppModule = {
   ...widget(
