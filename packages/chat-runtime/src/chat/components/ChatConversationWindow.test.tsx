@@ -81,6 +81,38 @@ afterEach(() => {
 });
 
 describe('ChatConversationWindow', () => {
+  it('does not inject starter suggestions unless the host provides them explicitly', async () => {
+    const store = createStore();
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    containers.push(container);
+    const root = createRoot(container);
+    roots.push(root);
+
+    await act(async () => {
+      root.render(
+        <Provider store={store}>
+          <ChatConversationWindow convId="conv-empty" />
+        </Provider>,
+      );
+    });
+
+    expect(container.textContent).not.toContain('Show current inventory status');
+
+    await act(async () => {
+      root.render(
+        <Provider store={store}>
+          <ChatConversationWindow
+            convId="conv-empty"
+            starterSuggestions={['Show current inventory status', 'Summarize today sales']}
+          />
+        </Provider>,
+      );
+    });
+
+    expect(container.textContent).toContain('Show current inventory status');
+  });
+
   it('renders host-provided timeline renderer overrides for hypercard.card.v2', async () => {
     const store = createStore();
     const container = document.createElement('div');

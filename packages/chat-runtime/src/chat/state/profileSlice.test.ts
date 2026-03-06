@@ -28,22 +28,20 @@ describe('profileSlice', () => {
     expect(state.availableProfiles.map((p) => p.slug)).toEqual(['default', 'agent']);
   });
 
-  it('tracks selected profile and registry', () => {
+  it('tracks selected profile', () => {
     const state = reduce([
-      actions.setSelectedProfile({ profile: 'agent', registry: 'default' }),
+      actions.setSelectedProfile({ profile: 'agent' }),
       actions.clearSelectedProfile(),
     ]);
 
     expect(state.selectedProfile).toBeNull();
-    expect(state.selectedRegistry).toBeNull();
   });
 
-  it('tracks scoped profile selection with global fallback preserved', () => {
+  it('tracks scoped profile selection independently', () => {
     const state = reduce([
-      actions.setSelectedProfile({ profile: 'global-default', registry: 'default' }),
+      actions.setSelectedProfile({ profile: 'global-default' }),
       actions.setSelectedProfile({
         profile: 'inventory-specialist',
-        registry: 'default',
         scopeKey: 'conv:abc',
       }),
       actions.clearScopedProfile({ scopeKey: 'conv:abc' }),

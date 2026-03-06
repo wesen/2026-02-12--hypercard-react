@@ -39,12 +39,8 @@ function applyProfileSelection(
     return;
   }
   const profile = String(profileSelection.profile ?? '').trim();
-  const registry = String(profileSelection.registry ?? '').trim();
   if (profile.length > 0) {
     payload.profile = profile;
-  }
-  if (registry.length > 0) {
-    payload.registry = registry;
   }
 }
 

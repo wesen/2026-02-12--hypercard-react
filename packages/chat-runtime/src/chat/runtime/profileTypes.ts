@@ -1,7 +1,11 @@
 export interface ChatProfileSelection {
   profile?: string;
-  registry?: string;
 }
+
+export type ChatProfilePolicy =
+  | { kind: 'none' }
+  | { kind: 'fixed'; profile: string }
+  | { kind: 'selectable'; scopeKey?: string };
 
 export interface ChatProfileListItem {
   slug: string;

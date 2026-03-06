@@ -9,11 +9,10 @@ describe('resolveSelectionAfterProfileRefresh', () => {
         { slug: 'analyst' },
       ],
       {},
-      'default',
       'analyst'
     );
 
-    expect(next).toEqual({ profile: 'analyst', registry: 'default' });
+    expect(next).toEqual({ profile: 'analyst' });
   });
 
   it('selects default profile when no profile is currently selected', () => {
@@ -23,11 +22,10 @@ describe('resolveSelectionAfterProfileRefresh', () => {
         { slug: 'analyst' },
       ],
       {},
-      'default',
       undefined
     );
 
-    expect(next).toEqual({ profile: 'inventory', registry: 'default' });
+    expect(next).toEqual({ profile: 'inventory' });
   });
 
   it('keeps current selection when it still exists after refresh', () => {
@@ -36,8 +34,7 @@ describe('resolveSelectionAfterProfileRefresh', () => {
         { slug: 'inventory', is_default: true },
         { slug: 'analyst' },
       ],
-      { profile: 'analyst', registry: 'default' },
-      'default',
+      { profile: 'analyst' },
       undefined
     );
 
@@ -50,21 +47,19 @@ describe('resolveSelectionAfterProfileRefresh', () => {
         { slug: 'inventory', is_default: false },
         { slug: 'planner', is_default: true },
       ],
-      { profile: 'analyst', registry: 'default' },
-      'default',
+      { profile: 'analyst' },
       undefined
     );
 
-    expect(next).toEqual({ profile: 'planner', registry: 'default' });
+    expect(next).toEqual({ profile: 'planner' });
   });
 
-  it('clears selected profile when registry is empty', () => {
+  it('clears selected profile when no profiles remain', () => {
     const next = resolveSelectionAfterProfileRefresh(
       [],
-      { profile: 'analyst', registry: 'default' },
-      'default',
+      { profile: 'analyst' },
       undefined
     );
-    expect(next).toEqual({ profile: null, registry: 'default' });
+    expect(next).toEqual({ profile: null });
   });
 });

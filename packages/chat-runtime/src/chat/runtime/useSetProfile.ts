@@ -12,13 +12,12 @@ export function useSetProfile(basePrefix = '', options: UseSetProfileOptions = {
   const scopeKey = String(options.scopeKey ?? '').trim() || undefined;
 
   return useCallback(
-    async (profile: string | null, registry?: string | null) => {
+    async (profile: string | null) => {
       const normalized = String(profile ?? '').trim();
       if (!normalized) {
         dispatch(
           chatProfilesSlice.actions.setSelectedProfile({
             profile: null,
-            registry: registry ?? undefined,
             scopeKey,
           })
         );
@@ -31,7 +30,6 @@ export function useSetProfile(basePrefix = '', options: UseSetProfileOptions = {
         dispatch(
           chatProfilesSlice.actions.setSelectedProfile({
             profile: serverSlug,
-            registry: registry ?? undefined,
             scopeKey,
           })
         );

@@ -31,43 +31,35 @@ function normalize(value: string | null | undefined): string {
 
 export function resolveSelectionAfterProfileRefresh(
   profiles: ChatProfileListItem[],
-  selected: { profile?: string; registry?: string },
-  registryHint?: string,
+  selected: { profile?: string },
   persistedProfileHint?: string
-): { profile: string | null; registry: string | null } | null {
+): { profile: string | null } | null {
   const selectedProfile = normalize(selected.profile);
-  const selectedRegistry = normalize(selected.registry);
-  const resolvedRegistry = normalize(registryHint) || selectedRegistry;
   const persistedProfile = normalize(persistedProfileHint);
 
   if (selectedProfile) {
     const hasSelected = profiles.some((item) => normalize(item.slug) === selectedProfile);
     if (hasSelected) {
-      const nextRegistry = resolvedRegistry || null;
-      if (nextRegistry === (selectedRegistry || null)) {
-        return null;
-      }
-      return { profile: selectedProfile, registry: nextRegistry };
+      return null;
     }
   }
 
   if (persistedProfile) {
     const hasPersisted = profiles.some((item) => normalize(item.slug) === persistedProfile);
     if (hasPersisted) {
-      return { profile: persistedProfile, registry: resolvedRegistry || null };
+      return { profile: persistedProfile };
     }
   }
 
   const fallback = profiles.find((item) => item.is_default) ?? profiles[0];
   if (!fallback?.slug) {
-    return { profile: null, registry: resolvedRegistry || null };
+    return { profile: null };
   }
-  return { profile: normalize(fallback.slug), registry: resolvedRegistry || null };
+  return { profile: normalize(fallback.slug) };
 }
 
 export function useProfiles(
   basePrefix = '',
-  registry?: string,
   options: UseProfilesOptions = {}
 ): UseProfilesResult {
   const enabled = options.enabled ?? true;
@@ -88,8 +80,7 @@ export function useProfiles(
     dispatch(chatProfilesSlice.actions.setProfileLoading(true));
     dispatch(chatProfilesSlice.actions.setProfileError(null));
     try {
-      const resolvedRegistry = String(registry ?? selected.registry ?? '').trim();
-      const nextProfiles = await listProfiles(resolvedRegistry || undefined, { basePrefix });
+      const nextProfiles = await listProfiles(undefined, { basePrefix });
       dispatch(chatProfilesSlice.actions.setAvailableProfiles(nextProfiles));
       dispatch(chatProfilesSlice.actions.setProfileLoading(false));
       let persistedProfile: string | undefined;
@@ -104,7 +95,6 @@ export function useProfiles(
       const nextSelection = resolveSelectionAfterProfileRefresh(
         nextProfiles,
         selected,
-        resolvedRegistry,
         persistedProfile
       );
       if (nextSelection) {
@@ -116,7 +106,7 @@ export function useProfiles(
         chatProfilesSlice.actions.setProfileError(err instanceof Error ? err.message : String(err))
       );
     }
-  }, [basePrefix, dispatch, enabled, registry, scopeKey, selected.profile, selected.registry]);
+  }, [basePrefix, dispatch, enabled, scopeKey, selected.profile]);
 
   useEffect(() => {
     if (!enabled) {

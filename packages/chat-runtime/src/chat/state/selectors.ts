@@ -26,7 +26,6 @@ const EMPTY_ERROR_HISTORY: ChatErrorRecord[] = [];
 const EMPTY_CHAT_PROFILES: ChatProfilesState = {
   availableProfiles: [],
   selectedProfile: null,
-  selectedRegistry: null,
   selectedByScope: {},
   loading: false,
   error: null,
@@ -34,9 +33,8 @@ const EMPTY_CHAT_PROFILES: ChatProfilesState = {
 const EMPTY_CHAT_WINDOW: ChatWindowSliceState = {
   byWindowId: {},
 };
-const EMPTY_PROFILE_SELECTION: { profile: string | undefined; registry: string | undefined } = {
+const EMPTY_PROFILE_SELECTION: { profile: string | undefined } = {
   profile: undefined,
-  registry: undefined,
 };
 
 function normalizeSelectorValue(value: string | undefined): string {
@@ -246,7 +244,7 @@ export const selectProfileError = (state: ChatStateSlice) =>
 export function selectCurrentProfileSelection(
   state: ChatStateSlice,
   scopeKey?: string
-): { profile: string | undefined; registry: string | undefined } {
+): { profile: string | undefined } {
   const profiles = getChatProfiles(state);
   const normalizedScope = String(scopeKey ?? '').trim();
   if (normalizedScope) {
@@ -254,14 +252,13 @@ export function selectCurrentProfileSelection(
     if (scoped) {
       return {
         profile: scoped.profile ?? undefined,
-        registry: scoped.registry ?? undefined,
       };
     }
-  }
-  const profile = profiles.selectedProfile ?? undefined;
-  const registry = profiles.selectedRegistry ?? undefined;
-  if (profile === undefined && registry === undefined) {
     return EMPTY_PROFILE_SELECTION;
   }
-  return { profile, registry };
+  const profile = profiles.selectedProfile ?? undefined;
+  if (profile === undefined) {
+    return EMPTY_PROFILE_SELECTION;
+  }
+  return { profile };
 }
