@@ -140,3 +140,49 @@ npm run storybook:check
 ### Next task
 
 Continue with `MacCalendar`.
+
+## 2026-03-06 — Task 3 (`MacCalendar`)
+
+### Goal
+
+Migrate the calendar widget into `app_rw_mac_calendar`, preserve standalone usage, and add seeded Storybook scenarios for the states that were previously trapped in local `useState`.
+
+### Files changed
+
+- `packages/rich-widgets/src/calendar/macCalendarState.ts`
+- `packages/rich-widgets/src/calendar/macCalendarState.test.ts`
+- `packages/rich-widgets/src/calendar/MacCalendar.tsx`
+- `packages/rich-widgets/src/calendar/MacCalendar.stories.tsx`
+- `packages/rich-widgets/src/launcher/modules.tsx`
+- `packages/rich-widgets/src/index.ts`
+
+### Implementation notes
+
+1. Added `app_rw_mac_calendar` with serialized event timestamps and persisted view/current-date/editor/palette state.
+2. Kept the modal form draft local inside `EventModal`, but moved the editor-open state into Redux by storing either:
+   - `editingEventId` for existing events, or
+   - `draftDateMs` for new-event creation.
+3. Preserved the package-export pattern used by the earlier migrations:
+   - connected path when the slice is registered,
+   - standalone local reducer fallback otherwise.
+4. Added seeded calendar stories for:
+   - modal open on an existing event,
+   - command palette open,
+   - a new-event draft opened on a seeded week/time slot.
+
+### Commands run
+
+```bash
+npm run test -w packages/rich-widgets
+npm run storybook:check
+```
+
+### Results
+
+- `npm run test -w packages/rich-widgets` ✅
+- `npm run storybook:check` ✅
+- `remarquee upload bundle ... --force` ✅ refreshed `/ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT`
+
+### Next task
+
+Continue with `KanbanBoard`.

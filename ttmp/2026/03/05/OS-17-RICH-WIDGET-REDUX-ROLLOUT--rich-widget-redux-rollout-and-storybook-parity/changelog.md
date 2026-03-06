@@ -8,3 +8,5 @@
 - Updated the OS-07 and OS-16 cleanup/migration guides with rollout lessons from `LogViewer` and `MacCalc`
 - Completed Task 2: migrated `MacCalc` to a dedicated Redux slice, added reducer tests, and added store-seeded Storybook scenarios
 - Refreshed the OS-17 reMarkable bundle after Task 2
+- Completed Task 3: migrated `MacCalendar` to a dedicated Redux slice, added reducer tests, and added store-seeded Storybook scenarios
+- Refreshed the OS-17 reMarkable bundle after Task 3
