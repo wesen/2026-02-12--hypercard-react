@@ -9,3 +9,4 @@
 - [x] Task 5 — Decide state ownership, add Redux only if justified, and wire exports/launcher integration
 - [x] Task 6 — Replace the ad hoc markdown list/paragraph renderer with a cleaner line-based implementation and expand tests
 - [x] Task 7 — Split `MacSlides` into smaller view pieces, define proper empty-deck UI, and verify the stories with Playwright MCP
+- [x] Task 8 — Extract `MacSlides` helpers/sections/hotkeys into dedicated files and remove the last inline visual override

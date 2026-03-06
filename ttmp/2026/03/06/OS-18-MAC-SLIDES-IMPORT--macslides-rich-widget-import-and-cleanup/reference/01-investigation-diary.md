@@ -149,6 +149,96 @@ npm run storybook:check
 - `npm run test -w packages/rich-widgets` ✅
 - `npm run storybook:check` ✅
 
+## 2026-03-06 — Task 8 publication refresh
+
+### Goal
+
+Refresh the ticket publication after the final modularization pass so the reMarkable bundle reflects the latest code structure.
+
+### Commands run
+
+```bash
+docmgr doctor --ticket OS-18-MAC-SLIDES-IMPORT --stale-after 30
+remarquee upload bundle \
+  .../index.md \
+  .../design/01-macslides-import-plan.md \
+  .../tasks.md \
+  .../changelog.md \
+  .../reference/01-investigation-diary.md \
+  --name "OS-18-MAC-SLIDES-IMPORT-2026-03-06-task8" \
+  --remote-dir "/ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT" \
+  --toc-depth 2 --non-interactive
+remarquee cloud ls /ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT --long --non-interactive
+```
+
+### Results
+
+- `docmgr doctor --ticket OS-18-MAC-SLIDES-IMPORT --stale-after 30` ✅
+- Updated bundle upload ✅
+- Remote listing now shows:
+  - `/ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT/OS-18-MAC-SLIDES-IMPORT-2026-03-06`
+  - `/ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT/OS-18-MAC-SLIDES-IMPORT-2026-03-06-task6`
+  - `/ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT/OS-18-MAC-SLIDES-IMPORT-2026-03-06-task7`
+  - `/ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT/OS-18-MAC-SLIDES-IMPORT-2026-03-06-task8`
+
+## 2026-03-06 — Task 8 final modularization pass
+
+### Goal
+
+Take one more cleanup pass so the widget no longer keeps medium-size helper/component logic bundled inside `MacSlidesView.tsx`.
+
+### Files changed
+
+- `packages/rich-widgets/src/mac-slides/MacSlidesView.tsx`
+- `packages/rich-widgets/src/mac-slides/MacSlidesSections.tsx`
+- `packages/rich-widgets/src/mac-slides/helpers.ts`
+- `packages/rich-widgets/src/mac-slides/useMacSlidesHotkeys.ts`
+- `packages/rich-widgets/src/parts.ts`
+- `packages/rich-widgets/src/theme/mac-slides.css`
+
+### What changed
+
+1. Extracted helper logic into `helpers.ts`:
+   - alignment cycling,
+   - current-slide alignment rewriting.
+2. Extracted presentational subcomponents into `MacSlidesSections.tsx`:
+   - `PresentationOverlay`
+   - `SlideSidebar`
+   - `EditorPane`
+   - `PreviewPane`
+3. Extracted keyboard behavior into `useMacSlidesHotkeys.ts`.
+4. Reduced `MacSlidesView.tsx` from a monolith to a coordinating view/controller.
+5. Added `msPaletteButton` styling in CSS and removed the last inline visual override from the toolbar button.
+
+### Outcome
+
+- `MacSlidesView.tsx` dropped to a much smaller coordinating component.
+- The widget is now split across clearer domains:
+  - wrapper,
+  - state,
+  - markdown,
+  - helpers,
+  - sections,
+  - hotkeys,
+  - stories,
+  - theme.
+
+### Live verification
+
+Rechecked the empty-deck story in Storybook via Playwright MCP after the split. The widget still loads and the empty-state layout remains intact.
+
+### Commands run
+
+```bash
+npm run test -w packages/rich-widgets
+npm run storybook:check
+```
+
+### Results
+
+- `npm run test -w packages/rich-widgets` ✅
+- `npm run storybook:check` ✅
+
 ## 2026-03-06 — Task 6 publication refresh
 
 ### Goal
