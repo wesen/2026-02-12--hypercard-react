@@ -1,7 +1,7 @@
 ---
 Title: MermaidEditor rich widget import and cleanup
 Ticket: OS-19-MERMAID-EDITOR-IMPORT
-Status: active
+Status: complete
 Topics:
   - frontend
   - widgets
@@ -11,8 +11,7 @@ Topics:
 DocType: index
 Intent: long-term
 Owners: []
-RelatedFiles:
-  - imports/mermaid-editor.jsx
+RelatedFiles: []
 ExternalSources: []
 Summary: ""
 LastUpdated: 2026-03-06T14:30:00-05:00
