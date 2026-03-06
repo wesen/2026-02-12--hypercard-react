@@ -75,17 +75,24 @@ The cleanup/import plan is to rebuild the useful content as a proper rich widget
 
 ### Phase 5 — State decision and launcher wiring
 
-- decide whether to keep state local first or introduce a Redux slice;
+- introduce a Redux slice for deck/session state and keep DOM-only concerns local;
 - export from `packages/rich-widgets/src/index.ts`;
 - add launcher registration in `packages/rich-widgets/src/launcher/modules.tsx` if the widget is ready for desktop launch.
 
 ## State direction
 
-Initial expectation:
+Final direction:
 
-- keep editor text selection, modal-local form state, and fullscreen DOM effects local;
-- use props or sample data first;
-- add Redux only if slideshow/editor/session states need deterministic seeded stories beyond props.
+- store these widget-session fields in Redux:
+  - markdown deck content,
+  - current slide index,
+  - command palette visibility,
+  - presentation visibility;
+- keep DOM-only concerns local:
+  - textarea ref/cursor handling,
+  - presentation overlay key handlers,
+  - transient browser focus behavior;
+- retain prop-based seeding as the standalone fallback path, but use the Redux slice for launcher-backed and Storybook-seeded scenarios.
 
 ## First task
 

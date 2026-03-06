@@ -258,3 +258,114 @@ npm run storybook:check
 ### Next task
 
 Task 5: decide the state boundary, add the Redux-backed path if warranted, and wire package exports plus launcher integration.
+
+## 2026-03-06 — Task 5 Redux boundary and launcher wiring
+
+### Goal
+
+Finish the import by deciding the durable state boundary, wiring the widget into the rich-widgets package surface, and making it launchable from the desktop module list.
+
+### Files changed
+
+- `packages/rich-widgets/src/mac-slides/macSlidesState.ts`
+- `packages/rich-widgets/src/mac-slides/macSlidesState.test.ts`
+- `packages/rich-widgets/src/mac-slides/MacSlides.tsx`
+- `packages/rich-widgets/src/mac-slides/MacSlides.stories.tsx`
+- `packages/rich-widgets/src/index.ts`
+- `packages/rich-widgets/src/launcher/modules.tsx`
+- `ttmp/2026/03/06/OS-18-MAC-SLIDES-IMPORT--macslides-rich-widget-import-and-cleanup/design/01-macslides-import-plan.md`
+
+### State decision
+
+I decided the widget does justify a Redux slice.
+
+Why:
+
+- the deck text and current slide are real widget-session state, not purely local rendering details;
+- palette/presentation visibility are part of the behavior we want Storybook and launcher-backed windows to reproduce deterministically;
+- the repo’s current cleanup direction is to move meaningful widget state into Redux where it improves seeded scenarios and desktop integration.
+
+What stays local:
+
+- textarea refs and cursor manipulation,
+- DOM event handlers inside presentation mode,
+- transient browser focus mechanics.
+
+### What changed
+
+1. Added `macSlidesState.ts` with a dedicated `app_rw_mac_slides` slice for:
+   - markdown content,
+   - current slide,
+   - palette-open state,
+   - presentation-open state.
+2. Added reducer tests covering seed normalization and state replacement/update behavior.
+3. Reworked `MacSlides.tsx` into the same connected/standalone pattern used by other migrated widgets:
+   - Redux-backed path when the slice is registered,
+   - local reducer fallback when used standalone.
+4. Updated the Storybook stories so stateful scenarios can use the seeded store helper instead of only prop seeding.
+5. Exported the widget and slice helpers from `packages/rich-widgets/src/index.ts`.
+6. Registered the widget in `packages/rich-widgets/src/launcher/modules.tsx` so it can launch as a desktop rich widget.
+7. Updated the implementation plan doc to record the final state-boundary decision instead of the earlier tentative note.
+
+### Commands run
+
+```bash
+npm run test -w packages/rich-widgets
+npm run storybook:check
+npm run typecheck -w packages/rich-widgets
+```
+
+### Results
+
+- `npm run test -w packages/rich-widgets` ✅
+- `npm run storybook:check` ✅
+- `npm run typecheck -w packages/rich-widgets` ⚠️ fails on the pre-existing `packages/rich-widgets` project `rootDir` / file-list configuration and unrelated baseline errors in `packages/engine` and `src/oscilloscope`, not on `MacSlides`
+
+### Ticket status
+
+- All planned import tasks are now complete.
+
+## 2026-03-06 — Ticket validation and reMarkable upload
+
+### Goal
+
+Close the ticket cleanly by verifying doc hygiene and publishing the finished bundle for offline review.
+
+### Commands run
+
+```bash
+docmgr doctor --ticket OS-18-MAC-SLIDES-IMPORT --stale-after 30
+remarquee status
+remarquee upload bundle \
+  .../index.md \
+  .../design/01-macslides-import-plan.md \
+  .../tasks.md \
+  .../changelog.md \
+  .../reference/01-investigation-diary.md \
+  --name "OS-18-MAC-SLIDES-IMPORT-2026-03-06" \
+  --remote-dir "/ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT" \
+  --toc-depth 2 --dry-run --non-interactive
+remarquee upload bundle \
+  .../index.md \
+  .../design/01-macslides-import-plan.md \
+  .../tasks.md \
+  .../changelog.md \
+  .../reference/01-investigation-diary.md \
+  --name "OS-18-MAC-SLIDES-IMPORT-2026-03-06" \
+  --remote-dir "/ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT" \
+  --toc-depth 2 --non-interactive
+remarquee cloud ls /ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT --long --non-interactive
+```
+
+### Results
+
+- `docmgr doctor --ticket OS-18-MAC-SLIDES-IMPORT --stale-after 30` ✅
+- `remarquee status` ✅
+- Bundle upload dry-run ✅
+- Bundle upload ✅
+- Remote listing verified:
+  - `/ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT/OS-18-MAC-SLIDES-IMPORT-2026-03-06`
+
+### Notes
+
+- The first cloud-list attempt raced the upload and returned `Error: entry '06' doesnt exist`; rerunning after the upload completed succeeded.
