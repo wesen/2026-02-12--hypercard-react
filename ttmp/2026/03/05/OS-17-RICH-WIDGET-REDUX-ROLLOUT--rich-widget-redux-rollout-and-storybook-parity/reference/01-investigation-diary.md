@@ -186,3 +186,88 @@ npm run storybook:check
 ### Next task
 
 Continue with `KanbanBoard`.
+
+## 2026-03-06 — Task 4 (`KanbanBoard`)
+
+### Goal
+
+Move `KanbanBoard` into `app_rw_kanban`, preserve the standalone fallback path, and convert the Storybook coverage from prop-only setup to store-seeded workflow scenarios.
+
+### Files changed
+
+- `packages/rich-widgets/src/kanban/kanbanState.ts`
+- `packages/rich-widgets/src/kanban/kanbanState.test.ts`
+- `packages/rich-widgets/src/kanban/KanbanBoard.tsx`
+- `packages/rich-widgets/src/kanban/KanbanBoard.stories.tsx`
+- `packages/rich-widgets/src/launcher/modules.tsx`
+- `packages/rich-widgets/src/index.ts`
+
+### Implementation notes
+
+1. Added `app_rw_kanban` with a serializable RTK slice for:
+   - `tasks`
+   - `columns`
+   - `editingTask`
+   - tag/priority/search filters
+   - `collapsedCols`
+2. Kept the drag-over column hint local because it is purely transient pointer state and does not need Redux persistence or story seeding.
+3. Reworked `KanbanBoard` into the same export pattern used by the earlier rollout tasks:
+   - standalone `useReducer` fallback when no slice is registered
+   - connected Redux path when `app_rw_kanban` is present in the store
+4. Replaced the old ad hoc local reducer actions with slice actions:
+   - `upsertTask`
+   - `deleteTask`
+   - `moveTask`
+   - `setEditingTask`
+   - `setFilterTag`
+   - `setFilterPriority`
+   - `setSearchQuery`
+   - `clearFilters`
+   - `toggleCollapsed`
+5. Converted the Storybook scenarios to seeded store-backed stories and added workflow-specific seeds for:
+   - edit modal open on an existing task
+   - urgent filtered/search state
+   - collapsed workflow lanes with a priority filter
+6. Wired launcher registration and public package exports to the new state key.
+
+### Commands run
+
+```bash
+npm run test -w packages/rich-widgets
+npm run storybook:check
+```
+
+### Results
+
+- `npm run test -w packages/rich-widgets` ✅
+- `npm run storybook:check` ✅
+- Live Storybook verification on port `6006` ✅ for:
+  - `richwidgets-kanbanboard--redux-editing-existing-task`
+  - `richwidgets-kanbanboard--redux-collapsed-workflow`
+- Playwright MCP only showed the existing Storybook/MSW asset warnings; no Kanban-specific runtime errors surfaced.
+
+### Next task
+
+Continue with `DeepResearch`.
+
+### Publication refresh
+
+```bash
+docmgr doctor --ticket OS-17-RICH-WIDGET-REDUX-ROLLOUT --stale-after 30
+remarquee upload bundle \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/index.md \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/design/01-redux-rollout-backlog-and-sequencing.md \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/tasks.md \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/changelog.md \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/reference/01-investigation-diary.md \
+  --name "OS-17-RICH-WIDGET-REDUX-ROLLOUT-2026-03-06-task4" \
+  --remote-dir "/ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT" \
+  --toc-depth 2 --non-interactive
+remarquee cloud ls /ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT --long --non-interactive
+```
+
+- `docmgr doctor --ticket OS-17-RICH-WIDGET-REDUX-ROLLOUT --stale-after 30` ✅
+- Updated bundle upload ✅
+- Remote listing now shows:
+  - `/ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT/OS-17-RICH-WIDGET-REDUX-ROLLOUT`
+  - `/ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT/OS-17-RICH-WIDGET-REDUX-ROLLOUT-2026-03-06-task4`

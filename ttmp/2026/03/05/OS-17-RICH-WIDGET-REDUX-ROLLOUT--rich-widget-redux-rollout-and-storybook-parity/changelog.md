@@ -10,3 +10,6 @@
 - Refreshed the OS-17 reMarkable bundle after Task 2
 - Completed Task 3: migrated `MacCalendar` to a dedicated Redux slice, added reducer tests, and added store-seeded Storybook scenarios
 - Refreshed the OS-17 reMarkable bundle after Task 3
+- Completed Task 4: migrated `KanbanBoard` to a dedicated Redux slice, added reducer tests, launcher wiring, and Redux-seeded workflow stories
+- Re-ran `docmgr doctor --ticket OS-17-RICH-WIDGET-REDUX-ROLLOUT --stale-after 30` after Task 4 with all checks passing
+- Uploaded the refreshed OS-17 bundle to reMarkable at `/ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT` as `OS-17-RICH-WIDGET-REDUX-ROLLOUT-2026-03-06-task4`
