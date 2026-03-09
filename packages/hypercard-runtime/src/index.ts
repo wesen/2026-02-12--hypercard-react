@@ -4,4 +4,4 @@ export * from './features/pluginCardRuntime';
 export * from './hypercard';
 export { PluginCardRenderer, type PluginCardRendererProps } from './runtime-host/PluginCardRenderer';
 export { PluginCardSessionHost, type PluginCardSessionHostProps } from './runtime-host/PluginCardSessionHost';
-export { dispatchRuntimeIntent } from './runtime-host/pluginIntentRouting';
+export { dispatchRuntimeAction } from './runtime-host/pluginIntentRouting';

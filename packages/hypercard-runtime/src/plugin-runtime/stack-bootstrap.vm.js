@@ -82,7 +82,7 @@ const __ui = {
 };
 
 let __stackBundle = null;
-let __runtimeIntents = [];
+let __runtimeActions = [];
 
 function defineStackBundle(factory) {
   if (typeof factory !== 'function') {
@@ -195,16 +195,16 @@ globalThis.__stackHost = {
     };
   },
 
-  render(cardId, cardState, sessionState, globalState) {
+  render(cardId, state) {
     const card = __stackBundle?.cards?.[cardId];
     if (!card || typeof card.render !== 'function') {
       throw new Error('Card not found or render() is missing: ' + String(cardId));
     }
 
-    return card.render({ cardState, sessionState, globalState });
+    return card.render({ state });
   },
 
-  event(cardId, handlerName, args, cardState, sessionState, globalState) {
+  event(cardId, handlerName, args, state) {
     const card = __stackBundle?.cards?.[cardId];
     if (!card) {
       throw new Error('Card not found: ' + String(cardId));
@@ -215,55 +215,21 @@ globalThis.__stackHost = {
       throw new Error('Handler not found: ' + String(handlerName));
     }
 
-    __runtimeIntents = [];
+    __runtimeActions = [];
 
-    const dispatchCardAction = (actionType, payload) => {
-      __runtimeIntents.push({
-        scope: 'card',
-        actionType: String(actionType),
-        payload,
-      });
-    };
-
-    const dispatchSessionAction = (actionType, payload) => {
-      __runtimeIntents.push({
-        scope: 'session',
-        actionType: String(actionType),
-        payload,
-      });
-    };
-
-    const dispatchDomainAction = (domain, actionType, payload) => {
-      __runtimeIntents.push({
-        scope: 'domain',
-        domain: String(domain),
-        actionType: String(actionType),
-        payload,
-      });
-    };
-
-    const dispatchSystemCommand = (command, payload) => {
-      __runtimeIntents.push({
-        scope: 'system',
-        command: String(command),
-        payload,
-      });
+    const dispatch = (action) => {
+      __runtimeActions.push(action);
     };
 
     handler(
       {
-        cardState,
-        sessionState,
-        globalState,
-        dispatchCardAction,
-        dispatchSessionAction,
-        dispatchDomainAction,
-        dispatchSystemCommand,
+        state,
+        dispatch,
       },
       args
     );
 
-    return __runtimeIntents.slice();
+    return __runtimeActions.slice();
   },
 
   defineCard(cardId, definitionOrFactory) {

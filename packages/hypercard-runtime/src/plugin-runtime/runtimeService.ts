@@ -1,12 +1,12 @@
 import SINGLEFILE_RELEASE_SYNC from '@jitl/quickjs-singlefile-mjs-release-sync';
 import { newQuickJSWASMModule } from 'quickjs-emscripten';
 import type { QuickJSContext, QuickJSRuntime, QuickJSWASMModule } from 'quickjs-emscripten-core';
-import { validateRuntimeIntents } from './intentSchema';
+import { validateRuntimeActions } from './intentSchema';
 import type {
   CardId,
   LoadedStackBundle,
   RuntimeErrorPayload,
-  RuntimeIntent,
+  RuntimeAction,
   SessionId,
   StackId,
 } from './contracts';
@@ -253,16 +253,12 @@ export class QuickJSCardRuntimeService {
   renderCard(
     sessionId: SessionId,
     cardId: CardId,
-    cardState: unknown,
-    sessionState: unknown,
-    globalState: unknown
+    state: unknown
   ) {
     const vm = this.getVmOrThrow(sessionId);
     const tree = evalToNative<unknown>(
       vm,
-      `globalThis.__stackHost.render(${toJsLiteral(cardId)}, ${toJsLiteral(cardState)}, ${toJsLiteral(
-        sessionState
-      )}, ${toJsLiteral(globalState)})`,
+      `globalThis.__stackHost.render(${toJsLiteral(cardId)}, ${toJsLiteral(state)})`,
       `${sessionId}.render.js`,
       this.options.renderTimeoutMs
     );
@@ -275,21 +271,19 @@ export class QuickJSCardRuntimeService {
     cardId: CardId,
     handler: string,
     args: unknown,
-    cardState: unknown,
-    sessionState: unknown,
-    globalState: unknown
-  ): RuntimeIntent[] {
+    state: unknown
+  ): RuntimeAction[] {
     const vm = this.getVmOrThrow(sessionId);
-    const intents = evalToNative<unknown>(
+    const actions = evalToNative<unknown>(
       vm,
       `globalThis.__stackHost.event(${toJsLiteral(cardId)}, ${toJsLiteral(handler)}, ${toJsLiteral(
         args
-      )}, ${toJsLiteral(cardState)}, ${toJsLiteral(sessionState)}, ${toJsLiteral(globalState)})`,
+      )}, ${toJsLiteral(state)})`,
       `${sessionId}.event.js`,
       this.options.eventTimeoutMs
     );
 
-    return validateRuntimeIntents(intents);
+    return validateRuntimeActions(actions);
   }
 
   disposeSession(sessionId: SessionId): boolean {
