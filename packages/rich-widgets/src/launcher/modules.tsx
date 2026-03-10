@@ -33,6 +33,7 @@ import {
   KANBAN_STATE_KEY,
   kanbanReducer,
 } from '../kanban/kanbanState';
+import { KANBAN_EXAMPLE_BOARDS } from '../kanban/exampleBoards';
 import { MacRepl } from '../repl/MacRepl';
 import {
   MAC_REPL_STATE_KEY,
@@ -147,6 +148,15 @@ export const RICH_WIDGETS: readonly RichWidgetDef[] = [
   { id: 'chart-view', name: 'Chart View', icon: '\uD83D\uDCC8', order: 101, w: 800, h: 560, render: () => <ChartView /> },
   { id: 'mac-write', name: 'MacWrite', icon: '\u270D\uFE0F', order: 102, w: 800, h: 620, render: () => <MacWrite /> },
   { id: 'kanban-board', name: 'Kanban Board', icon: '\uD83D\uDCCB', order: 103, w: 960, h: 640, render: () => <KanbanBoard /> },
+  ...KANBAN_EXAMPLE_BOARDS.map((board, index) => ({
+    id: board.id,
+    name: board.name,
+    icon: board.icon,
+    order: 103.1 + (index / 10),
+    w: 960,
+    h: 640,
+    render: () => <KanbanBoard {...board.props} />,
+  })),
   { id: 'mac-repl', name: 'MacRepl', icon: '\uD83D\uDCBB', order: 104, w: 720, h: 480, render: () => <MacRepl /> },
   { id: 'node-editor', name: 'Node Editor', icon: '\uD83D\uDD17', order: 105, w: 900, h: 600, render: () => <NodeEditor /> },
   { id: 'oscilloscope', name: 'Oscilloscope', icon: '\uD83D\uDCDF', order: 106, w: 800, h: 560, render: () => <Oscilloscope /> },
@@ -241,7 +251,7 @@ function RichWidgetsFolderWindow({
       <header data-part={RICH_PARTS.rwLauncherHeader}>
         <strong>Rich Widgets</strong>
         <span data-part={RICH_PARTS.rwLauncherHint}>
-          Double-click an icon to open the widget in its own launcher window.
+          Double-click an icon to open the widget in its own launcher window. Concrete Kanban boards are grouped with the Kanban prefix.
         </span>
       </header>
       <DesktopIconLayer

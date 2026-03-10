@@ -10,6 +10,7 @@ import {
   kanbanActions,
   kanbanReducer,
 } from './kanbanState';
+import { KANBAN_EXAMPLE_BOARDS } from './exampleBoards';
 import '@hypercard/rich-widgets/theme';
 
 const meta: Meta<typeof KanbanBoard> = {
@@ -160,5 +161,20 @@ export const ReduxCollapsedWorkflow: Story = {
     },
     filterPriority: 'high',
   }),
+  decorators: [fullscreenDecorator],
+};
+
+export const SprintBoard: Story = {
+  render: renderSeededStory(KANBAN_EXAMPLE_BOARDS[0].props),
+  decorators: [fullscreenDecorator],
+};
+
+export const BugTriageBoard: Story = {
+  render: renderSeededStory(KANBAN_EXAMPLE_BOARDS[1].props),
+  decorators: [fullscreenDecorator],
+};
+
+export const PersonalPlannerBoard: Story = {
+  render: renderSeededStory(KANBAN_EXAMPLE_BOARDS[2].props),
   decorators: [fullscreenDecorator],
 };
