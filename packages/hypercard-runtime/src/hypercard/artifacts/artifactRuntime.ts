@@ -10,6 +10,7 @@ export interface ArtifactUpsert {
   source: ArtifactSource;
   runtimeCardId?: string;
   runtimeCardCode?: string;
+  packId?: string;
 }
 
 export function normalizeArtifactId(raw: unknown): string | undefined {
@@ -53,15 +54,20 @@ function artifactFromStructured(record: Record<string, unknown>): ArtifactUpsert
 function cardFieldsFromStructured(record: Record<string, unknown>): {
   runtimeCardId?: string;
   runtimeCardCode?: string;
+  packId?: string;
 } {
   const payload = recordField(record, 'data');
   const card = payload ? recordField(payload, 'card') : undefined;
+  const runtime = recordField(record, 'runtime');
   if (!card) {
-    return {};
+    return {
+      packId: runtime ? stringField(runtime, 'pack') : undefined,
+    };
   }
   return {
     runtimeCardId: stringField(card, 'id'),
     runtimeCardCode: stringField(card, 'code'),
+    packId: runtime ? stringField(runtime, 'pack') : undefined,
   };
 }
 

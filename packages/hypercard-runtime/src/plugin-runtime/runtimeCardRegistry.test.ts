@@ -16,18 +16,20 @@ beforeEach(() => {
 
 describe('runtimeCardRegistry', () => {
   it('registers and retrieves runtime cards', () => {
-    registerRuntimeCard('lowStock', '({ ui }) => ({ render() { return ui.text("hi"); } })');
+    registerRuntimeCard('lowStock', '({ ui }) => ({ render() { return ui.text("hi"); } })', 'kanban.v1');
     expect(hasRuntimeCard('lowStock')).toBe(true);
     expect(getPendingRuntimeCards()).toHaveLength(1);
     expect(getPendingRuntimeCards()[0].cardId).toBe('lowStock');
     expect(getPendingRuntimeCards()[0].code).toContain('ui.text');
+    expect(getPendingRuntimeCards()[0].packId).toBe('kanban.v1');
   });
 
   it('overwrites existing card with same id', () => {
-    registerRuntimeCard('lowStock', 'v1');
-    registerRuntimeCard('lowStock', 'v2');
+    registerRuntimeCard('lowStock', 'v1', 'ui.card.v1');
+    registerRuntimeCard('lowStock', 'v2', 'kanban.v1');
     expect(getPendingRuntimeCards()).toHaveLength(1);
     expect(getPendingRuntimeCards()[0].code).toBe('v2');
+    expect(getPendingRuntimeCards()[0].packId).toBe('kanban.v1');
   });
 
   it('unregisters cards', () => {

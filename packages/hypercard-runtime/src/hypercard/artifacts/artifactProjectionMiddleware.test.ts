@@ -35,6 +35,9 @@ describe('artifactProjectionMiddleware', () => {
         props: {
           result: {
             title: 'Low Stock Card',
+            runtime: {
+              pack: 'kanban.v1',
+            },
             data: {
               artifact: {
                 id: 'low-stock-drilldown',
@@ -56,6 +59,7 @@ describe('artifactProjectionMiddleware', () => {
     const artifact = store.getState().hypercardArtifacts.byId['low-stock-drilldown'];
     expect(artifact).toBeDefined();
     expect(artifact.runtimeCardId).toBe('runtime-low-stock');
+    expect(artifact.packId).toBe('kanban.v1');
     expect(artifact.injectionStatus).toBe('pending');
     expect(hasRuntimeCard('runtime-low-stock')).toBe(true);
   });
@@ -70,6 +74,9 @@ describe('artifactProjectionMiddleware', () => {
         props: {
           result: {
             title: 'Current Inventory Status',
+            runtime: {
+              pack: 'ui.card.v1',
+            },
             data: {
               artifact: {
                 id: 'inventory-status-current',
@@ -93,5 +100,6 @@ describe('artifactProjectionMiddleware', () => {
     expect(artifact.title).toBe('Current Inventory Status');
     expect(artifact.source).toBe('card');
     expect(artifact.runtimeCardId).toBe('runtimeInventoryStatus');
+    expect(artifact.packId).toBe('ui.card.v1');
   });
 });

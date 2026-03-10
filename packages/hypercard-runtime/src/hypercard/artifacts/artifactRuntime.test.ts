@@ -50,6 +50,9 @@ describe('artifactRuntime', () => {
     const card = extractArtifactUpsertFromSem('hypercard.card.v2', {
       title: 'Low Stock Drilldown',
       name: 'Low Stock Items',
+      runtime: {
+        pack: 'kanban.v1',
+      },
       data: {
         artifact: {
           id: 'low-stock-drilldown',
@@ -68,6 +71,7 @@ describe('artifactRuntime', () => {
       source: 'card',
       runtimeCardId: 'lowStockDrilldown',
       runtimeCardCode: '({ ui }) => ({ render() { return ui.text("hi"); } })',
+      packId: 'kanban.v1',
     });
   });
 
@@ -100,6 +104,9 @@ describe('artifactRuntime', () => {
         props: {
           result: {
             title: 'Low Stock Drilldown',
+            runtime: {
+              pack: 'ui.card.v1',
+            },
             data: {
               artifact: {
                 id: 'low-stock-drilldown',
@@ -120,6 +127,7 @@ describe('artifactRuntime', () => {
       title: 'Low Stock Drilldown',
       source: 'card',
       runtimeCardId: 'runtime-low-stock',
+      packId: 'ui.card.v1',
     });
   });
 
@@ -127,6 +135,9 @@ describe('artifactRuntime', () => {
     const upsert = extractArtifactUpsertFromTimelineEntity('hypercard.card.v2', {
       result: {
         title: 'Inventory Snapshot',
+        runtime: {
+          pack: 'ui.card.v1',
+        },
         data: {
           artifact: {
             id: 'inventory-snapshot-1',
@@ -145,6 +156,7 @@ describe('artifactRuntime', () => {
       source: 'card',
       data: { totalSkus: 12 },
       runtimeCardId: 'runtimeInventorySnapshot',
+      packId: 'ui.card.v1',
     });
   });
 
