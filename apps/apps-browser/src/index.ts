@@ -7,6 +7,13 @@ export {
   useLazyGetModuleDocQuery,
 } from './api/appsApi';
 export { docsRegistry, DocsRegistry } from './domain/docsRegistry';
+export {
+  createHelpDocsMount,
+  createModuleDocsMount,
+  createVmmetaCardDocsMount,
+  createVmmetaPackDocsMount,
+  registerDefaultDocsMounts,
+} from './domain/docsMountAdapters';
 // Components
 export { AppIcon } from './components/AppIcon';
 export { AppsFolderWindow } from './components/AppsFolderWindow';

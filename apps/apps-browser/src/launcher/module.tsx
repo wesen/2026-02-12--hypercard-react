@@ -10,6 +10,8 @@ import type {
 import { type ReactNode, useRef } from 'react';
 import { Provider } from 'react-redux';
 import { createAppsBrowserStore } from '../app/store';
+import { docsRegistry } from '../domain/docsRegistry';
+import { registerDefaultDocsMounts } from '../domain/docsMountAdapters';
 import { AppsFolderWindow } from '../components/AppsFolderWindow';
 import { DocBrowserWindow } from '../components/doc-browser/DocBrowserWindow';
 import type { DocBrowserMode } from '../components/doc-browser/DocBrowserContext';
@@ -36,6 +38,7 @@ const DOC_ROUTE_MODULE = 'module';
 const DOC_ROUTE_DOC = 'doc';
 const DOC_MODE_APPS = 'apps';
 const DOC_MODE_HELP = 'help';
+const docsBootstrapByRegistry = new WeakSet<object>();
 
 function buildFolderWindowPayload(reason: LaunchReason): OpenWindowPayload {
   return {
@@ -390,6 +393,12 @@ function createAppsBrowserCommandHandler(hostContext: LauncherHostContext): Desk
 
 function AppsBrowserHost({ children }: { children: ReactNode }) {
   const storeRef = useRef<ReturnType<typeof createAppsBrowserStore> | null>(null);
+  if (!docsBootstrapByRegistry.has(docsRegistry)) {
+    docsBootstrapByRegistry.add(docsRegistry);
+    void registerDefaultDocsMounts((mount) => {
+      docsRegistry.register(mount);
+    });
+  }
   if (!storeRef.current) {
     storeRef.current = createAppsBrowserStore();
   }
