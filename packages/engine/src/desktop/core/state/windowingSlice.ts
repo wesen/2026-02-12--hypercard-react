@@ -145,6 +145,10 @@ const windowingSlice = createSlice({
       if (action.payload.minH !== undefined) {
         win.minH = Math.max(win.baseMinH, action.payload.minH);
       }
+
+      // Clamp bounds so a window never stays smaller than the new minimum
+      win.bounds.w = Math.max(win.minW, win.bounds.w);
+      win.bounds.h = Math.max(win.minH, win.bounds.h);
     },
 
     // ── Desktop UI state ──

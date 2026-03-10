@@ -1,11 +1,22 @@
 // @vitest-environment jsdom
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { type ContentMinSize, useContentMinSize } from './useContentMinSize';
 
 // jsdom does not perform real layout, so scrollWidth/scrollHeight are always 0.
 // We test the hook's callback mechanics and dedup logic using mocked scrollWidth.
+
+// Polyfill ResizeObserver for jsdom
+beforeAll(() => {
+  if (typeof globalThis.ResizeObserver === 'undefined') {
+    globalThis.ResizeObserver = class ResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    } as unknown as typeof globalThis.ResizeObserver;
+  }
+});
 
 const roots: Root[] = [];
 const containers: HTMLElement[] = [];

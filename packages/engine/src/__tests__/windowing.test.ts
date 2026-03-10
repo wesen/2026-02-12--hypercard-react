@@ -409,6 +409,38 @@ describe('windowingReducer', () => {
       expect(state.windows.w1.minH).toBe(300);
     });
 
+    it('clamps bounds.w up when minW exceeds current width', () => {
+      // Window opens at w=300, then content measures minW=354
+      const state = reduce(
+        openWindow(cardWindow('w1', 'browse')),
+        updateWindowMinSize({ id: 'w1', minW: 354 }),
+      );
+
+      expect(state.windows.w1.minW).toBe(354);
+      expect(state.windows.w1.bounds.w).toBe(354); // clamped up from 300
+    });
+
+    it('clamps bounds.h up when minH exceeds current height', () => {
+      const state = reduce(
+        openWindow(cardWindow('w1', 'browse')),
+        updateWindowMinSize({ id: 'w1', minH: 250 }),
+      );
+
+      expect(state.windows.w1.minH).toBe(250);
+      expect(state.windows.w1.bounds.h).toBe(250); // clamped up from 200
+    });
+
+    it('does not shrink bounds when minimum decreases', () => {
+      const state = reduce(
+        openWindow(cardWindow('w1', 'browse')), // bounds 300x200
+        updateWindowMinSize({ id: 'w1', minW: 400 }), // bounds.w clamped to 400
+        updateWindowMinSize({ id: 'w1', minW: 250 }), // minW drops, bounds.w stays 400
+      );
+
+      expect(state.windows.w1.minW).toBe(250);
+      expect(state.windows.w1.bounds.w).toBe(400); // bounds not shrunk
+    });
+
     it('is a no-op for unknown window id', () => {
       const before = reduce(openWindow(cardWindow('w1', 'browse')));
       const after = windowingReducer(before, updateWindowMinSize({ id: 'nonexistent', minW: 500 }));
