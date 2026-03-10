@@ -13,7 +13,7 @@ import {
 import '@hypercard/rich-widgets/theme';
 
 const meta: Meta<typeof KanbanBoard> = {
-  title: 'RichWidgets/KanbanBoard',
+  title: 'RichWidgets/Kanban/Board',
   component: KanbanBoard,
   parameters: {
     layout: 'fullscreen',

@@ -73,6 +73,9 @@ export { SAMPLE_DOCUMENT } from './mac-write/sampleData';
 
 // KanbanBoard
 export { KanbanBoard, KanbanBoardFrame, type KanbanBoardProps } from './kanban/KanbanBoard';
+export { KanbanBoardView, type KanbanBoardViewProps } from './kanban/KanbanBoardView';
+export { KanbanTaskCard, type KanbanTaskCardProps } from './kanban/KanbanTaskCard';
+export { KanbanTaskModal, type KanbanTaskModalProps } from './kanban/KanbanTaskModal';
 export {
   KANBAN_STATE_KEY,
   createKanbanStateSeed,

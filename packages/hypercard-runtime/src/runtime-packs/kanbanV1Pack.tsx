@@ -1,5 +1,5 @@
-import { KanbanBoardFrame, kanbanActions } from '@hypercard/rich-widgets/kanban-runtime';
-import type { KanbanAction, KanbanState, Column, Priority, TagId, Task } from '@hypercard/rich-widgets/kanban-runtime';
+import { KanbanBoardView } from '@hypercard/rich-widgets/kanban-runtime';
+import type { KanbanState, Column, Priority, TagId, Task } from '@hypercard/rich-widgets/kanban-runtime';
 import type { UIEventRef } from '../plugin-runtime/uiTypes';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -143,8 +143,8 @@ export interface KanbanV1Node {
     onDeleteTask?: UIEventRef;
     onMoveTask?: UIEventRef;
     onSearchChange?: UIEventRef;
-    onToggleTag?: UIEventRef;
-    onTogglePriority?: UIEventRef;
+    onSetFilterTag?: UIEventRef;
+    onSetFilterPriority?: UIEventRef;
     onClearFilters?: UIEventRef;
     onToggleCollapsed?: UIEventRef;
   };
@@ -199,8 +199,8 @@ export function validateKanbanV1Node(value: unknown): KanbanV1Node {
   assertEventRef(props.onDeleteTask, 'root.props.onDeleteTask');
   assertEventRef(props.onMoveTask, 'root.props.onMoveTask');
   assertEventRef(props.onSearchChange, 'root.props.onSearchChange');
-  assertEventRef(props.onToggleTag, 'root.props.onToggleTag');
-  assertEventRef(props.onTogglePriority, 'root.props.onTogglePriority');
+  assertEventRef(props.onSetFilterTag, 'root.props.onSetFilterTag');
+  assertEventRef(props.onSetFilterPriority, 'root.props.onSetFilterPriority');
   assertEventRef(props.onClearFilters, 'root.props.onClearFilters');
   assertEventRef(props.onToggleCollapsed, 'root.props.onToggleCollapsed');
 
@@ -220,8 +220,8 @@ export function validateKanbanV1Node(value: unknown): KanbanV1Node {
       onDeleteTask: props.onDeleteTask as UIEventRef | undefined,
       onMoveTask: props.onMoveTask as UIEventRef | undefined,
       onSearchChange: props.onSearchChange as UIEventRef | undefined,
-      onToggleTag: props.onToggleTag as UIEventRef | undefined,
-      onTogglePriority: props.onTogglePriority as UIEventRef | undefined,
+      onSetFilterTag: props.onSetFilterTag as UIEventRef | undefined,
+      onSetFilterPriority: props.onSetFilterPriority as UIEventRef | undefined,
       onClearFilters: props.onClearFilters as UIEventRef | undefined,
       onToggleCollapsed: props.onToggleCollapsed as UIEventRef | undefined,
     },
@@ -270,43 +270,19 @@ export function KanbanV1Renderer({ tree, onEvent }: KanbanV1RendererProps) {
     collapsedCols: props.collapsedCols,
   };
 
-  const dispatch = (action: KanbanAction) => {
-    switch (action.type) {
-      case kanbanActions.setEditingTask.type:
-        if (action.payload === null) {
-          emitEvent(props.onCloseTaskEditor, onEvent);
-          return;
-        }
-        emitEvent(props.onOpenTaskEditor, onEvent, { task: action.payload as Record<string, unknown> });
-        return;
-      case kanbanActions.upsertTask.type:
-        emitEvent(props.onSaveTask, onEvent, { task: action.payload as unknown as Record<string, unknown> });
-        return;
-      case kanbanActions.deleteTask.type:
-        emitEvent(props.onDeleteTask, onEvent, { id: String(action.payload ?? '') });
-        return;
-      case kanbanActions.moveTask.type:
-        emitEvent(props.onMoveTask, onEvent, action.payload as Record<string, unknown>);
-        return;
-      case kanbanActions.setSearchQuery.type:
-        emitEvent(props.onSearchChange, onEvent, { value: String(action.payload ?? '') });
-        return;
-      case kanbanActions.setFilterTag.type:
-        emitEvent(props.onToggleTag, onEvent, { tag: action.payload });
-        return;
-      case kanbanActions.setFilterPriority.type:
-        emitEvent(props.onTogglePriority, onEvent, { priority: action.payload });
-        return;
-      case kanbanActions.clearFilters.type:
-        emitEvent(props.onClearFilters, onEvent);
-        return;
-      case kanbanActions.toggleCollapsed.type:
-        emitEvent(props.onToggleCollapsed, onEvent, { columnId: String(action.payload ?? '') });
-        return;
-      default:
-        return;
-    }
-  };
-
-  return <KanbanBoardFrame state={state} dispatch={dispatch} />;
+  return (
+    <KanbanBoardView
+      state={state}
+      onOpenTaskEditor={(task) => emitEvent(props.onOpenTaskEditor, onEvent, { task: task as unknown as Record<string, unknown> })}
+      onCloseTaskEditor={() => emitEvent(props.onCloseTaskEditor, onEvent)}
+      onSaveTask={(task) => emitEvent(props.onSaveTask, onEvent, { task: task as unknown as Record<string, unknown> })}
+      onDeleteTask={(id) => emitEvent(props.onDeleteTask, onEvent, { id })}
+      onMoveTask={(payload) => emitEvent(props.onMoveTask, onEvent, payload)}
+      onSearchChange={(value) => emitEvent(props.onSearchChange, onEvent, { value })}
+      onSetFilterTag={(tag) => emitEvent(props.onSetFilterTag, onEvent, { tag })}
+      onSetFilterPriority={(priority) => emitEvent(props.onSetFilterPriority, onEvent, { priority })}
+      onClearFilters={() => emitEvent(props.onClearFilters, onEvent)}
+      onToggleCollapsed={(columnId) => emitEvent(props.onToggleCollapsed, onEvent, { columnId })}
+    />
+  );
 }
