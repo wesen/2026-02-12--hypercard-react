@@ -58,7 +58,7 @@ function cardFieldsFromStructured(record: Record<string, unknown>): {
 } {
   const payload = recordField(record, 'data');
   const card = payload ? recordField(payload, 'card') : undefined;
-  const runtime = recordField(record, 'runtime');
+  const runtime = payload ? recordField(payload, 'runtime') : undefined;
   if (!card) {
     return {
       packId: runtime ? stringField(runtime, 'pack') : undefined,

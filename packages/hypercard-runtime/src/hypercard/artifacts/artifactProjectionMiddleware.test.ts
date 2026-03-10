@@ -35,13 +35,13 @@ describe('artifactProjectionMiddleware', () => {
         props: {
           result: {
             title: 'Low Stock Card',
-            runtime: {
-              pack: 'kanban.v1',
-            },
             data: {
               artifact: {
                 id: 'low-stock-drilldown',
                 data: { threshold: 5 },
+              },
+              runtime: {
+                pack: 'kanban.v1',
               },
               card: {
                 id: 'runtime-low-stock',
@@ -74,13 +74,13 @@ describe('artifactProjectionMiddleware', () => {
         props: {
           result: {
             title: 'Current Inventory Status',
-            runtime: {
-              pack: 'ui.card.v1',
-            },
             data: {
               artifact: {
                 id: 'inventory-status-current',
                 data: { totalSkus: 14 },
+              },
+              runtime: {
+                pack: 'ui.card.v1',
               },
               card: {
                 id: 'runtimeInventoryStatus',
