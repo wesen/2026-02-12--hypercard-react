@@ -18,7 +18,11 @@ import type { LoadedStackBundle, RuntimeAction } from '../plugin-runtime/contrac
 import { getPendingRuntimeCards, hasRuntimeCard, injectPendingCardsWithReport, onRegistryChange } from '../plugin-runtime/runtimeCardRegistry';
 import { QuickJSCardRuntimeService } from '../plugin-runtime/runtimeService';
 import { dispatchRuntimeAction } from './pluginIntentRouting';
-import { normalizeRuntimePackId, renderRuntimeTree, validateRuntimeTree } from '../runtime-packs';
+import {
+  normalizeRuntimeSurfaceTypeId,
+  renderRuntimeSurfaceTree,
+  validateRuntimeSurfaceTree,
+} from '../runtime-packs';
 
 type StoreState = Record<string, unknown>;
 
@@ -335,9 +339,9 @@ export function PluginCardSessionHost({
       return {
         tree: (() => {
           const runtimeCard = getPendingRuntimeCards().find((card) => card.cardId === currentCardId);
-          const packId = normalizeRuntimePackId(runtimeCard?.packId ?? loadedBundleRef.current?.cardPacks?.[currentCardId]);
+          const packId = normalizeRuntimeSurfaceTypeId(runtimeCard?.packId ?? loadedBundleRef.current?.cardPacks?.[currentCardId]);
           const rawTree = runtimeServiceRef.current?.renderCard(sessionId, currentCardId, projectedState) ?? null;
-          return rawTree === null ? null : validateRuntimeTree(packId, rawTree);
+          return rawTree === null ? null : validateRuntimeSurfaceTree(packId, rawTree);
         })(),
         error: null,
       };
@@ -430,7 +434,7 @@ export function PluginCardSessionHost({
   }
 
   const runtimeCard = getPendingRuntimeCards().find((card) => card.cardId === currentCardId);
-  const packId = normalizeRuntimePackId(runtimeCard?.packId ?? loadedBundleRef.current?.cardPacks?.[currentCardId]);
+  const packId = normalizeRuntimeSurfaceTypeId(runtimeCard?.packId ?? loadedBundleRef.current?.cardPacks?.[currentCardId]);
 
-  return <>{renderRuntimeTree(packId, tree, emitRuntimeEvent)}</>;
+  return <>{renderRuntimeSurfaceTree(packId, tree, emitRuntimeEvent)}</>;
 }

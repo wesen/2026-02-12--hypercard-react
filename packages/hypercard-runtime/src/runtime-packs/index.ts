@@ -1,2 +1,2 @@
 export * from './kanbanV1Pack';
-export * from './runtimePackRegistry';
+export * from './runtimeSurfaceTypeRegistry';

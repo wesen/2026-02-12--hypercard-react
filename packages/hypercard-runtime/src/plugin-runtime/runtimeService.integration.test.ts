@@ -7,7 +7,7 @@ import LOOP_STACK from './fixtures/loop-stack.vm.js?raw';
 import PATCHED_LOW_STOCK_HANDLER from './fixtures/patched-low-stock-handler.vm.js?raw';
 import PATCHED_LOW_STOCK_RENDER from './fixtures/patched-low-stock-render.vm.js?raw';
 import { QuickJSCardRuntimeService } from './runtimeService';
-import { validateRuntimeTree } from '../runtime-packs';
+import { validateRuntimeSurfaceTree } from '../runtime-packs';
 
 const BUILTIN_KANBAN_STACK = `
 defineStackBundle(({ ui }) => ({
@@ -238,7 +238,7 @@ describe('QuickJSCardRuntimeService', () => {
         collapsedCols: {},
       },
     });
-    const tree = validateRuntimeTree('kanban.v1', rawTree);
+    const tree = validateRuntimeSurfaceTree('kanban.v1', rawTree);
     expect(tree.kind).toBe('kanban.page');
 
     const actions = service.eventCard(
@@ -268,7 +268,7 @@ describe('QuickJSCardRuntimeService', () => {
     });
 
     const rawTree = service.renderCard('builtin-kanban@one', 'board', {});
-    const tree = validateRuntimeTree('kanban.v1', rawTree);
+    const tree = validateRuntimeSurfaceTree('kanban.v1', rawTree);
     expect(tree.kind).toBe('kanban.page');
   });
 
