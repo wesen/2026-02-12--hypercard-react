@@ -92,7 +92,7 @@ describe('runtimeSessions reducer', () => {
         surfaceId: 'lowStock',
         action: {
           type: 'nav.go',
-          payload: { cardId: 'detail' },
+          payload: { surfaceId: 'detail' },
         },
       }),
     );
@@ -153,7 +153,7 @@ describe('runtimeSessions reducer', () => {
         surfaceId: 'home',
         action: {
           type: 'nav.go',
-          payload: { cardId: 'detail' },
+          payload: { surfaceId: 'detail' },
         },
       }),
     );
@@ -190,7 +190,7 @@ describe('runtimeSessions reducer', () => {
         surfaceId: 'home',
         action: {
           type: 'nav.go',
-          payload: { cardId: 'detail' },
+          payload: { surfaceId: 'detail' },
         },
       }),
     );
