@@ -2,142 +2,328 @@
 
 Last verified against source: 2026-03-11
 
-This guide explains the current runtime model used by `@hypercard/hypercard-runtime` after the APP-23 rename and package work. It is meant to answer a simple question for developers:
+This guide explains the runtime architecture used by the first-party frontend packages after the APP-23 and APP-16 cleanup work.
 
-What are the actual architectural pieces in this system, and where does each piece live?
+It is written for a new intern who needs to answer questions like:
 
-The short answer is:
+- What is a runtime bundle?
+- What is a runtime package?
+- What runs inside QuickJS and what stays on the host?
+- Where do `ui` and `kanban` actually live now?
+- What is the difference between a runtime surface and a runtime surface type?
+- Why do we keep talking about docs metadata and `vmmeta` in a runtime guide?
 
-- a `RuntimeSession` is a running QuickJS-backed session
-- a `RuntimeBundle` is app-authored source code plus metadata
-- a `RuntimePackage` is an installable DSL/API capability bundle
-- a `RuntimeSurface` is one renderable/eventable unit inside a bundle
-- a `RuntimeSurfaceType` is the host/runtime contract that validates and renders a surface tree
+If you only want the high-level API list, read `docs/js-api-user-guide-reference.md`.
 
-This guide goes through each one, shows the current file locations, and explains the static and runtime halves of the system.
+If you want the operator view of REPLs, brokers, and debug windows, also read
+`docs/repl-and-runtime-debug-guide.md`.
 
-## Why This Model Exists
+If you want the conceptual model that makes the API list make sense, read this guide first.
 
-Earlier versions of the runtime used `card` and `stack` almost everywhere. That naming became misleading once the system started supporting:
+## 1. The One-Screen Summary
 
-- multiple DSL/API families such as `ui` and `kanban`
-- reusable runtime packages
-- generated docs and source metadata
-- nontrivial runtime debug/editor tooling
-
-The current model is more explicit:
+Here is the shortest accurate description of the system:
 
 ```text
+Host app
+  registers RuntimePackages and RuntimeSurfaceTypes
+  opens windows in DesktopShell
+
 RuntimeSession
-  runs
-RuntimeBundle
-  which declares RuntimePackages
-  and exposes RuntimeSurfaces
-  whose trees are interpreted by RuntimeSurfaceTypes
+  loads a RuntimeBundle into QuickJS
+  installs RuntimePackages
+  renders RuntimeSurfaces
+
+RuntimeSurface
+  returns a tree for a RuntimeSurfaceType
+
+RuntimeSurfaceType
+  validates and renders that tree on the host
 ```
 
-That is the mental model to use when reading the code.
+Everything else in this guide is just unpacking that model carefully.
 
-## The Two Halves Of The System
+## 2. Why These Terms Exist
 
-It helps to separate the system into a static side and a runtime side.
+Earlier versions of this system used `stack` and `card` almost everywhere. That worked while there was effectively one default UI DSL and one dominant use case.
 
-### Static side
+That naming started to fail once the runtime grew to include:
 
-The static side is everything that exists before a VM is started:
+- multiple DSL/API families like `ui` and `kanban`;
+- package registration and dependency ordering;
+- generated source/docs metadata;
+- runtime debug windows and built-in source editing;
+- the idea that future packages might define very different render surfaces.
+
+So the current runtime uses these terms instead:
+
+- `RuntimeSession`
+- `RuntimeBundle`
+- `RuntimePackage`
+- `RuntimeSurface`
+- `RuntimeSurfaceType`
+
+These names are not cosmetic. They separate concerns that used to be collapsed together.
+
+## 3. The Two Halves of the System
+
+The runtime is easiest to understand if you split it into a static half and a live half.
+
+### Static half
+
+This is everything that exists before a VM session starts:
 
 - package definitions
+- VM-side package preludes
 - bundle source code
-- VM-side DSL helpers/preludes
-- host-side validators and renderers
-- package docs and surface docs
+- package docs metadata
+- bundle-owned surface docs
 - generated `vmmeta`
+- host-side validators/renderers
+- runtime bundle definitions used by the desktop shell
 
-### Runtime side
+### Live half
 
-The runtime side is everything that happens after a session starts:
+This is everything that exists after a session starts:
 
-- create QuickJS runtime/context
-- install package preludes
-- evaluate a bundle
-- read bundle metadata
-- render a surface
-- send handler events
-- validate returned actions
+- QuickJS runtime and context
+- installed package APIs
+- loaded bundle metadata
+- current surface render state
+- session-local draft/filter state
+- emitted runtime actions
 
 Diagram:
 
 ```text
-Static side
+Static artifacts
   package definitions
   bundle source
-  docs / vmmeta
+  docs metadata
+  vmmeta
       |
       v
-Runtime side
+Runtime execution
   RuntimeSession
-    -> install RuntimePackages
-    -> load RuntimeBundle
-    -> render RuntimeSurfaces
-    -> validate/render via RuntimeSurfaceTypes
+    installs packages
+    loads bundle
+    renders surfaces
+    emits actions
+      |
+      v
+Host React shell
+  validates tree
+  renders tree
+  updates Redux
 ```
 
-## RuntimeSession
+This distinction matters because many bugs happen when someone assumes a static concept lives at runtime, or vice versa.
+
+## 4. Layer Map
+
+The workspace now has a clear layer split.
+
+### Layer 1: Desktop shell and host widgets
+
+Main package:
+
+- `@hypercard/engine`
+
+Responsibilities:
+
+- desktop shell
+- windows, menus, icons, context menus
+- generic widgets
+- theme loading
+- Storybook helpers
+- desktop Redux state/actions/selectors
+
+Key files:
+
+- `packages/engine/src/index.ts`
+- `packages/engine/src/components/shell/windowing/DesktopShell.tsx`
+- `packages/engine/src/desktop/core/state/types.ts`
+- `packages/engine/src/app/generateCardStories.tsx`
+
+### Layer 2: Runtime core
+
+Main package:
+
+- `@hypercard/hypercard-runtime`
+
+Responsibilities:
+
+- QuickJS runtime lifecycle
+- runtime package registry
+- runtime surface-type registry
+- runtime surface host component
+- runtime debug/editor tooling
+- artifact/runtime projection
+
+Key files:
+
+- `packages/hypercard-runtime/src/index.ts`
+- `packages/hypercard-runtime/src/plugin-runtime/runtimeService.ts`
+- `packages/hypercard-runtime/src/plugin-runtime/stack-bootstrap.vm.js`
+- `packages/hypercard-runtime/src/runtime-packages/runtimePackageRegistry.ts`
+- `packages/hypercard-runtime/src/runtime-packs/runtimeSurfaceTypeRegistry.tsx`
+
+### Layer 3: Concrete runtime packages
+
+Current first-party examples:
+
+- `@hypercard/ui-runtime`
+- `@hypercard/kanban-runtime`
+
+Responsibilities:
+
+- define a runtime package
+- provide VM-side DSL/API helpers
+- provide docs metadata
+- provide runtime surface-type validation/rendering
+- provide package-owned host widgets if needed
+
+Key files:
+
+- `packages/ui-runtime/src/index.ts`
+- `packages/ui-runtime/src/runtimeRegistration.tsx`
+- `packages/kanban-runtime/src/index.ts`
+- `packages/kanban-runtime/src/runtimeRegistration.tsx`
+
+### Layer 4: Host apps and bundles
+
+Examples:
+
+- `wesen-os/apps/os-launcher`
+- `workspace-links/go-go-app-inventory/apps/inventory`
+
+Responsibilities:
+
+- register runtime packages at startup
+- define runtime bundle metadata for the shell
+- provide app-local VM bundle source
+- mount docs
+- expose demo surfaces
+
+This is the composition boundary.
+
+## 5. RuntimeSession
 
 A `RuntimeSession` is one running runtime instance.
 
 Current implementation:
 
-- [runtimeService.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/plugin-runtime/runtimeService.ts)
+- `packages/hypercard-runtime/src/plugin-runtime/runtimeService.ts`
 
-Key responsibilities:
-
-- create a QuickJS runtime and context
-- load the generic bootstrap source
-- install runtime packages in dependency order
-- evaluate bundle code
-- call `renderRuntimeSurface(...)`
-- call `eventRuntimeSurface(...)`
-- dispose sessions cleanly
-
-Key public type names and methods:
+Current class:
 
 - `QuickJSRuntimeService`
-- `loadRuntimeBundle(...)`
-- `renderRuntimeSurface(...)`
-- `eventRuntimeSurface(...)`
-- `defineRuntimeSurface(...)`
 
-This is runtime infrastructure. It should not know Kanban-specific UI details.
+Responsibilities:
 
-## RuntimeBundle
+- create a QuickJS runtime/context
+- install the generic bootstrap
+- install runtime packages in dependency order
+- evaluate bundle code
+- read runtime bundle metadata from the VM
+- render a runtime surface
+- call a runtime surface handler
+- dispose the session cleanly
 
-A `RuntimeBundle` is app-authored program code plus metadata.
+Important options:
 
-The VM-side authoring API is defined by the bootstrap:
+```ts
+interface QuickJSRuntimeServiceOptions {
+  memoryLimitBytes?: number;
+  stackLimitBytes?: number;
+  loadTimeoutMs?: number;
+  renderTimeoutMs?: number;
+  eventTimeoutMs?: number;
+}
+```
 
-- [stack-bootstrap.vm.js](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/plugin-runtime/stack-bootstrap.vm.js)
+Important public methods:
 
-The bundle author declares:
+```ts
+loadRuntimeBundle(stackId, sessionId, packageIds, code)
+defineRuntimeSurface(sessionId, surfaceId, code, packId?)
+renderRuntimeSurface(sessionId, surfaceId, state)
+eventRuntimeSurface(sessionId, surfaceId, handlerName, args, state)
+disposeRuntimeSession(sessionId)
+```
 
-- bundle id/title/description
-- `packageIds`
-- `initialSessionState`
-- `initialSurfaceState`
+### What a session is not
+
+A runtime session is not:
+
+- a desktop window
+- a bundle
+- a surface
+- a package
+
+It is the running VM instance that hosts those things.
+
+### Session flow
+
+```text
+create RuntimeSession
+  -> install bootstrap
+  -> install packages
+  -> evaluate bundle
+  -> read bundle meta
+  -> render/evaluate surfaces repeatedly
+  -> dispose session
+```
+
+## 6. RuntimeBundle
+
+A `RuntimeBundle` is app-authored source code plus metadata.
+
+There are two ways to think about bundles:
+
+- host-side `RuntimeBundleDefinition` used by the desktop shell;
+- VM-side bundle declaration registered through the bootstrap.
+
+### Host-side bundle definition
+
+Source:
+
+- `packages/engine/src/cards/types.ts`
+
+Important fields:
+
+- `id`
+- `name`
+- `icon`
+- `homeSurface`
+- `plugin.packageIds`
+- `plugin.bundleCode`
 - `surfaces`
 
-Example bundle sources:
+Example host-side bundle definitions:
 
-- [os-launcher plugin bundle](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/apps/os-launcher/src/domain/pluginBundle.ts)
-- [inventory plugin bundle](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-app-inventory/apps/inventory/src/domain/pluginBundle.ts)
+- `apps/os-launcher/src/domain/stack.ts`
+- `workspace-links/go-go-app-inventory/apps/inventory/src/domain/stack.ts`
 
-Example VM-side declaration shape:
+### VM-side bundle declaration
+
+Source:
+
+- `packages/hypercard-runtime/src/plugin-runtime/stack-bootstrap.vm.js`
+
+Main entrypoint:
+
+- `defineRuntimeBundle(factory)`
+
+Typical bundle declaration:
 
 ```js
-defineRuntimeBundle(() => ({
+defineRuntimeBundle(({ ui, widgets }) => ({
   id: 'inventory',
   title: 'Shop Inventory',
   packageIds: ['ui'],
+  initialSessionState: {},
+  initialSurfaceState: {},
   surfaces: {
     home: ...,
     browse: ...,
@@ -145,33 +331,25 @@ defineRuntimeBundle(() => ({
 }));
 ```
 
-Important rule:
+### The important distinction
 
-- bundle-local helpers belong in the bundle prelude
-- reusable public DSL belongs in runtime packages
+The host bundle definition and the VM bundle declaration are related, but not the same.
 
-## RuntimePackage
+The host bundle definition is how the shell knows what it can open.
 
-A `RuntimePackage` is the installable capability bundle.
+The VM bundle declaration is what the runtime session reads after evaluating the source.
 
-Current registry:
+The runtime service validates that the declared `packageIds` match what the host installed.
 
-- [runtimePackageRegistry.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/runtime-packages/runtimePackageRegistry.ts)
+## 7. RuntimePackage
 
-Current built-in examples:
+A `RuntimePackage` is the installable DSL/API capability bundle.
 
-- `ui`
-- `kanban`
+Source:
 
-A runtime package can contribute:
+- `packages/hypercard-runtime/src/runtime-packages/runtimePackageRegistry.ts`
 
-- a package id and version
-- package docs metadata
-- a VM install prelude
-- dependencies on other packages
-- one or more surface types
-
-Current definition shape:
+Definition:
 
 ```ts
 interface RuntimePackageDefinition {
@@ -185,51 +363,76 @@ interface RuntimePackageDefinition {
 }
 ```
 
-Current package prelude files:
-
-- [ui.package.vm.js](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/runtime-packages/ui.package.vm.js)
-- [kanban.package.vm.js](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/runtime-packages/kanban.package.vm.js)
-
-Current install flow:
-
-1. bundle declares `packageIds`
-2. runtime resolves dependency order
-3. each package prelude is eval’d into QuickJS
-4. the package registers VM-side APIs using `registerRuntimePackageApi(...)`
-5. bundle code runs and can access those APIs
-
-Pseudo-flow:
-
-```ts
-const ordered = resolveRuntimePackageInstallOrder(bundle.packageIds);
-for (const packageId of ordered) {
-  const runtimePackage = getRuntimePackageOrThrow(packageId);
-  eval(runtimePackage.installPrelude);
-}
-```
-
-## RuntimeSurface
-
-A `RuntimeSurface` is one renderable/eventable unit inside a bundle.
-
-Current VM-side authoring entrypoint:
-
-- `defineRuntimeSurface(...)`
-
 Examples:
 
-- inventory `home`
-- inventory `browse`
-- `kanbanSprintBoard`
-- `kanbanIncidentCommand`
+- `UI_RUNTIME_PACKAGE`
+- `KANBAN_RUNTIME_PACKAGE`
 
-Surface responsibilities:
+### What a package can contribute
 
-- implement `render({ state })`
-- optionally expose `handlers`
-- declare a `packId` / surface type id
+A runtime package may contribute:
 
-Example:
+- VM-side helper APIs
+- docs metadata
+- dependencies on other packages
+- one or more runtime surface types
+
+It may also own:
+
+- package-specific host widgets
+- validator code
+- renderer code
+
+### Current registry behavior
+
+The registry is currently module-global.
+
+API:
+
+```ts
+registerRuntimePackage(definition)
+clearRuntimePackages()
+getRuntimePackageOrThrow(packageId)
+listRuntimePackages()
+resolveRuntimePackageInstallOrder(packageIds)
+```
+
+### Dependency ordering
+
+The runtime service does not install packages in random order. It uses dependency ordering.
+
+For example:
+
+- `kanban` depends on `ui`
+
+That means:
+
+```text
+bundle declares ['ui', 'kanban']
+  -> resolveRuntimePackageInstallOrder(...)
+  -> install ui
+  -> install kanban
+```
+
+If the dependency graph cycles, runtime-core throws.
+
+## 8. RuntimeSurface
+
+A `RuntimeSurface` is the renderable/eventable unit inside a bundle.
+
+This is the runtime-core replacement for the old notion of a “card”.
+
+Source of the VM-side authoring contract:
+
+- `packages/hypercard-runtime/src/plugin-runtime/stack-bootstrap.vm.js`
+
+Main entrypoints:
+
+- `defineRuntimeSurface(surfaceId, definitionOrFactory, packId?)`
+- `defineRuntimeSurfaceRender(surfaceId, renderFn)`
+- `defineRuntimeSurfaceHandler(surfaceId, handlerName, handlerFn)`
+
+Typical shape:
 
 ```js
 defineRuntimeSurface(
@@ -240,7 +443,10 @@ defineRuntimeSurface(
     },
     handlers: {
       moveTask(context, args) {
-        ...
+        context.dispatch({
+          type: 'notify.show',
+          payload: { message: 'Moved task' },
+        });
       },
     },
   }),
@@ -248,177 +454,511 @@ defineRuntimeSurface(
 );
 ```
 
-This is the thing the host actually opens, rerenders, and sends events to.
+### What a surface owns
 
-## RuntimeSurfaceType
+A runtime surface owns:
 
-A `RuntimeSurfaceType` is the contract for a returned tree.
+- its `render({ state })` function
+- its `handlers`
+- its surface-type id such as `ui.card.v1` or `kanban.v1`
 
-Current registry:
+### What a surface does not own
 
-- [runtimeSurfaceTypeRegistry.tsx](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/runtime-packs/runtimeSurfaceTypeRegistry.tsx)
+A surface does not own:
 
-Current first-party surface types:
+- the host renderer
+- the VM package APIs
+- the desktop shell
+- the runtime session itself
 
-- `ui.card.v1`
-- `kanban.v1`
+## 9. RuntimeSurfaceType
 
-What a surface type owns:
+A `RuntimeSurfaceType` is the host/runtime contract for the tree returned by a surface.
 
-- `validateTree(value)`
-- `render({ tree, onEvent })`
+Source:
 
-This is a host concern, not a VM concern.
+- `packages/hypercard-runtime/src/runtime-packs/runtimeSurfaceTypeRegistry.tsx`
 
-Current examples:
+Definition:
 
-- `ui.card.v1`
-  - validate with [uiSchema.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/ui-runtime/src/runtime-packs/uiSchema.ts)
-  - render with [UIRuntimeRenderer.tsx](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/ui-runtime/src/UIRuntimeRenderer.tsx)
-- `kanban.v1`
-  - validate and render in [kanbanV1Pack.tsx](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/kanban-runtime/src/runtime-packs/kanbanV1Pack.tsx)
-
-Important distinction:
-
-- `kanban` is a runtime package
-- `kanban.v1` is a runtime surface type
-
-The package installs APIs. The surface type interprets returned trees.
-
-## Where The VM-Side DSL Lives
-
-Developers often ask: where does `ui.*` or `widgets.kanban.*` actually come from?
-
-Answer:
-
-- the generic registration mechanism is in [stack-bootstrap.vm.js](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/plugin-runtime/stack-bootstrap.vm.js)
-- the concrete API definitions are in package preludes such as:
-  - [ui.package.vm.js](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/ui-runtime/src/runtime-packages/ui.package.vm.js)
-  - [kanban.package.vm.js](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/kanban-runtime/src/runtime-packages/kanban.package.vm.js)
-
-The flow looks like:
-
-```text
-stack-bootstrap.vm.js
-  defines registerRuntimePackageApi(...)
-
-ui.package.vm.js
-  calls registerRuntimePackageApi('ui', { ui: __ui })
-
-kanban.package.vm.js
-  calls registerRuntimePackageApi('kanban', { widgets: __kanbanWidgets })
-
-bundle code
-  receives collected package APIs in defineRuntimeBundle(...) and defineRuntimeSurface(...)
+```ts
+interface RuntimeSurfaceTypeDefinition<TTree> {
+  packId: string;
+  validateTree: (value: unknown) => TTree;
+  render: (props: {
+    tree: TTree;
+    onEvent: (handler: string, args?: unknown) => void;
+  }) => ReactNode;
+}
 ```
 
-That means the DSL object crossing the VM boundary is really:
-
-- a VM-side object graph installed by package preludes
-- merged into the runtime package API namespace
-- passed into bundle and surface factories by the bootstrap
-
-## Where Docs Live
-
-There are two distinct documentation layers.
-
-### Prompt / authoring policy
-
-These docs tell an AI author what shape to emit.
-
-Example:
-
-- [runtime-card-policy.md](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-app-inventory/pkg/pinoweb/prompts/runtime-card-policy.md)
-
-This is still a prompt filename from the older artifact/protocol side, but the contents now teach runtime bundles, surfaces, packages, and surface types.
-
-### Structured package/surface docs
-
-These are authored near the VM code and extracted into `vmmeta`.
+This is where host-side interpretation happens.
 
 Examples:
 
-- package docs:
-  - [kanban-pack.docs.vm.js](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/apps/os-launcher/src/domain/vm/docs/kanban-pack.docs.vm.js)
-  - [inventory-pack.docs.vm.js](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-app-inventory/apps/inventory/src/domain/vm/docs/inventory-pack.docs.vm.js)
-- surface docs:
-  - [kanbanSprintBoard.vm.js](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/apps/os-launcher/src/domain/vm/cards/kanbanSprintBoard.vm.js)
+- `ui.card.v1`
+- `kanban.v1`
 
-Generated outputs:
+### Why surface types exist
 
-- [kanbanVmmeta.generated.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/apps/os-launcher/src/domain/generated/kanbanVmmeta.generated.ts)
-- [inventoryVmmeta.generated.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-app-inventory/apps/inventory/src/domain/generated/inventoryVmmeta.generated.ts)
+They let the VM return semantic data structures instead of host React elements.
 
-## The Host Boundary
+That gives you:
 
-The host boundary is:
+- validation
+- stable DSL boundaries
+- safer runtime behavior
+- room for documentation and prompting around a real schema
 
-1. install packages
-2. load bundle
-3. ask the session to render a surface
-4. validate the returned tree based on its surface type
-5. render the host-side React UI
-6. send handler events back into the session
-7. validate returned runtime actions
-
-Pseudo-code:
+### Registry API
 
 ```ts
-const bundle = await runtime.loadRuntimeBundle(stackId, sessionId, packageIds, code);
-const rawTree = runtime.renderRuntimeSurface(sessionId, surfaceId, projectedState);
-const reactNode = renderRuntimeSurfaceTree(surfaceTypeId, rawTree, onEvent);
+registerRuntimeSurfaceType(definition)
+clearRuntimeSurfaceTypes()
+normalizeRuntimeSurfaceTypeId(packId?)
+getRuntimeSurfaceTypeOrThrow(packId?)
+listRuntimeSurfaceTypes()
+validateRuntimeSurfaceTree(packId, value)
+renderRuntimeSurfaceTree(packId, value, onEvent)
 ```
 
-That boundary is why the architecture separates packages and surface types:
+## 10. The VM Bootstrap Contract
 
-- package = what the VM can use
-- surface type = how the host interprets what comes back
+The VM bootstrap file is the most important single file in runtime core.
 
-## What Still Intentionally Uses `card`
+Source:
 
-Not every `card` string in the repo is stale.
+- `packages/hypercard-runtime/src/plugin-runtime/stack-bootstrap.vm.js`
 
-The main intentional carve-out is the external artifact protocol:
+It defines the contract between the host and the QuickJS runtime.
 
-- `hypercard.card.v2`
-- backend extractor/event names
-- some prompt filenames
-- timeline card renderer names where they explicitly parse the artifact envelope
+### Important globals it provides
 
-Those are external protocol or legacy document names. They are not runtime-core execution concepts.
+- `registerRuntimePackageApi(packageId, apiExports)`
+- `defineRuntimeBundle(factory)`
+- `defineRuntimeSurface(...)`
+- `defineRuntimeSurfaceRender(...)`
+- `defineRuntimeSurfaceHandler(...)`
+- `globalThis.__runtimeBundleHost`
 
-Rule of thumb:
+### What `registerRuntimePackageApi(...)` does
 
-- if the code is about RuntimeSession / RuntimeBundle / RuntimeSurface execution, use the new nouns
-- if the code is about the artifact envelope `hypercard.card.v2`, `card` may still be correct
+Each installed package calls:
 
-## Current Architectural Tension
+```js
+registerRuntimePackageApi('ui', {
+  ui: { ...constructors... },
+});
+```
 
-The current model is cleaner than before, but one major architectural issue remains:
+or:
 
-- runtime core still physically owns concrete runtime packages like `ui` and `kanban`
+```js
+registerRuntimePackageApi('kanban', {
+  widgets: {
+    kanban: { ...constructors... },
+  },
+});
+```
 
-That is what APP-16 is for.
+The bootstrap merges these exports into a shared package API state and exposes them on `globalThis`.
 
-Today:
+That is why bundle factories can receive:
 
-- package registration exists
-- surface-type registration exists
-- but concrete package manifests and concrete surface-type renderers still live in runtime core
+- `ui`
+- `widgets`
 
-The next architecture step is to extract those concrete packages into external packages and let the host app register them.
+without using JavaScript imports.
 
-## Reading Order For New Contributors
+### What `__runtimeBundleHost` does
 
-If you are new to the runtime, read these files in this order:
+This is the host-facing adapter object inside the VM.
 
-1. [runtimeService.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/plugin-runtime/runtimeService.ts)
-2. [stack-bootstrap.vm.js](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/plugin-runtime/stack-bootstrap.vm.js)
-3. [runtimePackageRegistry.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/runtime-packages/runtimePackageRegistry.ts)
-4. [runtimeSurfaceTypeRegistry.tsx](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/runtime-packs/runtimeSurfaceTypeRegistry.tsx)
-5. one bundle:
-   - [os-launcher pluginBundle.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/apps/os-launcher/src/domain/pluginBundle.ts)
-6. one concrete surface type:
-   - [kanbanV1Pack.tsx](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/runtime-packs/kanbanV1Pack.tsx)
+It provides:
 
-After that, read APP-16 if you want the next architecture move, and APP-23 if you want the rationale for the naming model itself.
+- `getMeta()`
+- `renderRuntimeSurface(surfaceId, state)`
+- `eventRuntimeSurface(surfaceId, handlerName, args, state)`
+- `defineRuntimeSurface(...)`
+- `defineRuntimeSurfaceRender(...)`
+- `defineRuntimeSurfaceHandler(...)`
+
+The host runtime service calls into this object rather than poking surface definitions directly.
+
+## 11. Static vs Runtime Ownership
+
+One of the most useful questions to ask while reading this codebase is:
+
+“Is this thing static metadata, or is it runtime state?”
+
+### Static ownership examples
+
+- `UI_RUNTIME_PACKAGE`
+- `KANBAN_RUNTIME_PACKAGE`
+- `UI_RUNTIME_DOCS_METADATA`
+- `KANBAN_RUNTIME_DOCS_METADATA`
+- raw VM bundle source strings
+- generated `vmmeta`
+- `RuntimeBundleDefinition`
+
+### Runtime ownership examples
+
+- active QuickJS sessions
+- runtime surface state
+- runtime-emitted actions
+- current window nav state
+- current rendered surface tree
+
+Mixing these levels up is a common source of confusion.
+
+## 12. What Lives in `ui-runtime`
+
+Source entry:
+
+- `packages/ui-runtime/src/index.ts`
+
+This package owns:
+
+- `UI_RUNTIME_PACKAGE`
+- `UI_CARD_V1_RUNTIME_SURFACE_TYPE`
+- `UI_RUNTIME_DOCS_METADATA`
+- `UIRuntimeRenderer`
+- `validateUINode(...)`
+
+It is the base structured UI DSL package.
+
+It owns:
+
+- the VM-side `ui.*` constructors
+- the host-side validation/rendering for `ui.card.v1`
+- the surface-type docs for `ui.card.v1`
+
+It does not own:
+
+- QuickJS lifecycle
+- bundle loading
+- app startup
+
+## 13. What Lives in `kanban-runtime`
+
+Source entry:
+
+- `packages/kanban-runtime/src/index.ts`
+
+This package owns:
+
+- `KANBAN_RUNTIME_PACKAGE`
+- `KANBAN_V1_RUNTIME_SURFACE_TYPE`
+- `KANBAN_RUNTIME_DOCS_METADATA`
+- Kanban host widgets
+- Kanban state helpers
+- Kanban stories
+
+It owns:
+
+- the VM-side `widgets.kanban.*` constructors
+- the host-side validation/rendering for `kanban.v1`
+- package-owned docs for `kanban.v1`
+
+It depends on:
+
+- `ui`
+
+That dependency exists at the runtime-package layer and is enforced by install ordering.
+
+## 14. What Lives in the Host App
+
+Host apps such as `os-launcher` and Inventory own composition.
+
+That means they decide:
+
+- which runtime packages to register;
+- which runtime surface types to register;
+- which bundle source to load;
+- which docs to mount;
+- which demo/runtime surfaces to expose;
+- which desktop contributions to install.
+
+Examples:
+
+- `apps/os-launcher/src/app/registerRuntimePackages.ts`
+- `apps/os-launcher/src/app/registerAppsBrowserDocs.ts`
+- `workspace-links/go-go-app-inventory/apps/inventory/src/launcher/renderInventoryApp.tsx`
+
+This is why startup registration belongs in the app layer, not inside runtime core.
+
+## 15. End-to-End Flow
+
+Here is the full flow from startup to user interaction.
+
+```text
+host app starts
+  -> register runtime packages
+  -> register runtime surface types
+  -> build RuntimeBundleDefinition
+  -> DesktopShell opens home surface
+  -> RuntimeSurfaceSessionHost creates RuntimeSession
+  -> runtime installs package preludes
+  -> runtime evaluates bundle code
+  -> runtime exposes bundle meta
+  -> host asks runtime to render current surface
+  -> surface returns structured tree
+  -> host validates tree via RuntimeSurfaceType
+  -> host renders tree with React widgets
+  -> user interacts with UI
+  -> host sends handler event to runtime
+  -> runtime emits semantic actions
+  -> host updates Redux/session state
+  -> runtime re-renders surface
+```
+
+This is the core loop of the system.
+
+## 16. Docs and `vmmeta`
+
+Runtime docs are not an afterthought in this architecture.
+
+We now treat docs and exact source as first-class metadata.
+
+### Package-owned docs
+
+Examples:
+
+- `UI_RUNTIME_DOCS_METADATA`
+- `KANBAN_RUNTIME_DOCS_METADATA`
+
+These belong to the runtime package because they describe the package-owned DSL/API.
+
+### Bundle-owned surface docs
+
+Examples:
+
+- `apps/os-launcher/src/domain/generated/kanbanVmmeta.generated.ts`
+- `workspace-links/go-go-app-inventory/apps/inventory/src/domain/generated/inventoryVmmeta.generated.ts`
+
+These belong to the app bundle because they describe the concrete authored surfaces in that bundle.
+
+### Why this matters
+
+This supports:
+
+- docs browser mounting under `/docs/objects/...`
+- built-in source editing
+- runtime debug windows
+- generated symbol/package docs
+- future authoring assistance
+
+## 17. Debugging and Source Editing
+
+The runtime system includes tools that depend on the concepts above.
+
+Examples:
+
+- `RuntimeSurfaceDebugWindow`
+- code editor windows opened from `Stacks & Cards`
+- runtime debug registry
+- docs browser surface/package mounts
+
+These tools work because:
+
+- packages expose docs metadata;
+- bundles expose exact source in `vmmeta`;
+- stack/bundle definitions preserve runtime source metadata;
+- host apps mount docs from the correct owner.
+
+If docs or source metadata are missing, the debugger becomes much less useful.
+
+### Current debug split
+
+There are now two different live-debug data models:
+
+- runtime-surface debugging
+- plain JS session debugging
+
+They should be presented together carefully, but they should not be collapsed into one fake common
+runtime object.
+
+#### Runtime-surface debugging
+
+Main examples:
+
+- `RuntimeSurfaceDebugWindow`
+- runtime-surface registry entries
+- built-in source editing for bundle-owned surfaces
+
+This side of the world is about:
+
+- bundles
+- surfaces
+- surface types
+- runtime actions
+- built-in authored source
+
+#### Plain JS session debugging
+
+Main examples:
+
+- `JsSessionBroker`
+- `JsSessionService`
+- the `JavaScript REPL`
+- `JS Sessions` inside `Stacks & Cards`
+
+This side of the world is about:
+
+- blank QuickJS sessions
+- globals
+- raw eval
+- reset/dispose lifecycle
+- transcript-oriented tooling
+
+Diagram:
+
+```text
+RuntimeSurfaceDebugWindow
+  -> runtime-surface Redux state
+  -> runtime debug stack registry
+  -> JS session debug registry
+
+JS session debug registry
+  -> JsSessionBroker objects
+  -> serializable JsSessionSummary values
+```
+
+The important rule is:
+
+- runtime-surface sessions live in runtime-core state
+- plain JS sessions live in broker-owned external state
+
+That split is intentional.
+
+## 18. Common Failure Modes
+
+### Missing package registration
+
+Symptom:
+
+- runtime bundle load fails with `Unknown runtime package: ...`
+
+Cause:
+
+- host app did not register the package before loading the bundle
+
+### Package ID mismatch
+
+Symptom:
+
+- bundle load fails with a package mismatch error
+
+Cause:
+
+- bundle declares `packageIds` that do not match what the host installed
+
+### Unknown surface type
+
+Symptom:
+
+- render path fails with `Unknown runtime surface type: ...`
+
+Cause:
+
+- surface type definition was not registered
+
+### Wrong ownership boundary
+
+Symptom:
+
+- duplicated docs
+- missing docs
+- confusing package/app coupling
+
+Cause:
+
+- package-owned API docs were kept in an app bundle, or app-owned surface docs were incorrectly moved into a package
+
+## 19. Anti-Patterns
+
+### Anti-pattern: Treating the bundle as the package
+
+A runtime bundle is app-authored program code.
+
+A runtime package is an installable DSL/API unit.
+
+They are related, but not the same layer.
+
+### Anti-pattern: Treating a surface as a host widget
+
+A runtime surface returns a structured tree.
+
+The host widget tree is created later by the surface-type renderer.
+
+### Anti-pattern: Hiding startup registration in runtime core
+
+Registration belongs in the host app.
+
+If runtime core imports and registers concrete packages by itself, the ownership model becomes muddy again.
+
+### Anti-pattern: Using bundle-local helpers as public package API
+
+Bundle-specific helpers should stay bundle-local unless they are truly reusable across apps.
+
+## 20. File-by-File Orientation Map
+
+If you are onboarding and want a concrete reading path, use this order.
+
+### Start here
+
+- `packages/engine/src/cards/types.ts`
+- `packages/engine/src/desktop/core/state/types.ts`
+- `packages/hypercard-runtime/src/runtime-packages/runtimePackageRegistry.ts`
+- `packages/hypercard-runtime/src/runtime-packs/runtimeSurfaceTypeRegistry.tsx`
+
+### Then read runtime core
+
+- `packages/hypercard-runtime/src/plugin-runtime/runtimeService.ts`
+- `packages/hypercard-runtime/src/plugin-runtime/stack-bootstrap.vm.js`
+- `packages/hypercard-runtime/src/runtime-host/RuntimeSurfaceSessionHost.tsx`
+
+### Then read the concrete packages
+
+- `packages/ui-runtime/src/index.ts`
+- `packages/ui-runtime/src/runtimeRegistration.tsx`
+- `packages/kanban-runtime/src/index.ts`
+- `packages/kanban-runtime/src/runtimeRegistration.tsx`
+
+### Then read a host app
+
+- `apps/os-launcher/src/app/registerRuntimePackages.ts`
+- `apps/os-launcher/src/App.tsx`
+- `apps/os-launcher/src/domain/stack.ts`
+- `apps/os-launcher/src/domain/pluginBundle.ts`
+
+### Then read docs/debug integration
+
+- `apps/os-launcher/src/app/registerAppsBrowserDocs.ts`
+- `packages/hypercard-runtime/src/hypercard/debug/runtimeDebugApp.tsx`
+- `packages/hypercard-runtime/src/hypercard/debug/RuntimeSurfaceDebugWindow.tsx`
+
+## 21. Closing Mental Model
+
+If you finish this guide and still feel some ambiguity, reduce the architecture back down to this:
+
+```text
+engine
+  renders the desktop and widgets
+
+runtime core
+  runs QuickJS sessions and generic registries
+
+runtime packages
+  inject VM APIs and own surface-type contracts
+
+bundles
+  define app-specific surfaces
+
+surfaces
+  render trees and emit semantic actions
+```
+
+That is the current system.
+
+Once that model feels natural, the rest of the codebase becomes much easier to navigate.
