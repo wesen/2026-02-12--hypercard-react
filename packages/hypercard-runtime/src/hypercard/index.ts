@@ -4,6 +4,7 @@ export * from './artifacts/artifactsSlice';
 export * from './debug/RuntimeSurfaceDebugWindow';
 export * from './debug/runtimeDebugApp';
 export * from './debug/runtimeDebugRegistry';
+export * from './debug/jsSessionDebugRegistry';
 export * from './editor/CodeEditorWindow';
 export * from './editor/editorLaunch';
 export * from './editor/runtimeSurfaceRef';

@@ -8,6 +8,11 @@ import { openWindow } from '@hypercard/engine/desktop-core';
 import { createAppStore } from '../../app/createAppStore';
 import { registerRuntimeSession } from '../../features/runtimeSessions';
 import { RuntimeSurfaceDebugWindow } from './RuntimeSurfaceDebugWindow';
+import {
+  clearRegisteredJsSessionDebugSources,
+  registerJsSessionDebugSource,
+} from './jsSessionDebugRegistry';
+import { createJsSessionBroker } from '../../repl/jsSessionBroker';
 
 const DEBUG_STACK: RuntimeBundleDefinition = {
   id: 'os-launcher',
@@ -59,6 +64,7 @@ afterEach(() => {
   for (const container of containers.splice(0)) {
     container.remove();
   }
+  clearRegisteredJsSessionDebugSources();
 });
 
 describe('RuntimeSurfaceDebugWindow', () => {
@@ -120,5 +126,39 @@ describe('RuntimeSurfaceDebugWindow', () => {
     expect(sessionRow?.textContent).toContain('currentCard');
     expect(sessionRow?.textContent).not.toContain('cachedCard');
     expect(editButtons).toHaveLength(3);
+  });
+
+  it('shows registered JS sessions in a separate debug section', async () => {
+    const broker = createJsSessionBroker();
+    await broker.spawnSession({ sessionId: 'js-1', title: 'Scratch Pad' });
+    registerJsSessionDebugSource({
+      id: 'js-repl',
+      title: 'JavaScript REPL',
+      broker,
+    });
+
+    const { createStore } = createAppStore({});
+    const store = createStore();
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    containers.push(container);
+
+    const root = createRoot(container);
+    roots.push(root);
+
+    await act(async () => {
+      root.render(
+        <Provider store={store}>
+          <RuntimeSurfaceDebugWindow ownerAppId="hypercard-runtime-debug" bundles={[DEBUG_STACK]} />
+        </Provider>,
+      );
+    });
+
+    const text = container.textContent ?? '';
+    expect(text).toContain('JS Sessions (1)');
+    expect(text).toContain('js-1');
+    expect(text).toContain('JavaScript REPL');
+    expect(text).toContain('Scratch Pad');
   });
 });

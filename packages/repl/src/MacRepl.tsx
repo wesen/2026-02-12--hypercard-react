@@ -40,6 +40,17 @@ function createDriverContext(state: MacReplState, uptimeMs: number): ReplDriverC
   };
 }
 
+function prependInputLine(raw: string, lines: TerminalLine[]): TerminalLine[] {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return lines;
+  }
+  if (lines[0]?.type === 'input' && lines[0]?.text === trimmed) {
+    return lines;
+  }
+  return [{ type: 'input', text: trimmed }, ...lines];
+}
+
 function MacReplFrame({
   state,
   dispatch,
@@ -89,8 +100,11 @@ function MacReplFrame({
 
       if (result.clearTranscript) {
         dispatch(macReplActions.setLines([]));
-      } else if (result.lines.length > 0) {
-        dispatch(macReplActions.appendLines(result.lines));
+      } else {
+        const nextLines = prependInputLine(raw, result.lines);
+        if (nextLines.length > 0) {
+          dispatch(macReplActions.appendLines(nextLines));
+        }
       }
       if (result.envVars) {
         Object.entries(result.envVars).forEach(([key, value]) => {
