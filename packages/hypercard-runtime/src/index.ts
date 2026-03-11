@@ -1,5 +1,6 @@
 export * from './app';
 export * from './plugin-runtime';
+export * from './repl/runtimeBroker';
 export * from './features/runtimeSessions';
 export * from './hypercard';
 export * from './hypercard/debug/runtimeDebugApp';
