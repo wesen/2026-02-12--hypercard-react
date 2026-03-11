@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import COLUMN_STACK from './fixtures/column-stack.vm.js?raw';
 import DYNAMIC_CARD from './fixtures/dynamic-card.vm.js?raw';
 import INVENTORY_STACK from './fixtures/inventory-stack.vm.js?raw';
@@ -8,6 +8,9 @@ import PATCHED_LOW_STOCK_HANDLER from './fixtures/patched-low-stock-handler.vm.j
 import PATCHED_LOW_STOCK_RENDER from './fixtures/patched-low-stock-render.vm.js?raw';
 import { QuickJSRuntimeService } from './runtimeService';
 import { validateRuntimeSurfaceTree } from '../runtime-packs';
+import { registerBuiltInHypercardRuntime, resetBuiltInHypercardRuntimeRegistrationForTest } from '../runtimeDefaults';
+import { clearRuntimePackages } from '../runtime-packages';
+import { clearRuntimeSurfaceTypes } from '../runtime-packs';
 
 const BUILTIN_KANBAN_STACK = `
 defineRuntimeBundle(({ ui }) => ({
@@ -52,6 +55,13 @@ defineRuntimeSurface('board', ({ widgets }) => ({
 describe('QuickJSRuntimeService', () => {
   const services: QuickJSRuntimeService[] = [];
 
+  beforeEach(() => {
+    clearRuntimePackages();
+    clearRuntimeSurfaceTypes();
+    resetBuiltInHypercardRuntimeRegistrationForTest();
+    registerBuiltInHypercardRuntime();
+  });
+
   afterEach(() => {
     for (const service of services) {
       for (const sessionId of service.health().sessions) {
@@ -73,6 +83,19 @@ describe('QuickJSRuntimeService', () => {
       draft: { limit: 3 },
     });
     expect(tree.kind).toBe('panel');
+  });
+
+  it('fails bundle load when required runtime packages were not registered', async () => {
+    clearRuntimePackages();
+    clearRuntimeSurfaceTypes();
+    resetBuiltInHypercardRuntimeRegistrationForTest();
+
+    const service = new QuickJSRuntimeService();
+    services.push(service);
+
+    await expect(service.loadRuntimeBundle('inventory', 'inventory@missing', ['ui'], INVENTORY_STACK)).rejects.toThrow(
+      /unknown runtime package/i
+    );
   });
 
   it('returns generic runtime actions from handlers', async () => {

@@ -1,6 +1,3 @@
-import uiPackagePrelude from './ui.package.vm.js?raw';
-import kanbanPackagePrelude from './kanban.package.vm.js?raw';
-
 export interface RuntimePackageDefinition {
   packageId: string;
   version: string;
@@ -15,6 +12,10 @@ const runtimePackages = new Map<string, RuntimePackageDefinition>();
 
 export function registerRuntimePackage(definition: RuntimePackageDefinition): void {
   runtimePackages.set(definition.packageId, definition);
+}
+
+export function clearRuntimePackages(): void {
+  runtimePackages.clear();
 }
 
 export function getRuntimePackageOrThrow(packageId: string): RuntimePackageDefinition {
@@ -58,20 +59,3 @@ export function resolveRuntimePackageInstallOrder(packageIds: string[]): string[
 
   return ordered;
 }
-
-registerRuntimePackage({
-  packageId: 'ui',
-  version: '1.0.0',
-  summary: 'Base UI DSL package providing ui.* node constructors.',
-  installPrelude: uiPackagePrelude,
-  surfaceTypes: ['ui.card.v1'],
-});
-
-registerRuntimePackage({
-  packageId: 'kanban',
-  version: '1.0.0',
-  summary: 'Kanban widget DSL package providing widgets.kanban.* constructors.',
-  installPrelude: kanbanPackagePrelude,
-  surfaceTypes: ['kanban.v1'],
-  dependencies: ['ui'],
-});

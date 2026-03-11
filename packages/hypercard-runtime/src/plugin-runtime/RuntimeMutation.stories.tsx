@@ -9,6 +9,7 @@ import PATCHED_LOW_STOCK_HANDLER from './fixtures/patched-low-stock-handler.vm.j
 import PATCHED_LOW_STOCK_RENDER from './fixtures/patched-low-stock-render.vm.js?raw';
 import { QuickJSRuntimeService } from './runtimeService';
 import type { UINode } from './uiTypes';
+import { registerBuiltInHypercardRuntime } from '../runtimeDefaults';
 
 const SESSION_ID = 'story@runtime-mutation';
 const STACK_ID = 'inventory';
@@ -16,6 +17,8 @@ const STACK_ID = 'inventory';
 type RuntimeStatus = 'loading' | 'ready' | 'error';
 
 function RuntimeMutationDemo() {
+  registerBuiltInHypercardRuntime();
+
   const runtimeRef = useRef<QuickJSRuntimeService | null>(null);
   if (!runtimeRef.current) {
     runtimeRef.current = new QuickJSRuntimeService();

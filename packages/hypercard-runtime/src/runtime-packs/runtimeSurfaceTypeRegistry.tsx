@@ -1,8 +1,6 @@
 import type { ReactNode } from 'react';
-import { validateUINode } from '../plugin-runtime/uiSchema';
-import { PluginCardRenderer } from '../runtime-host/PluginCardRenderer';
-import { KanbanV1Renderer, validateKanbanV1Node, type KanbanV1Node } from './kanbanV1Pack';
 import type { UINode } from '../plugin-runtime/uiTypes';
+import type { KanbanV1Node } from './kanbanV1Pack';
 
 export const DEFAULT_RUNTIME_SURFACE_TYPE_ID = 'ui.card.v1' as const;
 export const KANBAN_V1_SURFACE_TYPE_ID = 'kanban.v1' as const;
@@ -25,6 +23,10 @@ const runtimeSurfaceTypes = new Map<string, RuntimeSurfaceTypeDefinition<unknown
 
 export function registerRuntimeSurfaceType<TTree>(definition: RuntimeSurfaceTypeDefinition<TTree>): void {
   runtimeSurfaceTypes.set(definition.packId, definition as RuntimeSurfaceTypeDefinition<unknown>);
+}
+
+export function clearRuntimeSurfaceTypes(): void {
+  runtimeSurfaceTypes.clear();
 }
 
 export function normalizeRuntimeSurfaceTypeId(packId?: string | null): string {
@@ -58,15 +60,3 @@ export function renderRuntimeSurfaceTree(packId: string | undefined, value: unkn
   const tree = surfaceType.validateTree(value);
   return surfaceType.render({ tree, onEvent });
 }
-
-registerRuntimeSurfaceType<UINode>({
-  packId: DEFAULT_RUNTIME_SURFACE_TYPE_ID,
-  validateTree: validateUINode,
-  render: ({ tree, onEvent }) => <PluginCardRenderer tree={tree} onEvent={onEvent} />,
-});
-
-registerRuntimeSurfaceType<KanbanV1Node>({
-  packId: KANBAN_V1_SURFACE_TYPE_ID,
-  validateTree: validateKanbanV1Node,
-  render: ({ tree, onEvent }) => <KanbanV1Renderer tree={tree} onEvent={onEvent} />,
-});

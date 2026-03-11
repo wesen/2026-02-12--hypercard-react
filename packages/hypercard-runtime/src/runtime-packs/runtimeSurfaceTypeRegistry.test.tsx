@@ -1,19 +1,38 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
+  clearRuntimeSurfaceTypes,
   KANBAN_V1_SURFACE_TYPE_ID,
   DEFAULT_RUNTIME_SURFACE_TYPE_ID,
   listRuntimeSurfaceTypes,
   renderRuntimeSurfaceTree,
   validateRuntimeSurfaceTree,
 } from './runtimeSurfaceTypeRegistry';
+import { registerBuiltInRuntimeSurfaceTypes } from './defaultRuntimeSurfaceTypes';
+import { resetBuiltInHypercardRuntimeRegistrationForTest } from '../runtimeDefaults';
 
 describe('runtimeSurfaceTypeRegistry', () => {
-  it('registers the baseline and kanban packs', () => {
+  beforeEach(() => {
+    clearRuntimeSurfaceTypes();
+    resetBuiltInHypercardRuntimeRegistrationForTest();
+  });
+
+  it('can stay empty until surface types are registered explicitly', () => {
+    expect(listRuntimeSurfaceTypes()).toEqual([]);
+    expect(() => validateRuntimeSurfaceTree(KANBAN_V1_SURFACE_TYPE_ID, { kind: 'kanban.page', children: [] })).toThrow(
+      /unknown runtime surface type/i
+    );
+  });
+
+  it('registers the baseline and kanban surface types explicitly', () => {
+    registerBuiltInRuntimeSurfaceTypes();
+
     expect(listRuntimeSurfaceTypes()).toEqual(expect.arrayContaining([DEFAULT_RUNTIME_SURFACE_TYPE_ID, KANBAN_V1_SURFACE_TYPE_ID]));
   });
 
   it('validates and renders kanban.v1 trees', () => {
+    registerBuiltInRuntimeSurfaceTypes();
+
     const tree = validateRuntimeSurfaceTree(KANBAN_V1_SURFACE_TYPE_ID, {
       kind: 'kanban.page',
       children: [
@@ -84,6 +103,7 @@ describe('runtimeSurfaceTypeRegistry', () => {
   });
 
   it('rejects unknown runtime surface types', () => {
+    registerBuiltInRuntimeSurfaceTypes();
     expect(() => validateRuntimeSurfaceTree('missing.v1', { kind: 'panel', children: [] })).toThrow(/unknown runtime surface type/i);
   });
 });
