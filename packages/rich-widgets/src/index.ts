@@ -81,6 +81,16 @@ export {
   selectMacReplState,
 } from './repl/replState';
 export { type TerminalLine, type LineType, type CommandInfo } from './repl/types';
+export {
+  type ReplCompletionItem,
+  type ReplDriver,
+  type ReplDriverContext,
+  type ReplEffect,
+  type ReplExecutionResult,
+  type ReplHelpEntry,
+} from './repl/core/types';
+export { resolveReplCompletionState, executeReplSubmission } from './repl/core/controller';
+export { BUILTIN_DEMO_REPL_DRIVER } from './repl/replCommands';
 export { BUILT_IN_COMMANDS, FORTUNES, INITIAL_LINES } from './repl/sampleData';
 
 // NodeEditor

@@ -1,5 +1,5 @@
-import { BUILT_IN_COMMANDS } from './sampleData';
 import { RICH_PARTS as P } from '../parts';
+import type { ReplCompletionItem } from './core/types';
 
 export function ReplInputLine({
   prompt,
@@ -17,12 +17,12 @@ export function ReplInputLine({
   input: string;
   suggestion: string;
   showCompletion: boolean;
-  completions: string[];
+  completions: ReplCompletionItem[];
   completionIdx: number;
   inputRef: React.RefObject<HTMLInputElement | null>;
   onChange: (value: string) => void;
   onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
-  onPickCompletion: (completion: string) => void;
+  onPickCompletion: (completion: ReplCompletionItem) => void;
 }) {
   return (
     <div data-part={P.replInputLine}>
@@ -48,7 +48,7 @@ export function ReplInputLine({
           <div data-part={P.replCompletionPopup}>
             {completions.map((completion, index) => (
               <div
-                key={completion}
+                key={completion.value}
                 data-part={P.replCompletionItem}
                 data-state={index === completionIdx ? 'active' : undefined}
                 onMouseDown={(event) => {
@@ -57,9 +57,9 @@ export function ReplInputLine({
                   inputRef.current?.focus();
                 }}
               >
-                <span>{completion}</span>
+                <span>{completion.value}</span>
                 <span style={{ opacity: 0.5, marginLeft: 8 }}>
-                  {BUILT_IN_COMMANDS[completion as keyof typeof BUILT_IN_COMMANDS]?.desc?.slice(0, 30) || 'alias'}
+                  {(completion.detail ?? 'item').slice(0, 30)}
                 </span>
               </div>
             ))}

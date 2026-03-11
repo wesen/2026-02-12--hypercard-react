@@ -3,13 +3,16 @@ import { ReactReduxContext, useDispatch, useSelector } from 'react-redux';
 import { RICH_PARTS as P } from '../parts';
 import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import { ReplInputLine } from './ReplInputLine';
-import { getCompletions, executeReplCommand } from './replCommands';
+import { executeReplSubmission, resolveReplCompletionState } from './core/controller';
+import type { ReplDriver, ReplDriverContext } from './core/types';
+import { BUILTIN_DEMO_REPL_DRIVER } from './replCommands';
 import { selectMacReplState, createMacReplStateSeed, macReplActions, macReplReducer, MAC_REPL_STATE_KEY, type MacReplAction, type MacReplState } from './replState';
 import type { TerminalLine } from './types';
 
 export interface MacReplProps {
   initialLines?: TerminalLine[];
   prompt?: string;
+  driver?: ReplDriver;
 }
 
 function createInitialSeed(props: MacReplProps): MacReplState {
@@ -19,21 +22,35 @@ function createInitialSeed(props: MacReplProps): MacReplState {
   });
 }
 
+function createDriverContext(state: MacReplState, uptimeMs: number): ReplDriverContext {
+  return {
+    lines: state.lines,
+    historyStack: state.historyStack,
+    envVars: state.envVars,
+    aliases: state.aliases,
+    uptimeMs,
+  };
+}
+
 function MacReplFrame({
   state,
   dispatch,
+  driver,
 }: {
   state: MacReplState;
   dispatch: (action: MacReplAction) => void;
+  driver: ReplDriver;
 }) {
   const [input, setInput] = useState('');
-  const [suggestion, setSuggestion] = useState('');
   const startTime = useRef(Date.now());
   const [showCompletion, setShowCompletion] = useState(false);
-  const [completions, setCompletions] = useState<string[]>([]);
   const [completionIdx, setCompletionIdx] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const driverContext = createDriverContext(state, Date.now() - startTime.current);
+  const completionState = resolveReplCompletionState(input, driver, driverContext);
+  const suggestion = completionState.suggestion;
+  const completions = completionState.items;
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -46,33 +63,20 @@ function MacReplFrame({
   }, []);
 
   useEffect(() => {
-    const parts = input.split(' ');
-    if (parts.length === 1 && input.length > 0) {
-      const matches = getCompletions(input, state.aliases);
-      if (matches.length === 1 && matches[0] !== input) {
-        setSuggestion(matches[0].slice(input.length));
-      } else {
-        setSuggestion('');
-      }
-      setCompletions(matches);
-    } else {
-      setSuggestion('');
-      setCompletions([]);
+    if (completionState.items.length === 0 && showCompletion) {
       setShowCompletion(false);
     }
-  }, [input, state.aliases]);
+  }, [completionState.items.length, showCompletion]);
 
   const executeCommand = useCallback(
     (raw: string) => {
-      const result = executeReplCommand(raw, {
-        lines: state.lines,
-        historyStack: state.historyStack,
-        envVars: state.envVars,
-        aliases: state.aliases,
-        uptimeMs: Date.now() - startTime.current,
-      });
+      const result = executeReplSubmission(
+        raw,
+        driver,
+        createDriverContext(state, Date.now() - startTime.current),
+      );
 
-      if (raw.trim() === 'clear') {
+      if (result.clearTranscript) {
         dispatch(macReplActions.setLines([]));
       } else if (result.lines.length > 0) {
         dispatch(macReplActions.appendLines(result.lines));
@@ -94,7 +98,7 @@ function MacReplFrame({
         });
       }
     },
-    [dispatch, state.aliases, state.envVars, state.historyStack, state.lines],
+    [dispatch, driver, state],
   );
 
   const handleSubmit = () => {
@@ -105,7 +109,6 @@ function MacReplFrame({
     executeCommand(trimmed);
     setInput('');
     dispatch(macReplActions.setHistoryIndex(-1));
-    setSuggestion('');
     setShowCompletion(false);
   };
 
@@ -116,11 +119,11 @@ function MacReplFrame({
     } else if (event.key === 'Tab') {
       event.preventDefault();
       if (completions.length === 1) {
-        setInput(completions[0] + ' ');
+        setInput(completions[0].value + ' ');
         setShowCompletion(false);
       } else if (completions.length > 1) {
         if (showCompletion) {
-          setInput(completions[completionIdx] + ' ');
+          setInput(completions[completionIdx].value + ' ');
           setShowCompletion(false);
         } else {
           setShowCompletion(true);
@@ -188,7 +191,7 @@ function MacReplFrame({
           onChange={setInput}
           onKeyDown={handleKeyDown}
           onPickCompletion={(completion) => {
-            setInput(completion + ' ');
+            setInput(completion.value + ' ');
             setShowCompletion(false);
           }}
         />
@@ -204,7 +207,7 @@ function MacReplFrame({
 
 function StandaloneMacRepl(props: MacReplProps) {
   const [state, dispatch] = useReducer(macReplReducer, createInitialSeed(props));
-  return <MacReplFrame state={state} dispatch={dispatch} />;
+  return <MacReplFrame state={state} dispatch={dispatch} driver={props.driver ?? BUILTIN_DEMO_REPL_DRIVER} />;
 }
 
 function ConnectedMacRepl(props: MacReplProps) {
@@ -216,7 +219,13 @@ function ConnectedMacRepl(props: MacReplProps) {
   }, [props.initialLines, props.prompt, reduxDispatch]);
 
   const effectiveState = state.initialized ? state : createInitialSeed(props);
-  return <MacReplFrame state={effectiveState} dispatch={(action) => reduxDispatch(action)} />;
+  return (
+    <MacReplFrame
+      state={effectiveState}
+      dispatch={(action) => reduxDispatch(action)}
+      driver={props.driver ?? BUILTIN_DEMO_REPL_DRIVER}
+    />
+  );
 }
 
 export function MacRepl(props: MacReplProps) {

@@ -1,32 +1,24 @@
 import { ASCII_ART, BUILT_IN_COMMANDS, FORTUNES } from './sampleData';
+import type { ReplCompletionItem, ReplDriver, ReplDriverContext, ReplExecutionResult } from './core/types';
 import type { TerminalLine } from './types';
-
-export interface ReplExecutionState {
-  lines: TerminalLine[];
-  historyStack: string[];
-  envVars: Record<string, string>;
-  aliases: Record<string, string>;
-  uptimeMs: number;
-}
-
-export interface ReplExecutionResult {
-  lines: TerminalLine[];
-  envVars?: Record<string, string>;
-  aliases?: Record<string, string>;
-}
 
 export function getCompletions(
   partial: string,
   aliases: Record<string, string>,
-): string[] {
+): ReplCompletionItem[] {
   if (!partial) return [];
   const allCommands = [...Object.keys(BUILT_IN_COMMANDS), ...Object.keys(aliases)];
-  return allCommands.filter((command) => command.startsWith(partial.toLowerCase()));
+  return allCommands
+    .filter((command) => command.startsWith(partial.toLowerCase()))
+    .map((command) => ({
+      value: command,
+      detail: BUILT_IN_COMMANDS[command as keyof typeof BUILT_IN_COMMANDS]?.desc ?? 'alias',
+    }));
 }
 
 export function executeReplCommand(
   raw: string,
-  state: ReplExecutionState,
+  state: ReplDriverContext,
 ): ReplExecutionResult {
   const trimmed = raw.trim();
   if (!trimmed) {
@@ -73,7 +65,7 @@ export function executeReplCommand(
       return { lines: newLines };
     }
     case 'clear':
-      return { lines: [] };
+      return { lines: [], clearTranscript: true };
     case 'echo':
       newLines.push({ type: 'output', text: argStr || '' });
       return { lines: newLines };
@@ -250,3 +242,26 @@ export function executeReplCommand(
       return { lines: newLines };
   }
 }
+
+export const BUILTIN_DEMO_REPL_DRIVER: ReplDriver = {
+  execute(raw, context) {
+    return executeReplCommand(raw, context);
+  },
+  getCompletions(input, context) {
+    return getCompletions(input, context.aliases);
+  },
+  getHelp(topic) {
+    if (!topic) {
+      return Object.entries(BUILT_IN_COMMANDS).map(([command, info]) => ({
+        title: command,
+        detail: info.desc,
+        usage: info.usage,
+      }));
+    }
+
+    const info = BUILT_IN_COMMANDS[topic as keyof typeof BUILT_IN_COMMANDS];
+    return info
+      ? [{ title: topic, detail: info.desc, usage: info.usage }]
+      : null;
+  },
+};

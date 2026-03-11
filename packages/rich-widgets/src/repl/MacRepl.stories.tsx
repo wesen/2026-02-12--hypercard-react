@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { fixedFrameDecorator, fullscreenDecorator } from '../storybook/frameDecorators';
 import { SeededStoreProvider, type SeedStore } from '../storybook/seededStore';
 import { MacRepl } from './MacRepl';
+import type { ReplDriver } from './core/types';
 import {
   createMacReplStateSeed,
   MAC_REPL_STATE_KEY,
@@ -46,6 +47,31 @@ function renderSeededStory(seed: Parameters<typeof createMacReplStateSeed>[0]) {
     store.dispatch(macReplActions.replaceState(createMacReplStateSeed(seed)));
   });
 }
+
+const SQL_DEMO_DRIVER: ReplDriver = {
+  execute(raw) {
+    const trimmed = raw.trim();
+    if (!trimmed) {
+      return { lines: [] };
+    }
+    return {
+      lines: [
+        { type: 'input', text: trimmed },
+        trimmed.toLowerCase().startsWith('select')
+          ? { type: 'output', text: 'rows: 3' }
+          : { type: 'system', text: 'SQL demo driver: no-op' },
+      ],
+    };
+  },
+  getCompletions(input) {
+    const entries = [
+      { value: 'select', detail: 'Run a SELECT query' },
+      { value: 'schema', detail: 'Inspect the schema' },
+      { value: 'tables', detail: 'List tables' },
+    ];
+    return entries.filter((entry) => entry.value.startsWith(input.toLowerCase()));
+  },
+};
 
 export const Default: Story = {
   render: renderSeededStory({}),
@@ -101,4 +127,19 @@ export const LongSession: Story = {
     historyStack: Array.from({ length: 8 }, (_, index) => `echo run-${index * 3}`),
   }),
   decorators: [fixedFrameDecorator('100%', 640)],
+};
+
+export const CustomDriver: Story = {
+  render: () => (
+    <MacRepl
+      prompt="sql>"
+      initialLines={[
+        { type: 'system', text: 'SQL Runtime Console' },
+        { type: 'system', text: 'Type select, schema, or tables.' },
+        { type: 'system', text: '' },
+      ]}
+      driver={SQL_DEMO_DRIVER}
+    />
+  ),
+  decorators: [fixedFrameDecorator('100%', 520)],
 };
