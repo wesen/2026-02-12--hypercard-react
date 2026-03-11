@@ -119,6 +119,7 @@ defineRuntimeBundle(({ ui }) => {
   return {
     id: 'todo',
     title: 'My Tasks',
+    packageIds: ["ui"],
     initialSessionState: {
       defaultPriority: 'medium',
     },

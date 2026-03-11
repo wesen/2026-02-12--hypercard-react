@@ -33,6 +33,7 @@ const TEST_STACK: CardStackDefinition = {
   icon: '🧪',
   homeCard: 'missing-home-card',
   plugin: {
+    packageIds: [],
     bundleCode: '',
   },
   cards: {},

@@ -61,7 +61,7 @@ function RuntimeMutationDemo() {
 
     async function load() {
       try {
-        const bundle = await runtime.loadRuntimeBundle(STACK_ID, SESSION_ID, INVENTORY_STACK);
+        const bundle = await runtime.loadRuntimeBundle(STACK_ID, SESSION_ID, ['ui'], INVENTORY_STACK);
         if (cancelled) {
           return;
         }

@@ -65,6 +65,7 @@ export interface RuntimeBundleMeta {
   declaredId?: string;
   title: string;
   description?: string;
+  packageIds: string[];
   initialSessionState?: unknown;
   initialSurfaceState?: Record<string, unknown>;
   surfaces: string[];

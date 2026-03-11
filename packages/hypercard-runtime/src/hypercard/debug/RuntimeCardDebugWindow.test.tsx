@@ -14,7 +14,7 @@ const DEBUG_STACK: CardStackDefinition = {
   name: 'go-go-os Launcher',
   icon: '🖥️',
   homeCard: 'currentCard',
-  plugin: { bundleCode: '' },
+  plugin: { packageIds: [], bundleCode: '' },
   cards: {
     currentCard: {
       id: 'currentCard',

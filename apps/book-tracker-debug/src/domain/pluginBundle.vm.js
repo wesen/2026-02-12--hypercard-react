@@ -138,6 +138,7 @@ defineRuntimeBundle(({ ui }) => {
   return {
     id: 'bookTrackerDebug',
     title: 'Book Tracker',
+    packageIds: ["ui"],
     initialSurfaceState: {
       bookDetail: { edits: {} },
       addBook: {

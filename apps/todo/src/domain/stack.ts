@@ -35,6 +35,7 @@ export const STACK: CardStackDefinition = {
   icon: '✅',
   homeCard: 'home',
   plugin: {
+    packageIds: ['ui'],
     bundleCode: TODO_PLUGIN_BUNDLE,
     capabilities: {
       domain: ['tasks'],

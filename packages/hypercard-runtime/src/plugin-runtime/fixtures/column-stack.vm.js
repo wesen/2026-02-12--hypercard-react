@@ -2,6 +2,7 @@ defineRuntimeBundle(({ ui }) => {
   return {
     id: 'column-demo',
     title: 'Column Demo',
+    packageIds: ["ui"],
     surfaces: {
       main: {
         render() {

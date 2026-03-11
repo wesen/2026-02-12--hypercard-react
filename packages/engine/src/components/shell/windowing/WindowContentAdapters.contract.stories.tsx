@@ -16,7 +16,7 @@ const STACK: CardStackDefinition = {
   name: 'Contract Stack',
   icon: '🧪',
   homeCard: 'home',
-  plugin: { bundleCode: '' },
+  plugin: { packageIds: [], bundleCode: '' },
   cards: {
     home: {
       id: 'home',

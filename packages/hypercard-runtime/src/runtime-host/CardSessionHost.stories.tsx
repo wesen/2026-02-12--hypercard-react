@@ -33,6 +33,7 @@ function createPluginStack(options: {
   name: string;
   icon: string;
   homeCard: string;
+  packageIds?: string[];
   bundleCode: string;
   cards: PluginCardMeta[];
 }): CardStackDefinition {
@@ -42,6 +43,7 @@ function createPluginStack(options: {
     icon: options.icon,
     homeCard: options.homeCard,
     plugin: {
+      packageIds: options.packageIds ?? ['ui'],
       bundleCode: options.bundleCode,
       capabilities: {
         system: ['nav.go', 'nav.back', 'notify.show'],

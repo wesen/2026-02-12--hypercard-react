@@ -35,6 +35,7 @@ export const STACK: CardStackDefinition = {
   icon: '📚',
   homeCard: 'home',
   plugin: {
+    packageIds: ['ui'],
     bundleCode: BOOK_TRACKER_PLUGIN_BUNDLE,
     capabilities: {
       domain: ['books'],

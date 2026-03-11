@@ -13,6 +13,7 @@ vi.mock('../plugin-runtime/runtimeService', () => {
       return {
         id: 'mock-plugin',
         title: 'Mock Plugin',
+        packageIds: ['ui'],
         surfaces: ['home'],
       };
     }
@@ -46,7 +47,9 @@ const TEST_STACK: CardStackDefinition = {
   icon: '🧪',
   homeCard: 'home',
   plugin: {
-    bundleCode: 'defineRuntimeBundle(() => ({ id: "mock-plugin", title: "Mock Plugin", surfaces: { home: { render() { return null; } } } }));',
+    packageIds: ['ui'],
+    bundleCode:
+      'defineRuntimeBundle(() => ({ id: "mock-plugin", title: "Mock Plugin", packageIds: ["ui"], surfaces: { home: { render() { return null; } } } }));',
   },
   cards: {
     home: {

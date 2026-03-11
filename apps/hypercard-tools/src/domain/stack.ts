@@ -42,6 +42,7 @@ export const STACK: CardStackDefinition = {
   icon: '🛠️',
   homeCard: 'home',
   plugin: {
+    packageIds: ['ui'],
     bundleCode: HYPERCARD_TOOLS_DEMO_PLUGIN_BUNDLE,
     capabilities: {
       domain: ['app_hypercard_tools'],

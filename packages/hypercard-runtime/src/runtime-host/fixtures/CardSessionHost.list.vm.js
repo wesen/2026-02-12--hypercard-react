@@ -11,6 +11,7 @@ defineRuntimeBundle(({ ui }) => {
   return {
     id: 'list-demo',
     title: 'List Demo',
+    packageIds: ["ui"],
     surfaces: {
       browse: {
         render() {

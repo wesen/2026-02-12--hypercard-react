@@ -2,6 +2,7 @@ defineRuntimeBundle(({ ui }) => {
   return {
     id: 'report-demo',
     title: 'Report Demo',
+    packageIds: ["ui"],
     surfaces: {
       report: {
         render() {

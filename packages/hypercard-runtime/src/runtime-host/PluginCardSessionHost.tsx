@@ -178,7 +178,7 @@ export function PluginCardSessionHost({
       }
 
       try {
-        const bundle = await runtimeService.loadRuntimeBundle(stack.id, sessionId, config.bundleCode);
+        const bundle = await runtimeService.loadRuntimeBundle(stack.id, sessionId, config.packageIds, config.bundleCode);
         if (cancelled) {
           return;
         }

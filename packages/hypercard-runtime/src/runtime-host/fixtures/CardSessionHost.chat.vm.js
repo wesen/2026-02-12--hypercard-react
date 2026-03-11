@@ -6,6 +6,7 @@ defineRuntimeBundle(({ ui }) => {
   return {
     id: 'chat-demo',
     title: 'Chat Demo',
+    packageIds: ["ui"],
     initialSurfaceState: {
       chat: {
         draft: '',

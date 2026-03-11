@@ -2,6 +2,7 @@ defineRuntimeBundle(({ ui }) => {
   return {
     id: 'inventory',
     title: 'Inventory',
+    packageIds: ["ui"],
     initialSessionState: { filter: 'all' },
     initialSurfaceState: { lowStock: { limit: 5 } },
     surfaces: {

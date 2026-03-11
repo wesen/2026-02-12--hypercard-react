@@ -2,6 +2,8 @@ import SINGLEFILE_RELEASE_SYNC from '@jitl/quickjs-singlefile-mjs-release-sync';
 import { newQuickJSWASMModule } from 'quickjs-emscripten';
 import type { QuickJSContext, QuickJSRuntime, QuickJSWASMModule } from 'quickjs-emscripten-core';
 import { validateRuntimeActions } from './intentSchema';
+import { getRuntimePackageOrThrow, resolveRuntimePackageInstallOrder } from '../runtime-packages';
+import { getRuntimeSurfaceTypeOrThrow } from '../runtime-packs';
 import type {
   RuntimeSurfaceId,
   RuntimeBundleMeta,
@@ -114,6 +116,11 @@ function validateRuntimeBundleMeta(stackId: StackId, sessionId: SessionId, value
     throw new Error('Runtime bundle metadata must be an object');
   }
 
+  const packageIds = value.packageIds;
+  if (!Array.isArray(packageIds) || packageIds.some((packageId) => typeof packageId !== 'string')) {
+    throw new Error('Runtime bundle metadata packageIds must be string[]');
+  }
+
   const surfaces = value.surfaces;
   if (!Array.isArray(surfaces) || surfaces.some((surfaceId) => typeof surfaceId !== 'string')) {
     throw new Error('Runtime bundle metadata surfaces must be string[]');
@@ -142,6 +149,7 @@ function validateRuntimeBundleMeta(stackId: StackId, sessionId: SessionId, value
     declaredId: typeof value.declaredId === 'string' ? value.declaredId : undefined,
     title: typeof value.title === 'string' ? value.title : 'Untitled Stack',
     description: typeof value.description === 'string' ? value.description : undefined,
+    packageIds: packageIds.filter((packageId): packageId is string => typeof packageId === 'string'),
     initialSessionState: value.initialSessionState,
     initialSurfaceState,
     surfaces,
@@ -212,7 +220,16 @@ export class QuickJSRuntimeService {
     return validateRuntimeBundleMeta(vm.stackId, vm.sessionId, meta);
   }
 
-  async loadRuntimeBundle(stackId: StackId, sessionId: SessionId, code: string): Promise<RuntimeBundleMeta> {
+  private installRuntimePackages(vm: SessionVm, packageIds: string[]): string[] {
+    const orderedPackageIds = resolveRuntimePackageInstallOrder(packageIds);
+    for (const packageId of orderedPackageIds) {
+      const runtimePackage = getRuntimePackageOrThrow(packageId);
+      evalCodeOrThrow(vm, runtimePackage.installPrelude, `${packageId}.runtime-package.js`, this.options.loadTimeoutMs);
+    }
+    return orderedPackageIds;
+  }
+
+  async loadRuntimeBundle(stackId: StackId, sessionId: SessionId, packageIds: string[], code: string): Promise<RuntimeBundleMeta> {
     if (this.vms.has(sessionId)) {
       throw new Error(`Runtime session already exists: ${sessionId}`);
     }
@@ -220,8 +237,16 @@ export class QuickJSRuntimeService {
     const vm = await this.createSessionVm(stackId, sessionId);
 
     try {
+      const installedPackageIds = this.installRuntimePackages(vm, packageIds);
       evalCodeOrThrow(vm, code, `${sessionId}.runtime-bundle.js`, this.options.loadTimeoutMs);
       const bundle = this.readRuntimeBundleMeta(vm);
+      const declared = Array.from(new Set(bundle.packageIds)).sort();
+      const installed = Array.from(new Set(installedPackageIds)).sort();
+      if (declared.length !== installed.length || declared.some((packageId, index) => packageId !== installed[index])) {
+        throw new Error(
+          `Runtime bundle packageIds mismatch. Declared: ${declared.join(', ') || '(none)'}; installed: ${installed.join(', ') || '(none)'}`
+        );
+      }
       this.vms.set(sessionId, vm);
       return bundle;
     } catch (error) {
@@ -233,6 +258,9 @@ export class QuickJSRuntimeService {
 
   defineRuntimeSurface(sessionId: SessionId, surfaceId: RuntimeSurfaceId, code: string, packId?: string): RuntimeBundleMeta {
     const vm = this.getVmOrThrow(sessionId);
+    if (typeof packId === 'string' && packId.trim().length > 0) {
+      getRuntimeSurfaceTypeOrThrow(packId);
+    }
     evalCodeOrThrow(
       vm,
       `globalThis.__runtimeBundleHost.defineRuntimeSurface(${toJsLiteral(surfaceId)}, (${code}), ${toJsLiteral(packId)})`,

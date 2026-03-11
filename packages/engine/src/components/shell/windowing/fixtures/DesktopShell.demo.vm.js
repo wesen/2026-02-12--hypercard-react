@@ -38,6 +38,7 @@ defineRuntimeBundle(({ ui }) => {
   return {
     id: 'demo',
     title: 'Demo App',
+    packageIds: ["ui"],
     initialSurfaceState: {
       chat: {
         draft: '',

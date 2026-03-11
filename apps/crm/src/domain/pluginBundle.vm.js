@@ -249,6 +249,7 @@ defineRuntimeBundle(({ ui }) => {
   return {
     id: 'crm',
     title: 'CRM',
+    packageIds: ["ui"],
     initialSurfaceState: {
       contactDetail: { edits: {} },
       companyDetail: { edits: {} },

@@ -61,6 +61,7 @@ interface PluginCardDef {
 interface PluginBundle {
   id: string;
   title: string;
+  packageIds: string[];
   description?: string;
   initialSessionState?: Record<string, unknown>;
   initialSurfaceState?: Record<string, Record<string, unknown>>;

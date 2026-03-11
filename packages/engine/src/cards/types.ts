@@ -1,4 +1,5 @@
 export interface PluginRuntimeStackConfig {
+  packageIds: string[];
   bundleCode: string;
   capabilities?: {
     domain?: 'all' | string[];

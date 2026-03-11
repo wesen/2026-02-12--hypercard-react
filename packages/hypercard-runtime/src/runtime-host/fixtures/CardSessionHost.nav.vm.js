@@ -44,6 +44,7 @@ defineRuntimeBundle(({ ui }) => {
   return {
     id: 'nav-demo',
     title: 'Nav Demo',
+    packageIds: ["ui"],
     surfaces: {
       list: {
         render() {

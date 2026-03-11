@@ -215,6 +215,7 @@ defineRuntimeBundle(({ ui }) => {
   return {
     id: 'hypercardToolsUiDslDemo',
     title: 'HyperCard Tools UI DSL Demos',
+    packageIds: ["ui"],
     description: 'Demo stack for the active UI DSL widget surface.',
     initialSessionState: {
       catalogFilter: '',

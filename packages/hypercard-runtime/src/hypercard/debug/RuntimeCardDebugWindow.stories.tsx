@@ -13,7 +13,7 @@ const STORY_STACK: CardStackDefinition = {
   name: 'Inventory',
   icon: '📦',
   homeCard: 'home',
-  plugin: { bundleCode: '' },
+  plugin: { packageIds: [], bundleCode: '' },
   cards: {
     home: {
       id: 'home',
@@ -37,7 +37,7 @@ const SECOND_STACK: CardStackDefinition = {
   name: 'go-go-os Launcher',
   icon: '🖥️',
   homeCard: 'home',
-  plugin: { bundleCode: '' },
+  plugin: { packageIds: [], bundleCode: '' },
   cards: {
     home: {
       id: 'home',

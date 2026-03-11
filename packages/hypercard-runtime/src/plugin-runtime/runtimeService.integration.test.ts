@@ -13,6 +13,7 @@ const BUILTIN_KANBAN_STACK = `
 defineRuntimeBundle(({ ui }) => ({
   id: 'builtin-kanban',
   title: 'Built-in Kanban',
+  packageIds: ['ui', 'kanban'],
   surfaces: {
     home: {
       render() {
@@ -64,7 +65,7 @@ describe('QuickJSRuntimeService', () => {
     const service = new QuickJSRuntimeService();
     services.push(service);
 
-    const bundle = await service.loadRuntimeBundle('inventory', 'inventory@one', INVENTORY_STACK);
+    const bundle = await service.loadRuntimeBundle('inventory', 'inventory@one', ['ui'], INVENTORY_STACK);
     expect(bundle.surfaces).toEqual(['lowStock']);
 
     const tree = service.renderRuntimeSurface('inventory@one', 'lowStock', {
@@ -78,7 +79,7 @@ describe('QuickJSRuntimeService', () => {
     const service = new QuickJSRuntimeService();
     services.push(service);
 
-    await service.loadRuntimeBundle('inventory', 'inventory@one', INVENTORY_STACK);
+    await service.loadRuntimeBundle('inventory', 'inventory@one', ['ui'], INVENTORY_STACK);
 
     const actions = service.eventRuntimeSurface(
       'inventory@one',
@@ -112,7 +113,7 @@ describe('QuickJSRuntimeService', () => {
     const service = new QuickJSRuntimeService();
     services.push(service);
 
-    await service.loadRuntimeBundle('inventory', 'inventory@one', INVENTORY_STACK);
+    await service.loadRuntimeBundle('inventory', 'inventory@one', ['ui'], INVENTORY_STACK);
     expect(service.disposeSession('inventory@one')).toBe(true);
     expect(service.disposeSession('inventory@one')).toBe(false);
     expect(() => service.renderRuntimeSurface('inventory@one', 'lowStock', {})).toThrow(/not found/i);
@@ -122,8 +123,8 @@ describe('QuickJSRuntimeService', () => {
     const service = new QuickJSRuntimeService();
     services.push(service);
 
-    await service.loadRuntimeBundle('inventory', 'inventory@one', INVENTORY_STACK);
-    await service.loadRuntimeBundle('inventory', 'inventory@two', INVENTORY_STACK);
+    await service.loadRuntimeBundle('inventory', 'inventory@one', ['ui'], INVENTORY_STACK);
+    await service.loadRuntimeBundle('inventory', 'inventory@two', ['ui'], INVENTORY_STACK);
 
     const firstTree = service.renderRuntimeSurface('inventory@one', 'lowStock', {
       filters: { filter: 'all' },
@@ -143,7 +144,7 @@ describe('QuickJSRuntimeService', () => {
     const service = new QuickJSRuntimeService();
     services.push(service);
 
-    await service.loadRuntimeBundle('column-demo', 'column-demo@one', COLUMN_STACK);
+    await service.loadRuntimeBundle('column-demo', 'column-demo@one', ['ui'], COLUMN_STACK);
     const tree = service.renderRuntimeSurface('column-demo@one', 'main', {});
 
     expect(tree.kind).toBe('column');
@@ -153,7 +154,7 @@ describe('QuickJSRuntimeService', () => {
     const service = new QuickJSRuntimeService({ renderTimeoutMs: 10 });
     services.push(service);
 
-    await service.loadRuntimeBundle('loop', 'loop@one', LOOP_STACK);
+    await service.loadRuntimeBundle('loop', 'loop@one', ['ui'], LOOP_STACK);
 
     expect(() => service.renderRuntimeSurface('loop@one', 'loop', {})).toThrow(/interrupted/i);
   });
@@ -162,7 +163,7 @@ describe('QuickJSRuntimeService', () => {
     const service = new QuickJSRuntimeService();
     services.push(service);
 
-    await service.loadRuntimeBundle('inventory', 'inventory@dynamic', INVENTORY_STACK);
+    await service.loadRuntimeBundle('inventory', 'inventory@dynamic', ['ui'], INVENTORY_STACK);
 
     const withDynamicCard = service.defineRuntimeSurface('inventory@dynamic', 'onDemand', DYNAMIC_CARD);
     expect(withDynamicCard.surfaces).toContain('onDemand');
@@ -207,12 +208,12 @@ describe('QuickJSRuntimeService', () => {
     const service = new QuickJSRuntimeService();
     services.push(service);
 
-    await service.loadRuntimeBundle('inventory', 'inventory@kanban', INVENTORY_STACK);
+    await service.loadRuntimeBundle('builtin-kanban', 'builtin-kanban@dynamic', ['ui', 'kanban'], BUILTIN_KANBAN_STACK);
 
-    const bundle = service.defineRuntimeSurface('inventory@kanban', 'sprintBoard', KANBAN_CARD, 'kanban.v1');
+    const bundle = service.defineRuntimeSurface('builtin-kanban@dynamic', 'sprintBoard', KANBAN_CARD, 'kanban.v1');
     expect(bundle.surfaces).toContain('sprintBoard');
 
-    const rawTree = service.renderRuntimeSurface('inventory@kanban', 'sprintBoard', {
+    const rawTree = service.renderRuntimeSurface('builtin-kanban@dynamic', 'sprintBoard', {
       app_kanban: {
         taxonomy: {
           issueTypes: [{ id: 'feature', label: 'Feature', icon: '✨' }],
@@ -242,7 +243,7 @@ describe('QuickJSRuntimeService', () => {
     expect(tree.kind).toBe('kanban.page');
 
     const actions = service.eventRuntimeSurface(
-      'inventory@kanban',
+      'builtin-kanban@dynamic',
       'sprintBoard',
       'moveTask',
       { id: 'task-1', col: 'done' },
@@ -260,8 +261,9 @@ describe('QuickJSRuntimeService', () => {
     const service = new QuickJSRuntimeService();
     services.push(service);
 
-    const bundle = await service.loadRuntimeBundle('builtin-kanban', 'builtin-kanban@one', BUILTIN_KANBAN_STACK);
+    const bundle = await service.loadRuntimeBundle('builtin-kanban', 'builtin-kanban@one', ['ui', 'kanban'], BUILTIN_KANBAN_STACK);
     expect(bundle.surfaces).toEqual(expect.arrayContaining(['home', 'board']));
+    expect(bundle.packageIds).toEqual(['ui', 'kanban']);
     expect(bundle.surfaceTypes).toMatchObject({
       home: 'ui.card.v1',
       board: 'kanban.v1',
@@ -276,10 +278,19 @@ describe('QuickJSRuntimeService', () => {
     const service = new QuickJSRuntimeService();
     services.push(service);
 
-    await service.loadRuntimeBundle('inventory', 'inventory@bad-pack', INVENTORY_STACK);
+    await service.loadRuntimeBundle('inventory', 'inventory@bad-pack', ['ui'], INVENTORY_STACK);
 
     expect(() =>
       service.defineRuntimeSurface('inventory@bad-pack', 'broken', KANBAN_CARD, 'missing.v1')
     ).toThrow(/unknown runtime surface type/i);
+  });
+
+  it('rejects bundle loads when declared package ids do not match installed packages', async () => {
+    const service = new QuickJSRuntimeService();
+    services.push(service);
+
+    await expect(
+      service.loadRuntimeBundle('inventory', 'inventory@mismatch', ['ui', 'kanban'], INVENTORY_STACK)
+    ).rejects.toThrow(/packageIds mismatch/i);
   });
 });

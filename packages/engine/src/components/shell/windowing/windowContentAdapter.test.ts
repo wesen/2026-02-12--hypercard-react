@@ -19,6 +19,7 @@ const ctx = {
     cards: {},
     homeCard: 'home',
     plugin: {
+      packageIds: [],
       bundleCode: '',
       capabilities: {},
     },

@@ -1,128 +1,63 @@
-const __ui = {
-  text(content) {
-    return { kind: 'text', text: String(content) };
-  },
-  button(label, props = {}) {
-    return { kind: 'button', props: { label: String(label), ...props } };
-  },
-  input(value, props = {}) {
-    return { kind: 'input', props: { value: String(value ?? ''), ...props } };
-  },
-  row(children = []) {
-    return { kind: 'row', children: Array.isArray(children) ? children : [] };
-  },
-  column(children = []) {
-    return { kind: 'column', children: Array.isArray(children) ? children : [] };
-  },
-  panel(children = []) {
-    return { kind: 'panel', children: Array.isArray(children) ? children : [] };
-  },
-  badge(text) {
-    return { kind: 'badge', text: String(text) };
-  },
-  table(rows = [], props = {}) {
-    return {
-      kind: 'table',
-      props: {
-        headers: Array.isArray(props?.headers) ? props.headers : [],
-        rows: Array.isArray(rows) ? rows : [],
-      },
-    };
-  },
-  dropdown(options = [], props = {}) {
-    const selected = Number.isFinite(Number(props?.selected)) ? Number(props.selected) : 0;
-    return {
-      kind: 'dropdown',
-      props: {
-        options: Array.isArray(options) ? options.map((option) => String(option)) : [],
-        selected,
-        onSelect: props?.onSelect,
-        width: props?.width,
-      },
-    };
-  },
-  selectableTable(rows = [], props = {}) {
-    return {
-      kind: 'selectableTable',
-      props: {
-        headers: Array.isArray(props?.headers) ? props.headers.map((header) => String(header)) : [],
-        rows: Array.isArray(rows) ? rows : [],
-        selectedRowKeys: Array.isArray(props?.selectedRowKeys)
-          ? props.selectedRowKeys.map((key) => String(key))
-          : [],
-        mode: props?.mode,
-        rowKeyIndex: Number.isFinite(Number(props?.rowKeyIndex)) ? Number(props.rowKeyIndex) : 0,
-        searchable: props?.searchable === true,
-        searchText: typeof props?.searchText === 'string' ? props.searchText : '',
-        searchPlaceholder: typeof props?.searchPlaceholder === 'string' ? props.searchPlaceholder : undefined,
-        emptyMessage: typeof props?.emptyMessage === 'string' ? props.emptyMessage : undefined,
-        onSelectionChange: props?.onSelectionChange,
-        onSearchChange: props?.onSearchChange,
-        onRowClick: props?.onRowClick,
-      },
-    };
-  },
-  gridBoard(props = {}) {
-    return {
-      kind: 'gridBoard',
-      props: {
-        rows: Number.isFinite(Number(props?.rows)) ? Number(props.rows) : 1,
-        cols: Number.isFinite(Number(props?.cols)) ? Number(props.cols) : 1,
-        cells: Array.isArray(props?.cells) ? props.cells : [],
-        selectedIndex:
-          props?.selectedIndex === null || Number.isFinite(Number(props?.selectedIndex))
-            ? props.selectedIndex
-            : undefined,
-        cellSize: props?.cellSize,
-        disabled: props?.disabled === true,
-        onSelect: props?.onSelect,
-      },
-    };
-  },
-};
+const __runtimePackageState =
+  globalThis.__runtimePackageState && typeof globalThis.__runtimePackageState === 'object'
+    ? globalThis.__runtimePackageState
+    : {
+        packageIds: [],
+        apis: {},
+      };
 
-const __widgets = {
-  kanban: {
-    page(...children) {
-      const flatChildren = children.flat().filter(Boolean);
-      return { kind: 'kanban.page', children: flatChildren };
-    },
-    taxonomy(props = {}) {
-      const safeProps = props && typeof props === 'object' && !Array.isArray(props) ? props : {};
-      return { kind: 'kanban.taxonomy', props: safeProps };
-    },
-    header(props = {}) {
-      const safeProps = props && typeof props === 'object' && !Array.isArray(props) ? props : {};
-      return { kind: 'kanban.header', props: safeProps };
-    },
-    filters(props = {}) {
-      const safeProps = props && typeof props === 'object' && !Array.isArray(props) ? props : {};
-      return { kind: 'kanban.filters', props: safeProps };
-    },
-    highlights(props = {}) {
-      const safeProps = props && typeof props === 'object' && !Array.isArray(props) ? props : {};
-      return { kind: 'kanban.highlights', props: safeProps };
-    },
-    board(props = {}) {
-      const safeProps = props && typeof props === 'object' && !Array.isArray(props) ? props : {};
-      return { kind: 'kanban.board', props: safeProps };
-    },
-    status(props = {}) {
-      const safeProps = props && typeof props === 'object' && !Array.isArray(props) ? props : {};
-      return { kind: 'kanban.status', props: safeProps };
-    },
-  },
-};
+globalThis.__runtimePackageState = __runtimePackageState;
 
 let __stackBundle = null;
 let __runtimeActions = [];
+
+function isPlainObject(value) {
+  return value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function mergeRuntimeApiValue(existingValue, incomingValue) {
+  if (isPlainObject(existingValue) && isPlainObject(incomingValue)) {
+    const merged = { ...existingValue };
+    for (const [key, value] of Object.entries(incomingValue)) {
+      merged[key] = mergeRuntimeApiValue(merged[key], value);
+    }
+    return merged;
+  }
+
+  return incomingValue;
+}
+
+function registerRuntimePackageApi(packageId, apiExports) {
+  const normalizedPackageId = String(packageId || '').trim();
+  if (!normalizedPackageId) {
+    throw new Error('registerRuntimePackageApi requires a package id');
+  }
+
+  if (!__runtimePackageState.packageIds.includes(normalizedPackageId)) {
+    __runtimePackageState.packageIds.push(normalizedPackageId);
+  }
+
+  if (!isPlainObject(apiExports)) {
+    return;
+  }
+
+  for (const [exportName, exportValue] of Object.entries(apiExports)) {
+    const mergedValue = mergeRuntimeApiValue(__runtimePackageState.apis[exportName], exportValue);
+    __runtimePackageState.apis[exportName] = mergedValue;
+    globalThis[exportName] = mergedValue;
+  }
+}
+
+function collectRuntimePackageApis() {
+  return { ...__runtimePackageState.apis };
+}
 
 function defineRuntimeBundleImpl(factory) {
   if (typeof factory !== 'function') {
     throw new Error('defineRuntimeBundle requires a factory function');
   }
 
-  __stackBundle = factory({ ui: __ui });
+  __stackBundle = factory(collectRuntimePackageApis());
 }
 
 function assertStackBundleReady() {
@@ -139,33 +74,11 @@ function assertSurfacesMap() {
   return __stackBundle.surfaces;
 }
 
-function normalizePackId(packId) {
-  if (typeof packId !== 'string' || packId.trim().length === 0) {
-    return 'ui.card.v1';
-  }
-
-  return packId.trim();
-}
-
-function createPackHelpers(packId) {
-  const normalizedPackId = normalizePackId(packId);
-
-  if (normalizedPackId === 'ui.card.v1') {
-    return { ui: __ui };
-  }
-
-  if (normalizedPackId === 'kanban.v1') {
-    return { widgets: __widgets };
-  }
-
-  throw new Error('Unknown runtime surface type: ' + String(normalizedPackId));
-}
-
 function normalizeRuntimeSurfaceDefinition(surfaceId, definitionOrFactory, packId) {
-  const normalizedPackId = normalizePackId(packId);
+  const normalizedPackId = typeof packId === 'string' && packId.trim().length > 0 ? packId.trim() : 'ui.card.v1';
   const definition =
     typeof definitionOrFactory === 'function'
-      ? definitionOrFactory(createPackHelpers(normalizedPackId))
+      ? definitionOrFactory(collectRuntimePackageApis())
       : definitionOrFactory;
 
   if (!definition || typeof definition !== 'object') {
@@ -230,7 +143,7 @@ globalThis.defineRuntimeBundle = defineRuntimeBundleImpl;
 globalThis.defineRuntimeSurface = defineRuntimeSurfaceImpl;
 globalThis.defineRuntimeSurfaceRender = defineRuntimeSurfaceRenderImpl;
 globalThis.defineRuntimeSurfaceHandler = defineRuntimeSurfaceHandlerImpl;
-globalThis.ui = __ui;
+globalThis.registerRuntimePackageApi = registerRuntimePackageApi;
 
 globalThis.__runtimeBundleHost = {
   getMeta() {
@@ -246,6 +159,9 @@ globalThis.__runtimeBundleHost = {
       declaredId: typeof __stackBundle.id === 'string' ? __stackBundle.id : undefined,
       title: String(__stackBundle.title ?? 'Untitled Stack'),
       description: typeof __stackBundle.description === 'string' ? __stackBundle.description : undefined,
+      packageIds: Array.isArray(__stackBundle.packageIds)
+        ? __stackBundle.packageIds.map((packageId) => String(packageId)).filter((packageId) => packageId.length > 0)
+        : [],
       initialSessionState: __stackBundle.initialSessionState,
       initialSurfaceState: __stackBundle.initialSurfaceState,
       surfaces: Object.keys(__stackBundle.surfaces),

@@ -42,6 +42,7 @@ export const STACK: CardStackDefinition = {
   icon: '💼',
   homeCard: 'home',
   plugin: {
+    packageIds: ['ui'],
     bundleCode: CRM_PLUGIN_BUNDLE,
     capabilities: {
       domain: ['contacts', 'companies', 'deals', 'activities'],
