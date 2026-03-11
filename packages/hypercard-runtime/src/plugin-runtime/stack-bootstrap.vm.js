@@ -8,7 +8,7 @@ const __runtimePackageState =
 
 globalThis.__runtimePackageState = __runtimePackageState;
 
-let __stackBundle = null;
+let __runtimeBundle = null;
 let __runtimeActions = [];
 
 function isPlainObject(value) {
@@ -57,21 +57,21 @@ function defineRuntimeBundleImpl(factory) {
     throw new Error('defineRuntimeBundle requires a factory function');
   }
 
-  __stackBundle = factory(collectRuntimePackageApis());
+  __runtimeBundle = factory(collectRuntimePackageApis());
 }
 
 function assertStackBundleReady() {
-  if (!__stackBundle || typeof __stackBundle !== 'object') {
+  if (!__runtimeBundle || typeof __runtimeBundle !== 'object') {
     throw new Error('Runtime bundle did not register via defineRuntimeBundle');
   }
 }
 
 function assertSurfacesMap() {
   assertStackBundleReady();
-  if (!__stackBundle.surfaces || typeof __stackBundle.surfaces !== 'object') {
-    __stackBundle.surfaces = {};
+  if (!__runtimeBundle.surfaces || typeof __runtimeBundle.surfaces !== 'object') {
+    __runtimeBundle.surfaces = {};
   }
-  return __stackBundle.surfaces;
+  return __runtimeBundle.surfaces;
 }
 
 function normalizeRuntimeSurfaceDefinition(surfaceId, definitionOrFactory, packId) {
@@ -147,26 +147,26 @@ globalThis.registerRuntimePackageApi = registerRuntimePackageApi;
 
 globalThis.__runtimeBundleHost = {
   getMeta() {
-    if (!__stackBundle || typeof __stackBundle !== 'object') {
+    if (!__runtimeBundle || typeof __runtimeBundle !== 'object') {
       throw new Error('Runtime bundle did not register via defineRuntimeBundle');
     }
 
-    if (!__stackBundle.surfaces || typeof __stackBundle.surfaces !== 'object') {
+    if (!__runtimeBundle.surfaces || typeof __runtimeBundle.surfaces !== 'object') {
       throw new Error('Runtime bundle surfaces must be an object');
     }
 
     return {
-      declaredId: typeof __stackBundle.id === 'string' ? __stackBundle.id : undefined,
-      title: String(__stackBundle.title ?? 'Untitled Stack'),
-      description: typeof __stackBundle.description === 'string' ? __stackBundle.description : undefined,
-      packageIds: Array.isArray(__stackBundle.packageIds)
-        ? __stackBundle.packageIds.map((packageId) => String(packageId)).filter((packageId) => packageId.length > 0)
+      declaredId: typeof __runtimeBundle.id === 'string' ? __runtimeBundle.id : undefined,
+      title: String(__runtimeBundle.title ?? 'Untitled Bundle'),
+      description: typeof __runtimeBundle.description === 'string' ? __runtimeBundle.description : undefined,
+      packageIds: Array.isArray(__runtimeBundle.packageIds)
+        ? __runtimeBundle.packageIds.map((packageId) => String(packageId)).filter((packageId) => packageId.length > 0)
         : [],
-      initialSessionState: __stackBundle.initialSessionState,
-      initialSurfaceState: __stackBundle.initialSurfaceState,
-      surfaces: Object.keys(__stackBundle.surfaces),
+      initialSessionState: __runtimeBundle.initialSessionState,
+      initialSurfaceState: __runtimeBundle.initialSurfaceState,
+      surfaces: Object.keys(__runtimeBundle.surfaces),
       surfaceTypes: Object.fromEntries(
-        Object.entries(__stackBundle.surfaces).map(([key, surface]) => [
+        Object.entries(__runtimeBundle.surfaces).map(([key, surface]) => [
           key,
           typeof surface?.packId === 'string' && surface.packId.length > 0 ? surface.packId : 'ui.card.v1',
         ]),
@@ -175,7 +175,7 @@ globalThis.__runtimeBundleHost = {
   },
 
   renderRuntimeSurface(surfaceId, state) {
-    const surface = __stackBundle?.surfaces?.[surfaceId];
+    const surface = __runtimeBundle?.surfaces?.[surfaceId];
     if (!surface || typeof surface.render !== 'function') {
       throw new Error('Runtime surface not found or render() is missing: ' + String(surfaceId));
     }
@@ -184,7 +184,7 @@ globalThis.__runtimeBundleHost = {
   },
 
   eventRuntimeSurface(surfaceId, handlerName, args, state) {
-    const surface = __stackBundle?.surfaces?.[surfaceId];
+    const surface = __runtimeBundle?.surfaces?.[surfaceId];
     if (!surface) {
       throw new Error('Runtime surface not found: ' + String(surfaceId));
     }
