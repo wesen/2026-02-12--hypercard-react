@@ -8,8 +8,8 @@ export interface ArtifactUpsert {
   template?: string;
   data?: Record<string, unknown>;
   source: ArtifactSource;
-  runtimeCardId?: string;
-  runtimeCardCode?: string;
+  runtimeSurfaceId?: string;
+  runtimeSurfaceCode?: string;
   packId?: string;
 }
 
@@ -52,8 +52,8 @@ function artifactFromStructured(record: Record<string, unknown>): ArtifactUpsert
 }
 
 function cardFieldsFromStructured(record: Record<string, unknown>): {
-  runtimeCardId?: string;
-  runtimeCardCode?: string;
+  runtimeSurfaceId?: string;
+  runtimeSurfaceCode?: string;
   packId?: string;
 } {
   const payload = recordField(record, 'data');
@@ -65,8 +65,8 @@ function cardFieldsFromStructured(record: Record<string, unknown>): {
     };
   }
   return {
-    runtimeCardId: stringField(card, 'id'),
-    runtimeCardCode: stringField(card, 'code'),
+    runtimeSurfaceId: stringField(card, 'id'),
+    runtimeSurfaceCode: stringField(card, 'code'),
     packId: runtime ? stringField(runtime, 'pack') : undefined,
   };
 }
@@ -154,14 +154,14 @@ export function buildArtifactOpenWindowPayload(input: {
   template?: string;
   title?: string;
   bundleId?: string;
-  runtimeCardId?: string;
+  runtimeSurfaceId?: string;
 }): OpenWindowPayload | undefined {
   const artifactId = normalizeArtifactId(input.artifactId);
   if (!artifactId) {
     return undefined;
   }
-  const runtimeCardId = cleanString(input.runtimeCardId);
-  if (!runtimeCardId) {
+  const runtimeSurfaceId = cleanString(input.runtimeSurfaceId);
+  if (!runtimeSurfaceId) {
     return undefined;
   }
   const safeKey = sanitizeArtifactKey(artifactId);
@@ -177,7 +177,7 @@ export function buildArtifactOpenWindowPayload(input: {
       kind: 'surface',
       surface: {
         bundleId,
-        surfaceId: runtimeCardId,
+        surfaceId: runtimeSurfaceId,
         surfaceSessionId: `artifact-session:${safeKey}`,
         param: artifactId,
       },

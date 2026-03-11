@@ -19,7 +19,7 @@ describe('runtimeSurfaceRegistry', () => {
     registerRuntimeSurface('lowStock', '({ ui }) => ({ render() { return ui.text("hi"); } })', 'kanban.v1');
     expect(hasRuntimeSurface('lowStock')).toBe(true);
     expect(getPendingRuntimeSurfaces()).toHaveLength(1);
-    expect(getPendingRuntimeSurfaces()[0].cardId).toBe('lowStock');
+    expect(getPendingRuntimeSurfaces()[0].surfaceId).toBe('lowStock');
     expect(getPendingRuntimeSurfaces()[0].code).toContain('ui.text');
     expect(getPendingRuntimeSurfaces()[0].packId).toBe('kanban.v1');
   });
@@ -85,6 +85,6 @@ describe('runtimeSurfaceRegistry', () => {
     };
     const report = injectPendingRuntimeSurfacesWithReport(service, 'session-1');
     expect(report.injected).toEqual(['good']);
-    expect(report.failed).toEqual([{ cardId: 'bad', error: 'syntax error' }]);
+    expect(report.failed).toEqual([{ surfaceId: 'bad', error: 'syntax error' }]);
   });
 });

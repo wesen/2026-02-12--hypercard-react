@@ -77,8 +77,8 @@ function RuntimeCardDebugStory() {
         template: 'reportViewer',
         source: 'card',
         data: { threshold: 5 },
-        runtimeCardId: 'lowStockDrilldown',
-        runtimeCardCode: '({ ui }) => ({ render() { return ui.text(\"ok\"); } })',
+        runtimeSurfaceId: 'lowStockDrilldown',
+        runtimeSurfaceCode: '({ ui }) => ({ render() { return ui.text(\"ok\"); } })',
         updatedAt: Date.now(),
       }),
     );

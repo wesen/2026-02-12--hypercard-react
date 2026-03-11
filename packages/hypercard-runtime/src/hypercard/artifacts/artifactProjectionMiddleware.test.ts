@@ -25,7 +25,7 @@ describe('artifactProjectionMiddleware', () => {
     clearRuntimeSurfaceRegistry();
   });
 
-  it('projects artifacts from snapshot entities and registers runtime cards', async () => {
+  it('projects artifacts from snapshot entities and registers runtime surfaces', async () => {
     const store = createStore();
     const entities: TimelineEntity[] = [
       {
@@ -58,7 +58,7 @@ describe('artifactProjectionMiddleware', () => {
 
     const artifact = store.getState().hypercardArtifacts.byId['low-stock-drilldown'];
     expect(artifact).toBeDefined();
-    expect(artifact.runtimeCardId).toBe('runtime-low-stock');
+    expect(artifact.runtimeSurfaceId).toBe('runtime-low-stock');
     expect(artifact.packId).toBe('kanban.v1');
     expect(artifact.injectionStatus).toBe('pending');
     expect(hasRuntimeSurface('runtime-low-stock')).toBe(true);
@@ -99,7 +99,7 @@ describe('artifactProjectionMiddleware', () => {
     expect(artifact).toBeDefined();
     expect(artifact.title).toBe('Current Inventory Status');
     expect(artifact.source).toBe('card');
-    expect(artifact.runtimeCardId).toBe('runtimeInventoryStatus');
+    expect(artifact.runtimeSurfaceId).toBe('runtimeInventoryStatus');
     expect(artifact.packId).toBe('ui.card.v1');
   });
 });

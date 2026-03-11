@@ -192,8 +192,8 @@ export function RuntimeSurfaceSessionHost({
           if (report.injected.length > 0 || report.failed.length > 0) {
             dispatch(
               markRuntimeSurfaceInjectionResults({
-                injectedCardIds: report.injected,
-                failed: report.failed.map((item) => ({ cardId: item.cardId, error: item.error })),
+                injectedSurfaceIds: report.injected,
+                failed: report.failed.map((item) => ({ surfaceId: item.surfaceId, error: item.error })),
               }),
             );
           }
@@ -272,8 +272,8 @@ export function RuntimeSurfaceSessionHost({
       if (report.injected.length > 0 || report.failed.length > 0) {
         dispatch(
           markRuntimeSurfaceInjectionResults({
-            injectedCardIds: report.injected,
-            failed: report.failed.map((item) => ({ cardId: item.cardId, error: item.error })),
+            injectedSurfaceIds: report.injected,
+            failed: report.failed.map((item) => ({ surfaceId: item.surfaceId, error: item.error })),
           }),
         );
       }
@@ -338,7 +338,7 @@ export function RuntimeSurfaceSessionHost({
     try {
       return {
         tree: (() => {
-          const runtimeSurface = getPendingRuntimeSurfaces().find((surface) => surface.cardId === currentSurfaceId);
+          const runtimeSurface = getPendingRuntimeSurfaces().find((surface) => surface.surfaceId === currentSurfaceId);
           const packId = normalizeRuntimeSurfaceTypeId(runtimeSurface?.packId ?? loadedBundleRef.current?.surfaceTypes?.[currentSurfaceId]);
           const rawTree = runtimeServiceRef.current?.renderRuntimeSurface(sessionId, currentSurfaceId, projectedState) ?? null;
           return rawTree === null ? null : validateRuntimeSurfaceTree(packId, rawTree);
@@ -433,7 +433,7 @@ export function RuntimeSurfaceSessionHost({
     return <div style={{ padding: 12 }}>No plugin output for surface: {currentSurfaceId}</div>;
   }
 
-  const runtimeSurface = getPendingRuntimeSurfaces().find((surface) => surface.cardId === currentSurfaceId);
+  const runtimeSurface = getPendingRuntimeSurfaces().find((surface) => surface.surfaceId === currentSurfaceId);
   const packId = normalizeRuntimeSurfaceTypeId(runtimeSurface?.packId ?? loadedBundleRef.current?.surfaceTypes?.[currentSurfaceId]);
 
   return <>{renderRuntimeSurfaceTree(packId, tree, emitRuntimeEvent)}</>;

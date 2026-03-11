@@ -69,8 +69,8 @@ function buildBundleSurfaceWindowPayload(bundle: RuntimeBundleDefinition, surfac
   };
 }
 
-function cardSource(card: { meta?: Record<string, unknown> }): string | null {
-  const runtime = card.meta?.runtime;
+function surfaceSource(surface: { meta?: Record<string, unknown> }): string | null {
+  const runtime = surface.meta?.runtime;
   if (!runtime || typeof runtime !== 'object') {
     return null;
   }
@@ -151,7 +151,7 @@ export function RuntimeCardDebugWindow({
 
   const activeBundle = availableBundles.find((bundle) => bundle.id === selectedStackId) ?? availableBundles[0];
   const bundleSurfaces = activeBundle ? Object.values(activeBundle.surfaces) : [];
-  const runtimeArtifacts = Object.values(artifacts).filter(a => a.runtimeCardId);
+  const runtimeArtifacts = Object.values(artifacts).filter((artifact) => artifact.runtimeSurfaceId);
 
   const td: React.CSSProperties = { padding: '3px 8px', fontSize: 11, borderBottom: '1px solid #ccc', verticalAlign: 'top', color: '#111' };
   const th: React.CSSProperties = { ...td, fontWeight: 700, background: '#e8e8f0', position: 'sticky', top: 0, color: '#111' };
@@ -168,15 +168,15 @@ export function RuntimeCardDebugWindow({
     dispatch(openWindow(payload));
   };
 
-  const sessionCurrentCardIds = useMemo(() => {
+  const sessionCurrentSurfaceIds = useMemo(() => {
     const entries = Object.entries(sessions).map(([sessionId, session]) => {
       const nav = windowingSessions[sessionId]?.nav;
-      const navCard =
+      const navSurface =
         Array.isArray(nav) && nav.length > 0 && typeof nav[nav.length - 1]?.surface === 'string'
           ? nav[nav.length - 1]?.surface ?? null
           : null;
-      const fallbackCard = Object.keys(session.surfaceState ?? {})[0] ?? null;
-      return [sessionId, navCard ?? fallbackCard] as const;
+      const fallbackSurface = Object.keys(session.surfaceState ?? {})[0] ?? null;
+      return [sessionId, navSurface ?? fallbackSurface] as const;
     });
     return new Map(entries);
   }, [sessions, windowingSessions]);
@@ -235,9 +235,9 @@ export function RuntimeCardDebugWindow({
                     >
                       ▶ Open
                     </button>
-                    {cardSource(c) ? (
+                    {surfaceSource(c) ? (
                       <button
-                        onClick={() => openCodeEditor(dispatch, { ownerAppId, surfaceId: c.id }, cardSource(c) ?? '')}
+                        onClick={() => openCodeEditor(dispatch, { ownerAppId, surfaceId: c.id }, surfaceSource(c) ?? '')}
                         style={{
                           fontSize: 10,
                           padding: '1px 6px',
@@ -266,15 +266,15 @@ export function RuntimeCardDebugWindow({
           <div style={{ fontSize: 11, color: '#555' }}>No runtime surfaces registered yet.</div>
         ) : (
           registryCards.map((surface) => (
-            <div key={surface.cardId} style={{ marginBottom: 12, border: '1px solid #ccc', borderRadius: 4, padding: 8 }}>
+            <div key={surface.surfaceId} style={{ marginBottom: 12, border: '1px solid #ccc', borderRadius: 4, padding: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <code style={{ fontWeight: 700 }}>{surface.cardId}</code>
+                <code style={{ fontWeight: 700 }}>{surface.surfaceId}</code>
                 <Badge text="registered" color="#2d6a4f" />
                 <span style={{ fontSize: 10, color: '#555' }}>
                   {new Date(surface.registeredAt).toLocaleTimeString()}
                 </span>
                 <button
-                  onClick={() => openCodeEditor(dispatch, { ownerAppId, surfaceId: surface.cardId }, surface.code)}
+                  onClick={() => openCodeEditor(dispatch, { ownerAppId, surfaceId: surface.surfaceId }, surface.code)}
                   style={{
                     fontSize: 10, padding: '1px 6px', borderRadius: 3,
                     border: '1px solid #999', background: '#f0f0f0', cursor: 'pointer',
@@ -311,7 +311,7 @@ export function RuntimeCardDebugWindow({
               {runtimeArtifacts.map(a => (
                 <tr key={a.id}>
                   <td style={td}><code>{a.id}</code></td>
-                  <td style={td}><code>{a.runtimeCardId}</code></td>
+                  <td style={td}><code>{a.runtimeSurfaceId}</code></td>
                   <td style={td}>{a.title}</td>
                   <td style={td}>
                     {a.injectionStatus === 'injected' && <Badge text="injected" color="#2d6a4f" />}
@@ -320,7 +320,7 @@ export function RuntimeCardDebugWindow({
                     {!a.injectionStatus && <Badge text="unknown" color="#666" />}
                     {a.injectionError && <div style={{ fontSize: 10, color: '#c0392b', marginTop: 2 }}>{a.injectionError}</div>}
                   </td>
-                  <td style={td}>{a.runtimeCardCode ? `${a.runtimeCardCode.length} chars` : '—'}</td>
+                  <td style={td}>{a.runtimeSurfaceCode ? `${a.runtimeSurfaceCode.length} chars` : '—'}</td>
                 </tr>
               ))}
             </tbody>
@@ -354,21 +354,21 @@ export function RuntimeCardDebugWindow({
                     {s.error && <div style={{ fontSize: 10, color: '#c0392b', marginTop: 2 }}>{s.error}</div>}
                   </td>
                   <td style={td}>
-                    {sessionCurrentCardIds.get(sid) ? (
-                      <code style={{ fontSize: 10 }}>{sessionCurrentCardIds.get(sid)}</code>
+                    {sessionCurrentSurfaceIds.get(sid) ? (
+                      <code style={{ fontSize: 10 }}>{sessionCurrentSurfaceIds.get(sid)}</code>
                     ) : (
                       <span style={{ color: '#555' }}>—</span>
                     )}
                   </td>
                   <td style={td}>
                     {(() => {
-                      const currentSurfaceId = sessionCurrentCardIds.get(sid);
+                      const currentSurfaceId = sessionCurrentSurfaceIds.get(sid);
                       if (!currentSurfaceId) {
                         return <span style={{ color: '#555' }}>—</span>;
                       }
                       const bundle = bundlesById.get(s.bundleId);
                       const surface = bundle?.surfaces[currentSurfaceId];
-                      const source = surface ? cardSource(surface) : null;
+                      const source = surface ? surfaceSource(surface) : null;
                       return (
                         <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                           <button

@@ -22,22 +22,22 @@ function cardArtifactId(props: Record<string, unknown>): string {
   return stringField(props, 'artifactId') ?? stringField(artifact ?? {}, 'id') ?? '';
 }
 
-function runtimeCardId(props: Record<string, unknown>): string {
+function runtimeSurfaceId(props: Record<string, unknown>): string {
   const payload = cardPayload(props);
   const payloadData = cardData(props);
   const card =
     recordField(payload ?? {}, 'card') ??
     recordField(payloadData ?? {}, 'card');
-  return stringField(props, 'runtimeCardId') ?? stringField(card ?? {}, 'id') ?? '';
+  return stringField(props, 'runtimeSurfaceId') ?? stringField(card ?? {}, 'id') ?? '';
 }
 
-function runtimeCardCode(props: Record<string, unknown>): string {
+function runtimeSurfaceCode(props: Record<string, unknown>): string {
   const payload = cardPayload(props);
   const payloadData = cardData(props);
   const card =
     recordField(payload ?? {}, 'card') ??
     recordField(payloadData ?? {}, 'card');
-  return stringField(props, 'runtimeCardCode') ?? stringField(card ?? {}, 'code') ?? '';
+  return stringField(props, 'runtimeSurfaceCode') ?? stringField(card ?? {}, 'code') ?? '';
 }
 
 function titleFromCard(props: Record<string, unknown>): string {
@@ -69,19 +69,19 @@ export function HypercardCardRenderer({ e, ctx }: { e: RenderEntity; ctx?: Rende
   const title = titleFromCard(props);
   const { status, detail } = detailFromCard(props);
   const artifactId = cardArtifactId(props);
-  const cardId = runtimeCardId(props);
-  const cardCode = runtimeCardCode(props);
+  const surfaceId = runtimeSurfaceId(props);
+  const surfaceCode = runtimeSurfaceCode(props);
   const bundleId = props.stackId ? String(props.stackId) : undefined;
-  const hasRuntimeSurface = cardId.trim().length > 0;
-  const hasCardCode = cardCode.trim().length > 0;
+  const hasRuntimeSurface = surfaceId.trim().length > 0;
+  const hasSurfaceCode = surfaceCode.trim().length > 0;
   const canOpenArtifact = Boolean(normalizeArtifactId(artifactId) && hasRuntimeSurface && status !== 'streaming' && status !== 'pending');
-  const canEditCode = hasRuntimeSurface && hasCardCode && status !== 'streaming' && status !== 'pending';
+  const canEditCode = hasRuntimeSurface && hasSurfaceCode && status !== 'streaming' && status !== 'pending';
 
   const openArtifact = () => {
     const payload = buildArtifactOpenWindowPayload({
       artifactId,
       title,
-      runtimeCardId: cardId,
+      runtimeSurfaceId: surfaceId,
       bundleId,
     });
     if (!payload) {
@@ -91,25 +91,25 @@ export function HypercardCardRenderer({ e, ctx }: { e: RenderEntity; ctx?: Rende
   };
 
   const editArtifact = () => {
-    if (!hasRuntimeSurface || !hasCardCode) {
+    if (!hasRuntimeSurface || !hasSurfaceCode) {
       return;
     }
-    openCodeEditor(dispatch, { ownerAppId: 'inventory', surfaceId: cardId }, cardCode);
+    openCodeEditor(dispatch, { ownerAppId: 'inventory', surfaceId }, surfaceCode);
   };
 
   return (
     <div data-part="chat-message" data-role="system">
       <div data-part="chat-role">Card:</div>
       <div style={{ fontSize: 11, whiteSpace: 'pre-wrap' }}>
-        <strong>{title}</strong>{cardId ? ` · runtime=${cardId}` : ''}
+        <strong>{title}</strong>{surfaceId ? ` · runtime=${surfaceId}` : ''}
         {detail ? ` — ${detail}` : ''}
       </div>
       <div style={{ fontSize: 11, whiteSpace: 'pre-wrap', opacity: 0.8 }}>
         status: {status}
       </div>
-      {hasCardCode && (
+      {hasSurfaceCode && (
         <SyntaxHighlight
-          code={cardCode}
+          code={surfaceCode}
           language="javascript"
           maxLines={18}
           style={{ marginTop: 6 }}

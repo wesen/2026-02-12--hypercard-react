@@ -9,14 +9,14 @@
  */
 
 export interface RuntimeSurfaceDefinition {
-  cardId: string;
+  surfaceId: string;
   code: string;
   packId?: string;
   registeredAt: number;
 }
 
 export interface RuntimeSurfaceInjectionFailure {
-  cardId: string;
+  surfaceId: string;
   error: string;
 }
 
@@ -29,9 +29,9 @@ const registry = new Map<string, RuntimeSurfaceDefinition>();
 const listeners = new Set<() => void>();
 
 /** Register a runtime surface definition for injection into future sessions. */
-export function registerRuntimeSurface(cardId: string, code: string, packId?: string): void {
-  registry.set(cardId, {
-    cardId,
+export function registerRuntimeSurface(surfaceId: string, code: string, packId?: string): void {
+  registry.set(surfaceId, {
+    surfaceId,
     code,
     packId: typeof packId === 'string' && packId.trim().length > 0 ? packId.trim() : undefined,
     registeredAt: Date.now(),
@@ -40,8 +40,8 @@ export function registerRuntimeSurface(cardId: string, code: string, packId?: st
 }
 
 /** Remove a runtime surface definition. */
-export function unregisterRuntimeSurface(cardId: string): void {
-  registry.delete(cardId);
+export function unregisterRuntimeSurface(surfaceId: string): void {
+  registry.delete(surfaceId);
   listeners.forEach((fn) => fn());
 }
 
@@ -51,8 +51,8 @@ export function getPendingRuntimeSurfaces(): RuntimeSurfaceDefinition[] {
 }
 
 /** Check if a specific runtime surface is registered. */
-export function hasRuntimeSurface(cardId: string): boolean {
-  return registry.has(cardId);
+export function hasRuntimeSurface(surfaceId: string): boolean {
+  return registry.has(surfaceId);
 }
 
 /** Subscribe to registry changes. Returns unsubscribe function. */
@@ -86,12 +86,12 @@ export function injectPendingRuntimeSurfacesWithReport(
   const failed: RuntimeSurfaceInjectionFailure[] = [];
   for (const def of registry.values()) {
     try {
-      service.defineRuntimeSurface(sessionId, def.cardId, def.code, def.packId);
-      injected.push(def.cardId);
+      service.defineRuntimeSurface(sessionId, def.surfaceId, def.code, def.packId);
+      injected.push(def.surfaceId);
     } catch (err) {
-      console.error(`[runtimeSurfaceRegistry] Failed to inject runtime surface ${def.cardId} into ${sessionId}:`, err);
+      console.error(`[runtimeSurfaceRegistry] Failed to inject runtime surface ${def.surfaceId} into ${sessionId}:`, err);
       failed.push({
-        cardId: def.cardId,
+        surfaceId: def.surfaceId,
         error: err instanceof Error ? err.message : String(err),
       });
     }

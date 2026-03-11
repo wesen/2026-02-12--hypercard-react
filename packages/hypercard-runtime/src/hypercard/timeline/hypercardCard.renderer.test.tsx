@@ -87,7 +87,7 @@ describe('HypercardCardRenderer', () => {
     expect(container.querySelector('[data-part="syntax-highlight"]')).not.toBeNull();
   });
 
-  it('keeps ready cards actionable once the runtime card exists', () => {
+  it('keeps ready cards actionable once the runtime surface exists', () => {
     const container = renderCard({
       id: 'evt-card-ready:result',
       kind: 'hypercard.card.v2',
@@ -107,7 +107,7 @@ describe('HypercardCardRenderer', () => {
             },
           },
         },
-        runtimeCardId: 'runtime-drilldown',
+        runtimeSurfaceId: 'runtime-drilldown',
         artifactId: 'artifact-card-2',
       },
       updatedAt: 2,

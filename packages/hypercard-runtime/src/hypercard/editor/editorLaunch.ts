@@ -49,6 +49,6 @@ export function getEditorInitialCode(ref: RuntimeSurfaceRef): string {
   }
   // Fallback: look up from the runtime surface registry.
   const surfaces = getPendingRuntimeSurfaces();
-  const found = surfaces.find((surface) => surface.cardId === ref.surfaceId);
+  const found = surfaces.find((surface) => surface.surfaceId === ref.surfaceId);
   return found?.code ?? `// No code found for surface: ${ref.surfaceId}\n`;
 }
