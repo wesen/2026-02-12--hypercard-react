@@ -5,17 +5,17 @@ import { openWindow } from '@hypercard/engine/desktop-core';
 import { buildArtifactOpenWindowPayload, normalizeArtifactId } from '../artifacts/artifactRuntime';
 import { openCodeEditor } from '../editor/editorLaunch';
 
-function cardPayload(props: Record<string, unknown>): Record<string, unknown> | undefined {
+function artifactPayload(props: Record<string, unknown>): Record<string, unknown> | undefined {
   return recordField(props, 'result') ?? props;
 }
 
-function cardData(props: Record<string, unknown>): Record<string, unknown> | undefined {
-  return recordField(cardPayload(props) ?? {}, 'data');
+function artifactData(props: Record<string, unknown>): Record<string, unknown> | undefined {
+  return recordField(artifactPayload(props) ?? {}, 'data');
 }
 
-function cardArtifactId(props: Record<string, unknown>): string {
-  const payload = cardPayload(props);
-  const payloadData = cardData(props);
+function artifactIdFromCardArtifact(props: Record<string, unknown>): string {
+  const payload = artifactPayload(props);
+  const payloadData = artifactData(props);
   const artifact =
     recordField(payload ?? {}, 'artifact') ??
     recordField(payloadData ?? {}, 'artifact');
@@ -23,8 +23,8 @@ function cardArtifactId(props: Record<string, unknown>): string {
 }
 
 function runtimeSurfaceId(props: Record<string, unknown>): string {
-  const payload = cardPayload(props);
-  const payloadData = cardData(props);
+  const payload = artifactPayload(props);
+  const payloadData = artifactData(props);
   const card =
     recordField(payload ?? {}, 'card') ??
     recordField(payloadData ?? {}, 'card');
@@ -32,27 +32,28 @@ function runtimeSurfaceId(props: Record<string, unknown>): string {
 }
 
 function runtimeSurfaceCode(props: Record<string, unknown>): string {
-  const payload = cardPayload(props);
-  const payloadData = cardData(props);
+  const payload = artifactPayload(props);
+  const payloadData = artifactData(props);
   const card =
     recordField(payload ?? {}, 'card') ??
     recordField(payloadData ?? {}, 'card');
   return stringField(props, 'runtimeSurfaceCode') ?? stringField(card ?? {}, 'code') ?? '';
 }
 
-function titleFromCard(props: Record<string, unknown>): string {
-  const payload = cardPayload(props);
+function titleFromArtifactCard(props: Record<string, unknown>): string {
+  const payload = artifactPayload(props);
   return (
     stringField(props, 'title') ??
     stringField(props, 'name') ??
     stringField(payload ?? {}, 'title') ??
     stringField(payload ?? {}, 'name') ??
     'Card'
-  );
+  ) ??
+    'Card';
 }
 
-function detailFromCard(props: Record<string, unknown>): { status: string; detail: string } {
-  const payload = cardPayload(props);
+function detailFromArtifactCard(props: Record<string, unknown>): { status: string; detail: string } {
+  const payload = artifactPayload(props);
   const error = stringField(props, 'error') ?? stringField(payload ?? {}, 'error') ?? '';
   if (error) {
     return { status: 'error', detail: error };
@@ -66,9 +67,9 @@ function detailFromCard(props: Record<string, unknown>): { status: string; detai
 export function HypercardCardRenderer({ e, ctx }: { e: RenderEntity; ctx?: RenderContext }) {
   const dispatch = useDispatch();
   const props = e.props;
-  const title = titleFromCard(props);
-  const { status, detail } = detailFromCard(props);
-  const artifactId = cardArtifactId(props);
+  const title = titleFromArtifactCard(props);
+  const { status, detail } = detailFromArtifactCard(props);
+  const artifactId = artifactIdFromCardArtifact(props);
   const surfaceId = runtimeSurfaceId(props);
   const surfaceCode = runtimeSurfaceCode(props);
   const bundleId = props.stackId ? String(props.stackId) : undefined;
