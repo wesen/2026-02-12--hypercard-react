@@ -8,10 +8,10 @@ import { BrowserDetailPanel } from './BrowserDetailPanel';
 describe('BrowserDetailPanel mounted docs', () => {
   it('renders mounted docs for the selected owner from the external catalog store', async () => {
     const owner = 'runtime-owner';
-    const mountPath = buildDocsMountPath('card', owner);
+    const mountPath = buildDocsMountPath('surface', owner);
     const docs: DocObject[] = [
       {
-        path: buildDocObjectPath('card', owner, 'incident-command'),
+        path: buildDocObjectPath('surface', owner, 'incident-command'),
         mountPath,
         kind: 'surface',
         owner,
