@@ -91,6 +91,18 @@ describe('hypercardReplDriver', () => {
           stackId: 'inventory',
           packageIds: ['ui'],
           bundleCode: INVENTORY_STACK,
+          docsMetadata: {
+            packId: 'ui.card.v1',
+            docs: {
+              by_symbol: {
+                lowStock: {
+                  name: 'lowStock',
+                  summary: 'Threshold-based inventory triage view for low or empty stock.',
+                  prose: 'Lists items below their inventory threshold and helps route follow-up actions.',
+                },
+              },
+            },
+          },
         },
       },
     });
@@ -120,6 +132,18 @@ describe('hypercardReplDriver', () => {
     expect(sessions.lines).toEqual([
       { type: 'output', text: 'inventory@repl * — inventory (ui)' },
       { type: 'system', text: '  surfaces: lowStock' },
+    ]);
+
+    const surfaces = await driver.execute('surfaces inventory@repl', {
+      lines: [],
+      historyStack: [],
+      envVars: {},
+      aliases: {},
+      uptimeMs: 0,
+    });
+    expect(surfaces.lines).toEqual([
+      { type: 'system', text: 'Runtime surfaces for inventory@repl' },
+      { type: 'output', text: 'lowStock — Threshold-based inventory triage view for low or empty stock. [ui.card.v1]' },
     ]);
 
     const rendered = await driver.execute(
@@ -162,8 +186,131 @@ describe('hypercardReplDriver', () => {
     });
   });
 
+  it('supports inline runtime surface authoring commands', async () => {
+    const driver = createHypercardReplDriver({
+      bundleLibrary: {
+        inventory: {
+          key: 'inventory',
+          title: 'Inventory fixture',
+          stackId: 'inventory',
+          packageIds: ['ui'],
+          bundleCode: INVENTORY_STACK,
+        },
+      },
+    });
+
+    await driver.execute('spawn inventory inventory@authoring', {
+      lines: [],
+      historyStack: [],
+      envVars: {},
+      aliases: {},
+      uptimeMs: 0,
+    });
+
+    await expect(
+      driver.execute(
+        'define-surface scratch ui.card.v1 ({ ui }) => ({ render() { return ui.text("hello scratch"); }, handlers: {} })',
+        {
+          lines: [],
+          historyStack: [],
+          envVars: {},
+          aliases: {},
+          uptimeMs: 0,
+        },
+      ),
+    ).resolves.toEqual({
+      lines: [
+        { type: 'system', text: 'Defined runtime surface scratch in inventory@authoring' },
+        { type: 'output', text: 'surfaces: lowStock, scratch' },
+      ],
+    });
+
+    const scratchRender = await driver.execute('render scratch', {
+      lines: [],
+      historyStack: [],
+      envVars: {},
+      aliases: {},
+      uptimeMs: 0,
+    });
+    expect(scratchRender.lines.some((line) => line.text.includes('"hello scratch"'))).toBe(true);
+
+    await expect(
+      driver.execute(
+        'define-render scratch function ({ state }) { return ui.text(state.message || "patched"); }',
+        {
+          lines: [],
+          historyStack: [],
+          envVars: {},
+          aliases: {},
+          uptimeMs: 0,
+        },
+      ),
+    ).resolves.toEqual({
+      lines: [
+        { type: 'system', text: 'Updated render() for scratch in inventory@authoring' },
+      ],
+    });
+
+    const patchedRender = await driver.execute('render scratch {"message":"patched from render"}', {
+      lines: [],
+      historyStack: [],
+      envVars: {},
+      aliases: {},
+      uptimeMs: 0,
+    });
+    expect(patchedRender.lines.some((line) => line.text.includes('"patched from render"'))).toBe(true);
+
+    await expect(
+      driver.execute(
+        'define-handler scratch ping function ({ dispatch }) { dispatch({ type: "notify.show", payload: { message: "pong" } }); }',
+        {
+          lines: [],
+          historyStack: [],
+          envVars: {},
+          aliases: {},
+          uptimeMs: 0,
+        },
+      ),
+    ).resolves.toEqual({
+      lines: [
+        { type: 'system', text: 'Updated handler scratch.ping in inventory@authoring' },
+      ],
+    });
+
+    const handlerResult = await driver.execute('event scratch ping', {
+      lines: [],
+      historyStack: [],
+      envVars: {},
+      aliases: {},
+      uptimeMs: 0,
+    });
+    expect(handlerResult.lines.some((line) => line.text.includes('"notify.show"'))).toBe(true);
+  });
+
   it('exposes command and package-doc completions', () => {
-    const driver = createHypercardReplDriver();
+    const driver = createHypercardReplDriver({
+      bundleLibrary: {
+        inventory: {
+          key: 'inventory',
+          title: 'Inventory fixture',
+          stackId: 'inventory',
+          packageIds: ['ui'],
+          bundleCode: INVENTORY_STACK,
+          docsMetadata: {
+            packId: 'ui.card.v1',
+            docs: {
+              by_symbol: {
+                lowStock: {
+                  name: 'lowStock',
+                  summary: 'Threshold-based inventory triage view for low or empty stock.',
+                  prose: 'Lists items below their inventory threshold and helps route follow-up actions.',
+                },
+              },
+            },
+          },
+        },
+      },
+    });
 
     expect(driver.getCompletions?.('pa', {
       lines: [],
@@ -185,6 +332,33 @@ describe('hypercardReplDriver', () => {
       expect.arrayContaining([
         { value: 'ui.card.v1', detail: 'Test docs for ui package' },
         { value: 'ui.panel', detail: 'Compose a panel node.' },
+        { value: 'lowStock', detail: 'Threshold-based inventory triage view for low or empty stock.' },
+      ]),
+    );
+
+    expect(driver.getHelp?.('lowStock', {
+      lines: [],
+      historyStack: [],
+      envVars: {},
+      aliases: {},
+      uptimeMs: 0,
+    })).toEqual([
+      {
+        title: 'lowStock',
+        detail: 'Threshold-based inventory triage view for low or empty stock.',
+        usage: 'Lists items below their inventory threshold and helps route follow-up actions.',
+      },
+    ]);
+
+    expect(driver.getCompletions?.('define-surface scratch ', {
+      lines: [],
+      historyStack: [],
+      envVars: {},
+      aliases: {},
+      uptimeMs: 0,
+    })).toEqual(
+      expect.arrayContaining([
+        { value: 'ui.card.v1', detail: 'registered runtime surface type' },
       ]),
     );
   });

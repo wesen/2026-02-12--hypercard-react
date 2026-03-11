@@ -16,6 +16,7 @@ export interface ReplBundleLibraryEntry {
   stackId: string;
   packageIds: string[];
   bundleCode: string;
+  docsMetadata?: RuntimeBundleDocsMetadata;
 }
 
 export interface HypercardReplDriverOptions {
@@ -43,6 +44,25 @@ interface RuntimePackageDocsMetadata {
   packId?: string;
   docs?: {
     files?: RuntimePackageDocFile[];
+  };
+}
+
+interface RuntimeBundleDocSymbol {
+  name: string;
+  summary?: string;
+  prose?: string;
+}
+
+interface RuntimeBundleDocFile {
+  file_path?: string;
+  symbols?: RuntimeBundleDocSymbol[];
+}
+
+interface RuntimeBundleDocsMetadata {
+  packId?: string;
+  docs?: {
+    files?: RuntimeBundleDocFile[];
+    by_symbol?: Record<string, RuntimeBundleDocSymbol>;
   };
 }
 
@@ -92,6 +112,21 @@ const COMMAND_HELP: Record<string, ReplHelpEntry> = {
     detail: 'Dispatch a handler on a runtime surface and print the resulting actions.',
     usage: 'event <surface-id> <handler> [args-json] [state-json]',
   },
+  'define-surface': {
+    title: 'define-surface',
+    detail: 'Define a new runtime surface in the active session from inline factory code.',
+    usage: 'define-surface <surface-id> <surface-type> <factory-code>',
+  },
+  'define-render': {
+    title: 'define-render',
+    detail: 'Replace the render() function for a runtime surface with inline code.',
+    usage: 'define-render <surface-id> <render-code>',
+  },
+  'define-handler': {
+    title: 'define-handler',
+    detail: 'Replace or add a handler on a runtime surface with inline code.',
+    usage: 'define-handler <surface-id> <handler-name> <handler-code>',
+  },
   'open-surface': {
     title: 'open-surface',
     detail: 'Emit a host effect requesting a window for a runtime surface.',
@@ -137,6 +172,35 @@ function listDocEntries(): ReplHelpEntry[] {
   return entries;
 }
 
+function listBundleDocEntries(
+  bundleLibrary: Map<string, ReplBundleLibraryEntry>,
+): ReplHelpEntry[] {
+  const entries: ReplHelpEntry[] = [];
+  for (const bundle of bundleLibrary.values()) {
+    const docs = bundle.docsMetadata?.docs;
+    for (const [symbolName, symbol] of Object.entries(docs?.by_symbol ?? {})) {
+      entries.push({
+        title: symbolName,
+        detail: symbol.summary ?? `Runtime surface doc from ${bundle.key}`,
+        usage: symbol.prose,
+      });
+    }
+    for (const file of docs?.files ?? []) {
+      for (const symbol of file.symbols ?? []) {
+        if (docs?.by_symbol?.[symbol.name]) {
+          continue;
+        }
+        entries.push({
+          title: symbol.name,
+          detail: symbol.summary ?? `Runtime surface doc from ${bundle.key}`,
+          usage: symbol.prose,
+        });
+      }
+    }
+  }
+  return entries;
+}
+
 function listPackageCompletionItems(): ReplCompletionItem[] {
   return listRuntimePackages().map((packageId) => {
     const runtimePackage = getRuntimePackageOrThrow(packageId);
@@ -154,11 +218,42 @@ function parseJsonArg(raw: string | undefined, fallback: unknown = {}): unknown 
   return JSON.parse(raw);
 }
 
-function helpForTopic(topic: string | null): ReplHelpEntry[] | null {
+function parseInlineAuthoringArgs(raw: string, count: number): string[] {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return [];
+  }
+
+  const tokens: string[] = [];
+  let cursor = trimmed;
+  for (let index = 0; index < count; index += 1) {
+    const match = cursor.match(/^(\S+)(?:\s+|$)/);
+    if (!match) {
+      return tokens;
+    }
+    tokens.push(match[1]);
+    cursor = cursor.slice(match[0].length);
+  }
+
+  if (cursor.trim().length > 0) {
+    tokens.push(cursor.trim());
+  }
+
+  return tokens;
+}
+
+function helpForTopic(
+  topic: string | null,
+  bundleLibrary: Map<string, ReplBundleLibraryEntry>,
+): ReplHelpEntry[] | null {
+  const docEntries = [
+    ...listDocEntries(),
+    ...listBundleDocEntries(bundleLibrary),
+  ];
   if (!topic) {
     return [
       ...Object.values(COMMAND_HELP),
-      ...listDocEntries(),
+      ...docEntries,
     ];
   }
 
@@ -167,7 +262,33 @@ function helpForTopic(topic: string | null): ReplHelpEntry[] | null {
     return [command];
   }
 
-  return listDocEntries().filter((entry) => entry.title === topic);
+  return docEntries.filter((entry) => entry.title === topic);
+}
+
+function findBundleForStackId(
+  bundleLibrary: Map<string, ReplBundleLibraryEntry>,
+  stackId: string,
+): ReplBundleLibraryEntry | null {
+  for (const bundle of bundleLibrary.values()) {
+    if (bundle.stackId === stackId) {
+      return bundle;
+    }
+  }
+  return null;
+}
+
+function describeSurface(
+  bundleLibrary: Map<string, ReplBundleLibraryEntry>,
+  stackId: string,
+  surfaceId: string,
+  fallbackSurfaceType: string,
+): string {
+  const bundle = findBundleForStackId(bundleLibrary, stackId);
+  const symbol = bundle?.docsMetadata?.docs?.by_symbol?.[surfaceId];
+  if (!symbol?.summary) {
+    return fallbackSurfaceType;
+  }
+  return `${symbol.summary} [${fallbackSurfaceType}]`;
 }
 
 function linesForSessions(broker: RuntimeBroker, activeSessionId: string | null): TerminalLine[] {
@@ -253,6 +374,7 @@ export function createHypercardReplDriver(
       }
 
       const [command, ...rest] = trimmed.split(/\s+/);
+      const restRaw = trimmed.slice(command.length).trimStart();
 
       switch (command) {
         case 'packages':
@@ -310,18 +432,23 @@ export function createHypercardReplDriver(
               { type: 'system', text: `Runtime surfaces for ${sessionId}` },
               ...meta.surfaces.map((surfaceId) => ({
                 type: 'output' as const,
-                text: `${surfaceId} — ${meta.surfaceTypes?.[surfaceId] ?? 'ui.card.v1'}`,
+                text: `${surfaceId} — ${describeSurface(
+                  bundleLibrary,
+                  handle.stackId,
+                  surfaceId,
+                  meta.surfaceTypes?.[surfaceId] ?? 'ui.card.v1',
+                )}`,
               })),
             ],
           };
         }
         case 'render': {
-          const surfaceId = rest[0];
+          const [surfaceId, stateJson] = parseInlineAuthoringArgs(restRaw, 1);
           if (!surfaceId) {
             throw new Error('Usage: render <surface-id> [state-json]');
           }
           const { handle } = getActiveSession();
-          const tree = handle.renderSurface(surfaceId, parseJsonArg(rest[1], {}));
+          const tree = handle.renderSurface(surfaceId, parseJsonArg(stateJson, {}));
           return { lines: formatJsonLines(tree) };
         }
         case 'event': {
@@ -338,6 +465,46 @@ export function createHypercardReplDriver(
             parseJsonArg(rest[3], {}),
           );
           return { lines: formatJsonLines(actions) };
+        }
+        case 'define-surface': {
+          const [surfaceId, surfaceType, code] = parseInlineAuthoringArgs(restRaw, 2);
+          if (!surfaceId || !surfaceType || !code) {
+            throw new Error('Usage: define-surface <surface-id> <surface-type> <factory-code>');
+          }
+          const { handle, sessionId } = getActiveSession();
+          const bundle = handle.defineSurface(surfaceId, code, surfaceType);
+          return {
+            lines: [
+              { type: 'system', text: `Defined runtime surface ${surfaceId} in ${sessionId}` },
+              { type: 'output', text: `surfaces: ${bundle.surfaces.join(', ') || 'none'}` },
+            ],
+          };
+        }
+        case 'define-render': {
+          const [surfaceId, code] = parseInlineAuthoringArgs(restRaw, 1);
+          if (!surfaceId || !code) {
+            throw new Error('Usage: define-render <surface-id> <render-code>');
+          }
+          const { handle, sessionId } = getActiveSession();
+          handle.defineSurfaceRender(surfaceId, code);
+          return {
+            lines: [
+              { type: 'system', text: `Updated render() for ${surfaceId} in ${sessionId}` },
+            ],
+          };
+        }
+        case 'define-handler': {
+          const [surfaceId, handlerName, code] = parseInlineAuthoringArgs(restRaw, 2);
+          if (!surfaceId || !handlerName || !code) {
+            throw new Error('Usage: define-handler <surface-id> <handler-name> <handler-code>');
+          }
+          const { handle, sessionId } = getActiveSession();
+          handle.defineSurfaceHandler(surfaceId, handlerName, code);
+          return {
+            lines: [
+              { type: 'system', text: `Updated handler ${surfaceId}.${handlerName} in ${sessionId}` },
+            ],
+          };
         }
         case 'open-surface': {
           const surfaceId = rest[0];
@@ -404,6 +571,8 @@ export function createHypercardReplDriver(
             }));
         case 'render':
         case 'event':
+        case 'define-render':
+        case 'define-handler':
         case 'open-surface': {
           const session = activeSessionId ? broker.getSession(activeSessionId) : null;
           const partial = tokens[1] ?? '';
@@ -417,8 +586,15 @@ export function createHypercardReplDriver(
                 }))
             : [];
         }
+        case 'define-surface':
+          return listRuntimeSurfaceTypes()
+            .filter((surfaceType) => surfaceType.startsWith(tokens[2] ?? ''))
+            .map((surfaceType) => ({
+              value: surfaceType,
+              detail: 'registered runtime surface type',
+            }));
         case 'help':
-          return helpForTopic(null)?.map((entry) => ({
+          return helpForTopic(null, bundleLibrary)?.map((entry) => ({
             value: entry.title,
             detail: entry.detail,
           })) ?? [];
@@ -430,11 +606,15 @@ export function createHypercardReplDriver(
               value: entry.title,
               detail: entry.detail,
             })),
+            ...listBundleDocEntries(bundleLibrary).map((entry) => ({
+              value: entry.title,
+              detail: entry.detail,
+            })),
           ].filter((entry) => entry.value.startsWith(lastToken));
       }
     },
     getHelp(topic) {
-      return helpForTopic(topic);
+      return helpForTopic(topic, bundleLibrary);
     },
   };
 }
