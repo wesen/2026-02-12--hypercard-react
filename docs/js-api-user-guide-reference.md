@@ -1,189 +1,134 @@
 # HyperCard JS API User Guide and Reference
 
-> **Last verified against source**: 2026-02-13  
+> **Last verified against source**: 2026-03-11  
 > **Engine barrel**: `packages/engine/src/index.ts`
 
 ## 1. Purpose and Scope
 
 This document is the authoritative API reference for `@hypercard/engine`. It covers:
 
-- DSL model (CardStackDefinition, CardDefinition, ActionDescriptor, UINode)
-- Shell runtime (HyperCardShell, CardRenderer, navigation, toasts)
-- Domain integration (shared selectors, shared actions, createAppStore)
-- Value expressions (Sel, Param, Ev, Act)
-- Scoped state system
-- App creation patterns (createDSLApp, createStoryHelpers)
-- Streaming chat system
-- Debug utilities
+- runtime bundle model (`RuntimeBundleDefinition`, `RuntimeSurfaceMeta`)
+- desktop shell and window launching
+- Storybook app wiring with `createStoryHelpers`
+- VM-authored surface examples and host integration points
+- widgets and theme loading
+
+This reference used to describe the older card/stack DSL model. APP-23 renamed the live runtime-core types to bundle/surface terminology. The sections below are updated to match the current shipped source.
 
 ## 2. Architecture
 
 ### Runtime Flow
 
 ```
-User interaction → CardRenderer emits binding event
-  → Shell resolves ActionDescriptor args (Sel/Param/Ev expressions)
-  → Runtime executes action:
-      1. Built-in (nav.go, toast, state.set, etc.)
-      2. Local handler (card → cardType → background → stack → global)
-      3. Shared handler (from sharedActions registry)
-      4. Unhandled (console.warn)
-  → Reducers update state → Shell re-renders
+DesktopShell opens a runtime surface window
+  → RuntimeSurfaceSessionHost loads a runtime bundle into a runtime session
+  → VM render() returns a runtime surface tree for a surface type such as `ui.card.v1` or `kanban.v1`
+  → Host validates and renders that tree
+  → UI events call VM handlers
+  → VM dispatches actions like `nav.go`, `notify.show`, `draft.patch`
+  → Host reducers update state → surface re-renders
 ```
 
 ### Package Structure
 
 | Module | Exports | Purpose |
 |--------|---------|---------|
-| `cards/` | `CardStackDefinition`, `CardDefinition`, `ActionDescriptor`, `UINode`, `Act`, `Sel`, `Param`, `Ev`, `ui.*` | DSL types + helpers |
-| `components/shell/` | `HyperCardShell`, `CardRenderer`, `ChatSidebar`, layouts | Runtime shell |
+| `cards/` | `RuntimeBundleDefinition`, `RuntimeSurfaceMeta` | Desktop/runtime bundle metadata |
+| `components/shell/windowing/` | `DesktopShell`, window content adapters, desktop command routing | Desktop shell |
 | `components/widgets/` | `DataTable`, `ListView`, `FormView`, `DetailView`, `MenuGrid`, `ChatView`, `StreamingChatView`, etc. | UI primitives |
-| `app/` | `createAppStore`, `createDSLApp`, `createStoryHelpers` | App bootstrap utilities |
+| `app/` | `createStoryHelpers`, story param helpers | Story/app bootstrap helpers |
 | `chat/` | `streamingChatReducer`, `useChatStream`, `fakeStream` | Streaming chat system |
 | `debug/` | `debugReducer`, `StandardDebugPane`, `useStandardDebugHooks` | Debug infrastructure |
-| `features/navigation/` | `navigationReducer`, `navigate`, `goBack`, `setLayout`, `initializeNavigation` | Navigation state |
 | `features/notifications/` | `notificationsReducer`, `showToast`, `clearToast` | Toast state |
 
 ## 3. DSL Model
 
-### CardStackDefinition
+### RuntimeBundleDefinition
 
 ```ts
-interface CardStackDefinition<TRootState = unknown> {
+interface RuntimeBundleDefinition {
   id: string;
   name: string;
   icon: string;
-  homeCard: string;            // ID of the default card
-  global?: { state?, selectors?, actions? };
-  stack?: { state?, selectors?, actions? };
-  backgrounds?: Record<string, BackgroundDefinition>;
-  cardTypes?: Record<string, CardTypeDefinition>;
-  cards: Record<string, CardDefinition>;
+  homeSurface: string;
+  plugin: {
+    packageIds: string[];
+    bundleCode: string;
+    capabilities?: {
+      domain?: 'all' | string[];
+      system?: 'all' | string[];
+    };
+  };
+  surfaces: Record<string, RuntimeSurfaceMeta>;
 }
 ```
 
-### CardDefinition
+### RuntimeSurfaceMeta
 
 ```ts
-interface CardDefinition<TRootState = unknown> {
+interface RuntimeSurfaceMeta {
   id: string;
-  type: string;                // e.g., 'list', 'detail', 'form', 'menu'
+  type: string;
   title?: string;
   icon?: string;
-  backgroundId?: string;
-  state?: { initial?: Record<string, unknown> };
-  ui: UINode;                  // DSL UI tree
-  bindings?: CardBindings;     // event→action mapping
-  selectors?: Record<string, CardSelectorFn>;
-  actions?: Record<string, CardActionHandler>;
+  ui: Record<string, unknown>;
+  meta?: Record<string, unknown>;
 }
 ```
 
-### ActionDescriptor
+The runtime-side UI DSL is no longer described by static engine `ActionDescriptor` / `CardDefinition` types. VM bundles define runtime surfaces in QuickJS via:
 
-```ts
-interface ActionDescriptor {
-  $: 'act';
-  type: string;
-  args?: ValueExpr;
-  to?: ActionScope;  // 'card' | 'cardType' | 'background' | 'stack' | 'global' | 'shared' | 'auto'
-}
-```
-
-### Value Expressions
-
-| Helper | Type | Purpose |
-|--------|------|---------|
-| `Sel(name, from?, args?)` | `SelExpr` | Resolve a selector by name |
-| `Param(name)` | `ParamExpr` | Read a navigation parameter |
-| `Ev(name)` | `EvExpr` | Read from the triggering event payload |
-| `Act(type, args?, opts?)` | `ActionDescriptor` | Create an action descriptor |
-
-Example:
-```ts
-Act('nav.go', { card: 'detail', param: Ev('id') })
-Act('contact.save', { data: Sel('formValues', 'card') }, { to: 'shared' })
-```
-
-### UI Node Helpers
-
-```ts
-ui.menu({ items: [...] })
-ui.list({ items: Sel('allItems', 'shared'), columns: [...] })
-ui.detail({ fields: [...], record: Sel('currentItem', 'shared') })
-ui.form({ fields: [...] })
-ui.report({ sections: [...] })
-ui.chat({ messages: Sel('messages', 'shared'), suggestions: [...] })
+```js
+defineRuntimeBundle(({ ui, widgets }) => ({
+  id: 'example',
+  title: 'Example',
+  packageIds: ['ui'],
+  surfaces: {
+    home: {
+      render() {
+        return ui.panel([
+          ui.text('Hello'),
+          ui.button('Open detail', {
+            onClick: { handler: 'go', args: { surfaceId: 'detail' } },
+          }),
+        ]);
+      },
+      handlers: {
+        go(context, args) {
+          context.dispatch({
+            type: 'nav.go',
+            payload: { surfaceId: String(args.surfaceId || 'home') },
+          });
+        },
+      },
+    },
+  },
+}));
 ```
 
 ## 4. Built-in Actions
 
 | Action | Args | Behavior |
 |--------|------|----------|
-| `nav.go` | `{ card, param? }` | Push card onto navigation stack |
-| `nav.back` | — | Pop navigation stack |
-| `toast.show` | `{ message }` | Show a toast notification |
-| `state.set` | `{ scope?, path, value }` | Set a scoped state path |
-| `state.setField` | `{ scope?, path?, key, value }` | Set `path.key` in scoped state |
-| `state.patch` | `{ scope?, patch }` | Merge patch into scoped state |
-| `state.reset` | `{ scope? }` | Reset scoped state for scope |
-
-`scope` defaults to `'card'` and can be: `card`, `cardType`, `background`, `stack`, `global`.
-
-## 5. Action Resolution
-
-When `descriptor.to` is set:
-- `'shared'` → only shared handler
-- `'card'` / `'stack'` / etc. → only that local scope
-- `'auto'` or unset → cascade: local (card→cardType→background→stack→global) then shared
-
-Unhandled actions emit a `console.warn` with action type and card context.
-
-## 6. Selector Resolution
-
-Order (when `from` is `auto` or unset): card → cardType → background → stack → global → shared.
-
-Each scope can also read from scoped state:
-- `state.somePath` reads from that scope's state object
-- Direct key names match against scope's state keys
+| `nav.go` | `{ surfaceId, param? }` | Navigate to another runtime surface |
+| `nav.back` | — | Go back in runtime surface navigation |
+| `notify.show` | `{ message }` | Show a host notification |
+| `draft.set` | `{ path, value }` | Set a draft-state path |
+| `draft.patch` | `{ ... }` | Merge into draft state |
+| `draft.reset` | — | Reset draft state |
+| `filters.set` | `{ path, value }` | Set a session/filter path |
+| `filters.patch` | `{ ... }` | Merge into session/filter state |
+| `filters.reset` | — | Reset session/filter state |
 
 ## 7. App Bootstrap
-
-### createAppStore
-
-```ts
-import { createAppStore } from '@hypercard/engine';
-
-const { store, createStore } = createAppStore({
-  contacts: contactsReducer,
-  deals: dealsReducer,
-});
-```
-
-Pre-wires: `hypercardRuntime`, `navigation`, `notifications`, `debug` reducers.
-
-### createDSLApp
-
-```ts
-const { App, store, createStore } = createDSLApp({
-  stack: MY_STACK,
-  sharedSelectors, sharedActions,
-  domainReducers: { contacts: contactsReducer },
-  navShortcuts: [{ card: 'home', icon: '🏠' }],
-  snapshotSelector: (state) => ({ contacts: state.contacts }),
-});
-```
 
 ### createStoryHelpers
 
 ```ts
 const { storeDecorator, createStory, FullApp } = createStoryHelpers({
-  stack: MY_STACK,
-  sharedSelectors, sharedActions,
+  bundle: MY_BUNDLE,
   createStore,
-  navShortcuts: [...],
-  cardParams: { contactDetail: 'c1' },
-  snapshotSelector: (state) => ({ ... }),
+  surfaceParams: { detail: 'item-1' },
 });
 ```
 
@@ -230,14 +175,21 @@ const cancel = fakeStream('hello', {
 
 ## 10. Navigation
 
-```ts
-import { navigate, goBack, setLayout, initializeNavigation, resetNavigation } from '@hypercard/engine';
+`DesktopShell` opens a bundle’s `homeSurface` by default. VM-authored runtime surfaces navigate by dispatching runtime actions:
 
-dispatch(initializeNavigation({ homeCard: 'dashboard' }));
-dispatch(navigate({ card: 'detail', paramValue: 'item-1' }));
-dispatch(goBack());
-dispatch(setLayout('drawer'));  // resets to homeCard
-dispatch(resetNavigation());    // resets to homeCard without layout change
+```js
+context.dispatch({ type: 'nav.go', payload: { surfaceId: 'detail', param: 'item-1' } });
+context.dispatch({ type: 'nav.back' });
+```
+
+For Storybook and desktop-shell examples, the current helper path is:
+
+```tsx
+const { createStory, FullApp } = createStoryHelpers({
+  bundle: MY_BUNDLE,
+  createStore,
+  surfaceParams: { detail: 'item-1' },
+});
 ```
 
 ## 11. Theming
