@@ -423,13 +423,14 @@ export function createHypercardReplDriver(
             detail: entry.detail,
           })) ?? [];
         default:
+          const lastToken = tokens.length > 0 ? tokens[tokens.length - 1] ?? '' : '';
           return [
             ...listPackageCompletionItems(),
             ...listDocEntries().map((entry) => ({
               value: entry.title,
               detail: entry.detail,
             })),
-          ].filter((entry) => entry.value.startsWith(tokens.at(-1) ?? ''));
+          ].filter((entry) => entry.value.startsWith(lastToken));
       }
     },
     getHelp(topic) {
