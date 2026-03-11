@@ -6,6 +6,10 @@ import {
   createHypercardReplDriver,
   getRuntimePackageDocsMetadata,
 } from './hypercardReplDriver';
+import {
+  clearAttachedRuntimeSessions,
+  registerAttachedRuntimeSession,
+} from './attachedRuntimeSessionRegistry';
 
 const TEST_UI_RUNTIME_PACKAGE = {
   packageId: 'ui',
@@ -63,6 +67,7 @@ beforeEach(() => {
 afterEach(() => {
   clearRuntimePackages();
   clearRuntimeSurfaceTypes();
+  clearAttachedRuntimeSessions();
 });
 
 describe('hypercardReplDriver', () => {
@@ -130,7 +135,7 @@ describe('hypercardReplDriver', () => {
       uptimeMs: 0,
     });
     expect(sessions.lines).toEqual([
-      { type: 'output', text: 'inventory@repl * — inventory (ui)' },
+      { type: 'output', text: 'inventory@repl * — inventory (ui) [spawned]' },
       { type: 'system', text: '  surfaces: lowStock' },
     ]);
 
@@ -285,6 +290,79 @@ describe('hypercardReplDriver', () => {
       uptimeMs: 0,
     });
     expect(handlerResult.lines.some((line) => line.text.includes('"notify.show"'))).toBe(true);
+  });
+
+  it('attaches to live host-owned runtime sessions in read-only mode', async () => {
+    registerAttachedRuntimeSession({
+      handle: {
+        sessionId: 'inventory@live',
+        stackId: 'inventory',
+        origin: 'attached',
+        writable: false,
+        getBundleMeta: () => ({
+          stackId: 'inventory',
+          sessionId: 'inventory@live',
+          title: 'Inventory Live',
+          packageIds: ['ui'],
+          surfaces: ['lowStock'],
+          surfaceTypes: { lowStock: 'ui.card.v1' },
+        }),
+        renderSurface: () => ({ kind: 'panel', children: [{ kind: 'text', value: 'attached' }] }),
+        eventSurface: () => [],
+        defineSurface: () => {
+          throw new Error('Attached runtime session inventory@live is read-only');
+        },
+        defineSurfaceRender: () => {
+          throw new Error('Attached runtime session inventory@live is read-only');
+        },
+        defineSurfaceHandler: () => {
+          throw new Error('Attached runtime session inventory@live is read-only');
+        },
+        dispose: () => false,
+      },
+      summary: {
+        sessionId: 'inventory@live',
+        stackId: 'inventory',
+        packageIds: ['ui'],
+        surfaces: ['lowStock'],
+        surfaceTypes: { lowStock: 'ui.card.v1' },
+        title: 'Inventory Live',
+        origin: 'attached',
+        writable: false,
+      },
+    });
+
+    const driver = createHypercardReplDriver();
+    const context = {
+      lines: [],
+      historyStack: [],
+      envVars: {},
+      aliases: {},
+      uptimeMs: 0,
+    };
+
+    await expect(driver.execute('attach inventory@live', context)).resolves.toEqual({
+      lines: [{ type: 'system', text: 'Attached to runtime session: inventory@live (read-only)' }],
+    });
+
+    await expect(driver.execute('sessions', context)).resolves.toEqual({
+      lines: [
+        { type: 'output', text: 'inventory@live * — inventory (ui) [attached, read-only]' },
+        { type: 'system', text: '  surfaces: lowStock' },
+      ],
+    });
+
+    const rendered = await driver.execute('render lowStock', context);
+    expect(rendered.lines.some((line) => line.text.includes('"attached"'))).toBe(true);
+
+    await expect(driver.execute('event lowStock ping', context)).rejects.toThrow(/read-only/i);
+    await expect(
+      driver.execute(
+        'define-surface scratch ui.card.v1 ({ ui }) => ({ render() { return ui.text("hello"); }, handlers: {} })',
+        context,
+      ),
+    ).rejects.toThrow(/read-only/i);
+    await expect(driver.execute('open-surface lowStock', context)).rejects.toThrow(/spawned runtime sessions/i);
   });
 
   it('exposes command and package-doc completions', () => {

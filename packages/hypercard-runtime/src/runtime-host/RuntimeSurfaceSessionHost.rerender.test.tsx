@@ -5,16 +5,38 @@ import { Provider } from 'react-redux';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createAppStore } from '../app/createAppStore';
 import type { RuntimeBundleDefinition } from '@hypercard/engine';
+import { getAttachedRuntimeSession, clearAttachedRuntimeSessions } from '../repl/attachedRuntimeSessionRegistry';
+import { clearRuntimePackages, registerRuntimePackage } from '../runtime-packages';
+import { clearRuntimeSurfaceTypes, registerRuntimeSurfaceType } from '../runtime-packs';
+import { TEST_UI_CARD_V1_RUNTIME_SURFACE_TYPE, TEST_UI_RUNTIME_PACKAGE } from '../testRuntimeUi';
 import { RuntimeSurfaceSessionHost } from './RuntimeSurfaceSessionHost';
 
 vi.mock('../plugin-runtime/runtimeService', () => {
   class MockQuickJSRuntimeService {
+    getRuntimeBundleMeta(sessionId: string) {
+      return {
+        stackId: 'runtime-rerender-stack',
+        sessionId,
+        title: 'Mock Plugin',
+        packageIds: ['ui'],
+        surfaces: ['home'],
+        surfaceTypes: {
+          home: 'ui.card.v1',
+        },
+      };
+    }
+
     async loadRuntimeBundle() {
       return {
+        stackId: 'runtime-rerender-stack',
+        sessionId: 'session-rerender',
         id: 'mock-plugin',
         title: 'Mock Plugin',
         packageIds: ['ui'],
         surfaces: ['home'],
+        surfaceTypes: {
+          home: 'ui.card.v1',
+        },
       };
     }
 
@@ -97,6 +119,9 @@ afterEach(() => {
   for (const container of containers.splice(0)) {
     container.remove();
   }
+  clearAttachedRuntimeSessions();
+  clearRuntimePackages();
+  clearRuntimeSurfaceTypes();
 });
 
 async function waitForText(container: HTMLElement, text: string, timeoutMs = 3000) {
@@ -114,6 +139,9 @@ async function waitForText(container: HTMLElement, text: string, timeoutMs = 300
 
 describe('RuntimeSurfaceSessionHost rerender invalidation', () => {
   async function renderAndUpdateCount(stack: RuntimeBundleDefinition) {
+    registerRuntimePackage(TEST_UI_RUNTIME_PACKAGE);
+    registerRuntimeSurfaceType(TEST_UI_CARD_V1_RUNTIME_SURFACE_TYPE);
+
     const { createStore } = createAppStore({ inventory: inventoryReducer });
     const store = createStore();
 
@@ -147,5 +175,35 @@ describe('RuntimeSurfaceSessionHost rerender invalidation', () => {
 
   it('rerenders when only projected domain state changes and capabilities.domain is all', async () => {
     await renderAndUpdateCount(createTestStack({ domain: 'all' }));
+  });
+
+  it('registers ready interactive sessions in the attached runtime registry', async () => {
+    registerRuntimePackage(TEST_UI_RUNTIME_PACKAGE);
+    registerRuntimeSurfaceType(TEST_UI_CARD_V1_RUNTIME_SURFACE_TYPE);
+
+    const { createStore } = createAppStore({ inventory: inventoryReducer });
+    const store = createStore();
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    containers.push(container);
+
+    const root = createRoot(container);
+    roots.push(root);
+
+    await act(async () => {
+      root.render(
+        <Provider store={store}>
+          <RuntimeSurfaceSessionHost windowId="window:runtime-attach" sessionId="session-attach" bundle={TEST_STACK} />
+        </Provider>,
+      );
+    });
+
+    await waitForText(container, 'Count: 0');
+
+    const attached = getAttachedRuntimeSession('session-attach');
+    expect(attached?.summary.origin).toBe('attached');
+    expect(attached?.summary.writable).toBe(false);
+    expect(attached?.summary.surfaces).toEqual(['home']);
   });
 });

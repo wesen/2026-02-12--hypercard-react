@@ -213,6 +213,11 @@ export class QuickJSRuntimeService {
     return this.readRuntimeBundleMeta(vm);
   }
 
+  getRuntimeBundleMeta(sessionId: SessionId): RuntimeBundleMeta {
+    const vm = this.getVmOrThrow(sessionId);
+    return this.readRuntimeBundleMeta(vm);
+  }
+
   renderRuntimeSurface(
     sessionId: SessionId,
     surfaceId: RuntimeSurfaceId,

@@ -17,6 +17,7 @@ import { markRuntimeSurfaceInjectionResults } from '../hypercard/artifacts/artif
 import type { RuntimeBundleMeta, RuntimeAction } from '../plugin-runtime/contracts';
 import { getPendingRuntimeSurfaces, hasRuntimeSurface, injectPendingRuntimeSurfacesWithReport, onRegistryChange } from '../plugin-runtime/runtimeSurfaceRegistry';
 import { QuickJSRuntimeService } from '../plugin-runtime/runtimeService';
+import { registerAttachedRuntimeSession, unregisterAttachedRuntimeSession } from '../repl/attachedRuntimeSessionRegistry';
 import { dispatchRuntimeAction } from './pluginIntentRouting';
 import {
   normalizeRuntimeSurfaceTypeId,
@@ -285,6 +286,62 @@ export function RuntimeSurfaceSessionHost({
       }
     });
   }, [dispatch, pluginConfig, runtimeSession, sessionId]);
+
+  useEffect(() => {
+    if (!pluginConfig || !runtimeSession || runtimeSession.status !== 'ready' || isPreview) {
+      return;
+    }
+
+    const runtimeService = runtimeServiceRef.current;
+    if (!runtimeService) {
+      return;
+    }
+
+    const getMeta = () => runtimeService.getRuntimeBundleMeta(sessionId);
+
+    registerAttachedRuntimeSession({
+      handle: {
+        sessionId,
+        stackId: bundle.id,
+        origin: 'attached',
+        writable: false,
+        getBundleMeta: getMeta,
+        renderSurface(surfaceId, state) {
+          return runtimeService.renderRuntimeSurface(sessionId, surfaceId, state);
+        },
+        eventSurface(surfaceId, handler, args, state) {
+          return runtimeService.eventRuntimeSurface(sessionId, surfaceId, handler, args, state);
+        },
+        defineSurface() {
+          throw new Error(`Attached runtime session ${sessionId} is read-only`);
+        },
+        defineSurfaceRender() {
+          throw new Error(`Attached runtime session ${sessionId} is read-only`);
+        },
+        defineSurfaceHandler() {
+          throw new Error(`Attached runtime session ${sessionId} is read-only`);
+        },
+        dispose() {
+          return false;
+        },
+      },
+      summary: {
+        sessionId,
+        stackId: bundle.id,
+        packageIds: [...getMeta().packageIds],
+        surfaces: [...getMeta().surfaces],
+        surfaceTypes: getMeta().surfaceTypes ? { ...getMeta().surfaceTypes } : undefined,
+        title: getMeta().title,
+        description: getMeta().description,
+        origin: 'attached',
+        writable: false,
+      },
+    });
+
+    return () => {
+      unregisterAttachedRuntimeSession(sessionId);
+    };
+  }, [bundle.id, isPreview, pluginConfig, runtimeSession, sessionId]);
 
   useEffect(() => {
     if (!pluginConfig) {

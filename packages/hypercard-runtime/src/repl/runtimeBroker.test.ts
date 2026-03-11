@@ -35,6 +35,8 @@ describe('runtimeBroker', () => {
         stackId: 'inventory',
         packageIds: ['ui'],
         surfaces: ['lowStock'],
+        origin: 'spawned',
+        writable: true,
       }),
     ]);
 

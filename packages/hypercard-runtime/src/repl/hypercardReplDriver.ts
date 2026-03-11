@@ -6,9 +6,10 @@ import type {
   ReplHelpEntry,
   TerminalLine,
 } from '@hypercard/repl';
+import { getAttachedRuntimeSession, listAttachedRuntimeSessions } from './attachedRuntimeSessionRegistry';
 import { getRuntimePackageOrThrow, listRuntimePackages } from '../runtime-packages/runtimePackageRegistry';
 import { listRuntimeSurfaceTypes } from '../runtime-packs/runtimeSurfaceTypeRegistry';
-import { createRuntimeBroker, type RuntimeBroker, type SpawnRuntimeSessionRequest } from './runtimeBroker';
+import { createRuntimeBroker, type RuntimeBroker, type RuntimeSessionHandle, type RuntimeSessionSummary, type SpawnRuntimeSessionRequest } from './runtimeBroker';
 
 export interface ReplBundleLibraryEntry {
   key: string;
@@ -87,9 +88,14 @@ const COMMAND_HELP: Record<string, ReplHelpEntry> = {
     detail: 'Spawn a runtime session from a named bundle library entry.',
     usage: 'spawn <bundle-key> [session-id]',
   },
+  attach: {
+    title: 'attach',
+    detail: 'Attach the REPL to a live host-owned runtime session in read-only mode.',
+    usage: 'attach <session-id>',
+  },
   sessions: {
     title: 'sessions',
-    detail: 'List broker-owned runtime sessions.',
+    detail: 'List spawned and attached runtime sessions visible to the REPL.',
     usage: 'sessions',
   },
   use: {
@@ -291,8 +297,14 @@ function describeSurface(
   return `${symbol.summary} [${fallbackSurfaceType}]`;
 }
 
+function collectSessions(broker: RuntimeBroker): RuntimeSessionSummary[] {
+  const attached = listAttachedRuntimeSessions().map((entry) => entry.summary);
+  const spawned = broker.listSessions();
+  return [...spawned, ...attached].sort((left, right) => left.sessionId.localeCompare(right.sessionId));
+}
+
 function linesForSessions(broker: RuntimeBroker, activeSessionId: string | null): TerminalLine[] {
-  const sessions = broker.listSessions();
+  const sessions = collectSessions(broker);
   if (sessions.length === 0) {
     return [{ type: 'system', text: 'No runtime sessions.' }];
   }
@@ -300,7 +312,10 @@ function linesForSessions(broker: RuntimeBroker, activeSessionId: string | null)
   return sessions.flatMap((session) => [
     {
       type: 'output' as const,
-      text: `${session.sessionId}${session.sessionId === activeSessionId ? ' *' : ''} — ${session.stackId} (${session.packageIds.join(', ')})`,
+      text:
+        `${session.sessionId}${session.sessionId === activeSessionId ? ' *' : ''} — ` +
+        `${session.stackId} (${session.packageIds.join(', ')}) ` +
+        `[${session.origin}${session.writable ? '' : ', read-only'}]`,
     },
     {
       type: 'system' as const,
@@ -326,16 +341,41 @@ export function createHypercardReplDriver(
     return candidate;
   }
 
+  function getSessionRecord(sessionId: string): { handle: RuntimeSessionHandle; summary: RuntimeSessionSummary } | null {
+    const spawnedHandle = broker.getSession(sessionId);
+    if (spawnedHandle) {
+      const summary = broker.listSessions().find((entry) => entry.sessionId === sessionId);
+      if (!summary) {
+        throw new Error(`Missing runtime session summary for spawned session: ${sessionId}`);
+      }
+      return { handle: spawnedHandle, summary };
+    }
+
+    const attached = getAttachedRuntimeSession(sessionId);
+    if (attached) {
+      return { handle: attached.handle, summary: attached.summary };
+    }
+
+    return null;
+  }
+
+  function requireWritableSession(record: { handle: RuntimeSessionHandle; summary: RuntimeSessionSummary }, sessionId: string) {
+    if (record.summary.writable) {
+      return;
+    }
+    throw new Error(`Attached runtime session ${sessionId} is read-only`);
+  }
+
   function getActiveSession(sessionIdArg?: string) {
     const sessionId = sessionIdArg ?? activeSessionId;
     if (!sessionId) {
       throw new Error('No active runtime session. Use spawn or use <session-id> first.');
     }
-    const handle = broker.getSession(sessionId);
-    if (!handle) {
+    const record = getSessionRecord(sessionId);
+    if (!record) {
       throw new Error(`Unknown runtime session: ${sessionId}`);
     }
-    return { sessionId, handle };
+    return { sessionId, ...record };
   }
 
   async function spawnBundle(bundleKey: string, sessionIdArg?: string): Promise<ReplExecutionResult> {
@@ -410,18 +450,32 @@ export function createHypercardReplDriver(
           return {
             lines: linesForSessions(broker, activeSessionId),
           };
+        case 'attach': {
+          const sessionId = rest[0];
+          if (!sessionId) {
+            throw new Error('Usage: attach <session-id>');
+          }
+          const attached = getAttachedRuntimeSession(sessionId);
+          if (!attached) {
+            throw new Error(`Unknown attached runtime session: ${sessionId}`);
+          }
+          activeSessionId = sessionId;
+          return {
+            lines: [{ type: 'system', text: `Attached to runtime session: ${sessionId} (read-only)` }],
+          };
+        }
         case 'use': {
           const sessionId = rest[0];
           if (!sessionId) {
             throw new Error('Usage: use <session-id>');
           }
-          const handle = broker.getSession(sessionId);
-          if (!handle) {
+          const record = getSessionRecord(sessionId);
+          if (!record) {
             throw new Error(`Unknown runtime session: ${sessionId}`);
           }
           activeSessionId = sessionId;
           return {
-            lines: [{ type: 'system', text: `Active runtime session: ${sessionId}` }],
+            lines: [{ type: 'system', text: `Active runtime session: ${sessionId}${record.summary.writable ? '' : ' (read-only)'}` }],
           };
         }
         case 'surfaces': {
@@ -457,7 +511,9 @@ export function createHypercardReplDriver(
           if (!surfaceId || !handler) {
             throw new Error('Usage: event <surface-id> <handler> [args-json] [state-json]');
           }
-          const { handle } = getActiveSession();
+          const active = getActiveSession();
+          requireWritableSession(active, active.sessionId);
+          const { handle } = active;
           const actions = handle.eventSurface(
             surfaceId,
             handler,
@@ -471,7 +527,9 @@ export function createHypercardReplDriver(
           if (!surfaceId || !surfaceType || !code) {
             throw new Error('Usage: define-surface <surface-id> <surface-type> <factory-code>');
           }
-          const { handle, sessionId } = getActiveSession();
+          const active = getActiveSession();
+          requireWritableSession(active, active.sessionId);
+          const { handle, sessionId } = active;
           const bundle = handle.defineSurface(surfaceId, code, surfaceType);
           return {
             lines: [
@@ -485,7 +543,9 @@ export function createHypercardReplDriver(
           if (!surfaceId || !code) {
             throw new Error('Usage: define-render <surface-id> <render-code>');
           }
-          const { handle, sessionId } = getActiveSession();
+          const active = getActiveSession();
+          requireWritableSession(active, active.sessionId);
+          const { handle, sessionId } = active;
           handle.defineSurfaceRender(surfaceId, code);
           return {
             lines: [
@@ -498,7 +558,9 @@ export function createHypercardReplDriver(
           if (!surfaceId || !handlerName || !code) {
             throw new Error('Usage: define-handler <surface-id> <handler-name> <handler-code>');
           }
-          const { handle, sessionId } = getActiveSession();
+          const active = getActiveSession();
+          requireWritableSession(active, active.sessionId);
+          const { handle, sessionId } = active;
           handle.defineSurfaceHandler(surfaceId, handlerName, code);
           return {
             lines: [
@@ -511,7 +573,11 @@ export function createHypercardReplDriver(
           if (!surfaceId) {
             throw new Error('Usage: open-surface <surface-id> [session-id]');
           }
-          const { handle, sessionId } = getActiveSession(rest[1]);
+          const active = getActiveSession(rest[1]);
+          if (!active.summary.writable) {
+            throw new Error(`open-surface is only supported for spawned runtime sessions right now: ${active.sessionId}`);
+          }
+          const { handle, sessionId } = active;
           return {
             lines: [
               {

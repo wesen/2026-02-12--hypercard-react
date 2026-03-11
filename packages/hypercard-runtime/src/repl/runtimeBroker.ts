@@ -16,11 +16,15 @@ export interface RuntimeSessionSummary {
   surfaceTypes?: Record<string, string>;
   title: string;
   description?: string;
+  origin: 'spawned' | 'attached';
+  writable: boolean;
 }
 
 export interface RuntimeSessionHandle {
   readonly sessionId: SessionId;
   readonly stackId: StackId;
+  readonly origin: 'spawned' | 'attached';
+  readonly writable: boolean;
   getBundleMeta(): RuntimeBundleMeta;
   renderSurface(surfaceId: RuntimeSurfaceId, state: unknown): unknown;
   eventSurface(surfaceId: RuntimeSurfaceId, handler: string, args: unknown, state: unknown): RuntimeAction[];
@@ -48,6 +52,8 @@ function toRuntimeSessionSummary(bundle: RuntimeBundleMeta): RuntimeSessionSumma
     surfaceTypes: bundle.surfaceTypes ? { ...bundle.surfaceTypes } : undefined,
     title: bundle.title,
     description: bundle.description,
+    origin: 'spawned',
+    writable: true,
   };
 }
 
@@ -73,6 +79,8 @@ export function createRuntimeBroker(
     return {
       sessionId: bundle.sessionId,
       stackId: bundle.stackId,
+      origin: 'spawned',
+      writable: true,
       getBundleMeta() {
         return {
           ...bundle,
