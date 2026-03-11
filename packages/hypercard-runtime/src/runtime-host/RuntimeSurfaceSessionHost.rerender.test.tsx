@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createAppStore } from '../app/createAppStore';
 import type { CardStackDefinition } from '@hypercard/engine';
-import { PluginCardSessionHost } from './PluginCardSessionHost';
+import { RuntimeSurfaceSessionHost } from './RuntimeSurfaceSessionHost';
 
 vi.mock('../plugin-runtime/runtimeService', () => {
   class MockQuickJSRuntimeService {
@@ -112,7 +112,7 @@ async function waitForText(container: HTMLElement, text: string, timeoutMs = 300
   throw new Error(`Timed out waiting for text: ${text}`);
 }
 
-describe('PluginCardSessionHost rerender invalidation', () => {
+describe('RuntimeSurfaceSessionHost rerender invalidation', () => {
   async function renderAndUpdateCount(stack: CardStackDefinition) {
     const { createStore } = createAppStore({ inventory: inventoryReducer });
     const store = createStore();
@@ -127,7 +127,7 @@ describe('PluginCardSessionHost rerender invalidation', () => {
     await act(async () => {
       root.render(
         <Provider store={store}>
-          <PluginCardSessionHost windowId="window:runtime-rerender" sessionId="session-rerender" stack={stack} />
+          <RuntimeSurfaceSessionHost windowId="window:runtime-rerender" sessionId="session-rerender" stack={stack} />
         </Provider>,
       );
     });

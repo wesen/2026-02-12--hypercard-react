@@ -4,9 +4,9 @@ import { useDispatch } from 'react-redux';
 import { type CardStackDefinition } from '@hypercard/engine';
 import { openWindow, type OpenWindowPayload } from '@hypercard/engine/desktop-core';
 import {
-  getPendingRuntimeCards,
+  getPendingRuntimeSurfaces,
   onRegistryChange,
-  type RuntimeCardDefinition,
+  type RuntimeSurfaceDefinition,
 } from '../../plugin-runtime';
 import { SyntaxHighlight } from '@hypercard/chat-runtime';
 import type { ArtifactRecord } from '../artifacts/artifactsSlice';
@@ -116,7 +116,7 @@ export function RuntimeCardDebugWindow({
   initialStackId,
 }: RuntimeCardDebugWindowProps) {
   const dispatch = useDispatch();
-  const [registryCards, setRegistryCards] = useState<RuntimeCardDefinition[]>(getPendingRuntimeCards());
+  const [registryCards, setRegistryCards] = useState<RuntimeSurfaceDefinition[]>(getPendingRuntimeSurfaces());
   const registeredStacks = useRegisteredRuntimeDebugStacks();
   const availableStacks = useMemo(
     () => (stacks && stacks.length > 0 ? [...stacks] : registeredStacks),
@@ -127,7 +127,7 @@ export function RuntimeCardDebugWindow({
   );
 
   useEffect(() => {
-    const update = () => setRegistryCards(getPendingRuntimeCards());
+    const update = () => setRegistryCards(getPendingRuntimeSurfaces());
     return onRegistryChange(update);
   }, []);
 

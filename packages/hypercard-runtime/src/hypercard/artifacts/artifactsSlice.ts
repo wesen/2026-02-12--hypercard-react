@@ -87,7 +87,7 @@ const artifactsSlice = createSlice({
         injectionError: existing?.injectionError,
       };
     },
-    markRuntimeCardInjectionResults(
+    markRuntimeSurfaceInjectionResults(
       state,
       action: PayloadAction<{
         injectedCardIds?: string[];
@@ -133,6 +133,6 @@ const artifactsSlice = createSlice({
   },
 });
 
-export const { upsertArtifact, markRuntimeCardInjectionResults, clearArtifacts } = artifactsSlice.actions;
+export const { upsertArtifact, markRuntimeSurfaceInjectionResults, clearArtifacts } = artifactsSlice.actions;
 export const artifactsReducer = artifactsSlice.reducer;
 export const hypercardArtifactsReducer = artifactsSlice.reducer;

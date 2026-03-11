@@ -1,6 +1,6 @@
 import { type LaunchableAppModule, type LaunchReason } from '@hypercard/desktop-os';
 import type { OpenWindowPayload } from '@hypercard/engine/desktop-core';
-import { PluginCardSessionHost } from '@hypercard/hypercard-runtime';
+import { RuntimeSurfaceSessionHost } from '@hypercard/hypercard-runtime';
 import { type DesktopContribution, type WindowContentAdapter } from '@hypercard/engine/desktop-react';
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { type ReactNode, useRef } from 'react';
@@ -66,7 +66,7 @@ function createCrmCardAdapter(): WindowContentAdapter {
       if (window.content.kind !== 'card' || !cardRef || cardRef.stackId !== STACK.id) {
         return null;
       }
-      return <PluginCardSessionHost windowId={window.id} sessionId={cardRef.cardSessionId} stack={STACK} />;
+      return <RuntimeSurfaceSessionHost windowId={window.id} sessionId={cardRef.cardSessionId} stack={STACK} />;
     },
   };
 }

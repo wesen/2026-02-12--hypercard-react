@@ -13,9 +13,9 @@ import {
   setRuntimeSessionStatus,
 } from '../features/pluginCardRuntime';
 import { selectFocusedWindowId, selectSessionCurrentNav, selectSessionNavDepth } from '@hypercard/engine/desktop-core';
-import { markRuntimeCardInjectionResults } from '../hypercard/artifacts/artifactsSlice';
+import { markRuntimeSurfaceInjectionResults } from '../hypercard/artifacts/artifactsSlice';
 import type { RuntimeBundleMeta, RuntimeAction } from '../plugin-runtime/contracts';
-import { getPendingRuntimeCards, hasRuntimeCard, injectPendingCardsWithReport, onRegistryChange } from '../plugin-runtime/runtimeCardRegistry';
+import { getPendingRuntimeSurfaces, hasRuntimeSurface, injectPendingRuntimeSurfacesWithReport, onRegistryChange } from '../plugin-runtime/runtimeSurfaceRegistry';
 import { QuickJSRuntimeService } from '../plugin-runtime/runtimeService';
 import { dispatchRuntimeAction } from './pluginIntentRouting';
 import {
@@ -45,14 +45,14 @@ function asArray<T>(value: unknown): T[] {
 function projectRuntimeState(domains: Record<string, unknown>, opts: {
   stackId: string;
   sessionId: string;
-  cardId: string;
+  surfaceId: string;
   windowId: string;
   navDepth: number;
   currentNavParam?: string;
   focusedWindowId: string | null;
   runtimeStatus: string;
   sessionState: Record<string, unknown>;
-  cardState: Record<string, unknown>;
+  surfaceState: Record<string, unknown>;
 }) {
   const projectedDomains = { ...domains };
   const inventory = isRecord(projectedDomains.inventory) ? projectedDomains.inventory : null;
@@ -77,11 +77,11 @@ function projectRuntimeState(domains: Record<string, unknown>, opts: {
     self: {
       stackId: opts.stackId,
       sessionId: opts.sessionId,
-      cardId: opts.cardId,
+      surfaceId: opts.surfaceId,
       windowId: opts.windowId,
     },
     nav: {
-      current: opts.cardId,
+      current: opts.surfaceId,
       param: opts.currentNavParam,
       depth: opts.navDepth,
       canBack: opts.navDepth > 1,
@@ -91,24 +91,24 @@ function projectRuntimeState(domains: Record<string, unknown>, opts: {
       runtimeStatus: opts.runtimeStatus,
     },
     filters: opts.sessionState,
-    draft: opts.cardState,
+    draft: opts.surfaceState,
     ...projectedDomains,
   };
 }
 
-export interface PluginCardSessionHostProps {
+export interface RuntimeSurfaceSessionHostProps {
   windowId: string;
   sessionId: string;
   stack: CardStackDefinition;
   mode?: 'interactive' | 'preview';
 }
 
-export function PluginCardSessionHost({
+export function RuntimeSurfaceSessionHost({
   windowId,
   sessionId,
   stack,
   mode = 'interactive',
-}: PluginCardSessionHostProps) {
+}: RuntimeSurfaceSessionHostProps) {
   const dispatch = useDispatch();
   const store = useStore<StoreState>();
 
@@ -117,13 +117,13 @@ export function PluginCardSessionHost({
   const navDepth = useSelector((state: StoreState) => selectSessionNavDepth(state as any, sessionId));
   const focusedWindowId = useSelector((state: StoreState) => selectFocusedWindowId(state as any));
 
-  // Accept cards from the static stack definition OR runtime-injected cards (not in stack.cards)
-  const currentCardId = currentNav?.card && (stack.cards[currentNav.card] || hasRuntimeCard(currentNav.card))
+  // Accept surfaces from the static stack definition OR runtime-injected surfaces (not in stack.cards)
+  const currentSurfaceId = currentNav?.card && (stack.cards[currentNav.card] || hasRuntimeSurface(currentNav.card))
     ? currentNav.card
     : stack.homeCard;
   const runtimeSession = useSelector((state: StoreState) => selectRuntimeSession(state as any, sessionId));
   const sessionState = useSelector((state: StoreState) => selectRuntimeSessionState(state as any, sessionId));
-  const cardState = useSelector((state: StoreState) => selectRuntimeCardState(state as any, sessionId, currentCardId));
+  const surfaceState = useSelector((state: StoreState) => selectRuntimeCardState(state as any, sessionId, currentSurfaceId));
   const projectedDomainAccess = useMemo(
     () => runtimeSession?.capabilities.domain ?? resolveCapabilityPolicy(pluginConfig?.capabilities).domain,
     [pluginConfig, runtimeSession?.capabilities.domain],
@@ -186,12 +186,12 @@ export function PluginCardSessionHost({
 
         dispatch(setRuntimeSessionStatus({ sessionId, status: 'ready' }));
 
-        // Inject any runtime cards that were registered before the session loaded
+        // Inject any runtime surfaces that were registered before the session loaded
         if (runtimeService) {
-          const report = injectPendingCardsWithReport(runtimeService, sessionId);
+          const report = injectPendingRuntimeSurfacesWithReport(runtimeService, sessionId);
           if (report.injected.length > 0 || report.failed.length > 0) {
             dispatch(
-              markRuntimeCardInjectionResults({
+              markRuntimeSurfaceInjectionResults({
                 injectedCardIds: report.injected,
                 failed: report.failed.map((item) => ({ cardId: item.cardId, error: item.error })),
               }),
@@ -199,7 +199,7 @@ export function PluginCardSessionHost({
           }
           if (report.injected.length > 0) {
             console.log(
-              `[PluginCardSessionHost] Injected ${report.injected.length} runtime cards into ${sessionId}:`,
+              `[RuntimeSurfaceSessionHost] Injected ${report.injected.length} runtime surfaces into ${sessionId}:`,
               report.injected,
             );
           }
@@ -215,7 +215,7 @@ export function PluginCardSessionHost({
               dispatch: (action) => dispatch(action as never),
               getState: () => store.getState(),
               sessionId,
-              cardId: currentCardId,
+              cardId: currentSurfaceId,
               windowId,
             }
           );
@@ -256,9 +256,9 @@ export function PluginCardSessionHost({
     return () => {
       cancelled = true;
     };
-  }, [dispatch, pluginConfig, runtimeSession, sessionId, stack.id, currentCardId, windowId, store]);
+  }, [dispatch, pluginConfig, runtimeSession, sessionId, stack.id, currentSurfaceId, windowId, store]);
 
-  // Subscribe to runtime card registry — inject new cards as they arrive
+  // Subscribe to the runtime surface registry and inject new surfaces as they arrive.
   useEffect(() => {
     if (!pluginConfig || !runtimeSession || runtimeSession.status !== 'ready') {
       return;
@@ -268,10 +268,10 @@ export function PluginCardSessionHost({
       return;
     }
     return onRegistryChange(() => {
-      const report = injectPendingCardsWithReport(runtimeService, sessionId);
+      const report = injectPendingRuntimeSurfacesWithReport(runtimeService, sessionId);
       if (report.injected.length > 0 || report.failed.length > 0) {
         dispatch(
-          markRuntimeCardInjectionResults({
+          markRuntimeSurfaceInjectionResults({
             injectedCardIds: report.injected,
             failed: report.failed.map((item) => ({ cardId: item.cardId, error: item.error })),
           }),
@@ -279,7 +279,7 @@ export function PluginCardSessionHost({
       }
       if (report.injected.length > 0) {
         console.log(
-          `[PluginCardSessionHost] Live-injected ${report.injected.length} runtime cards into ${sessionId}:`,
+          `[RuntimeSurfaceSessionHost] Live-injected ${report.injected.length} runtime surfaces into ${sessionId}:`,
           report.injected,
         );
       }
@@ -304,27 +304,27 @@ export function PluginCardSessionHost({
       projectRuntimeState(projectedDomains, {
         stackId: stack.id,
         sessionId,
-        cardId: currentCardId,
+        surfaceId: currentSurfaceId,
         windowId,
         navDepth,
         currentNavParam: currentNav?.param,
         focusedWindowId,
         runtimeStatus: runtimeSession?.status ?? 'missing',
         sessionState,
-        cardState,
+        surfaceState,
       }),
     [
       projectedDomains,
       stack.id,
       sessionId,
-      currentCardId,
+      currentSurfaceId,
       windowId,
       navDepth,
       currentNav?.param,
       focusedWindowId,
       runtimeSession?.status,
       sessionState,
-      cardState,
+      surfaceState,
     ]
   );
 
@@ -338,9 +338,9 @@ export function PluginCardSessionHost({
     try {
       return {
         tree: (() => {
-          const runtimeCard = getPendingRuntimeCards().find((card) => card.cardId === currentCardId);
-          const packId = normalizeRuntimeSurfaceTypeId(runtimeCard?.packId ?? loadedBundleRef.current?.surfaceTypes?.[currentCardId]);
-          const rawTree = runtimeServiceRef.current?.renderRuntimeSurface(sessionId, currentCardId, projectedState) ?? null;
+          const runtimeSurface = getPendingRuntimeSurfaces().find((surface) => surface.cardId === currentSurfaceId);
+          const packId = normalizeRuntimeSurfaceTypeId(runtimeSurface?.packId ?? loadedBundleRef.current?.surfaceTypes?.[currentSurfaceId]);
+          const rawTree = runtimeServiceRef.current?.renderRuntimeSurface(sessionId, currentSurfaceId, projectedState) ?? null;
           return rawTree === null ? null : validateRuntimeSurfaceTree(packId, rawTree);
         })(),
         error: null,
@@ -351,7 +351,7 @@ export function PluginCardSessionHost({
         error: error instanceof Error ? error.message : String(error),
       };
     }
-  }, [currentCardId, pluginConfig, projectState, runtimeSession, sessionId]);
+  }, [currentSurfaceId, pluginConfig, projectState, runtimeSession, sessionId]);
 
   const tree = renderOutcome.tree;
   const renderError = renderOutcome.error;
@@ -382,7 +382,7 @@ export function PluginCardSessionHost({
         const projectedState = projectState();
         actions = runtimeServiceRef.current?.eventRuntimeSurface(
           sessionId,
-          currentCardId,
+          currentSurfaceId,
           handler,
           args,
           projectedState,
@@ -397,13 +397,13 @@ export function PluginCardSessionHost({
           dispatch: (action) => dispatch(action as never),
           getState: () => store.getState(),
           sessionId,
-          cardId: currentCardId,
+          cardId: currentSurfaceId,
           windowId,
         });
       });
     },
     [
-      currentCardId,
+      currentSurfaceId,
       dispatch,
       pluginConfig,
       projectState,
@@ -430,11 +430,11 @@ export function PluginCardSessionHost({
     if (renderError) {
       return <div style={{ padding: 12, color: '#9f1d1d' }}>Runtime render error: {renderError}</div>;
     }
-    return <div style={{ padding: 12 }}>No plugin output for card: {currentCardId}</div>;
+    return <div style={{ padding: 12 }}>No plugin output for surface: {currentSurfaceId}</div>;
   }
 
-  const runtimeCard = getPendingRuntimeCards().find((card) => card.cardId === currentCardId);
-  const packId = normalizeRuntimeSurfaceTypeId(runtimeCard?.packId ?? loadedBundleRef.current?.surfaceTypes?.[currentCardId]);
+  const runtimeSurface = getPendingRuntimeSurfaces().find((surface) => surface.cardId === currentSurfaceId);
+  const packId = normalizeRuntimeSurfaceTypeId(runtimeSurface?.packId ?? loadedBundleRef.current?.surfaceTypes?.[currentSurfaceId]);
 
   return <>{renderRuntimeSurfaceTree(packId, tree, emitRuntimeEvent)}</>;
 }

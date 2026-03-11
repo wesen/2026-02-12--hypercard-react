@@ -72,10 +72,10 @@ export function HypercardCardRenderer({ e, ctx }: { e: RenderEntity; ctx?: Rende
   const cardId = runtimeCardId(props);
   const cardCode = runtimeCardCode(props);
   const stackId = props.stackId ? String(props.stackId) : undefined;
-  const hasRuntimeCard = cardId.trim().length > 0;
+  const hasRuntimeSurface = cardId.trim().length > 0;
   const hasCardCode = cardCode.trim().length > 0;
-  const canOpenArtifact = Boolean(normalizeArtifactId(artifactId) && hasRuntimeCard && status !== 'streaming' && status !== 'pending');
-  const canEditCode = hasRuntimeCard && hasCardCode && status !== 'streaming' && status !== 'pending';
+  const canOpenArtifact = Boolean(normalizeArtifactId(artifactId) && hasRuntimeSurface && status !== 'streaming' && status !== 'pending');
+  const canEditCode = hasRuntimeSurface && hasCardCode && status !== 'streaming' && status !== 'pending';
 
   const openArtifact = () => {
     const payload = buildArtifactOpenWindowPayload({
@@ -91,7 +91,7 @@ export function HypercardCardRenderer({ e, ctx }: { e: RenderEntity; ctx?: Rende
   };
 
   const editArtifact = () => {
-    if (!hasRuntimeCard || !hasCardCode) {
+    if (!hasRuntimeSurface || !hasCardCode) {
       return;
     }
     openCodeEditor(dispatch, { ownerAppId: 'inventory', cardId }, cardCode);

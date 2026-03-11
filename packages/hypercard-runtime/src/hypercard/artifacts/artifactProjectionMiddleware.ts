@@ -1,6 +1,6 @@
 import { createListenerMiddleware, type PayloadAction } from '@reduxjs/toolkit';
 import { timelineSlice, type TimelineEntity } from '@hypercard/chat-runtime';
-import { registerRuntimeCard } from '../../plugin-runtime';
+import { registerRuntimeSurface } from '../../plugin-runtime';
 import { extractArtifactUpsertFromTimelineEntity } from './artifactRuntime';
 import { upsertArtifact } from './artifactsSlice';
 
@@ -22,7 +22,7 @@ function projectArtifactFromEntity(dispatch: (action: unknown) => unknown, entit
   );
 
   if (upsert.runtimeCardId && upsert.runtimeCardCode) {
-    registerRuntimeCard(upsert.runtimeCardId, upsert.runtimeCardCode, upsert.packId);
+    registerRuntimeSurface(upsert.runtimeCardId, upsert.runtimeCardCode, upsert.packId);
   }
 }
 

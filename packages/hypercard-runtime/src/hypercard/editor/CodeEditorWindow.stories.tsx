@@ -2,7 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Provider } from 'react-redux';
 import { CodeEditorWindow } from './CodeEditorWindow';
-import { clearRuntimeCardRegistry, registerRuntimeCard } from '../../plugin-runtime';
+import { clearRuntimeSurfaceRegistry, registerRuntimeSurface } from '../../plugin-runtime';
 
 const store = configureStore({ reducer: { _: (s = {}) => s } });
 
@@ -30,7 +30,7 @@ const meta: Meta<typeof Wrapper> = {
   parameters: { layout: 'centered' },
   decorators: [
     (Story) => {
-      clearRuntimeCardRegistry();
+      clearRuntimeSurfaceRegistry();
       return <Story />;
     },
   ],
@@ -77,7 +77,7 @@ export const AlreadyRegistered: Story = {
   },
   decorators: [
     (Story) => {
-      registerRuntimeCard('registeredCard', SAMPLE_CODE);
+      registerRuntimeSurface('registeredCard', SAMPLE_CODE);
       return <Story />;
     },
   ],

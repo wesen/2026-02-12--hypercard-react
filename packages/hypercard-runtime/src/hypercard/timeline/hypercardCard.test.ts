@@ -9,7 +9,7 @@ import {
   resetChatModulesRegistrationForTest,
   timelineSlice,
 } from '@hypercard/chat-runtime';
-import { clearRuntimeCardRegistry, hasRuntimeCard } from '../../plugin-runtime/runtimeCardRegistry';
+import { clearRuntimeSurfaceRegistry, hasRuntimeSurface } from '../../plugin-runtime/runtimeSurfaceRegistry';
 import { createArtifactProjectionMiddleware } from '../artifacts/artifactProjectionMiddleware';
 import { hypercardArtifactsReducer } from '../artifacts/artifactsSlice';
 
@@ -27,7 +27,7 @@ function createStore() {
 
 describe('hypercard card timeline projection', () => {
   beforeEach(() => {
-    clearRuntimeCardRegistry();
+    clearRuntimeSurfaceRegistry();
     clearSemHandlers();
     resetChatModulesRegistrationForTest();
     ensureChatModulesRegistered();
@@ -88,7 +88,7 @@ describe('hypercard card timeline projection', () => {
 
     expect(artifact).toBeDefined();
     expect(artifact.source).toBe('card');
-    expect(hasRuntimeCard('runtime-low-stock')).toBe(true);
+    expect(hasRuntimeSurface('runtime-low-stock')).toBe(true);
   });
 
   it('keeps backend suggestions projection disabled by default', () => {

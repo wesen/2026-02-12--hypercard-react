@@ -5,7 +5,7 @@ import { createAppStore } from '../../app/createAppStore';
 import type { CardStackDefinition } from '@hypercard/engine';
 import { RuntimeCardDebugWindow } from './RuntimeCardDebugWindow';
 import { upsertArtifact } from '../artifacts/artifactsSlice';
-import { clearRuntimeCardRegistry, registerRuntimeCard } from '../../plugin-runtime';
+import { clearRuntimeSurfaceRegistry, registerRuntimeSurface } from '../../plugin-runtime';
 import { clearRegisteredRuntimeDebugStacks, registerRuntimeDebugStacks } from './runtimeDebugRegistry';
 
 const STORY_STACK: CardStackDefinition = {
@@ -57,15 +57,15 @@ function RuntimeCardDebugStory() {
   }
 
   useEffect(() => {
-    clearRuntimeCardRegistry();
+    clearRuntimeSurfaceRegistry();
     clearRegisteredRuntimeDebugStacks();
     registerRuntimeDebugStacks([STORY_STACK, SECOND_STACK]);
 
-    registerRuntimeCard(
+    registerRuntimeSurface(
       'lowStockDrilldown',
       '({ ui }) => ({ render() { return ui.panel([ui.text(\"Low Stock\")]); } })',
     );
-    registerRuntimeCard(
+    registerRuntimeSurface(
       'inventorySummary',
       '({ ui }) => ({ render() { return ui.panel([ui.text(\"Summary\")]); } })',
     );

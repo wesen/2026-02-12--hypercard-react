@@ -1,5 +1,5 @@
 import { type LaunchableAppModule, type LauncherHostContext, type LaunchReason } from '@hypercard/desktop-os';
-import { CodeEditorWindow, decodeRuntimeCardEditorInstanceId, getEditorInitialCode, PluginCardSessionHost } from '@hypercard/hypercard-runtime';
+import { CodeEditorWindow, decodeRuntimeCardEditorInstanceId, getEditorInitialCode, RuntimeSurfaceSessionHost } from '@hypercard/hypercard-runtime';
 import type { OpenWindowPayload } from '@hypercard/engine/desktop-core';
 import type { DesktopCommandHandler, DesktopContribution, WindowContentAdapter } from '@hypercard/engine/desktop-react';
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
@@ -96,7 +96,7 @@ function createHypercardToolsCardAdapter(): WindowContentAdapter {
       if (window.content.kind !== 'card' || !cardRef || cardRef.stackId !== STACK.id) {
         return null;
       }
-      return <PluginCardSessionHost windowId={window.id} sessionId={cardRef.cardSessionId} stack={STACK} />;
+      return <RuntimeSurfaceSessionHost windowId={window.id} sessionId={cardRef.cardSessionId} stack={STACK} />;
     },
   };
 }

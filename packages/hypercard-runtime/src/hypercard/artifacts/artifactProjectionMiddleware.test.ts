@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { timelineSlice, type TimelineEntity } from '@hypercard/chat-runtime';
-import { clearRuntimeCardRegistry, hasRuntimeCard } from '../../plugin-runtime';
+import { clearRuntimeSurfaceRegistry, hasRuntimeSurface } from '../../plugin-runtime';
 import { createArtifactProjectionMiddleware } from './artifactProjectionMiddleware';
 import { hypercardArtifactsReducer } from './artifactsSlice';
 
@@ -22,7 +22,7 @@ function flushListeners() {
 
 describe('artifactProjectionMiddleware', () => {
   beforeEach(() => {
-    clearRuntimeCardRegistry();
+    clearRuntimeSurfaceRegistry();
   });
 
   it('projects artifacts from snapshot entities and registers runtime cards', async () => {
@@ -61,7 +61,7 @@ describe('artifactProjectionMiddleware', () => {
     expect(artifact.runtimeCardId).toBe('runtime-low-stock');
     expect(artifact.packId).toBe('kanban.v1');
     expect(artifact.injectionStatus).toBe('pending');
-    expect(hasRuntimeCard('runtime-low-stock')).toBe(true);
+    expect(hasRuntimeSurface('runtime-low-stock')).toBe(true);
   });
 
   it('projects artifacts from mergeSnapshot entities for first-class card kinds', async () => {

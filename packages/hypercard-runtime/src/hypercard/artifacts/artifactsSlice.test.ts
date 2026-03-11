@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { artifactsReducer, markRuntimeCardInjectionResults, upsertArtifact } from './artifactsSlice';
+import { artifactsReducer, markRuntimeSurfaceInjectionResults, upsertArtifact } from './artifactsSlice';
 
 function reduce(actions: Parameters<typeof artifactsReducer>[1][]) {
   let state = artifactsReducer(undefined, { type: '__test__/init' });
@@ -69,7 +69,7 @@ describe('artifactsSlice', () => {
         runtimeCardCode: 'code-bad',
         updatedAt: 10,
       }),
-      markRuntimeCardInjectionResults({
+      markRuntimeSurfaceInjectionResults({
         injectedCardIds: ['runtime-ok'],
         failed: [{ cardId: 'runtime-bad', error: 'syntax error' }],
         updatedAt: 99,

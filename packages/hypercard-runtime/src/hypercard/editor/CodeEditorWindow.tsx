@@ -6,7 +6,7 @@ import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { bracketMatching, foldGutter, indentOnInput, syntaxHighlighting } from '@codemirror/language';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { classHighlighter } from '@lezer/highlight';
-import { hasRuntimeCard, registerRuntimeCard } from '../../plugin-runtime';
+import { hasRuntimeSurface, registerRuntimeSurface } from '../../plugin-runtime';
 
 export interface CodeEditorWindowProps {
   cardId: string;
@@ -90,7 +90,7 @@ export function CodeEditorWindow({ cardId, initialCode, onSave }: CodeEditorWind
 
     const code = view.state.doc.toString();
     try {
-      registerRuntimeCard(cardId, code);
+      registerRuntimeSurface(cardId, code);
       setStatus({ type: 'saved', message: `Injected ${cardId} — ${code.length} chars` });
       setDirty(false);
       onSave?.(cardId, code);
@@ -111,7 +111,7 @@ export function CodeEditorWindow({ cardId, initialCode, onSave }: CodeEditorWind
     setStatus({ type: 'idle' });
   }, [initialCode]);
 
-  const isRegistered = hasRuntimeCard(cardId);
+  const isRegistered = hasRuntimeSurface(cardId);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#282c34' }}>

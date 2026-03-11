@@ -6,7 +6,7 @@
  */
 
 import { type OpenWindowPayload, openWindow } from '@hypercard/engine/desktop-core';
-import { getPendingRuntimeCards } from '../../plugin-runtime';
+import { getPendingRuntimeSurfaces } from '../../plugin-runtime';
 import {
   buildRuntimeCardEditorAppKey,
   HYPERCARD_TOOLS_APP_ID,
@@ -48,7 +48,7 @@ export function getEditorInitialCode(ref: RuntimeCardRef): string {
     return stashed;
   }
   // Fallback: look up from the runtime card registry
-  const cards = getPendingRuntimeCards();
+  const cards = getPendingRuntimeSurfaces();
   const found = cards.find((c) => c.cardId === ref.cardId);
   return found?.code ?? `// No code found for card: ${ref.cardId}\n`;
 }

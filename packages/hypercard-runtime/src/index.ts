@@ -7,5 +7,5 @@ export * from './hypercard/debug/runtimeDebugRegistry';
 export * from './runtime-packs';
 export * from './runtime-packages';
 export { PluginCardRenderer, type PluginCardRendererProps } from './runtime-host/PluginCardRenderer';
-export { PluginCardSessionHost, type PluginCardSessionHostProps } from './runtime-host/PluginCardSessionHost';
+export { RuntimeSurfaceSessionHost, type RuntimeSurfaceSessionHostProps } from './runtime-host/RuntimeSurfaceSessionHost';
 export { dispatchRuntimeAction } from './runtime-host/pluginIntentRouting';

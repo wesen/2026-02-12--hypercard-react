@@ -6,7 +6,7 @@ import { openWindow } from '@hypercard/engine/desktop-core';
 import CHAT_PLUGIN_BUNDLE from './fixtures/CardSessionHost.chat.vm.js?raw';
 import LIST_PLUGIN_BUNDLE from './fixtures/CardSessionHost.list.vm.js?raw';
 import NAV_PLUGIN_BUNDLE from './fixtures/CardSessionHost.nav.vm.js?raw';
-import { PluginCardSessionHost, type PluginCardSessionHostProps } from './PluginCardSessionHost';
+import { RuntimeSurfaceSessionHost, type RuntimeSurfaceSessionHostProps } from './RuntimeSurfaceSessionHost';
 import REPORT_PLUGIN_BUNDLE from './fixtures/CardSessionHost.report.vm.js?raw';
 
 interface PluginCardMeta {
@@ -116,12 +116,12 @@ function createStoreWithSession(stack: CardStackDefinition, sessionId: string, c
   return store;
 }
 
-function PluginCardSessionHostWrapper(props: PluginCardSessionHostProps) {
+function RuntimeSurfaceSessionHostWrapper(props: RuntimeSurfaceSessionHostProps) {
   const store = createStoreWithSession(props.stack, props.sessionId);
   return (
     <Provider store={store}>
       <div style={{ width: 440, height: 380, border: '2px solid #000', overflow: 'auto', background: '#fff' }}>
-        <PluginCardSessionHost {...props} />
+        <RuntimeSurfaceSessionHost {...props} />
       </div>
     </Provider>
   );
@@ -129,11 +129,11 @@ function PluginCardSessionHostWrapper(props: PluginCardSessionHostProps) {
 
 const meta = {
   title: 'HypercardRuntime/RuntimeHost/CardSessionHost',
-  component: PluginCardSessionHostWrapper,
+  component: RuntimeSurfaceSessionHostWrapper,
   parameters: {
     layout: 'centered',
   },
-} satisfies Meta<typeof PluginCardSessionHostWrapper>;
+} satisfies Meta<typeof RuntimeSurfaceSessionHostWrapper>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -196,7 +196,7 @@ export const TwoSessionsIsolated: Story = {
           </div>
           <Provider store={storeA}>
             <div style={{ width: 380, height: 340, border: '2px solid #000', overflow: 'auto', background: '#fff' }}>
-              <PluginCardSessionHost windowId="window:session-a" sessionId="session-a" stack={NAV_STACK} />
+              <RuntimeSurfaceSessionHost windowId="window:session-a" sessionId="session-a" stack={NAV_STACK} />
             </div>
           </Provider>
         </div>
@@ -206,7 +206,7 @@ export const TwoSessionsIsolated: Story = {
           </div>
           <Provider store={storeB}>
             <div style={{ width: 380, height: 340, border: '2px solid #000', overflow: 'auto', background: '#fff' }}>
-              <PluginCardSessionHost windowId="window:session-b" sessionId="session-b" stack={NAV_STACK} />
+              <RuntimeSurfaceSessionHost windowId="window:session-b" sessionId="session-b" stack={NAV_STACK} />
             </div>
           </Provider>
         </div>
