@@ -16,10 +16,10 @@ defineRuntimeBundle(({ ui }) => {
     return asRecord(asRecord(state).draft);
   }
 
-  function navigate(context, cardId, param) {
+  function navigate(context, surfaceId, param) {
     context.dispatch({
       type: 'nav.go',
-      payload: param ? { cardId: String(cardId), param: String(param) } : { cardId: String(cardId) },
+      payload: param ? { surfaceId: String(surfaceId), param: String(param) } : { surfaceId: String(surfaceId) },
     });
   }
 
@@ -53,15 +53,15 @@ defineRuntimeBundle(({ ui }) => {
         render() {
           return ui.panel([
             ui.text('Demo Desktop App'),
-            ui.button('📋 Browse Items', { onClick: { handler: 'go', args: { cardId: 'browse' } } }),
-            ui.button('📊 Reports', { onClick: { handler: 'go', args: { cardId: 'report' } } }),
-            ui.button('💬 Chat', { onClick: { handler: 'go', args: { cardId: 'chat' } } }),
-            ui.button('⚙️ Settings', { onClick: { handler: 'go', args: { cardId: 'settings' } } }),
+            ui.button('📋 Browse Items', { onClick: { handler: 'go', args: { surfaceId: 'browse' } } }),
+            ui.button('📊 Reports', { onClick: { handler: 'go', args: { surfaceId: 'report' } } }),
+            ui.button('💬 Chat', { onClick: { handler: 'go', args: { surfaceId: 'chat' } } }),
+            ui.button('⚙️ Settings', { onClick: { handler: 'go', args: { surfaceId: 'settings' } } }),
           ]);
         },
         handlers: {
           go(context, args) {
-            navigate(context, asRecord(args).cardId || 'home');
+            navigate(context, asRecord(args).surfaceId || 'home');
           },
         },
       },
@@ -75,14 +75,14 @@ defineRuntimeBundle(({ ui }) => {
               { headers: ['SKU', 'Name', 'Category', 'Price', 'Qty'] }
             ),
             ui.row([
-              ui.button('🏠 Home', { onClick: { handler: 'go', args: { cardId: 'home' } } }),
-              ui.button('📊 Reports', { onClick: { handler: 'go', args: { cardId: 'report' } } }),
+              ui.button('🏠 Home', { onClick: { handler: 'go', args: { surfaceId: 'home' } } }),
+              ui.button('📊 Reports', { onClick: { handler: 'go', args: { surfaceId: 'report' } } }),
             ]),
           ]);
         },
         handlers: {
           go(context, args) {
-            navigate(context, asRecord(args).cardId || 'home');
+            navigate(context, asRecord(args).surfaceId || 'home');
           },
         },
       },
@@ -106,13 +106,13 @@ defineRuntimeBundle(({ ui }) => {
             ui.row([
               ui.button('📄 Export CSV', { onClick: { handler: 'notify', args: { message: 'Export not implemented' } } }),
               ui.button('🔄 Refresh', { onClick: { handler: 'notify', args: { message: 'Data refreshed' } } }),
-              ui.button('🏠 Home', { onClick: { handler: 'go', args: { cardId: 'home' } } }),
+              ui.button('🏠 Home', { onClick: { handler: 'go', args: { surfaceId: 'home' } } }),
             ]),
           ]);
         },
         handlers: {
           go(context, args) {
-            navigate(context, asRecord(args).cardId || 'home');
+            navigate(context, asRecord(args).surfaceId || 'home');
           },
           notify(context, args) {
             showNotice(context, asRecord(args).message || '');
@@ -138,13 +138,13 @@ defineRuntimeBundle(({ ui }) => {
             ui.input(draftText, { onChange: { handler: 'changeDraft' } }),
             ui.row([
               ui.button('Send', { onClick: { handler: 'send' } }),
-              ui.button('🏠 Home', { onClick: { handler: 'go', args: { cardId: 'home' } } }),
+              ui.button('🏠 Home', { onClick: { handler: 'go', args: { surfaceId: 'home' } } }),
             ]),
           ]);
         },
         handlers: {
           go(context, args) {
-            navigate(context, asRecord(args).cardId || 'home');
+            navigate(context, asRecord(args).surfaceId || 'home');
           },
           changeDraft(context, args) {
             setDraft(context, 'draft', asRecord(args).value);
@@ -184,12 +184,12 @@ defineRuntimeBundle(({ ui }) => {
               ],
               { headers: ['Key', 'Value'] }
             ),
-            ui.button('🏠 Home', { onClick: { handler: 'go', args: { cardId: 'home' } } }),
+            ui.button('🏠 Home', { onClick: { handler: 'go', args: { surfaceId: 'home' } } }),
           ]);
         },
         handlers: {
           go(context, args) {
-            navigate(context, asRecord(args).cardId || 'home');
+            navigate(context, asRecord(args).surfaceId || 'home');
           },
         },
       },
