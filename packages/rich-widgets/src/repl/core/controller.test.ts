@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveReplCompletionState } from './controller';
+import { executeReplSubmission, resolveReplCompletionState } from './controller';
 import type { ReplDriver } from './types';
 
 const TEST_DRIVER: ReplDriver = {
@@ -40,5 +40,27 @@ describe('repl controller', () => {
     });
 
     expect(completionState).toEqual({ suggestion: '', items: [] });
+  });
+
+  it('awaits async driver execution results', async () => {
+    const asyncDriver: ReplDriver = {
+      async execute() {
+        return {
+          lines: [{ type: 'output', text: 'done' }],
+        };
+      },
+    };
+
+    await expect(
+      executeReplSubmission('run', asyncDriver, {
+        lines: [],
+        historyStack: [],
+        envVars: {},
+        aliases: {},
+        uptimeMs: 0,
+      }),
+    ).resolves.toEqual({
+      lines: [{ type: 'output', text: 'done' }],
+    });
   });
 });

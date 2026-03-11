@@ -31,6 +31,6 @@ export function executeReplSubmission(
   raw: string,
   driver: ReplDriver,
   context: ReplDriverContext,
-): ReplExecutionResult {
-  return driver.execute(raw, context);
+): Promise<ReplExecutionResult> {
+  return Promise.resolve(driver.execute(raw, context));
 }

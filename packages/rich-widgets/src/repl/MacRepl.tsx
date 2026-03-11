@@ -43,6 +43,7 @@ function MacReplFrame({
 }) {
   const [input, setInput] = useState('');
   const startTime = useRef(Date.now());
+  const [isRunning, setIsRunning] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);
   const [completionIdx, setCompletionIdx] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -69,8 +70,8 @@ function MacReplFrame({
   }, [completionState.items.length, showCompletion]);
 
   const executeCommand = useCallback(
-    (raw: string) => {
-      const result = executeReplSubmission(
+    async (raw: string) => {
+      const result = await executeReplSubmission(
         raw,
         driver,
         createDriverContext(state, Date.now() - startTime.current),
@@ -101,12 +102,30 @@ function MacReplFrame({
     [dispatch, driver, state],
   );
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (isRunning) {
+      return;
+    }
+
     const trimmed = input.trim();
     if (trimmed) {
       dispatch(macReplActions.setHistoryStack([...state.historyStack, trimmed]));
     }
-    executeCommand(trimmed);
+    setIsRunning(true);
+    try {
+      await executeCommand(trimmed);
+    } catch (error) {
+      dispatch(
+        macReplActions.appendLines([
+          {
+            type: 'error',
+            text: error instanceof Error ? error.message : String(error),
+          },
+        ]),
+      );
+    } finally {
+      setIsRunning(false);
+    }
     setInput('');
     dispatch(macReplActions.setHistoryIndex(-1));
     setShowCompletion(false);
@@ -115,7 +134,7 @@ function MacReplFrame({
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
       event.preventDefault();
-      handleSubmit();
+      void handleSubmit();
     } else if (event.key === 'Tab') {
       event.preventDefault();
       if (completions.length === 1) {
@@ -187,6 +206,7 @@ function MacReplFrame({
           showCompletion={showCompletion}
           completions={completions}
           completionIdx={completionIdx}
+          disabled={isRunning}
           inputRef={inputRef}
           onChange={setInput}
           onKeyDown={handleKeyDown}
@@ -200,6 +220,7 @@ function MacReplFrame({
       <WidgetStatusBar>
         <span>{state.envVars.HOME}</span>
         <span>{state.historyStack.length} cmds</span>
+        <span>{isRunning ? 'running…' : 'idle'}</span>
       </WidgetStatusBar>
     </div>
   );

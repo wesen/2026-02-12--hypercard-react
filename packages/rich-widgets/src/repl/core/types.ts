@@ -1,5 +1,7 @@
 import type { TerminalLine } from '../types';
 
+export type MaybePromise<T> = T | Promise<T>;
+
 export interface ReplCompletionItem {
   value: string;
   detail?: string;
@@ -33,7 +35,7 @@ export interface ReplExecutionResult {
 }
 
 export interface ReplDriver {
-  execute(raw: string, context: ReplDriverContext): ReplExecutionResult;
+  execute(raw: string, context: ReplDriverContext): MaybePromise<ReplExecutionResult>;
   getCompletions?(input: string, context: ReplDriverContext): ReplCompletionItem[];
   getHelp?(topic: string | null, context: ReplDriverContext): ReplHelpEntry[] | null;
 }

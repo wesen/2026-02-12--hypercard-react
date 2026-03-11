@@ -8,6 +8,7 @@ export function ReplInputLine({
   showCompletion,
   completions,
   completionIdx,
+  disabled = false,
   inputRef,
   onChange,
   onKeyDown,
@@ -19,6 +20,7 @@ export function ReplInputLine({
   showCompletion: boolean;
   completions: ReplCompletionItem[];
   completionIdx: number;
+  disabled?: boolean;
   inputRef: React.RefObject<HTMLInputElement | null>;
   onChange: (value: string) => void;
   onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
@@ -35,6 +37,7 @@ export function ReplInputLine({
           value={input}
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={onKeyDown}
+          disabled={disabled}
           spellCheck={false}
           autoComplete="off"
           autoCapitalize="off"
