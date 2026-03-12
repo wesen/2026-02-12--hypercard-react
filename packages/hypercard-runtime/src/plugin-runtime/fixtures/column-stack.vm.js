@@ -1,8 +1,9 @@
-defineStackBundle(({ ui }) => {
+defineRuntimeBundle(({ ui }) => {
   return {
     id: 'column-demo',
     title: 'Column Demo',
-    cards: {
+    packageIds: ["ui"],
+    surfaces: {
       main: {
         render() {
           return ui.column([

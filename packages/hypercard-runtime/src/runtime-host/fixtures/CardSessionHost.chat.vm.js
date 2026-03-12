@@ -1,4 +1,4 @@
-defineStackBundle(({ ui }) => {
+defineRuntimeBundle(({ ui }) => {
   function asRecord(value) {
     return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   }
@@ -6,7 +6,8 @@ defineStackBundle(({ ui }) => {
   return {
     id: 'chat-demo',
     title: 'Chat Demo',
-    initialCardState: {
+    packageIds: ["ui"],
+    initialSurfaceState: {
       chat: {
         draft: '',
         messages: [
@@ -15,7 +16,7 @@ defineStackBundle(({ ui }) => {
         ],
       },
     },
-    cards: {
+    surfaces: {
       chat: {
         render({ state }) {
           const draftState = asRecord(state?.draft);

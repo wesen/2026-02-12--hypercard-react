@@ -18,7 +18,7 @@ function createStore() {
   });
 }
 
-function renderCard(entity: RenderEntity) {
+function renderEntity(entity: RenderEntity) {
   const store = createStore();
   const container = document.createElement('div');
   document.body.appendChild(container);
@@ -54,7 +54,7 @@ afterEach(() => {
 
 describe('HypercardCardRenderer', () => {
   it('renders highlighted streaming card code from the incoming payload', () => {
-    const container = renderCard({
+    const container = renderEntity({
       id: 'evt-card:result',
       kind: 'hypercard.card.v2',
       createdAt: 1,
@@ -87,8 +87,8 @@ describe('HypercardCardRenderer', () => {
     expect(container.querySelector('[data-part="syntax-highlight"]')).not.toBeNull();
   });
 
-  it('keeps ready cards actionable once the runtime card exists', () => {
-    const container = renderCard({
+  it('keeps ready cards actionable once the runtime surface exists', () => {
+    const container = renderEntity({
       id: 'evt-card-ready:result',
       kind: 'hypercard.card.v2',
       createdAt: 1,
@@ -107,7 +107,7 @@ describe('HypercardCardRenderer', () => {
             },
           },
         },
-        runtimeCardId: 'runtime-drilldown',
+        runtimeSurfaceId: 'runtime-drilldown',
         artifactId: 'artifact-card-2',
       },
       updatedAt: 2,

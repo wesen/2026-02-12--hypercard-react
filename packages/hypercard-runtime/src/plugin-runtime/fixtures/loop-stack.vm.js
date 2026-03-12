@@ -1,8 +1,9 @@
-defineStackBundle(({ ui }) => {
+defineRuntimeBundle(({ ui }) => {
   return {
     id: 'loop',
     title: 'Loop',
-    cards: {
+    packageIds: ["ui"],
+    surfaces: {
       loop: {
         render() {
           while (true) {}
