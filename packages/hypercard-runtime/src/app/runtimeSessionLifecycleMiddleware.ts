@@ -1,7 +1,11 @@
 import { createListenerMiddleware } from '@reduxjs/toolkit';
 import { closeWindow, type WindowInstance } from '@hypercard/engine/desktop-core';
 import { removeRuntimeSession } from '../features/runtimeSessions';
-import { DEFAULT_RUNTIME_SESSION_MANAGER } from '../runtime-session-manager';
+import {
+  DEFAULT_RUNTIME_SESSION_MANAGER,
+  type RuntimeSessionManager,
+} from '../runtime-session-manager';
+import { shouldDisposeOnLastSurfaceWindowClose } from '../runtime-session-manager';
 
 type RootStateLike = {
   windowing?: {
@@ -26,8 +30,15 @@ function stillHasSurfaceWindow(state: RootStateLike, sessionId: string): boolean
   );
 }
 
-export function createRuntimeSessionLifecycleMiddleware() {
+interface CreateRuntimeSessionLifecycleMiddlewareOptions {
+  manager?: RuntimeSessionManager;
+}
+
+export function createRuntimeSessionLifecycleMiddleware(
+  options: CreateRuntimeSessionLifecycleMiddlewareOptions = {},
+) {
   const listener = createListenerMiddleware();
+  const manager = options.manager ?? DEFAULT_RUNTIME_SESSION_MANAGER;
 
   listener.startListening({
     actionCreator: closeWindow,
@@ -43,7 +54,12 @@ export function createRuntimeSessionLifecycleMiddleware() {
         return;
       }
 
-      DEFAULT_RUNTIME_SESSION_MANAGER.disposeSession(sessionId);
+      const summary = manager.getSummary(sessionId);
+      if (!summary || !shouldDisposeOnLastSurfaceWindowClose(summary.ownership)) {
+        return;
+      }
+
+      manager.disposeSession(sessionId);
       api.dispatch(removeRuntimeSession({ sessionId }));
     },
   });

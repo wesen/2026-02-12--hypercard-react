@@ -275,6 +275,34 @@ create RuntimeSession
   -> dispose session
 ```
 
+### RuntimeSessionManager
+
+After APP-28, there is an explicit manager layer above `QuickJSRuntimeService`:
+
+- `packages/hypercard-runtime/src/runtime-session-manager/runtimeSessionManager.ts`
+- `packages/hypercard-runtime/src/runtime-session-manager/runtimeOwnership.ts`
+- `packages/hypercard-runtime/src/app/runtimeSessionLifecycleMiddleware.ts`
+
+This manager is important because the VM lifecycle is no longer supposed to follow ordinary React mount/unmount behavior.
+
+Responsibilities:
+
+- ensure a runtime session exists for a given `bundleId + sessionId`
+- keep the stable `sessionId -> handle` map for managed runtime sessions
+- track attached window/view ids
+- publish serializable summaries for operator tooling
+- expose ownership classes such as:
+  - `window-owned`
+  - `broker-owned`
+  - `attached-read-only`
+  - `attached-writable` (future)
+
+The first central disposal rule now is:
+
+- last surface-window close only auto-disposes `window-owned` runtime sessions
+
+That rule is enforced from Redux desktop lifecycle middleware, not from `useEffect` cleanup in `RuntimeSurfaceSessionHost`.
+
 ## 6. RuntimeBundle
 
 A `RuntimeBundle` is app-authored source code plus metadata.
@@ -697,7 +725,7 @@ host app starts
   -> register runtime surface types
   -> build RuntimeBundleDefinition
   -> DesktopShell opens home surface
-  -> RuntimeSurfaceSessionHost creates RuntimeSession
+  -> RuntimeSurfaceSessionHost asks RuntimeSessionManager for RuntimeSession
   -> runtime installs package preludes
   -> runtime evaluates bundle code
   -> runtime exposes bundle meta
@@ -713,6 +741,12 @@ host app starts
 ```
 
 This is the core loop of the system.
+
+The important ownership correction is:
+
+- React hosts attach and detach views
+- the session manager owns runtime-process existence
+- Redux desktop lifecycle decides when a truly window-owned session should be torn down
 
 ## 16. Docs and `vmmeta`
 

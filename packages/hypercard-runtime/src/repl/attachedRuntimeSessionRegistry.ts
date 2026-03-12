@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import type { SessionId } from '../plugin-runtime/contracts';
 import {
+  ATTACHED_READ_ONLY_RUNTIME_SESSION,
   DEFAULT_RUNTIME_SESSION_MANAGER,
   type RuntimeSessionManagerHandle,
   type RuntimeSessionManagerSummary,
@@ -31,6 +32,7 @@ function toSummary(summary: RuntimeSessionManagerSummary): RuntimeSessionSummary
     description: summary.description,
     origin: 'attached',
     writable: false,
+    ownership: ATTACHED_READ_ONLY_RUNTIME_SESSION,
   };
 }
 

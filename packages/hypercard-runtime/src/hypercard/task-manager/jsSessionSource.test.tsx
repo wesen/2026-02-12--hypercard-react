@@ -19,6 +19,7 @@ describe('jsSessionTaskManagerSource', () => {
         kind: 'js-session',
         title: 'Scratch Pad',
         details: expect.objectContaining({
+          ownership: 'broker-owned',
           globals: expect.any(String),
         }),
       }),

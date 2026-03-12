@@ -3,6 +3,7 @@ import INVENTORY_STACK from '../plugin-runtime/fixtures/inventory-stack.vm.js?ra
 import { clearRuntimePackages, registerRuntimePackage } from '../runtime-packages';
 import { clearRuntimeSurfaceTypes, registerRuntimeSurfaceType } from '../runtime-packs';
 import { TEST_UI_CARD_V1_RUNTIME_SURFACE_TYPE, TEST_UI_RUNTIME_PACKAGE } from '../testRuntimeUi';
+import { WINDOW_OWNED_RUNTIME_SESSION } from './runtimeOwnership';
 import { createRuntimeSessionManager } from './runtimeSessionManager';
 
 describe('runtimeSessionManager', () => {
@@ -37,6 +38,7 @@ describe('runtimeSessionManager', () => {
         surfaces: ['lowStock'],
         status: 'ready',
         attachedViewIds: [],
+        ownership: WINDOW_OWNED_RUNTIME_SESSION,
       }),
     ]);
 

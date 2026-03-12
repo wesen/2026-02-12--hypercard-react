@@ -110,6 +110,7 @@ export function createRuntimeSessionTaskManagerSource(
           details: {
             bundleId: session.bundleId,
             bundleName: bundle?.name ?? session.bundleId,
+            ownership: session.ownership.kind,
             currentSurface: currentSurface.surfaceId ?? '—',
             surfaceCount: String(session.surfaces.length),
             attachedViews: String(session.attachedViewIds.length),

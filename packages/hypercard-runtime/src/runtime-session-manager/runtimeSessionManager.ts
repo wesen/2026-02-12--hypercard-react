@@ -1,5 +1,9 @@
 import type { RuntimeAction, RuntimeBundleMeta, RuntimeSurfaceId, SessionId, StackId } from '../plugin-runtime/contracts';
 import { QuickJSRuntimeService, type QuickJSRuntimeServiceOptions } from '../plugin-runtime/runtimeService';
+import {
+  WINDOW_OWNED_RUNTIME_SESSION,
+  type RuntimeSessionOwnership,
+} from './runtimeOwnership';
 
 export interface EnsureRuntimeSessionRequest {
   bundleId: StackId;
@@ -19,6 +23,7 @@ export interface RuntimeSessionManagerSummary {
   status: 'loading' | 'ready' | 'error';
   error?: string;
   attachedViewIds: string[];
+  ownership: RuntimeSessionOwnership;
 }
 
 export interface RuntimeSessionManagerHandle {
@@ -39,6 +44,7 @@ export interface RuntimeSessionManagerHandle {
 export interface RuntimeSessionManager {
   ensureSession(request: EnsureRuntimeSessionRequest): Promise<RuntimeSessionManagerHandle>;
   getSession(sessionId: SessionId): RuntimeSessionManagerHandle | null;
+  getSummary(sessionId: SessionId): RuntimeSessionManagerSummary | null;
   listSessions(): RuntimeSessionManagerSummary[];
   disposeSession(sessionId: SessionId): boolean;
   clear(): void;
@@ -88,6 +94,7 @@ function toSummary(record: RuntimeSessionRecord): RuntimeSessionManagerSummary {
     status: record.status,
     error: record.error,
     attachedViewIds: Array.from(record.attachedViewIds).sort(),
+    ownership: WINDOW_OWNED_RUNTIME_SESSION,
   };
 }
 
@@ -245,6 +252,10 @@ export function createRuntimeSessionManager(
         return null;
       }
       return createHandle(sessionId);
+    },
+    getSummary(sessionId) {
+      const record = records.get(sessionId);
+      return record ? toSummary(record) : null;
     },
     listSessions() {
       return Array.from(records.values())

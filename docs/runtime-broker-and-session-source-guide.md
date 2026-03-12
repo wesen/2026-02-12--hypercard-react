@@ -48,6 +48,24 @@ The rule of thumb is:
 - brokers own operator-facing lifecycle
 - session sources bridge into debug/task-manager UI
 
+For runtime-backed surface sessions there is now one extra layer that matters:
+
+```text
+service
+  low-level QuickJS execution
+
+session manager
+  source of truth for runtime-session ownership and live handles
+
+broker
+  operator-facing manager for spawned sessions
+
+session source
+  adapter for debug/task-manager UI
+```
+
+That `session manager` layer is the main APP-28 change. It is what starts making the system behave more like a process manager instead of a React component tree that happens to have VMs inside it.
+
 ## 2. Why this split exists
 
 If you collapse all three layers into one object, one of two bad things happens:
@@ -74,6 +92,34 @@ In this older system:
 
 This path predates the newer broker/source pattern, so it is slightly more store-centric.
 
+### Runtime session manager
+
+Main files:
+
+- [runtimeSessionManager.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/runtime-session-manager/runtimeSessionManager.ts)
+- [runtimeOwnership.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/runtime-session-manager/runtimeOwnership.ts)
+- [runtimeSessionLifecycleMiddleware.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/app/runtimeSessionLifecycleMiddleware.ts)
+
+This layer now sits between the low-level runtime service and the host/debug/operator surfaces.
+
+Responsibilities:
+
+- ensure runtime sessions exist
+- own the live `sessionId -> handle` map for managed runtime sessions
+- track attached view ids
+- publish serializable summaries for tooling
+- expose explicit ownership classes:
+  - `window-owned`
+  - `broker-owned`
+  - `attached-read-only`
+  - `attached-writable` (reserved for later)
+- let desktop lifecycle middleware decide whether a last-window close should actually dispose a session
+
+This is the important architectural correction from APP-28:
+
+- React host mount/unmount is no longer the authoritative VM lifetime boundary
+- the session manager plus desktop lifecycle middleware now own that decision
+
 ### Plain JS system
 
 Main files:
@@ -89,6 +135,13 @@ This newer path is cleaner:
 - the debug registry exposes broker-backed sources to UI
 
 That is the pattern future systems should copy.
+
+The runtime-surface system is moving in that direction too, but it still has one more layer than the plain JS path:
+
+- `QuickJSRuntimeService`
+- `RuntimeSessionManager`
+- optional `RuntimeBroker`
+- task/debug/REPL sources
 
 ## 4. Services
 

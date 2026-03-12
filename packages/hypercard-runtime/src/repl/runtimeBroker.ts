@@ -1,5 +1,9 @@
 import type { RuntimeBundleMeta, RuntimeSurfaceId, RuntimeAction, SessionId, StackId } from '../plugin-runtime/contracts';
 import { QuickJSRuntimeService, type QuickJSRuntimeServiceOptions } from '../plugin-runtime/runtimeService';
+import {
+  BROKER_OWNED_RUNTIME_SESSION,
+  type RuntimeSessionOwnership,
+} from '../runtime-session-manager/runtimeOwnership';
 
 export interface SpawnRuntimeSessionRequest {
   stackId: StackId;
@@ -18,6 +22,7 @@ export interface RuntimeSessionSummary {
   description?: string;
   origin: 'spawned' | 'attached';
   writable: boolean;
+  ownership: RuntimeSessionOwnership;
 }
 
 export interface RuntimeSessionHandle {
@@ -54,6 +59,7 @@ function toRuntimeSessionSummary(bundle: RuntimeBundleMeta): RuntimeSessionSumma
     description: bundle.description,
     origin: 'spawned',
     writable: true,
+    ownership: BROKER_OWNED_RUNTIME_SESSION,
   };
 }
 

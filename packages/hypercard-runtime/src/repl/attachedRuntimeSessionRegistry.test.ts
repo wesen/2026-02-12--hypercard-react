@@ -9,6 +9,7 @@ import { DEFAULT_RUNTIME_SESSION_MANAGER } from '../runtime-session-manager';
 import { clearRuntimePackages, registerRuntimePackage } from '../runtime-packages';
 import { clearRuntimeSurfaceTypes, registerRuntimeSurfaceType } from '../runtime-packs';
 import { TEST_UI_CARD_V1_RUNTIME_SURFACE_TYPE, TEST_UI_RUNTIME_PACKAGE } from '../testRuntimeUi';
+import { ATTACHED_READ_ONLY_RUNTIME_SESSION } from '../runtime-session-manager/runtimeOwnership';
 
 beforeEach(() => {
   clearRuntimePackages();
@@ -36,6 +37,7 @@ describe('attachedRuntimeSessionRegistry', () => {
 
     expect(listAttachedRuntimeSessions()).toHaveLength(1);
     expect(getAttachedRuntimeSession('inventory@live')?.summary.origin).toBe('attached');
+    expect(getAttachedRuntimeSession('inventory@live')?.summary.ownership).toEqual(ATTACHED_READ_ONLY_RUNTIME_SESSION);
     expect(getAttachedRuntimeSession('inventory@live')?.handle.renderSurface('lowStock', { filters: {}, draft: {} })).toBeTruthy();
 
     releaseView();

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import INVENTORY_STACK from '../plugin-runtime/fixtures/inventory-stack.vm.js?raw';
 import { clearRuntimePackages, registerRuntimePackage } from '../runtime-packages';
 import { clearRuntimeSurfaceTypes, registerRuntimeSurfaceType } from '../runtime-packs';
+import { BROKER_OWNED_RUNTIME_SESSION } from '../runtime-session-manager';
 import { TEST_UI_CARD_V1_RUNTIME_SURFACE_TYPE, TEST_UI_RUNTIME_PACKAGE } from '../testRuntimeUi';
 import { createRuntimeBroker } from './runtimeBroker';
 
@@ -37,6 +38,7 @@ describe('runtimeBroker', () => {
         surfaces: ['lowStock'],
         origin: 'spawned',
         writable: true,
+        ownership: BROKER_OWNED_RUNTIME_SESSION,
       }),
     ]);
 

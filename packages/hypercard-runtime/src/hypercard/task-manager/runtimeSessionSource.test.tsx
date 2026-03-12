@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { RuntimeBundleDefinition } from '@hypercard/engine';
 import { createRuntimeSessionTaskManagerSource } from './runtimeSessionSource';
-import type { RuntimeSessionManager } from '../../runtime-session-manager';
+import {
+  WINDOW_OWNED_RUNTIME_SESSION,
+  type RuntimeSessionManager,
+} from '../../runtime-session-manager';
 
 const INVENTORY_BUNDLE: RuntimeBundleDefinition = {
   id: 'inventory',
@@ -20,6 +23,7 @@ describe('runtimeSessionTaskManagerSource', () => {
     const manager: RuntimeSessionManager = {
       ensureSession: vi.fn() as never,
       getSession: vi.fn() as never,
+      getSummary: vi.fn() as never,
       listSessions: () => [
         {
           sessionId: 'session-1',
@@ -30,6 +34,7 @@ describe('runtimeSessionTaskManagerSource', () => {
           title: 'Inventory',
           status: 'ready',
           attachedViewIds: ['window:one'],
+          ownership: WINDOW_OWNED_RUNTIME_SESSION,
         },
       ],
       disposeSession: vi.fn(() => true),
@@ -61,6 +66,7 @@ describe('runtimeSessionTaskManagerSource', () => {
         title: 'Inventory · report',
         details: expect.objectContaining({
           bundleId: 'inventory',
+          ownership: 'window-owned',
           currentSurface: 'report',
           surfaceCount: '2',
           attachedViews: '1',
@@ -73,6 +79,7 @@ describe('runtimeSessionTaskManagerSource', () => {
     const manager: RuntimeSessionManager = {
       ensureSession: vi.fn() as never,
       getSession: vi.fn() as never,
+      getSummary: vi.fn() as never,
       listSessions: () => [
         {
           sessionId: 'session-1',
@@ -83,6 +90,7 @@ describe('runtimeSessionTaskManagerSource', () => {
           title: 'Inventory',
           status: 'ready',
           attachedViewIds: [],
+          ownership: WINDOW_OWNED_RUNTIME_SESSION,
         },
       ],
       disposeSession: vi.fn(() => true),

@@ -28,6 +28,7 @@ export function createJsSessionTaskManagerSource(
         status: 'ready',
         startedAt: session.createdAt,
         details: {
+          ownership: 'broker-owned',
           globals: String(session.globalNames.length),
           globalsPreview: session.globalNames.slice(0, 6).join(', ') || '—',
         },
