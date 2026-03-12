@@ -6,10 +6,8 @@ import {
   createHypercardReplDriver,
   getRuntimePackageDocsMetadata,
 } from './hypercardReplDriver';
-import {
-  clearAttachedRuntimeSessions,
-  registerAttachedRuntimeSession,
-} from './attachedRuntimeSessionRegistry';
+import { clearAttachedRuntimeSessions } from './attachedRuntimeSessionRegistry';
+import { DEFAULT_RUNTIME_SESSION_MANAGER } from '../runtime-session-manager';
 
 const TEST_UI_RUNTIME_PACKAGE = {
   packageId: 'ui',
@@ -65,6 +63,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  DEFAULT_RUNTIME_SESSION_MANAGER.clear();
   clearRuntimePackages();
   clearRuntimeSurfaceTypes();
   clearAttachedRuntimeSessions();
@@ -296,44 +295,14 @@ describe('hypercardReplDriver', () => {
   });
 
   it('attaches to live host-owned runtime sessions in read-only mode', async () => {
-    registerAttachedRuntimeSession({
-      handle: {
-        sessionId: 'inventory@live',
-        stackId: 'inventory',
-        origin: 'attached',
-        writable: false,
-        getBundleMeta: () => ({
-          stackId: 'inventory',
-          sessionId: 'inventory@live',
-          title: 'Inventory Live',
-          packageIds: ['ui'],
-          surfaces: ['lowStock'],
-          surfaceTypes: { lowStock: 'ui.card.v1' },
-        }),
-        renderSurface: () => ({ kind: 'panel', children: [{ kind: 'text', value: 'attached' }] }),
-        eventSurface: () => [],
-        defineSurface: () => {
-          throw new Error('Attached runtime session inventory@live is read-only');
-        },
-        defineSurfaceRender: () => {
-          throw new Error('Attached runtime session inventory@live is read-only');
-        },
-        defineSurfaceHandler: () => {
-          throw new Error('Attached runtime session inventory@live is read-only');
-        },
-        dispose: () => false,
-      },
-      summary: {
-        sessionId: 'inventory@live',
-        stackId: 'inventory',
-        packageIds: ['ui'],
-        surfaces: ['lowStock'],
-        surfaceTypes: { lowStock: 'ui.card.v1' },
-        title: 'Inventory Live',
-        origin: 'attached',
-        writable: false,
-      },
+    const runtimeHandle = await DEFAULT_RUNTIME_SESSION_MANAGER.ensureSession({
+      bundleId: 'inventory',
+      sessionId: 'inventory@live',
+      packageIds: ['ui'],
+      bundleCode: INVENTORY_STACK,
     });
+    runtimeHandle.attachView('window:inventory@live');
+    runtimeHandle.defineSurfaceRender('lowStock', 'function () { return { kind: "panel", children: [{ kind: "text", value: "attached" }] }; }');
 
     const driver = createHypercardReplDriver();
     const context = {

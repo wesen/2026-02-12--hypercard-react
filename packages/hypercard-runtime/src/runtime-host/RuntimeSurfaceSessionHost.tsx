@@ -15,8 +15,6 @@ import { selectFocusedWindowId, selectSessionCurrentNav, selectSessionNavDepth }
 import { markRuntimeSurfaceInjectionResults } from '../hypercard/artifacts/artifactsSlice';
 import type { RuntimeBundleMeta, RuntimeAction } from '../plugin-runtime/contracts';
 import { getPendingRuntimeSurfaces, hasRuntimeSurface, injectPendingRuntimeSurfacesWithReport, onRegistryChange } from '../plugin-runtime/runtimeSurfaceRegistry';
-import { registerAttachedJsSession, unregisterAttachedJsSession } from '../repl/attachedJsSessionRegistry';
-import { registerAttachedRuntimeSession, unregisterAttachedRuntimeSession } from '../repl/attachedRuntimeSessionRegistry';
 import { DEFAULT_RUNTIME_SESSION_MANAGER } from '../runtime-session-manager';
 import { dispatchRuntimeAction } from './pluginIntentRouting';
 import {
@@ -320,87 +318,6 @@ export function RuntimeSurfaceSessionHost({
       }
     });
   }, [dispatch, localRuntimeReady, pluginConfig, runtimeSession, sessionId]);
-
-  useEffect(() => {
-    if (!pluginConfig || !runtimeSession || runtimeSession.status !== 'ready' || isPreview || !localRuntimeReady) {
-      return;
-    }
-
-    const runtimeHandle = DEFAULT_RUNTIME_SESSION_MANAGER.getSession(sessionId);
-    if (!runtimeHandle) {
-      return;
-    }
-
-    const meta = loadedBundleRef.current ?? runtimeHandle.getBundleMeta();
-
-    registerAttachedRuntimeSession({
-      handle: {
-        sessionId,
-        stackId: bundle.id,
-        origin: 'attached',
-        writable: false,
-        getBundleMeta() {
-          return loadedBundleRef.current ?? runtimeHandle.getBundleMeta();
-        },
-        renderSurface(surfaceId, state) {
-          return runtimeHandle.renderSurface(surfaceId, state);
-        },
-        eventSurface(surfaceId, handler, args, state) {
-          return runtimeHandle.eventSurface(surfaceId, handler, args, state);
-        },
-        defineSurface() {
-          throw new Error(`Attached runtime session ${sessionId} is read-only`);
-        },
-        defineSurfaceRender() {
-          throw new Error(`Attached runtime session ${sessionId} is read-only`);
-        },
-        defineSurfaceHandler() {
-          throw new Error(`Attached runtime session ${sessionId} is read-only`);
-        },
-        dispose() {
-          return false;
-        },
-      },
-      summary: {
-        sessionId,
-        stackId: bundle.id,
-        packageIds: [...meta.packageIds],
-        surfaces: [...meta.surfaces],
-        surfaceTypes: meta.surfaceTypes ? { ...meta.surfaceTypes } : undefined,
-        title: meta.title,
-        description: meta.description,
-        origin: 'attached',
-        writable: false,
-      },
-    });
-
-    registerAttachedJsSession({
-      handle: {
-        sessionId,
-        stackId: bundle.id,
-        origin: 'attached-runtime',
-        writable: true,
-        evaluate(code) {
-          return runtimeHandle.evaluateSessionJs(code);
-        },
-        inspectGlobals() {
-          return runtimeHandle.getSessionGlobalNames();
-        },
-      },
-      summary: {
-        sessionId,
-        stackId: bundle.id,
-        title: meta.title,
-        origin: 'attached-runtime',
-        writable: true,
-      },
-    });
-
-    return () => {
-      unregisterAttachedJsSession(sessionId);
-      unregisterAttachedRuntimeSession(sessionId);
-    };
-  }, [bundle.id, isPreview, localRuntimeReady, pluginConfig, runtimeSession, sessionId]);
 
   useEffect(() => {
     if (!pluginConfig || !runtimeSession || runtimeSession.status !== 'ready' || !localRuntimeReady) {

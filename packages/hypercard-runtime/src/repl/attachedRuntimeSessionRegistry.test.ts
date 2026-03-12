@@ -1,79 +1,44 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   clearAttachedRuntimeSessions,
   getAttachedRuntimeSession,
   listAttachedRuntimeSessions,
-  registerAttachedRuntimeSession,
-  unregisterAttachedRuntimeSession,
 } from './attachedRuntimeSessionRegistry';
-import type { RuntimeSessionHandle } from './runtimeBroker';
+import INVENTORY_STACK from '../plugin-runtime/fixtures/inventory-stack.vm.js?raw';
+import { DEFAULT_RUNTIME_SESSION_MANAGER } from '../runtime-session-manager';
+import { clearRuntimePackages, registerRuntimePackage } from '../runtime-packages';
+import { clearRuntimeSurfaceTypes, registerRuntimeSurfaceType } from '../runtime-packs';
+import { TEST_UI_CARD_V1_RUNTIME_SURFACE_TYPE, TEST_UI_RUNTIME_PACKAGE } from '../testRuntimeUi';
 
-function createHandle(sessionId: string): RuntimeSessionHandle {
-  return {
-    sessionId,
-    stackId: 'inventory',
-    origin: 'attached',
-    writable: false,
-    getBundleMeta: () => ({
-      stackId: 'inventory',
-      sessionId,
-      title: 'Inventory',
-      packageIds: ['ui'],
-      surfaces: ['lowStock'],
-    }),
-    renderSurface: () => ({ kind: 'panel' }),
-    eventSurface: () => [],
-    defineSurface: () => {
-      throw new Error('read-only');
-    },
-    defineSurfaceRender: () => {
-      throw new Error('read-only');
-    },
-    defineSurfaceHandler: () => {
-      throw new Error('read-only');
-    },
-    dispose: () => false,
-  };
-}
+beforeEach(() => {
+  clearRuntimePackages();
+  clearRuntimeSurfaceTypes();
+  registerRuntimePackage(TEST_UI_RUNTIME_PACKAGE);
+  registerRuntimeSurfaceType(TEST_UI_CARD_V1_RUNTIME_SURFACE_TYPE);
+});
 
 afterEach(() => {
+  DEFAULT_RUNTIME_SESSION_MANAGER.clear();
   clearAttachedRuntimeSessions();
+  clearRuntimePackages();
+  clearRuntimeSurfaceTypes();
 });
 
 describe('attachedRuntimeSessionRegistry', () => {
-  it('registers and looks up attached runtime sessions', () => {
-    registerAttachedRuntimeSession({
-      handle: createHandle('inventory@live'),
-      summary: {
-        sessionId: 'inventory@live',
-        stackId: 'inventory',
-        packageIds: ['ui'],
-        surfaces: ['lowStock'],
-        title: 'Inventory',
-        origin: 'attached',
-        writable: false,
-      },
+  it('derives attached runtime sessions from manager-owned sessions with attached views', async () => {
+    const handle = await DEFAULT_RUNTIME_SESSION_MANAGER.ensureSession({
+      bundleId: 'inventory',
+      sessionId: 'inventory@live',
+      packageIds: ['ui'],
+      bundleCode: INVENTORY_STACK,
     });
+    const releaseView = handle.attachView('window:inventory@live');
 
     expect(listAttachedRuntimeSessions()).toHaveLength(1);
     expect(getAttachedRuntimeSession('inventory@live')?.summary.origin).toBe('attached');
-  });
+    expect(getAttachedRuntimeSession('inventory@live')?.handle.renderSurface('lowStock', { filters: {}, draft: {} })).toBeTruthy();
 
-  it('unregisters attached sessions', () => {
-    registerAttachedRuntimeSession({
-      handle: createHandle('inventory@live'),
-      summary: {
-        sessionId: 'inventory@live',
-        stackId: 'inventory',
-        packageIds: ['ui'],
-        surfaces: ['lowStock'],
-        title: 'Inventory',
-        origin: 'attached',
-        writable: false,
-      },
-    });
-
-    unregisterAttachedRuntimeSession('inventory@live');
+    releaseView();
     expect(listAttachedRuntimeSessions()).toEqual([]);
   });
 });
