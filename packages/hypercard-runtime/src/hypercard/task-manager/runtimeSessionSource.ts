@@ -2,12 +2,13 @@ import type { RuntimeBundleDefinition } from '@hypercard/engine';
 import { openWindow, type OpenWindowPayload } from '@hypercard/engine/desktop-core';
 import type { TaskManagerRow, TaskManagerSource } from './types';
 import { buildRuntimeDebugWindowPayload } from '../debug/runtimeDebugApp';
-import type { RuntimeSessionRecord } from '../../features/runtimeSessions/runtimeSessionsSlice';
+import {
+  DEFAULT_RUNTIME_SESSION_MANAGER,
+  type RuntimeSessionManager,
+  type RuntimeSessionManagerSummary,
+} from '../../runtime-session-manager';
 
 interface RuntimeSessionTaskManagerState {
-  runtimeSessions?: {
-    sessions: Record<string, RuntimeSessionRecord>;
-  };
   windowing?: {
     sessions: Record<string, {
       nav?: Array<{
@@ -27,6 +28,7 @@ interface RuntimeSessionTaskManagerSourceOptions {
   ownerAppId: string;
   focusJsConsole?: (sessionId: string) => void;
   subscribe: (listener: () => void) => () => void;
+  manager?: RuntimeSessionManager;
 }
 
 function buildBundleSurfaceWindowPayload(
@@ -63,18 +65,17 @@ function buildBundleSurfaceWindowPayload(
 }
 
 function currentSurfaceForSession(
-  sessionId: string,
-  session: RuntimeSessionRecord,
+  session: RuntimeSessionManagerSummary,
   navSessions: RuntimeSessionTaskManagerState['windowing'],
 ): { surfaceId: string | null; param?: string } {
-  const nav = navSessions?.sessions?.[sessionId]?.nav;
+  const nav = navSessions?.sessions?.[session.sessionId]?.nav;
   if (Array.isArray(nav) && nav.length > 0) {
     const current = nav[nav.length - 1];
     if (typeof current?.surface === 'string') {
       return { surfaceId: current.surface, param: current.param };
     }
   }
-  return { surfaceId: Object.keys(session.surfaceState ?? {})[0] ?? null };
+  return { surfaceId: session.surfaces[0] ?? null };
 }
 
 export function createRuntimeSessionTaskManagerSource(
@@ -83,6 +84,7 @@ export function createRuntimeSessionTaskManagerSource(
   const bundlesById = new Map(options.bundles.map((bundle) => [bundle.id, bundle]));
   const sourceId = options.sourceId ?? 'runtime-sessions';
   const sourceTitle = options.sourceTitle ?? 'Runtime Sessions';
+  const manager = options.manager ?? DEFAULT_RUNTIME_SESSION_MANAGER;
 
   return {
     sourceId() {
@@ -93,14 +95,13 @@ export function createRuntimeSessionTaskManagerSource(
     },
     listRows() {
       const state = options.getState();
-      const sessions = state.runtimeSessions?.sessions ?? {};
       const windowing = state.windowing;
 
-      return Object.entries(sessions).map(([sessionId, session]) => {
+      return manager.listSessions().map((session) => {
         const bundle = bundlesById.get(session.bundleId);
-        const currentSurface = currentSurfaceForSession(sessionId, session, windowing);
+        const currentSurface = currentSurfaceForSession(session, windowing);
         return {
-          id: sessionId,
+          id: session.sessionId,
           kind: 'runtime-session',
           sourceId,
           sourceTitle,
@@ -110,7 +111,8 @@ export function createRuntimeSessionTaskManagerSource(
             bundleId: session.bundleId,
             bundleName: bundle?.name ?? session.bundleId,
             currentSurface: currentSurface.surfaceId ?? '—',
-            surfaceCount: String(Object.keys(session.surfaceState ?? {}).length),
+            surfaceCount: String(session.surfaces.length),
+            attachedViews: String(session.attachedViewIds.length),
           },
           actions: [
             { id: 'open', label: 'Open', intent: 'open' },
@@ -122,7 +124,7 @@ export function createRuntimeSessionTaskManagerSource(
     },
     invoke(actionId, rowId) {
       const state = options.getState();
-      const session = state.runtimeSessions?.sessions?.[rowId];
+      const session = manager.listSessions().find((entry) => entry.sessionId === rowId);
       if (!session) {
         throw new Error(`Unknown runtime session: ${rowId}`);
       }
@@ -148,7 +150,7 @@ export function createRuntimeSessionTaskManagerSource(
         if (!bundle) {
           throw new Error(`Unknown runtime bundle: ${session.bundleId}`);
         }
-        const currentSurface = currentSurfaceForSession(rowId, session, state.windowing);
+        const currentSurface = currentSurfaceForSession(session, state.windowing);
         if (!currentSurface.surfaceId) {
           throw new Error(`Runtime session has no active surface: ${rowId}`);
         }
@@ -163,7 +165,12 @@ export function createRuntimeSessionTaskManagerSource(
       throw new Error(`Unsupported runtime session action: ${actionId}`);
     },
     subscribe(listener) {
-      return options.subscribe(listener);
+      const unregisterStore = options.subscribe(listener);
+      const unregisterManager = manager.subscribe(listener);
+      return () => {
+        unregisterManager();
+        unregisterStore();
+      };
     },
   };
 }
