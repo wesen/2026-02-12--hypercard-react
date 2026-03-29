@@ -1,4 +1,4 @@
-import type { JsSessionBroker } from '../../os-repl/jsSessionBroker';
+import type { JsSessionBroker } from '../../repl/jsSessionBroker';
 import type { TaskManagerRow, TaskManagerSource } from './types';
 
 interface JsSessionTaskManagerSourceOptions {

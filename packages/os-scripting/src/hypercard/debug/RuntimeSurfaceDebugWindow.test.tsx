@@ -12,7 +12,7 @@ import {
   clearRegisteredJsSessionDebugSources,
   registerJsSessionDebugSource,
 } from './jsSessionDebugRegistry';
-import { createJsSessionBroker } from '../../os-repl/jsSessionBroker';
+import { createJsSessionBroker } from '../../repl/jsSessionBroker';
 
 const DEBUG_STACK: RuntimeBundleDefinition = {
   id: 'os-launcher',

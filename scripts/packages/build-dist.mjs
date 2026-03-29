@@ -11,6 +11,7 @@ const distDir = path.join(packageDir, 'dist');
 const packageJsonPath = path.join(packageDir, 'package.json');
 const tsconfigPath = path.join(packageDir, 'tsconfig.json');
 const tempTsconfigPath = path.join(packageDir, '.tsconfig.build-dist.tmp.json');
+const tempTsbuildInfoPath = path.join(packageDir, '.tsconfig.build-dist.tmp.tsbuildinfo');
 const assetSuffixes = ['.css', '.vm.js'];
 
 function isAssetFile(filename) {
@@ -80,6 +81,7 @@ async function writeBuildTsconfig() {
       ...(tsconfig.compilerOptions ?? {}),
       declarationMap: false,
       sourceMap: false,
+      tsBuildInfoFile: tempTsbuildInfoPath,
       paths: rewrittenPaths,
     },
   };
@@ -112,8 +114,10 @@ async function copyAssets() {
 
 await rm(distDir, { recursive: true, force: true });
 await rm(tempTsconfigPath, { force: true });
+await rm(tempTsbuildInfoPath, { force: true });
 await writeBuildTsconfig();
 runTscBuild();
 const copiedCount = await copyAssets();
 await rm(tempTsconfigPath, { force: true });
+await rm(tempTsbuildInfoPath, { force: true });
 console.log(`Copied ${copiedCount} asset file(s) into ${path.relative(packageDir, distDir) || 'dist'}.`);

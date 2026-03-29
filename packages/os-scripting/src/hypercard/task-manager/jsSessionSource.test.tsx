@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createJsSessionBroker } from '../../os-repl/jsSessionBroker';
+import { createJsSessionBroker } from '../../repl/jsSessionBroker';
 import { createJsSessionTaskManagerSource } from './jsSessionSource';
 
 describe('jsSessionTaskManagerSource', () => {

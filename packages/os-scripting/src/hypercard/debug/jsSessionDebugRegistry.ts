@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import type { JsSessionBroker } from '../../os-repl/jsSessionBroker';
+import type { JsSessionBroker } from '../../repl/jsSessionBroker';
 
 export interface JsSessionDebugSource {
   id: string;
