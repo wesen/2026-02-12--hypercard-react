@@ -1,0 +1,77 @@
+name: publish-github-package-canary
+
+on:
+  workflow_dispatch:
+    inputs:
+      package_dir:
+        description: Package directory to publish to GitHub Packages
+        required: true
+        default: packages/os-core
+        type: choice
+        options:
+          - packages/os-core
+      npm_tag:
+        description: npm dist-tag to publish under
+        required: true
+        default: canary
+        type: string
+      version_suffix:
+        description: Optional prerelease suffix appended to the package version
+        required: false
+        default: ''
+        type: string
+      dry_run:
+        description: Run npm publish with --dry-run
+        required: true
+        default: true
+        type: boolean
+
+jobs:
+  publish-canary:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      PACKAGE_DIR: ${{ inputs.package_dir }}
+      NPM_TAG: ${{ inputs.npm_tag }}
+      VERSION_SUFFIX: ${{ inputs.version_suffix != '' && inputs.version_suffix || format('canary.{0}', github.run_number) }}
+      NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@go-go-golems'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Typecheck selected package
+        run: npm run typecheck -w "$PACKAGE_DIR"
+
+      - name: Run selected package tests
+        run: npm run test -w "$PACKAGE_DIR"
+
+      - name: Build publish artifacts
+        run: npm run build:dist -w "$PACKAGE_DIR"
+
+      - name: Pack smoke selected package
+        run: node scripts/packages/pack-smoke.mjs "$PACKAGE_DIR"
+
+      - name: Publish selected package
+        run: |
+          PUBLISH_ARGS=("$PACKAGE_DIR" --tag "$NPM_TAG" --version-suffix "$VERSION_SUFFIX")
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            PUBLISH_ARGS+=(--dry-run)
+          fi
+          node scripts/packages/publish-github-package.mjs "${PUBLISH_ARGS[@]}"
