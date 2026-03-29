@@ -6,6 +6,7 @@ import path from 'node:path';
 import process from 'node:process';
 
 const packageDir = process.cwd();
+const workspaceRoot = path.resolve(packageDir, '..', '..');
 const srcDir = path.join(packageDir, 'src');
 const distDir = path.join(packageDir, 'dist');
 const packageJsonPath = path.join(packageDir, 'package.json');
@@ -35,8 +36,24 @@ async function walkAssets(dir) {
 }
 
 function rewritePathTarget(target) {
+  if (target.startsWith('./src/')) {
+    if (target.endsWith('.vm.js') || target.endsWith('.css')) {
+      return target.replace(/^\.\/src\//, './dist/');
+    }
+    if (target.endsWith('.ts') || target.endsWith('.tsx')) {
+      return target
+        .replace(/^\.\/src\//, './dist/')
+        .replace(/\.(ts|tsx)$/, '.d.ts');
+    }
+  }
   if (target.endsWith('/src/index.ts')) {
     return target.replace(/\/src\/index\.ts$/, '/dist/index.d.ts');
+  }
+  if (target.match(/\/src\/.+\.(ts|tsx)$/)) {
+    return target.replace(/\/src\/(.+)\.(ts|tsx)$/, '/dist/$1.d.ts');
+  }
+  if (target.match(/\/src\/.+\.css$/) || target.match(/\/src\/.+\.vm\.js$/)) {
+    return target.replace(/\/src\/(.+)$/, '/dist/$1');
   }
   if (target.endsWith('/src/*')) {
     return target.replace(/\/src\/\*$/, '/dist/*');
@@ -45,6 +62,106 @@ function rewritePathTarget(target) {
     return target.replace(/\/src$/, '/dist/index.d.ts');
   }
   return target;
+}
+
+async function listWorkspacePackageDirs() {
+  const packageRoots = [path.join(workspaceRoot, 'packages'), path.join(workspaceRoot, 'apps')];
+  const dirs = [];
+
+  for (const root of packageRoots) {
+    let entries;
+    try {
+      entries = await readdir(root, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+
+    for (const entry of entries) {
+      if (!entry.isDirectory()) {
+        continue;
+      }
+      dirs.push(path.join(root, entry.name));
+    }
+  }
+
+  return dirs;
+}
+
+function collectExportTargets(packageName, packageDirname, packageJson) {
+  const targets = new Map();
+  const exportsField = packageJson.exports;
+
+  if (typeof exportsField === 'string') {
+    targets.set(packageName, exportsField);
+    return targets;
+  }
+
+  if (exportsField && typeof exportsField === 'object' && !Array.isArray(exportsField)) {
+    for (const [key, value] of Object.entries(exportsField)) {
+      if (typeof value !== 'string') {
+        continue;
+      }
+      if (key === '.') {
+        targets.set(packageName, value);
+        continue;
+      }
+      if (!key.startsWith('./')) {
+        continue;
+      }
+      targets.set(`${packageName}/${key.slice(2)}`, value);
+    }
+  }
+
+  if (!targets.has(packageName)) {
+    if (typeof packageJson.types === 'string') {
+      targets.set(packageName, packageJson.types);
+    } else if (typeof packageJson.main === 'string') {
+      targets.set(packageName, packageJson.main);
+    }
+  }
+
+  const resolvedTargets = new Map();
+  for (const [alias, target] of targets.entries()) {
+    const rewrittenTarget = rewritePathTarget(target);
+    const absoluteTarget = rewrittenTarget.startsWith('.')
+      ? path.resolve(packageDirname, rewrittenTarget)
+      : path.resolve(packageDirname, rewrittenTarget);
+    resolvedTargets.set(alias, [path.relative(packageDir, absoluteTarget)]);
+  }
+
+  return resolvedTargets;
+}
+
+async function buildWorkspacePackagePaths(currentPackageName) {
+  const packageDirs = await listWorkspacePackageDirs();
+  const generatedPaths = {};
+
+  for (const candidateDir of packageDirs) {
+    if (candidateDir === packageDir) {
+      continue;
+    }
+
+    const candidatePackageJsonPath = path.join(candidateDir, 'package.json');
+    let candidatePackageJsonRaw;
+    try {
+      candidatePackageJsonRaw = await readFile(candidatePackageJsonPath, 'utf8');
+    } catch {
+      continue;
+    }
+
+    const candidatePackageJson = JSON.parse(candidatePackageJsonRaw);
+    const candidatePackageName = String(candidatePackageJson.name ?? '').trim();
+    if (!candidatePackageName || candidatePackageName === currentPackageName) {
+      continue;
+    }
+
+    const exportTargets = collectExportTargets(candidatePackageName, candidateDir, candidatePackageJson);
+    for (const [alias, values] of exportTargets.entries()) {
+      generatedPaths[alias] = values;
+    }
+  }
+
+  return generatedPaths;
 }
 
 async function writeBuildTsconfig() {
@@ -57,7 +174,7 @@ async function writeBuildTsconfig() {
   const tsconfig = JSON.parse(tsconfigRaw);
   const packageName = String(packageJson.name ?? '').trim();
   const currentPaths = tsconfig.compilerOptions?.paths ?? {};
-  const rewrittenPaths = {};
+  const rewrittenPaths = await buildWorkspacePackagePaths(packageName);
 
   for (const [key, values] of Object.entries(currentPaths)) {
     if (!Array.isArray(values)) {
@@ -96,9 +213,7 @@ function runTscBuild() {
     stdio: 'inherit',
   });
 
-  if (result.status !== 0) {
-    process.exit(result.status ?? 1);
-  }
+  return result.status ?? 1;
 }
 
 async function copyAssets() {
@@ -112,12 +227,23 @@ async function copyAssets() {
   return assets.length;
 }
 
-await rm(distDir, { recursive: true, force: true });
-await rm(tempTsconfigPath, { force: true });
-await rm(tempTsbuildInfoPath, { force: true });
-await writeBuildTsconfig();
-runTscBuild();
-const copiedCount = await copyAssets();
-await rm(tempTsconfigPath, { force: true });
-await rm(tempTsbuildInfoPath, { force: true });
-console.log(`Copied ${copiedCount} asset file(s) into ${path.relative(packageDir, distDir) || 'dist'}.`);
+let exitCode = 0;
+
+try {
+  await rm(distDir, { recursive: true, force: true });
+  await rm(tempTsconfigPath, { force: true });
+  await rm(tempTsbuildInfoPath, { force: true });
+  await writeBuildTsconfig();
+  exitCode = runTscBuild();
+  if (exitCode === 0) {
+    const copiedCount = await copyAssets();
+    console.log(`Copied ${copiedCount} asset file(s) into ${path.relative(packageDir, distDir) || 'dist'}.`);
+  }
+} finally {
+  await rm(tempTsconfigPath, { force: true });
+  await rm(tempTsbuildInfoPath, { force: true });
+}
+
+if (exitCode !== 0) {
+  process.exit(exitCode);
+}
