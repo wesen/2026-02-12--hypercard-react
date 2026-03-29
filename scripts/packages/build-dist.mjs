@@ -10,9 +10,13 @@ const workspaceRoot = path.resolve(packageDir, '..', '..');
 const srcDir = path.join(packageDir, 'src');
 const distDir = path.join(packageDir, 'dist');
 const packageJsonPath = path.join(packageDir, 'package.json');
+const packageReadmePath = path.join(packageDir, 'README.md');
 const tsconfigPath = path.join(packageDir, 'tsconfig.json');
 const tempTsconfigPath = path.join(packageDir, '.tsconfig.build-dist.tmp.json');
 const tempTsbuildInfoPath = path.join(packageDir, '.tsconfig.build-dist.tmp.tsbuildinfo');
+const publishPackageJsonPath = path.join(distDir, 'package.json');
+const publishIgnorePath = path.join(distDir, '.npmignore');
+const publishReadmePath = path.join(distDir, 'README.md');
 const assetSuffixes = ['.css', '.vm.js'];
 
 function isAssetFile(filename) {
@@ -87,6 +91,36 @@ async function listWorkspacePackageDirs() {
   return dirs;
 }
 
+async function readWorkspacePackages() {
+  const packageDirs = await listWorkspacePackageDirs();
+  const packages = [];
+
+  for (const candidateDir of packageDirs) {
+    const candidatePackageJsonPath = path.join(candidateDir, 'package.json');
+    let candidatePackageJsonRaw;
+    try {
+      candidatePackageJsonRaw = await readFile(candidatePackageJsonPath, 'utf8');
+    } catch {
+      continue;
+    }
+
+    const candidatePackageJson = JSON.parse(candidatePackageJsonRaw);
+    const candidatePackageName = String(candidatePackageJson.name ?? '').trim();
+    if (!candidatePackageName) {
+      continue;
+    }
+
+    packages.push({
+      dir: candidateDir,
+      name: candidatePackageName,
+      version: String(candidatePackageJson.version ?? '').trim(),
+      packageJson: candidatePackageJson,
+    });
+  }
+
+  return packages;
+}
+
 function collectExportTargets(packageName, packageDirname, packageJson) {
   const targets = new Map();
   const exportsField = packageJson.exports;
@@ -133,29 +167,24 @@ function collectExportTargets(packageName, packageDirname, packageJson) {
 }
 
 async function buildWorkspacePackagePaths(currentPackageName) {
-  const packageDirs = await listWorkspacePackageDirs();
+  const workspacePackages = await readWorkspacePackages();
   const generatedPaths = {};
 
-  for (const candidateDir of packageDirs) {
+  for (const workspacePackage of workspacePackages) {
+    const candidateDir = workspacePackage.dir;
     if (candidateDir === packageDir) {
       continue;
     }
-
-    const candidatePackageJsonPath = path.join(candidateDir, 'package.json');
-    let candidatePackageJsonRaw;
-    try {
-      candidatePackageJsonRaw = await readFile(candidatePackageJsonPath, 'utf8');
-    } catch {
-      continue;
-    }
-
-    const candidatePackageJson = JSON.parse(candidatePackageJsonRaw);
-    const candidatePackageName = String(candidatePackageJson.name ?? '').trim();
+    const candidatePackageName = workspacePackage.name;
     if (!candidatePackageName || candidatePackageName === currentPackageName) {
       continue;
     }
 
-    const exportTargets = collectExportTargets(candidatePackageName, candidateDir, candidatePackageJson);
+    const exportTargets = collectExportTargets(
+      candidatePackageName,
+      candidateDir,
+      workspacePackage.packageJson,
+    );
     for (const [alias, values] of exportTargets.entries()) {
       generatedPaths[alias] = values;
     }
@@ -227,6 +256,140 @@ async function copyAssets() {
   return assets.length;
 }
 
+function rewritePublishRuntimeTarget(target) {
+  if (typeof target !== 'string') {
+    return target;
+  }
+  const normalizedTarget = target.startsWith('src/') ? `./${target}` : target;
+  if (normalizedTarget.startsWith('./src/')) {
+    const publishTarget = `./${normalizedTarget.slice('./src/'.length)}`;
+    if (publishTarget.endsWith('.ts') || publishTarget.endsWith('.tsx')) {
+      return publishTarget.replace(/\.(ts|tsx)$/, '.js');
+    }
+    return publishTarget;
+  }
+  return target;
+}
+
+function rewritePublishTypesTarget(target) {
+  if (typeof target !== 'string') {
+    return target;
+  }
+  const normalizedTarget = target.startsWith('src/') ? `./${target}` : target;
+  if (normalizedTarget.startsWith('./src/')) {
+    const publishTarget = `./${normalizedTarget.slice('./src/'.length)}`;
+    if (publishTarget.endsWith('.ts') || publishTarget.endsWith('.tsx')) {
+      return publishTarget.replace(/\.(ts|tsx)$/, '.d.ts');
+    }
+    return publishTarget;
+  }
+  return target;
+}
+
+function rewriteStringLeafs(value, mapper) {
+  if (typeof value === 'string') {
+    return mapper(value);
+  }
+  if (Array.isArray(value)) {
+    return value.map((entry) => rewriteStringLeafs(entry, mapper));
+  }
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, entry]) => [key, rewriteStringLeafs(entry, mapper)]),
+    );
+  }
+  return value;
+}
+
+function rewriteWorkspaceVersion(specifier, resolvedVersion) {
+  if (typeof specifier !== 'string' || !specifier.startsWith('workspace:')) {
+    return specifier;
+  }
+
+  const suffix = specifier.slice('workspace:'.length);
+  if (!suffix || suffix === '*') {
+    return resolvedVersion;
+  }
+  if (suffix === '^' || suffix === '~') {
+    return `${suffix}${resolvedVersion}`;
+  }
+  if (suffix.startsWith('^') || suffix.startsWith('~')) {
+    return `${suffix[0]}${resolvedVersion}`;
+  }
+  return suffix;
+}
+
+function rewriteDependencyMap(sectionName, dependencies, workspaceVersions) {
+  if (!dependencies) {
+    return undefined;
+  }
+
+  const rewrittenEntries = Object.entries(dependencies).map(([dependencyName, specifier]) => {
+    if (typeof specifier !== 'string' || !specifier.startsWith('workspace:')) {
+      return [dependencyName, specifier];
+    }
+
+    const resolvedVersion = workspaceVersions.get(dependencyName);
+    if (!resolvedVersion) {
+      throw new Error(`Cannot rewrite ${sectionName} ${dependencyName}=${specifier}: missing workspace version.`);
+    }
+
+    return [dependencyName, rewriteWorkspaceVersion(specifier, resolvedVersion)];
+  });
+
+  return Object.fromEntries(rewrittenEntries);
+}
+
+async function writePublishArtifacts() {
+  const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf8'));
+  const workspacePackages = await readWorkspacePackages();
+  const workspaceVersions = new Map(
+    workspacePackages.map((workspacePackage) => [workspacePackage.name, workspacePackage.version]),
+  );
+
+  const publishPackageJson = {
+    name: packageJson.name,
+    version: packageJson.version,
+    type: packageJson.type,
+    description: packageJson.description,
+    keywords: packageJson.keywords,
+    repository: packageJson.repository,
+    homepage: packageJson.homepage,
+    bugs: packageJson.bugs,
+    license: packageJson.license,
+    author: packageJson.author,
+    sideEffects: packageJson.sideEffects,
+    exports: rewriteStringLeafs(packageJson.exports, rewritePublishRuntimeTarget),
+    main: rewritePublishRuntimeTarget(packageJson.main),
+    module: rewritePublishRuntimeTarget(packageJson.module),
+    types: rewritePublishTypesTarget(packageJson.types),
+    dependencies: rewriteDependencyMap('dependency', packageJson.dependencies, workspaceVersions),
+    peerDependencies: rewriteDependencyMap('peerDependency', packageJson.peerDependencies, workspaceVersions),
+    optionalDependencies: rewriteDependencyMap(
+      'optionalDependency',
+      packageJson.optionalDependencies,
+      workspaceVersions,
+    ),
+    peerDependenciesMeta: packageJson.peerDependenciesMeta,
+    publishConfig: packageJson.publishConfig,
+    engines: packageJson.engines,
+  };
+
+  const filteredPublishPackageJson = Object.fromEntries(
+    Object.entries(publishPackageJson).filter(([, value]) => value !== undefined),
+  );
+
+  await writeFile(publishPackageJsonPath, `${JSON.stringify(filteredPublishPackageJson, null, 2)}\n`, 'utf8');
+  await writeFile(publishIgnorePath, '**/*.test.js\n**/*.test.d.ts\n', 'utf8');
+
+  try {
+    const readme = await readFile(packageReadmePath, 'utf8');
+    await writeFile(publishReadmePath, readme, 'utf8');
+  } catch {
+    await rm(publishReadmePath, { force: true });
+  }
+}
+
 let exitCode = 0;
 
 try {
@@ -237,6 +400,7 @@ try {
   exitCode = runTscBuild();
   if (exitCode === 0) {
     const copiedCount = await copyAssets();
+    await writePublishArtifacts();
     console.log(`Copied ${copiedCount} asset file(s) into ${path.relative(packageDir, distDir) || 'dist'}.`);
   }
 } finally {
