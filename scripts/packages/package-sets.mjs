@@ -7,6 +7,17 @@ export const packageSets = {
     'packages/os-scripting',
     'packages/os-shell',
   ],
+  'os-inventory-stack': [
+    'packages/os-core',
+    'packages/os-chat',
+    'packages/os-repl',
+    'packages/os-scripting',
+    'packages/os-shell',
+    'packages/os-confirm',
+    'packages/os-ui-cards',
+    'packages/os-widgets',
+    'packages/os-kanban',
+  ],
 };
 
 export function listPackageSetNames() {

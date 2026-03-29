@@ -11,6 +11,7 @@ on:
         options:
           - os-core
           - os-shell-stack
+          - os-inventory-stack
       npm_tag:
         description: npm dist-tag to publish under
         required: true
@@ -66,6 +67,9 @@ jobs:
               ;;
             os-shell-stack)
               PACKAGE_DIRS=(packages/os-core packages/os-chat packages/os-repl packages/os-scripting packages/os-shell)
+              ;;
+            os-inventory-stack)
+              PACKAGE_DIRS=(packages/os-core packages/os-chat packages/os-repl packages/os-scripting packages/os-shell packages/os-confirm packages/os-ui-cards packages/os-widgets packages/os-kanban)
               ;;
             *)
               echo "Unknown package set: $PACKAGE_SET" >&2
