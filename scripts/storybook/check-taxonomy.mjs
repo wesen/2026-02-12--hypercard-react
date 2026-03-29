@@ -120,20 +120,20 @@ function checkPlacement(relPath) {
   }
 
   if (relPath.startsWith('packages/os-core/')) {
-    const ok = /^packages\/engine\/src\/(components\/.+|plugin-runtime\/.+)\.stories\.(ts|tsx)$/.test(relPath);
+    const ok = /^packages\/os-core\/src\/(components\/.+|plugin-runtime\/.+)\.stories\.(ts|tsx)$/.test(relPath);
     if (!ok) {
       return 'engine story path must be under packages/os-core/src/components or packages/os-core/src/plugin-runtime';
     }
   }
   if (relPath.startsWith('packages/os-chat/')) {
-    const ok = /^packages\/chat-runtime\/src\/chat\/.+\.stories\.(ts|tsx)$/.test(relPath);
+    const ok = /^packages\/os-chat\/src\/chat\/.+\.stories\.(ts|tsx)$/.test(relPath);
     if (!ok) {
       return 'chat-runtime story path must be under packages/os-chat/src/chat';
     }
   }
   if (relPath.startsWith('packages/os-scripting/')) {
     const ok =
-      /^packages\/hypercard-runtime\/src\/(hypercard\/.+|runtime-host\/.+|plugin-runtime\/.+)\.stories\.(ts|tsx)$/.test(
+      /^packages\/os-scripting\/src\/(hypercard\/.+|runtime-host\/.+|plugin-runtime\/.+)\.stories\.(ts|tsx)$/.test(
         relPath,
       );
     if (!ok) {
