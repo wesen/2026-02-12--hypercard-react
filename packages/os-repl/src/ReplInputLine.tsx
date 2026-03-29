@@ -1,3 +1,4 @@
+import type { JSX, KeyboardEvent, RefObject } from 'react';
 import type { ReplCompletionItem } from './types';
 import { REPL_PARTS as P } from './parts';
 
@@ -21,11 +22,11 @@ export function ReplInputLine({
   completions: ReplCompletionItem[];
   completionIdx: number;
   disabled?: boolean;
-  inputRef: React.RefObject<HTMLInputElement | null>;
+  inputRef: RefObject<HTMLInputElement | null>;
   onChange: (value: string) => void;
-  onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
+  onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
   onPickCompletion: (completion: ReplCompletionItem) => void;
-}) {
+}): JSX.Element {
   return (
     <div data-part={P.replInputLine}>
       <span data-part={P.replPrompt}>{prompt}</span>

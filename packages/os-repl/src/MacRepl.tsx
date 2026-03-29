@@ -1,4 +1,13 @@
-import { useCallback, useContext, useEffect, useReducer, useRef, useState } from 'react';
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useReducer,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type JSX,
+} from 'react';
 import { ReactReduxContext, useDispatch, useSelector } from 'react-redux';
 import { REPL_PARTS as P } from './parts';
 import { WidgetStatusBar } from './WidgetStatusBar';
@@ -164,7 +173,7 @@ function MacReplFrame({
     setShowCompletion(false);
   };
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
       event.preventDefault();
       void handleSubmit();
@@ -259,7 +268,7 @@ function MacReplFrame({
   );
 }
 
-function StandaloneMacRepl(props: MacReplProps) {
+function StandaloneMacRepl(props: MacReplProps): JSX.Element {
   const [state, dispatch] = useReducer(macReplReducer, createInitialSeed(props));
   return (
     <MacReplFrame
@@ -271,7 +280,7 @@ function StandaloneMacRepl(props: MacReplProps) {
   );
 }
 
-function ConnectedMacRepl(props: MacReplProps) {
+function ConnectedMacRepl(props: MacReplProps): JSX.Element {
   const reduxDispatch = useDispatch();
   const state = useSelector(selectMacReplState);
 
@@ -290,7 +299,7 @@ function ConnectedMacRepl(props: MacReplProps) {
   );
 }
 
-export function MacRepl(props: MacReplProps) {
+export function MacRepl(props: MacReplProps): JSX.Element {
   const reduxContext = useContext(ReactReduxContext);
   const store = reduxContext?.store;
   const rootState = store?.getState();

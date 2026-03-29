@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { JSX, ReactNode } from 'react';
 import { REPL_PARTS as P } from './parts';
 
 export interface WidgetStatusBarProps {
@@ -6,7 +6,7 @@ export interface WidgetStatusBarProps {
   className?: string;
 }
 
-export function WidgetStatusBar({ children, className }: WidgetStatusBarProps) {
+export function WidgetStatusBar({ children, className }: WidgetStatusBarProps): JSX.Element {
   return (
     <div data-part={P.widgetStatusBar} className={className}>
       {children}
