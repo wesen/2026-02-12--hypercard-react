@@ -26,9 +26,9 @@ go-go-os-frontend/
     crm/
     book-tracker-debug/
   packages/
-    engine/
-    desktop-os/
-    confirm-runtime/
+    os-core/
+    os-shell/
+    os-confirm/
 ```
 
 ## Frontend Quick Start

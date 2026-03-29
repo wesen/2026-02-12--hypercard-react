@@ -18,6 +18,7 @@ const publishPackageJsonPath = path.join(distDir, 'package.json');
 const publishIgnorePath = path.join(distDir, '.npmignore');
 const publishReadmePath = path.join(distDir, 'README.md');
 const assetSuffixes = ['.css', '.vm.js'];
+const publishArtifactIgnorePattern = /\.(test|stories)\.(d\.ts|js)$/;
 
 function isAssetFile(filename) {
   return assetSuffixes.some((suffix) => filename.endsWith(suffix));
@@ -33,6 +34,22 @@ async function walkAssets(dir) {
       continue;
     }
     if (entry.isFile() && isAssetFile(entry.name)) {
+      files.push(fullPath);
+    }
+  }
+  return files;
+}
+
+async function walkFiles(dir) {
+  const entries = await readdir(dir, { withFileTypes: true });
+  const files = [];
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...(await walkFiles(fullPath)));
+      continue;
+    }
+    if (entry.isFile()) {
       files.push(fullPath);
     }
   }
@@ -256,6 +273,13 @@ async function copyAssets() {
   return assets.length;
 }
 
+async function removeIgnoredPublishArtifacts() {
+  const files = await walkFiles(distDir);
+  const ignoredFiles = files.filter((file) => publishArtifactIgnorePattern.test(file));
+  await Promise.all(ignoredFiles.map((file) => rm(file, { force: true })));
+  return ignoredFiles.length;
+}
+
 function rewritePublishRuntimeTarget(target) {
   if (typeof target !== 'string') {
     return target;
@@ -359,6 +383,7 @@ async function writePublishArtifacts() {
     license: packageJson.license,
     author: packageJson.author,
     sideEffects: packageJson.sideEffects,
+    files: packageJson.files,
     exports: rewriteStringLeafs(packageJson.exports, rewritePublishRuntimeTarget),
     main: rewritePublishRuntimeTarget(packageJson.main),
     module: rewritePublishRuntimeTarget(packageJson.module),
@@ -380,7 +405,7 @@ async function writePublishArtifacts() {
   );
 
   await writeFile(publishPackageJsonPath, `${JSON.stringify(filteredPublishPackageJson, null, 2)}\n`, 'utf8');
-  await writeFile(publishIgnorePath, '**/*.test.js\n**/*.test.d.ts\n', 'utf8');
+  await writeFile(publishIgnorePath, '**/*.test.js\n**/*.test.d.ts\n**/*.stories.js\n**/*.stories.d.ts\n', 'utf8');
 
   try {
     const readme = await readFile(packageReadmePath, 'utf8');
@@ -399,9 +424,14 @@ try {
   await writeBuildTsconfig();
   exitCode = runTscBuild();
   if (exitCode === 0) {
+    const removedIgnoredArtifacts = await removeIgnoredPublishArtifacts();
     const copiedCount = await copyAssets();
     await writePublishArtifacts();
-    console.log(`Copied ${copiedCount} asset file(s) into ${path.relative(packageDir, distDir) || 'dist'}.`);
+    console.log(
+      `Removed ${removedIgnoredArtifacts} ignored publish artifact(s) and copied ${copiedCount} asset file(s) into ${
+        path.relative(packageDir, distDir) || 'dist'
+      }.`,
+    );
   }
 } finally {
   await rm(tempTsconfigPath, { force: true });

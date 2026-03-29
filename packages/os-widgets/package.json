@@ -1,8 +1,31 @@
 {
   "name": "@go-go-golems/os-widgets",
   "version": "0.1.0",
+  "description": "Shared rich widget primitives and launcher modules for go-go-os.",
   "private": true,
   "type": "module",
+  "license": "MIT",
+  "author": "Manuel Odendahl",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/go-go-golems/go-go-os-frontend.git",
+    "directory": "packages/os-widgets"
+  },
+  "homepage": "https://github.com/go-go-golems/go-go-os-frontend/tree/main/packages/os-widgets#readme",
+  "bugs": {
+    "url": "https://github.com/go-go-golems/go-go-os-frontend/issues"
+  },
+  "files": [
+    "**/*.js",
+    "**/*.d.ts",
+    "**/*.css",
+    "**/*.vm.js",
+    "**/*.json",
+    "README.md"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "exports": {
     ".": "./src/index.ts",
     "./theme": "./src/theme/index.ts",

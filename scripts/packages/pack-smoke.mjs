@@ -16,7 +16,12 @@ if (packageDirs.length === 0) {
 }
 
 function isTestArtifact(filePath) {
-  return filePath.endsWith('.test.js') || filePath.endsWith('.test.d.ts');
+  return (
+    filePath.endsWith('.test.js') ||
+    filePath.endsWith('.test.d.ts') ||
+    filePath.endsWith('.stories.js') ||
+    filePath.endsWith('.stories.d.ts')
+  );
 }
 
 for (const packageDirArg of packageDirs) {

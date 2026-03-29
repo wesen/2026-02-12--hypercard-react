@@ -1,8 +1,31 @@
 {
   "name": "@go-go-golems/os-ui-cards",
   "version": "0.1.0",
+  "description": "UI node schema and React renderer packages for go-go-os cards.",
   "private": true,
   "type": "module",
+  "license": "MIT",
+  "author": "Manuel Odendahl",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/go-go-golems/go-go-os-frontend.git",
+    "directory": "packages/os-ui-cards"
+  },
+  "homepage": "https://github.com/go-go-golems/go-go-os-frontend/tree/main/packages/os-ui-cards#readme",
+  "bugs": {
+    "url": "https://github.com/go-go-golems/go-go-os-frontend/issues"
+  },
+  "files": [
+    "**/*.js",
+    "**/*.d.ts",
+    "**/*.css",
+    "**/*.vm.js",
+    "**/*.json",
+    "README.md"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "exports": {
     ".": "./src/index.ts"
   },
